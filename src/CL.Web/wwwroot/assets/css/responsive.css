@@ -1,0 +1,736 @@
+/*Responsive*/
+@media screen and (max-width: 1280px) {
+    .left-topbar {
+        width: auto;
+    }
+}
+
+@media screen and (max-width: 1024px) {
+    .top-header {
+        left: 0px;
+    }
+
+    .sidebar-wrapper {
+        width: 260px !important;
+        left: -260px;
+        box-shadow: none;
+        z-index: 12;
+    }
+
+    .page-content-wrapper {
+        margin-left: 0px!important;
+    }
+
+    .wrapper.toggled .sidebar-wrapper {
+        left: 0px;
+        box-shadow: 0 .3rem 0.6rem rgba(0, 0, 0, .13);
+        transition: all .2s ease-out;
+        z-index: 16;
+    }
+
+    .wrapper.toggled .sidebar-wrapper .menu-title,
+    .wrapper.toggled .sidebar-wrapper .menu-label {
+        display: block !important;
+    }
+
+    .wrapper.toggled .sidebar-wrapper .menu-title {
+        margin-left: 10px;
+    }
+
+    .wrapper.toggled .sidebar-wrapper .has-arrow::after {
+        display: block !important;
+    }
+
+    .wrapper.toggled .sidebar-wrapper #menu > li {
+        margin: 0;
+    }
+
+    .wrapper.toggled .sidebar-wrapper #menu > li > a {
+        justify-content: flex-start !important;
+        width: auto;
+        padding: 8px 42px 8px 15px !important;
+        border-radius: 8px;
+    }
+
+    .wrapper.toggled .sidebar-wrapper #menu > li > a .parent-icon {
+        min-width: auto !important;
+        margin: 0 !important;
+    }
+
+    .wrapper.toggled .sidebar-wrapper #menu > li > ul.mm-show {
+        display: block !important;
+    }
+
+    .wrapper.toggled .sidebar-wrapper #menu > li > ul:not(.mm-show) {
+        display: none !important;
+    }
+
+    .wrapper.toggled .page-content-wrapper {
+        margin-left: 0px;
+    }
+
+    .wrapper.toggled .overlay {
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        background: #000;
+        opacity: 0.6;
+        z-index: 15;
+        display: block;
+        cursor: move;
+        transition: all .2s ease-out;
+    }
+
+    .footer {
+        margin-left: 0px;
+    }
+
+    .wrapper.toggled .footer {
+        margin-left: 0px;
+    }
+}
+
+@media screen and (max-width: 991px) {
+    .inline-input-select {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .page-content-wrapper {
+        margin-left: 0px!important;
+    }
+
+    .btn-step {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .btn-step2 {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+}
+
+@media screen and (max-width: 767px) {
+
+    .card-riepilogo {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .user-img {
+        margin-top:7px;
+    }
+
+    .inline-input-select {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .btn-step {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .btn-step2 {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .toggle-btn {
+        display: none;
+    }
+
+    .user-info {
+        display: none;
+    }
+
+    .lang span {
+        display: none;
+    }
+
+    .right-topbar .navbar-nav .nav-link {
+        padding: 0rem 14px;
+        border-left: 0px solid #ededed;
+        font-size: 25px;
+    }
+
+    .msg-count {
+        left: 26px;
+    }
+
+    .fc .fc-toolbar {
+        display: flow-root;
+    }
+
+    footer {
+        display: flex;
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .tab-item {
+        border-left: 1px solid !important;
+    }
+
+    #LimiteFatturatoChart {
+        margin-top:0px!important;
+    }
+
+    .puoi-incassare {
+        margin-top:0px!important;
+        padding-bottom:30px;
+    }
+}
+
+@media screen and (max-width: 620px) {
+
+    .pagination {
+        flex-wrap:wrap;
+    }
+
+    .msg-name {
+        word-wrap: break-word;
+        /* Per le versioni più vecchie dei browser */
+		overflow-wrap: break-word;
+        /* Standard più recente */
+		word-break: break-all;
+        /* Aggiunto per assicurare il comportamento in casi estremi */;
+    }
+
+    .user-img {
+        margin-top:7px;
+    }
+
+    .bottoni-fatture {
+        margin-bottom:15px;
+        margin-top:20px!important;
+    }
+
+    .bottoni-fatture i {
+        padding: 10px 15px!important;
+    }
+
+    .breadcrumb-titolo {
+        display: block;
+        text-align: center;
+        justify-content: center;
+    }
+
+    .testo-nessuna {
+        flex-direction: column !important;
+    }
+
+    h5 {
+        font-size: 18px;
+    }
+
+    .align-row {
+        display: block;
+    }
+
+    .inline-input-select {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .btn-step {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .btn-step2 {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .toggle-btn {
+        display: none;
+    }
+
+    .top-header .navbar .dropdown-menu::after {
+        display: none;
+    }
+
+    .top-header .navbar .dropdown {
+        position: static !important;
+    }
+
+    .top-header .navbar .dropdown-menu {
+        width: 100% !important;
+    }
+
+    footer {
+        display: flex;
+        flex-direction: column;
+        text-align: center;
+    }
+}
+
+@media screen and (max-width: 520px) {
+    .logo-icon {
+        display: none;
+    }
+
+    footer {
+        display: flex;
+        flex-direction: column;
+        text-align: center;
+    }
+}
+
+/* Consulens navigation, page and dashboard breakpoints */
+@media (min-width: 1025px) {
+    .wrapper.toggled .sidebar-wrapper #menu > li {
+        margin: 3px 0;
+    }
+
+    .wrapper.toggled .sidebar-wrapper #menu > li > a {
+        min-height: 38px;
+        padding: 8px 0 !important;
+        border-radius: 9px;
+    }
+
+    .top-header .button:has(.toggle-btn) {
+        display: none !important;
+    }
+
+    .wrapper.toggled .sidebar-wrapper .sidebar-footer .menu-title-select {
+        display: none;
+    }
+
+    .wrapper.toggled .sidebar-wrapper .sidebar-footer a {
+        justify-content: center;
+        padding: 8px;
+    }
+
+    .wrapper.toggled .sidebar-wrapper .metismenu {
+        padding-inline: 10px;
+    }
+
+    .wrapper.toggled .sidebar-wrapper .sidebar-footer {
+        padding-inline: 10px;
+    }
+
+    .wrapper.toggled .sidebar-wrapper #menu > li > a:hover {
+        background: #d4e4f9;
+    }
+
+    .wrapper.toggled .sidebar-wrapper #menu > li > a:hover .parent-icon i {
+        color: var(--consulens-nav-text);
+    }
+
+    /* Keep the expand control reachable when the sidebar is collapsed. */
+    .wrapper.toggled:not(.sidebar-hovered) .sidebar-wrapper .sidebar-header .sidebar-collapse {
+        display: block;
+    }
+
+    .wrapper.toggled:not(.sidebar-hovered) .sidebar-wrapper .sidebar-header {
+        flex-direction: column;
+        justify-content: center;
+        gap: 5px;
+        padding: 7px 10px;
+    }
+
+    .wrapper.toggled .sidebar-header .loghi {
+        flex: 0 0 auto;
+        line-height: 0;
+    }
+
+    .wrapper.toggled .sidebar-header #logo-icon {
+        width: 28px;
+        height: 28px;
+        object-fit: contain;
+    }
+
+    .wrapper.toggled .sidebar-header .sidebar-collapse {
+        width: 28px;
+        height: 22px;
+        line-height: 22px;
+        margin: 0;
+        font-size: 16px;
+        border-radius: 5px;
+        background: transparent;
+        color: #7595c0;
+        box-shadow: none;
+    }
+
+    .wrapper.toggled .sidebar-header .sidebar-collapse:hover {
+        background: var(--consulens-hover);
+        color: var(--consulens-nav-text);
+    }
+
+    .wrapper.toggled .sidebar-header .sidebar-collapse:focus:not(:focus-visible) {
+        outline: none;
+    }
+}
+
+@media (max-width: 1024px) {
+    .sidebar-header .sidebar-collapse {
+        display: none;
+    }
+
+    .sidebar-wrapper .sidebar-header {
+        position: absolute;
+        top: -70px;
+        width: 260px;
+    }
+
+    .sidebar-header .close-menu-mobile {
+        margin-left: auto;
+    }
+
+    .wrapper.toggled .sidebar-header .logo-img {
+        display: block !important;
+    }
+
+    .wrapper.toggled .sidebar-header #logo-icon {
+        display: none !important;
+    }
+
+    .wrapper.toggled .sidebar-wrapper .sidebar-header .loghi {
+        width: auto;
+    }
+}
+
+@media (max-width: 1024px) {
+    .top-header .button {
+        display: none !important;
+    }
+
+    .top-header .left-topbar {
+        display: flex;
+        flex-shrink: 0;
+    }
+
+    .top-header .toggle-btn-mobile {
+        margin: 0;
+        width: 30px;
+    }
+
+    .top-header .navbar {
+        gap: 10px;
+    }
+}
+
+@media (max-width: 767px) {
+    .topbar-profile .user-info, .topbar-profile-chevron {
+        display: none;
+    }
+
+    .topbar-profile .user-box {
+        min-width: 0;
+        padding: 5px;
+        height: 44px;
+    }
+
+    .top-header .topbar-profile {
+        padding-left: 8px;
+    }
+
+    .top-header .navbar-nav {
+        gap: 8px;
+    }
+
+    .topbar-create .btn {
+        padding: 0 8px;
+        letter-spacing: 0;
+        font-size: 11px;
+    }
+}
+
+@media (max-width: 480px) {
+    .top-header .navbar {
+        padding-inline: 8px;
+    }
+
+    .topbar-search > i {
+        margin-left: 8px;
+        font-size: 18px;
+    }
+
+    .topbar-search input {
+        padding-inline: 6px;
+    }
+
+    .topbar-create .btn span {
+        display: none;
+    }
+
+    .topbar-create .btn {
+        width: 32px;
+        justify-content: center;
+    }
+
+    .topbar-create .btn i {
+        font-size: 18px;
+    }
+
+    .top-header .topbar-notifications > .nav-link {
+        width: 32px;
+    }
+
+    .top-header .dropdown-lg .dropdown-menu {
+        width: min(355px, calc(100vw - 20px));
+    }
+
+    .top-header .topbar-notifications {
+        position: static;
+    }
+
+    .top-header .topbar-notifications .dropdown-menu {
+        right: 8px;
+    }
+}
+
+@media (max-width: 767px) {
+    .page-breadcrumbs {
+        margin-bottom: 18px;
+    }
+
+    .page-breadcrumbs ol {
+        font-size: 10px;
+        letter-spacing: .5px;
+    }
+
+    .page-wrapper > .page-content-wrapper {
+        padding: 0 10px 10px;
+    }
+
+    .page-wrapper > .page-content-wrapper > .page-content {
+        padding: 18px 14px;
+        border-radius: 12px;
+    }
+
+    .page-footer,
+    .page-footer-links {
+        justify-content: center;
+        text-align: center;
+        font-size: 10px;
+        letter-spacing: .5px;
+    }
+}
+
+@media screen and (max-width: 767px) {
+    .dashboard-fiscale #LimiteFatturatoChart {
+        margin-top: 0px !important;
+    }
+
+    .dashboard-fiscale .puoi-incassare {
+        margin-top: 0px !important;
+        padding-bottom: 30px;
+    }
+
+    .dashboard-fiscale .imposte-riga {
+        display: flex !important;
+        flex-direction: column !important;
+    }
+
+}
+
+@media (max-width: 767px) {
+    .dashboard-fiscale .titolo-pagina {
+        font-size: 21px;
+    }
+
+    .dashboard-fiscale .numeri-destra {
+        gap: 10px !important;
+        flex-direction: row !important;
+        flex-wrap: wrap;
+    }
+
+    .dashboard-fiscale .numeri-destra > .col {
+        flex: 1 1 140px !important;
+    }
+
+    .dashboard-fiscale .imposte-riga {
+        gap: 14px !important;
+    }
+
+    .dashboard-fiscale .incassi-tot {
+        flex-wrap: wrap;
+    }
+
+    .dashboard-fiscale .incassi-tot-card {
+        flex-basis: 140px;
+    }
+
+    .dashboard-fiscale .card-limite .alert {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+}
+
+@media (max-width: 991px) {
+    .dashboard-overview > .col-lg-6:first-child {
+        border-right: 0;
+        border-bottom: 1px solid var(--consulens-border);
+        margin-bottom: 20px;
+        padding-bottom: 16px;
+    }
+}
+@media (max-width: 767px) {
+    .dashboard-fiscale .dashboard-overview { padding: 12px 0; }
+    .dashboard-fiscale .dashboard-section { padding: 0; margin-top: 24px; }
+    .dashboard-overview .numeri-destra > .col + .col { border-left: 0; }
+    .dashboard-fiscale .dashboard-upcoming {
+        min-height: 0;
+        padding: 14px;
+        border-left: 0;
+        border-top: 1px solid var(--consulens-divider);
+    }
+}
+
+@media (max-width: 767px) {
+    .invoice-filter-client { flex: 1 1 100%; }
+    .invoice-filter-dates { flex: 1 1 250px; }
+    .invoice-filter-status { flex: 1 1 180px; }
+    .invoice-filter-advanced > div { max-width: none; }
+}
+
+@media (max-width: 1799px) {
+    .invoice-filter-categories { order: 4; flex-basis: 100%; }
+}
+@media (max-width: 767px) {
+    .invoice-filter-period { flex: 1 1 100%; flex-wrap: wrap; }
+    .invoice-filter-actions { margin-left: 0; }
+    .invoice-filter-categories .badge-filtro-categoria { white-space: normal; text-align: center; }
+}
+@media (max-width: 400px) {
+    .invoice-filter-period { flex-wrap: wrap; gap: 6px; }
+    .invoice-filter-period > .form-select { flex-basis: 100%; border-radius: 7px; }
+    .invoice-filter-period .invoice-filter-dates { flex-basis: 100%; }
+}
+
+@media (max-width: 767px) {
+    .invoice-view-picker { margin-left: auto; }
+}
+
+@media (max-width: 767px) {
+    .customer-filter-form .invoice-filter-client { flex: 1 1 100%; }
+}
+
+/* Mobile components: preserve Bootstrap utility direction and adapt each layout. */
+.wrapper > .overlay { display: none; }
+
+@media (max-width: 1024px) {
+    body.mobile-menu-open { overflow: hidden; }
+    .sidebar-wrapper { max-width: calc(100vw - 48px); }
+    .wrapper.toggled .sidebar-wrapper { overscroll-behavior-y: contain; }
+    .wrapper.toggled > .overlay { cursor: pointer; touch-action: none; }
+    .sidebar-header .close-menu-mobile,
+    .top-header .toggle-btn-mobile {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 44px;
+        min-height: 44px;
+        border: 0;
+        border-radius: 8px;
+        background: transparent;
+    }
+    .sidebar-header .close-menu-mobile { color: var(--consulens-nav-text); }
+    .sidebar-wrapper .sidebar-header { max-width: 100%; }
+    .sidebar-wrapper .sidebar-body { overscroll-behavior: contain; }
+}
+
+@media (max-width: 767px) {
+    .page-content, .page-content .row > *, .card-body,
+    .input-group, .configuration-field { min-width: 0; }
+    .page-content .titolo-pagina { font-size: 22px; line-height: 1.3; overflow-wrap: anywhere; }
+    .page-content .breadcrumb-titolo { text-align: left; margin-bottom: 16px; }
+    .page-breadcrumbs ol { flex-wrap: wrap; row-gap: 6px; }
+    .page-breadcrumbs li { min-width: 0; overflow-wrap: anywhere; }
+    .page-content .card-header { flex-wrap: wrap; gap: 10px; }
+    .page-content .card-header > * { min-width: 0; }
+    .page-content .alert { overflow-wrap: anywhere; }
+    .page-content .btn { min-height: 40px; white-space: normal; }
+    .page-content .btn-group { max-width: 100%; flex-wrap: wrap; }
+    .page-content .btn-step, .page-content .btn-step2 { gap: 10px; align-items: stretch; }
+    .page-content .inline-input-select { align-items: stretch; gap: 12px; }
+    .page-content .select2-container { max-width: 100%; }
+    .page-content .select2-container .select2-selection__choice { max-width: 100%; white-space: normal; }
+
+    .invoice-filter-toolbar { align-items: stretch; }
+    .invoice-filter-client, .invoice-filter-status { flex-basis: 100%; }
+    .invoice-filter-period > .form-select { flex: 1 1 100%; border-radius: 7px; }
+    .invoice-filter-period .invoice-filter-dates { flex: 1 1 100%; }
+    .invoice-filter-dates { width: 100%; flex-basis: 100%; }
+    .invoice-filter-dates input { min-width: 0; width: 100%; }
+    .invoice-filter-actions { width: 100%; flex-wrap: wrap; }
+    .invoice-filter-actions .invoice-filter-more { flex: 1; justify-content: center; }
+    .invoice-filter-categories { max-width: 100%; flex-wrap: wrap; }
+    .invoice-filter-categories .badge-filtro-categoria { flex: 1 1 120px; min-height: 40px; }
+    .invoice-filter-advanced { padding: 12px; gap: 12px; }
+    .invoice-filter-advanced > div { flex-basis: 100%; min-width: 0; }
+    .customer-filter-form { flex-wrap: wrap; gap: 10px; }
+    .invoice-view-picker { flex-shrink: 0; }
+
+    .page-content .table-responsive { max-width: 100%; overscroll-behavior-x: contain; }
+    .page-content .table-responsive > .table { margin-bottom: 0; }
+    .page-content .table-responsive .btn { min-width: 40px; }
+    .pagination { gap: 4px; }
+    .pagination .page-link { min-width: 40px; min-height: 40px; text-align: center; }
+    .pagination li { margin: 0; }
+    .modal-dialog { margin: 12px; max-width: calc(100% - 24px); }
+    .modal-content { max-height: calc(100dvh - 24px); }
+    .modal-body { overflow-y: auto; min-height: 0; overscroll-behavior-y: contain; }
+    .modal-header, .modal-footer { flex-shrink: 0; }
+    .modal-header .modal-title { min-width: 0; overflow-wrap: anywhere; }
+    .modal-footer { gap: 8px; }
+    .modal-footer > .btn { flex: 1 1 120px; min-height: 44px; margin: 0; white-space: normal; }
+    .modal-dialog:is(.modal-fullscreen, .modal-fullscreen-md-down, .modal-fullscreen-lg-down, .modal-fullscreen-xl-down, .modal-fullscreen-xxl-down) {
+        margin: 0; max-width: 100%;
+    }
+    :is(.modal-fullscreen, .modal-fullscreen-md-down, .modal-fullscreen-lg-down, .modal-fullscreen-xl-down, .modal-fullscreen-xxl-down) .modal-content {
+        max-height: none;
+    }
+
+    .profile-settings .profile-section { padding-inline: 14px; }
+    .business-profile .profile-section form.row.g-3 { --bs-gutter-x: 16px; --bs-gutter-y: 16px; }
+    .profile-account-card .account-edit-action { max-width: 100%; }
+    .account-summary-grid > *, .profile-payment-card > *, .profile-document-card > * { min-width: 0; }
+    .account-summary-grid dd { overflow-wrap: anywhere; }
+    .profile-operating-toggle { flex-wrap: wrap; gap: 12px; }
+    .consultant-profile .consultant-account-overview { grid-template-columns: 1fr; }
+    .conto-dates { display: flex; flex-wrap: wrap; gap: 8px; }
+    .rec-timeline-header { flex-wrap: wrap; }
+    .rec-timeline-item { padding: 12px; overflow-wrap: anywhere; }
+    .rec-timeline { padding-left: 26px; }
+}
+
+@media (max-width: 480px) {
+    .page-wrapper > .page-content-wrapper > .page-content { padding: 16px 12px; }
+    .top-header .navbar { gap: 4px; }
+    .top-header .navbar-nav { gap: 4px; }
+    .top-header .topbar-profile { padding-left: 4px; }
+    .top-header .topbar-create .btn,
+    .top-header .topbar-notifications > .nav-link { min-width: 40px; min-height: 44px; }
+    .topbar-search { min-width: 0; }
+    .topbar-search input { font-size: 16px; min-width: 0; }
+    .top-header .navbar .dropdown-menu { max-width: calc(100vw - 16px); max-height: calc(100dvh - 86px); overflow-y: auto; }
+    .profile-payment-visual { flex-basis: 100%; }
+    .profile-payment-card, .profile-document-card { gap: 14px; }
+    .dashboard-fiscale .incassi-tot-card + .incassi-tot-card { border-left: 0; }
+    .wallet-bonus-table { table-layout: auto; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .sidebar-wrapper, .sidebar-wrapper .sidebar-header { transition: none; }
+}
+
+@media (max-width: 575.98px) {
+    .modal-dialog.modal-fullscreen-sm-down { margin: 0; max-width: 100%; }
+    .modal-fullscreen-sm-down .modal-content { max-height: none; }
+}

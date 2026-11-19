@@ -16,9 +16,13 @@ public static class DependencyInjection
 
         // PostgreSQL (oggi su Supabase). Usare la connessione diretta o il "session pooler" (porta 5432):
         // il "transaction pooler" (6543) non supporta i prepared statement usati da Npgsql.
-        services.AddDbContext<AppDbContext>(o => o.UseNpgsql(connectionString,
-            pg => pg.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName)
-                   .MigrationsHistoryTable("__EFMigrationsHistory", AppDbContext.Schema)));
+        // "Data Source=file.db" = modalità demo locale su SQLite (solo per provare l'interfaccia, schema creato senza migrazioni).
+        if (UsaSqliteDemo(connectionString))
+            services.AddDbContext<AppDbContext>(o => o.UseSqlite(connectionString));
+        else
+            services.AddDbContext<AppDbContext>(o => o.UseNpgsql(connectionString,
+                pg => pg.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName)
+                       .MigrationsHistoryTable("__EFMigrationsHistory", AppDbContext.Schema)));
 
         services.AddIdentity<ApplicationUser, IdentityRole>(o =>
             {
@@ -30,9 +34,13 @@ public static class DependencyInjection
                 o.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
             })
             .AddEntityFrameworkStores<AppDbContext>()
-            .AddDefaultTokenProviders();
+            .AddDefaultTokenProviders()
+            .AddClaimsPrincipalFactory<ClaimsFactory>();
 
         services.AddSingleton(TimeProvider.System);
         return services;
     }
+
+    public static bool UsaSqliteDemo(string connectionString) =>
+        connectionString.TrimStart().StartsWith("Data Source=", StringComparison.OrdinalIgnoreCase);
 }

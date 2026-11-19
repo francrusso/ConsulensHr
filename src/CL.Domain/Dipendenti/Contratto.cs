@@ -2,6 +2,19 @@ using CL.Domain.Common;
 
 namespace CL.Domain.Dipendenti;
 
+public static class TipoContrattoExtensions
+{
+    public static string Descrizione(this TipoContratto tipo) => tipo switch
+    {
+        TipoContratto.TempoIndeterminato => "Tempo indeterminato",
+        TipoContratto.TempoDeterminato => "Tempo determinato",
+        TipoContratto.Apprendistato => "Apprendistato",
+        TipoContratto.Intermittente => "Intermittente",
+        TipoContratto.Somministrazione => "Somministrazione",
+        _ => tipo.ToString(),
+    };
+}
+
 public enum TipoContratto
 {
     TempoIndeterminato,

@@ -1,0 +1,8 @@
+@model StatoRichiesta
+@switch (Model)
+{
+    case StatoRichiesta.InAttesa: <span class="badge bg-warning">In attesa</span> break;
+    case StatoRichiesta.Approvata: <span class="badge bg-success">Approvata</span> break;
+    case StatoRichiesta.Rifiutata: <span class="badge bg-danger">Rifiutata</span> break;
+    default: <span class="badge bg-secondary">Annullata</span> break;
+}

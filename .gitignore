@@ -1,0 +1,25 @@
+# Build .NET
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+TestResults/
+*.trx
+artifacts/
+
+# IDE
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.swp
+
+# macOS
+.DS_Store
+
+# Segreti e dati locali (le credenziali vanno negli user-secrets, fuori dal repository)
+appsettings.*.local.json
+*.db
+*.db-shm
+*.db-wal

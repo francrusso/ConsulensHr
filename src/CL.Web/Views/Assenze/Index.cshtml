@@ -1,0 +1,60 @@
+@model CL.Web.Controllers.AssenzeViewModel
+@inject CL.Web.Infrastruttura.UtenteCorrente Utente
+@{
+    ViewData["Title"] = Utente.IsDipendente ? "Le mie ferie e permessi" : "Ferie e permessi";
+    var gestore = Utente.IsConsulente || Utente.IsAzienda;
+    var ritorno = Context.Request.Path + Context.Request.QueryString;
+}
+
+<div class="breadcrumb-titolo d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+    <h1 class="titolo-pagina mb-0">@ViewData["Title"]</h1>
+    <a asp-action="Nuova" class="btn btn-primary"><i class="ri-calendar-event-line" aria-hidden="true"></i> @(gestore ? "Registra assenza" : "Nuova richiesta")</a>
+</div>
+
+@if (Model.Saldi is not null)
+{
+    <div class="mb-4"><partial name="_Saldi" model="Model.Saldi" /></div>
+}
+
+<section class="customer-directory">
+    <form asp-action="Index" method="get" class="invoice-filter-bar customer-filter-form">
+        <div class="invoice-filter-toolbar">
+            <div>
+                <select name="stato" class="form-select" aria-label="Stato della richiesta">
+                    @if (!Utente.IsDipendente)
+                    {
+                        <option value="InAttesa" selected="@(Model.Stato == StatoRichiesta.InAttesa)">Da approvare</option>
+                    }
+                    else
+                    {
+                        <option value="InAttesa" selected="@(Model.Stato == StatoRichiesta.InAttesa)">In attesa</option>
+                    }
+                    <option value="Approvata" selected="@(Model.Stato == StatoRichiesta.Approvata)">Approvate</option>
+                    <option value="Rifiutata" selected="@(Model.Stato == StatoRichiesta.Rifiutata)">Rifiutate</option>
+                    <option value="Annullata" selected="@(Model.Stato == StatoRichiesta.Annullata)">Annullate</option>
+                    <option value="" selected="@(Model.Stato is null)">Tutte</option>
+                </select>
+            </div>
+            <div>
+                <select name="anno" class="form-select" aria-label="Anno">
+                    @for (var a = Model.Oggi.Year + 1; a >= Model.Oggi.Year - 3; a--)
+                    {
+                        <option value="@a" selected="@(a == Model.Anno)">@a</option>
+                    }
+                </select>
+            </div>
+            @if (Model.Aziende is not null)
+            {
+                <div>
+                    <select name="aziendaId" class="form-select" aria-label="Filtra per azienda" asp-items="Model.Aziende">
+                        <option value="">Tutte le aziende</option>
+                    </select>
+                </div>
+            }
+            <input type="hidden" name="tutte" value="true" />
+            <div class="invoice-filter-actions"><button class="btn invoice-filter-submit" type="submit">Filtra <i class="ri-filter-3-line" aria-hidden="true"></i></button></div>
+        </div>
+    </form>
+
+    <partial name="_TabellaRichieste" model="(Model.Richieste, gestore, gestore, Utente.IsConsulente, Model.Oggi, ritorno)" />
+</section>

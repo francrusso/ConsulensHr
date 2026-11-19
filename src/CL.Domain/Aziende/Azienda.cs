@@ -42,5 +42,12 @@ public sealed class Azienda : Entity
         SantoPatronoGiorno = giorno;
     }
 
+    public void RimuoviSantoPatrono()
+    {
+        SantoPatronoMese = null;
+        SantoPatronoGiorno = null;
+    }
+
     public void Disattiva() => Attiva = false;
+    public void Riattiva() => Attiva = true;
 }

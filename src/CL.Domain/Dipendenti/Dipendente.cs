@@ -37,6 +37,17 @@ public sealed class Dipendente : Entity
         DataNascita = dataNascita;
     }
 
+    /// <summary>Correzione di errori di inserimento nei dati anagrafici di base.</summary>
+    public void CorreggiAnagrafica(string nome, string cognome, CodiceFiscale codiceFiscale, DateOnly dataNascita)
+    {
+        if (_contratti.Any(c => c.DataInizio < dataNascita.AddYears(16)))
+            throw new DomainException("Con questa data di nascita un contratto risulterebbe stipulato prima dei 16 anni.");
+        Nome = Guard.NotEmpty(nome, "Nome");
+        Cognome = Guard.NotEmpty(cognome, "Cognome");
+        CodiceFiscale = codiceFiscale;
+        DataNascita = dataNascita;
+    }
+
     public void AggiornaRecapiti(string? email, string? telefono, string? indirizzo)
     {
         Email = email?.Trim();

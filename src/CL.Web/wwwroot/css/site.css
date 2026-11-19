@@ -1,31 +1,27 @@
-html {
-  font-size: 14px;
+/* Piccoli adattamenti di Consulens HR sopra il tema di ConsulensNew. */
+
+/* Il logout è un POST (form + button): stesso aspetto del link originale. */
+.sidebar-footer button.sidebar-logout {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  font: inherit;
 }
 
-@media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
-}
+/* Numeri grandi nelle card della panoramica */
+.card-numero { font-family: var(--headings-fonts); font-size: 2rem; font-weight: 600; line-height: 1; color: var(--consulens-page-title); }
+.etichetta { color: var(--consulens-muted); font-size: .85rem; }
 
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
-}
+/* Coppie etichetta/valore nelle schede di dettaglio */
+.scheda dt { color: var(--consulens-muted); font-weight: 400; font-size: .85rem; }
+.scheda dd { color: var(--consulens-page-title); margin-bottom: .9rem; }
 
-html {
-  position: relative;
-  min-height: 100%;
-}
+.icona-card { color: var(--consulens-icon) !important; }
 
-body {
-  margin-bottom: 60px;
-}
-
-.form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
-  color: var(--bs-secondary-color);
-  text-align: end;
-}
-
-.form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
-  text-align: start;
-}
+/* Card saldi ferie/permessi */
+.saldo-dettaglio > div { display: flex; justify-content: space-between; font-size: .85rem; padding: 2px 0; border-top: 1px dashed var(--consulens-divider); }
+.saldo-dettaglio dt { font-weight: 400; color: var(--consulens-muted); }
+.saldo-dettaglio dd { margin: 0; color: var(--consulens-page-title); font-variant-numeric: tabular-nums; }

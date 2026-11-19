@@ -1,0 +1,235 @@
+/* Utility e piccoli componenti condivisi della piattaforma.
+ *
+ * Caricato dopo app.css, navigation.css e responsive.css. Ogni regola è scritta come
+ * ":root .classe": la specificità (0,2,0) vince sugli stili dei componenti senza usare
+ * !important, così gli stili inline impostati dagli script restano applicabili.
+ *
+ * Prima di aggiungere una classe:
+ * - usare le utility di Bootstrap quando il valore coincide (mb-0, p-0, text-center,
+ *   text-nowrap, w-100, text-muted, text-info, align-items-*, gap-3, ...);
+ * - i colori passano dai token di custom.css, non da valori esadecimali;
+ * - i nomi descrivono la funzione o il valore della scala, mai l'elenco delle dichiarazioni.
+ * Le regole di una sola pagina stanno nel foglio della pagina o nella sua sezione di app.css.
+ */
+
+/* ---------- Tipografia ---------- */
+/* Dimensioni in px (stessa convenzione di .font-14 del template) e, dove la pagina le usa, in rem. */
+:root .font-10 { font-size: 10px; }
+:root .font-11 { font-size: 11px; }
+:root .font-12 { font-size: 12px; }
+:root .font-13 { font-size: 13px; }
+:root .font-14 { font-size: 14px; }
+:root .font-15 { font-size: 15px; }
+:root .font-16 { font-size: 16px; }
+:root .font-18 { font-size: 18px; }
+:root .font-20 { font-size: 20px; }
+:root .font-22 { font-size: 22px; }
+:root .font-24 { font-size: 24px; }
+:root .font-28 { font-size: 28px; }
+:root .font-40 { font-size: 40px; }
+:root .font-48 { font-size: 48px; }
+:root .font-64 { font-size: 64px; }
+:root .font-0-8rem { font-size: .8rem; }
+:root .font-0-85rem { font-size: .85rem; }
+:root .font-0-9rem { font-size: .9rem; }
+:root .font-1-5rem { font-size: 1.5rem; }
+:root .font-1-6rem { font-size: 1.6rem; }
+:root .font-2rem { font-size: 2rem; }
+:root .font-3rem { font-size: 3rem; }
+
+/* Pesi 500 e 600: Bootstrap 5.1 non li ha; i nomi sono quelli di Bootstrap 5.3. */
+:root .fw-medium { font-weight: 500; }
+:root .fw-semibold { font-weight: 600; }
+
+:root .font-headings { font-family: var(--headings-fonts); }
+:root .lh-1-5 { line-height: 1.5; }
+:root .ls-0-5px { letter-spacing: .5px; }
+:root .text-transform-none { text-transform: none; }
+:root .ws-pre-line { white-space: pre-line; }
+:root .ws-pre-wrap { white-space: pre-wrap; }
+:root .word-break-word { word-break: break-word; }
+:root .overflow-wrap-break { overflow-wrap: break-word; }
+:root .overflow-wrap-anywhere { overflow-wrap: anywhere; }
+:root .list-disc { list-style: disc; }
+:root .list-inside { list-style: inside; }
+
+/* ---------- Colori del testo ---------- */
+:root .text-icon-menu { color: var(--icon-menu-color); }
+:root .text-consulens-muted { color: var(--consulens-muted); }
+:root .text-subtle { color: var(--consulens-text-subtle); }
+:root .text-subtle-alt { color: var(--consulens-text-subtle-alt); }
+:root .text-slate { color: var(--consulens-text-slate); }
+:root .text-faint { color: var(--consulens-text-faint); }
+:root .text-hint { color: var(--consulens-text-hint); }
+:root .text-breadcrumb { color: var(--consulens-breadcrumb-active); }
+:root .text-page-title { color: var(--consulens-page-title); }
+:root .text-cyan { color: var(--bs-cyan); }
+:root .text-violet { color: var(--consulens-violet); }
+/* Eredita il colore del contenitore anche quando un componente ne imposta un altro (es. h5, p). */
+:root .text-inherit { color: inherit; }
+:root .text-status-ok { color: var(--consulens-status-ok); }
+:root .text-status-ko { color: var(--consulens-status-ko); }
+:root .text-note { color: var(--consulens-text-note); }
+:root .text-help { color: var(--consulens-text-help); }
+:root .text-warning-note { color: var(--consulens-warning-note-text); }
+:root .text-success-border { color: var(--bs-success-border-subtle); }
+
+/* ---------- Superfici ---------- */
+:root .surface-gray-100 { background-color: var(--bs-gray-100); }
+:root .surface-gray-200 { background-color: var(--bs-gray-200); }
+:root .surface-gray-300 { background-color: var(--consulens-surface-gray-300); }
+:root .surface-placeholder { background-color: var(--consulens-surface-placeholder); }
+:root .surface-soft-blue { background-color: var(--consulens-surface-soft-blue); }
+:root .surface-light-blue { background-color: var(--consulens-surface-light-blue); }
+:root .surface-pale-blue { background-color: var(--consulens-surface-pale-blue); }
+:root .surface-muted-blue { background-color: var(--consulens-surface-muted-blue); }
+:root .surface-section { background-color: var(--consulens-section-bg); }
+:root .surface-alert-info { background-color: var(--consulens-alert-info-bg); }
+:root .surface-success-subtle { background-color: var(--bs-success-bg-subtle); }
+:root .surface-warning-subtle { background-color: var(--bs-warning-bg-subtle); }
+:root .surface-translucent-white { background-color: var(--consulens-surface-translucent-white); }
+:root .surface-hover { background-color: var(--consulens-hover); }
+
+/* ---------- Layout ---------- */
+:root .flex-1 { flex: 1; }
+:root .min-w-0 { min-width: 0; }
+:root .gap-0-75rem { gap: .75rem; }
+:root .gap-5px { gap: 5px; }
+:root .gap-10px { gap: 10px; }
+:root .grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+:root .grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+:root .cursor-pointer { cursor: pointer; }
+:root .cursor-grab { cursor: grab; }
+:root .opacity-70 { opacity: .7; }
+:root .object-fit-cover { object-fit: cover; }
+
+/* ---------- Spaziature fuori dalla scala di Bootstrap (0,25 / 0,5 / 1 / 1,5 / 3 rem) ---------- */
+:root .mt-n10px { margin-top: -10px; }
+:root .mt-3px { margin-top: 3px; }
+:root .mt-1pct { margin-top: 1%; }
+:root .mb-1px { margin-bottom: 1px; }
+:root .mb-2px { margin-bottom: 2px; }
+:root .mb-3px { margin-bottom: 3px; }
+:root .mb-4px { margin-bottom: 4px; }
+:root .mb-5px { margin-bottom: 5px; }
+:root .mb-8px { margin-bottom: 8px; }
+:root .mb-10px { margin-bottom: 10px; }
+:root .ms-1px { margin-left: 1px; }
+:root .ms-4px { margin-left: 4px; }
+:root .ms-5px { margin-left: 5px; }
+:root .ms-8px { margin-left: 8px; }
+:root .me-1px { margin-right: 1px; }
+:root .me-4px { margin-right: 4px; }
+:root .me-5px { margin-right: 5px; }
+:root .me-8px { margin-right: 8px; }
+:root .me-10px { margin-right: 10px; }
+:root .me-20px { margin-right: 20px; }
+:root .ps-15px { padding-left: 15px; }
+:root .py-2px { padding-top: 2px; padding-bottom: 2px; }
+:root .py-8px { padding-top: 8px; padding-bottom: 8px; }
+:root .px-10px { padding-left: 10px; padding-right: 10px; }
+:root .px-12px { padding-left: 12px; padding-right: 12px; }
+
+/* ---------- Dimensioni ---------- */
+:root .w-0 { width: 0%; }
+:root .w-20 { width: 20%; }
+:root .w-40 { width: 40%; }
+:root .w-60 { width: 60%; }
+:root .w-80 { width: 80%; }
+:root .w-13px { width: 13px; }
+:root .h-18px { height: 18px; }
+:root .h-20px { height: 20px; }
+:root .h-2-4rem { height: 2.4rem; }
+:root .size-35px { width: 35px; height: 35px; }
+:root .size-3rem { width: 3rem; height: 3rem; }
+:root .mw-200px { max-width: 200px; }
+:root .mw-220px { max-width: 220px; }
+:root .mw-250px { max-width: 250px; }
+:root .mw-260px { max-width: 260px; }
+:root .mw-400px { max-width: 400px; }
+:root .mw-500px { max-width: 500px; }
+:root .mw-600px { max-width: 600px; }
+:root .mw-650px { max-width: 650px; }
+:root .mw-700px { max-width: 700px; }
+:root .mw-800px { max-width: 800px; }
+:root .mh-300px { max-height: 300px; }
+:root .min-h-160px { min-height: 160px; }
+:root .min-h-200px { min-height: 200px; }
+:root .min-h-248px { min-height: 248px; }
+:root .min-h-280px { min-height: 280px; }
+:root .min-h-320px { min-height: 320px; }
+:root .min-h-410px { min-height: 410px; }
+:root .min-h-500px { min-height: 500px; }
+:root .min-h-28rem { min-height: 28rem; }
+:root .min-w-600px { min-width: 600px; }
+:root .overflow-y-auto { overflow-y: auto; }
+
+/* Elemento presente nel DOM (per esempio un input usato dagli script) ma senza ingombro. */
+:root .visually-collapsed { width: 0; height: 0; overflow: hidden; }
+
+/* ---------- Componenti condivisi ---------- */
+/* Etichetta compatta sopra un valore in sola lettura (riepiloghi della fatturazione). */
+:root .label-compact { font-weight: 600; margin-bottom: 0 !important; }
+
+/* Pulsante senza cornice né sfondo, per icone e link d'azione. */
+:root .btn-bare { background-color: transparent; border: none; }
+
+/* Link-pulsante «mostra/nascondi dettagli» sotto le righe delle tabelle documenti. */
+:root .btn-inline-toggle { padding: 0; font-size: 12px; padding-bottom: 9px; }
+
+/* Badge cliccabile nelle colonne di stato delle fatture. */
+:root .badge-action { padding: 5px; margin: 0; font-size: 11px; }
+
+/* Badge neutro con contatore (Dashboard finanziaria). */
+:root .badge-neutral-pill { font-size: 10px; padding: 2px 8px; margin-left: 4px; background-color: var(--consulens-badge-neutral-bg); color: var(--consulens-badge-neutral-text); font-weight: 600; }
+
+/* Badge di errore di validazione su più righe. */
+:root .badge-validation { white-space: normal; text-align: left; color: var(--consulens-validation-text); background-color: var(--consulens-validation-bg); font-weight: 600; border: 1px solid var(--consulens-validation-border); }
+
+/* Pulsante in coda a un input-group (es. «Oggi» accanto a una data). */
+:root .input-group-addon-end { font-size: 12px; border-radius: 0 5px 5px 0 !important; }
+
+/* Icone d'azione nelle tabelle di incassi e pagamenti. */
+:root .icon-action { border-radius: 3px; }
+:root .icon-action-delete { background-color: var(--bs-red); color: white; }
+
+/* Icona in riquadro accanto ai totali. */
+:root .icon-tile-info { font-size: 30px; color: var(--bs-info); background-color: var(--bs-body-bg); padding: 4px 13px; border-radius: 6px; }
+
+/* Avviso neutro, senza la tinta delle varianti Bootstrap. */
+:root .alert-neutral { background-color: var(--consulens-alert-neutral-bg); color: var(--icon-menu-color); }
+
+/* Card colorate per esito o stato. Restano compatibili con .card-tinted, che toglie il bordo standard. */
+:root .card-tint-info { background-color: var(--consulens-tint-info-bg); border-color: var(--consulens-tint-info-border); }
+:root .card-tint-success { background-color: var(--consulens-tint-success-bg); border-color: var(--consulens-tint-success-border); }
+:root .card-tint-danger { background-color: var(--consulens-tint-danger-bg); border-color: var(--consulens-tint-danger-border); }
+:root .card-tint-consent { border: 1px solid var(--consulens-tint-consent-border); background-color: var(--consulens-tint-consent-bg); }
+:root .card-tint-revoke { border: 1px solid var(--consulens-tint-revoke-border); background-color: var(--consulens-tint-revoke-bg); }
+:root .card-danger-outline { border: 2px solid var(--consulens-danger-outline); }
+
+/* Pannello dei filtri avanzati. */
+:root .surface-filter-panel { background: var(--consulens-filter-panel-bg); border: 1px solid var(--consulens-filter-panel-border); }
+
+/* Divisori. */
+:root .divider-soft { color: var(--consulens-divider-soft); }
+:root .list-row-divider { border-bottom: 1px solid var(--consulens-list-row-divider); }
+
+/* Colonne di statistiche affiancate, separate da una linea verticale. */
+:root .stat-col { flex: 1; }
+:root .stat-col-divider { border-right: 1px solid var(--consulens-stat-divider); }
+
+/* Celle delle tabelle dei movimenti bancari. */
+:root .cell-pad { padding: 12px 16px; }
+
+/* Loghi delle banche. */
+:root .bank-logo-sm { height: 24px; width: 24px; margin-right: 8px; border-radius: 4px; }
+:root .bank-logo-md { height: 30px; width: 30px; margin-right: 8px; border-radius: 4px; vertical-align: middle; }
+:root .conto-item-border { border-color: var(--consulens-stat-divider); }
+
+/* Contenuti incorporati. */
+:root .calendly-embed { min-width: 320px; height: 700px; }
+:root .report-frame { width: 100%; height: 75vh; border: 0; }
+:root .report-frame-tall { height: 80vh; border-radius: 10px; }
+
+/* Grafici: pallino del colore della serie nei tooltip. */
+:root .chart-tooltip-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--chart-tooltip-color); margin-right: 6px; }

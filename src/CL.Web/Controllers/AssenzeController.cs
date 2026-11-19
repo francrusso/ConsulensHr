@@ -1,0 +1,247 @@
+using System.ComponentModel.DataAnnotations;
+using CL.Domain.Assenze;
+using CL.Domain.Dipendenti;
+using CL.Infrastructure.Persistence;
+using CL.Web.Infrastruttura;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
+
+namespace CL.Web.Controllers;
+
+public sealed class RichiestaForm
+{
+    [Required(ErrorMessage = "Seleziona il dipendente."), Display(Name = "Dipendente")]
+    public Guid? DipendenteId { get; set; }
+
+    [Display(Name = "Tipo di assenza")]
+    public TipoAssenza Tipo { get; set; } = TipoAssenza.Ferie;
+
+    [Required(ErrorMessage = "Indica la data di inizio."), Display(Name = "Dal")]
+    public DateOnly? Dal { get; set; }
+
+    [Display(Name = "Al")]
+    public DateOnly? Al { get; set; }
+
+    [Display(Name = "Permesso a ore (una sola giornata)")]
+    public bool AOre { get; set; }
+
+    [Display(Name = "Ore")]
+    public decimal? Ore { get; set; }
+
+    [StringLength(1000), Display(Name = "Note")]
+    public string? Note { get; set; }
+
+    [StringLength(50), Display(Name = "Protocollo certificato medico")]
+    public string? ProtocolloCertificato { get; set; }
+
+    [Display(Name = "Approva subito")]
+    public bool ApprovaSubito { get; set; } = true;
+
+    public static IEnumerable<SelectListItem> Tipi =>
+        Enum.GetValues<TipoAssenza>().Select(t => new SelectListItem(t.Descrizione(), t.ToString()));
+}
+
+public sealed record RichiestaRiga(
+    Guid Id, Guid DipendenteId, string Dipendente, string Azienda, TipoAssenza Tipo, DateOnly Dal, DateOnly Al,
+    bool AOre, decimal Ore, StatoRichiesta Stato, DateTime RichiestaIl, string? Note, string? DecisaDa, string? MotivoRifiuto);
+
+public sealed class AssenzeViewModel
+{
+    public required List<RichiestaRiga> Richieste { get; init; }
+    public StatoRichiesta? Stato { get; init; }
+    public int Anno { get; init; }
+    public Guid? AziendaId { get; init; }
+    public List<SelectListItem>? Aziende { get; init; }
+    /// <summary>Solo per il dipendente: i propri saldi.</summary>
+    public IReadOnlyList<SaldoAssenza>? Saldi { get; init; }
+    public DateOnly Oggi { get; init; }
+}
+
+[Authorize]
+public sealed class AssenzeController(AppDbContext db, UtenteCorrente utente, ServizioSaldi saldi, TimeProvider clock) : AppController
+{
+    private DateOnly Oggi => DateOnly.FromDateTime(clock.GetLocalNow().DateTime);
+    private DateTime AdessoUtc => clock.GetUtcNow().UtcDateTime;
+    private bool Gestore => utente.IsConsulente || utente.IsAzienda;
+
+    public async Task<IActionResult> Index(StatoRichiesta? stato, int? anno, Guid? aziendaId, bool tutte = false)
+    {
+        var annoScelto = anno ?? Oggi.Year;
+        // Chi approva vede per default ciò che è da decidere; il dipendente vede tutto il proprio anno.
+        var filtroStato = tutte || utente.IsDipendente ? stato : stato ?? StatoRichiesta.InAttesa;
+
+        var dipendenti = utente.Filtra(db.Dipendenti.AsNoTracking());
+        if (aziendaId is { } az) dipendenti = dipendenti.Where(d => d.AziendaId == az);
+
+        var query = from r in db.RichiesteAssenza.AsNoTracking()
+                    join d in dipendenti on r.DipendenteId equals d.Id
+                    join a in db.Aziende.AsNoTracking() on d.AziendaId equals a.Id
+                    select new { r, d.Cognome, d.Nome, a.RagioneSociale };
+        if (filtroStato is { } s) query = query.Where(x => x.r.Stato == s);
+        // Le richieste da approvare si vedono tutte, anche se riguardano l'anno prossimo.
+        if (!(Gestore && filtroStato == StatoRichiesta.InAttesa))
+            query = query.Where(x => x.r.Dal.Year == annoScelto);
+
+        var righe = (await query.OrderBy(x => x.r.Dal).ThenBy(x => x.Cognome).ToListAsync())
+            .Select(x => new RichiestaRiga(x.r.Id, x.r.DipendenteId, $"{x.Cognome} {x.Nome}", x.RagioneSociale, x.r.Tipo,
+                x.r.Dal, x.r.Al, x.r.AOre, x.r.Ore, x.r.Stato, x.r.RichiestaIl, x.r.Note, x.r.DecisaDa, x.r.MotivoRifiuto))
+            .ToList();
+
+        IReadOnlyList<SaldoAssenza>? mieiSaldi = null;
+        if (utente.IsDipendente && await dipendenti.FirstOrDefaultAsync() is { } io)
+            mieiSaldi = await saldi.Calcola(io, annoScelto, annoScelto == Oggi.Year ? Oggi.Month : 12);
+
+        return View(new AssenzeViewModel
+        {
+            Richieste = righe,
+            Stato = filtroStato,
+            Anno = annoScelto,
+            AziendaId = aziendaId,
+            Aziende = utente.IsConsulente
+                ? await db.Aziende.AsNoTracking().OrderBy(a => a.RagioneSociale)
+                    .Select(a => new SelectListItem(a.RagioneSociale, a.Id.ToString(), a.Id == aziendaId)).ToListAsync()
+                : null,
+            Saldi = mieiSaldi,
+            Oggi = Oggi,
+        });
+    }
+
+    public async Task<IActionResult> Nuova(Guid? dipendenteId)
+    {
+        var form = new RichiestaForm { DipendenteId = utente.IsDipendente ? utente.DipendenteId : dipendenteId, Dal = Oggi };
+        return await MostraForm(form);
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> Nuova(RichiestaForm form)
+    {
+        if (utente.IsDipendente)
+        {
+            form.DipendenteId = utente.DipendenteId; // il dipendente chiede solo per sé: il campo non è nel form
+            ModelState.Remove(nameof(form.DipendenteId));
+        }
+        if (form.AOre && form.Ore is null)
+            ModelState.AddModelError(nameof(form.Ore), "Indica quante ore di permesso.");
+        if (!ModelState.IsValid) return await MostraForm(form);
+
+        var dip = await utente.Filtra(db.Dipendenti).FirstOrDefaultAsync(d => d.Id == form.DipendenteId);
+        if (dip is null) return Forbid();
+        var azienda = await db.Aziende.FirstAsync(a => a.Id == dip.AziendaId);
+
+        var dal = form.Dal!.Value;
+        var al = form.AOre ? dal : form.Al ?? dal;
+        var esistenti = await db.RichiesteAssenza.Where(r => r.DipendenteId == dip.Id && r.Dal <= al && r.Al >= dal).ToListAsync();
+
+        // Il dipendente non può superare il saldo maturato fino al mese dell'assenza; l'ufficio può farlo (es. ferie anticipate).
+        decimal? disponibile = null;
+        if (utente.IsDipendente && form.Tipo.HaSaldo())
+            disponibile = (await saldi.Calcola(dip, form.Tipo, dal.Year, al.Month)).Disponibile;
+
+        RichiestaAssenza? richiesta = null;
+        if (!Prova(() => richiesta = PianificatoreAssenze.Crea(dip, azienda, form.Tipo, dal, al, esistenti, AdessoUtc,
+                form.AOre ? form.Ore : null, disponibile, form.Note, form.ProtocolloCertificato)))
+            return await MostraForm(form);
+
+        if (Gestore && form.ApprovaSubito && richiesta!.Stato == StatoRichiesta.InAttesa)
+            richiesta.Approva(utente.Email, AdessoUtc);
+
+        db.RichiesteAssenza.Add(richiesta!);
+        await db.SaveChangesAsync();
+
+        Conferma(richiesta!.Stato == StatoRichiesta.Approvata
+            ? $"{richiesta.Tipo.Descrizione()} registrata: {richiesta.Ore:0.##} ore."
+            : $"Richiesta di {richiesta.Tipo.Descrizione().ToLower()} inviata ({richiesta.Ore:0.##} ore): in attesa di approvazione.");
+        return utente.IsDipendente
+            ? RedirectToAction(nameof(Index))
+            : RedirectToAction("Dettaglio", "Dipendenti", new { id = dip.Id });
+    }
+
+    [HttpPost, ValidateAntiForgeryToken, Authorize(Policy = Policy.GestionePersonale)]
+    public async Task<IActionResult> Approva(Guid id, string? ritorno)
+    {
+        var r = await Trova(id);
+        if (r is null) return NotFound();
+        if (Prova(() => r.Approva(utente.Email, AdessoUtc)))
+        {
+            await db.SaveChangesAsync();
+            Conferma("Richiesta approvata.");
+        }
+        else Errore(PrimoErrore());
+        return Torna(ritorno);
+    }
+
+    [HttpPost, ValidateAntiForgeryToken, Authorize(Policy = Policy.GestionePersonale)]
+    public async Task<IActionResult> Rifiuta(Guid id, string? motivo, string? ritorno)
+    {
+        var r = await Trova(id);
+        if (r is null) return NotFound();
+        if (Prova(() => r.Rifiuta(utente.Email, motivo ?? "", AdessoUtc)))
+        {
+            await db.SaveChangesAsync();
+            Conferma("Richiesta rifiutata.");
+        }
+        else Errore(PrimoErrore());
+        return Torna(ritorno);
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> Annulla(Guid id, string? ritorno)
+    {
+        var r = await Trova(id);
+        if (r is null) return NotFound();
+        if (Prova(() => r.Annulla(Oggi)))
+        {
+            await db.SaveChangesAsync();
+            Conferma("Richiesta annullata.");
+        }
+        else Errore(PrimoErrore());
+        return Torna(ritorno);
+    }
+
+    /// <summary>Residuo dell'anno precedente (o saldo di partenza dal gestionale paghe).</summary>
+    [HttpPost, ValidateAntiForgeryToken, Authorize(Policy = Policy.GestionePersonale)]
+    public async Task<IActionResult> ImpostaResidui(Guid dipendenteId, int anno, decimal? ferie, decimal? rol, decimal? exFestivita)
+    {
+        if (!await utente.Filtra(db.Dipendenti).AnyAsync(d => d.Id == dipendenteId)) return NotFound();
+        var esistenti = await db.SaldiIniziali.Where(s => s.DipendenteId == dipendenteId && s.Anno == anno).ToListAsync();
+
+        foreach (var (tipo, ore) in new[] { (TipoAssenza.Ferie, ferie), (TipoAssenza.Rol, rol), (TipoAssenza.ExFestivita, exFestivita) })
+        {
+            var s = esistenti.FirstOrDefault(x => x.Tipo == tipo);
+            if (s is null) db.SaldiIniziali.Add(new SaldoIniziale(dipendenteId, anno, tipo, ore ?? 0));
+            else s.Rettifica(ore ?? 0);
+        }
+        await db.SaveChangesAsync();
+        Conferma($"Residui di inizio {anno} salvati.");
+        return RedirectToAction("Dettaglio", "Dipendenti", new { id = dipendenteId });
+    }
+
+    private Task<RichiestaAssenza?> Trova(Guid id)
+    {
+        var ids = utente.Filtra(db.Dipendenti).Select(d => d.Id);
+        return db.RichiesteAssenza.FirstOrDefaultAsync(r => r.Id == id && ids.Contains(r.DipendenteId));
+    }
+
+    private string PrimoErrore() => ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).FirstOrDefault() ?? "Operazione non riuscita.";
+
+    private IActionResult Torna(string? ritorno) =>
+        Url.IsLocalUrl(ritorno) ? LocalRedirect(ritorno) : RedirectToAction(nameof(Index));
+
+    private async Task<IActionResult> MostraForm(RichiestaForm form)
+    {
+        ViewBag.Gestore = Gestore;
+        ViewBag.Dipendenti = Gestore
+            ? (await utente.Filtra(db.Dipendenti.AsNoTracking()).OrderBy(d => d.Cognome).ThenBy(d => d.Nome).ToListAsync())
+                .Where(d => d.InForzaIl(Oggi) || d.Id == form.DipendenteId)
+                .Select(d => new SelectListItem(d.NomeCompleto, d.Id.ToString(), d.Id == form.DipendenteId)).ToList()
+            : null;
+
+        if (utente.IsDipendente && utente.DipendenteId is { } mio
+            && await db.Dipendenti.AsNoTracking().FirstOrDefaultAsync(d => d.Id == mio) is { } io)
+            ViewBag.Saldi = await saldi.Calcola(io, Oggi.Year, 12);
+
+        return View("Nuova", form);
+    }
+}

@@ -1,0 +1,158 @@
+/* PAGINE LOGIN */
+
+.login-header-container{
+	display: flex;
+	justify-content: center;
+	align-content: center;
+	text-align: center;
+	padding-top:30px;
+}
+
+/*Authentication*/
+
+.title-auth{
+    font-family: var(--headings-fonts);
+    color: var(--bs-primary);
+    font-size: 30px;
+    padding-bottom: 5px;
+    font-weight: 600;
+}
+
+html.auth-panel-page,
+html.auth-panel-page body {
+    --bs-body-bg: #ffffff;
+    background-color: #ffffff;
+}
+
+.auth-panel {
+    --auth-inset: 10px;
+    display: grid;
+    place-items: center;
+    min-height: calc(100vh - 2 * var(--auth-inset));
+    min-height: calc(100dvh - 2 * var(--auth-inset));
+    margin: var(--auth-inset);
+    padding: clamp(16px, 4vw, 56px);
+    border-radius: clamp(16px, 1.35vw, 28px);
+    background: url("../images/auth-background.png") center / cover no-repeat,
+                radial-gradient(circle closest-side, #ffffff, #ebf3ff);
+}
+
+.auth-panel-card {
+    width: min(100%, 540px);
+    margin: 0;
+    padding: clamp(22px, 3.2vw, 42px);
+    background: var(--consulens-surface);
+    border-color: var(--consulens-border);
+    box-shadow: none;
+}
+
+.auth-panel-logo {
+    display: block;
+    width: min(155px, 100%);
+    height: auto;
+    margin-bottom: clamp(24px, 3vw, 44px);
+}
+
+.auth-panel-card .titolo-pagina {
+    margin: 0 0 24px;
+}
+
+.auth-panel-card .validation-summary-valid {
+    display: none;
+}
+
+.auth-panel-remember {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 28px;
+    margin: 0;
+    padding: 3px 12px;
+    border: 1px solid var(--consulens-border);
+    border-radius: 7px;
+    background: var(--consulens-surface-subtle);
+    color: var(--consulens-breadcrumb-active);
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+
+.auth-panel-remember .form-check-label {
+    font-size: 10px;
+}
+
+.auth-panel-remember .form-check-input {
+    float: none;
+    margin: 0;
+    cursor: pointer;
+}
+
+.auth-panel-card-wide {
+    width: min(100%, 1000px);
+}
+
+.auth-onboarding-steps li {
+    position: relative;
+    display: grid;
+    grid-template-columns: 28px minmax(0, 1fr);
+    gap: 12px;
+}
+
+.auth-onboarding-steps li:not(:last-child) {
+    padding-bottom: 16px;
+}
+
+.auth-onboarding-steps li:not(:last-child)::before {
+    content: "";
+    position: absolute;
+    top: 32px;
+    bottom: 4px;
+    left: 13px;
+    border-left: 1px solid var(--consulens-border);
+}
+
+.auth-onboarding-step-number {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--consulens-badge-primary-bg);
+    color: var(--consulens-accent);
+}
+
+.auth-panel-card .auth-onboarding-path-title,
+.auth-panel-card .auth-onboarding-step-title {
+    color: #244a81;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+}
+
+.auth-panel-card .auth-onboarding-step-title {
+    font-weight: 400;
+}
+
+.auth-panel-card .auth-onboarding-step-title > i {
+    color: var(--consulens-icon);
+}
+
+.auth-onboarding-step-description {
+    font-size: 11px;
+}
+
+.auth-panel-card .auth-onboarding-email {
+    background-color: #f1f8ff;
+}
+
+.auth-panel-card .auth-onboarding-path {
+    background-color: #f8f9fd;
+}
+
+.auth-onboarding-email .referral-icon {
+    background-color: var(--consulens-hover);
+    color: #244a81;
+}
+
+.auth-onboarding-email-title {
+    color: #244a81;
+    font-weight: 500;
+}

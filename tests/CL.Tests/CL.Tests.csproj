@@ -8,11 +8,13 @@
     <PackageReference Include="xunit.runner.visualstudio" />
     <PackageReference Include="coverlet.collector" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
   </ItemGroup>
   <ItemGroup>
     <Using Include="Xunit" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\CL.Infrastructure\CL.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\CL.Web\CL.Web.csproj" />
   </ItemGroup>
 </Project>

@@ -1,0 +1,15 @@
+@if (TempData["Messaggio"] is string messaggio)
+{
+    <div class="alert alert-success alert-dismissible fade show radius-15" role="status">
+        <i class="ri-checkbox-circle-line" aria-hidden="true"></i> @messaggio
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Chiudi"></button>
+    </div>
+}
+@if (TempData["Errore"] is string errore)
+{
+    <div class="alert alert-danger alert-dismissible fade show radius-15" role="alert">
+        <h5><i class="ri-error-warning-line" aria-hidden="true"></i> Attenzione</h5>
+        <p class="mb-0">@errore</p>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Chiudi"></button>
+    </div>
+}

@@ -1,0 +1,104 @@
+@model CL.Web.Controllers.RichiestaForm
+@{
+    var gestore = (bool)ViewBag.Gestore;
+    ViewData["Title"] = gestore ? "Registra assenza" : "Nuova richiesta";
+    var dipendenti = ViewBag.Dipendenti as List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>;
+    var saldi = ViewBag.Saldi as IReadOnlyList<SaldoAssenza>;
+}
+
+<a asp-action="Index" class="small text-body-secondary"><i class="ri-arrow-left-s-line" aria-hidden="true"></i> Ferie e permessi</a>
+<h1 class="titolo-pagina mb-3">@ViewData["Title"]</h1>
+
+@if (saldi is not null)
+{
+    <div class="alert alert-secondary radius-15 d-flex flex-wrap gap-4" role="note">
+        @foreach (var s in saldi)
+        {
+            <span><strong>@s.Tipo.Descrizione()</strong>: @s.Disponibile.ToString("0.##") ore disponibili a fine anno</span>
+        }
+    </div>
+}
+
+<div class="card radius-15 p-4">
+    <form asp-action="Nuova" method="post" class="row g-3" novalidate id="formRichiesta">
+        <div asp-validation-summary="All" class="alert alert-danger radius-15" role="alert"></div>
+
+        @if (dipendenti is not null)
+        {
+            <div class="col-md-6">
+                <label asp-for="DipendenteId" class="form-label"></label>
+                <select asp-for="DipendenteId" asp-items="dipendenti" class="form-select" aria-required="true">
+                    <option value="">Seleziona…</option>
+                </select>
+            </div>
+        }
+        <div class="col-md-6">
+            <label asp-for="Tipo" class="form-label"></label>
+            <select asp-for="Tipo" asp-items="CL.Web.Controllers.RichiestaForm.Tipi" class="form-select"></select>
+        </div>
+
+        <div class="col-12">
+            <div class="form-check form-switch">
+                <input asp-for="AOre" class="form-check-input" role="switch" />
+                <label asp-for="AOre" class="form-check-label"></label>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <label asp-for="Dal" class="form-label" id="etichettaDal">Dal</label>
+            <input asp-for="Dal" type="date" class="form-control" aria-required="true" />
+        </div>
+        <div class="col-md-4" id="campoAl">
+            <label asp-for="Al" class="form-label"></label>
+            <input asp-for="Al" type="date" class="form-control" />
+            <div class="form-text">Vuoto = un solo giorno. Sabati, domeniche e festivi non vengono conteggiati.</div>
+        </div>
+        <div class="col-md-4" id="campoOre">
+            <label asp-for="Ore" class="form-label"></label>
+            <input asp-for="Ore" type="text" inputmode="decimal" class="form-control" placeholder="es. 2 oppure 1,5" />
+        </div>
+
+        <div class="col-md-6" id="campoProtocollo">
+            <label asp-for="ProtocolloCertificato" class="form-label"></label>
+            <input asp-for="ProtocolloCertificato" class="form-control" />
+        </div>
+        <div class="col-12">
+            <label asp-for="Note" class="form-label"></label>
+            <textarea asp-for="Note" class="form-control" rows="2"></textarea>
+        </div>
+
+        @if (gestore)
+        {
+            <div class="col-12">
+                <div class="form-check">
+                    <input asp-for="ApprovaSubito" class="form-check-input" />
+                    <label asp-for="ApprovaSubito" class="form-check-label"></label>
+                    <div class="form-text">Togli la spunta per lasciarla in attesa di approvazione.</div>
+                </div>
+            </div>
+        }
+
+        <div class="col-12 d-flex gap-2 mt-3">
+            <button type="submit" class="btn btn-primary">@(gestore ? "Registra" : "Invia richiesta")</button>
+            <a asp-action="Index" class="btn btn-outline-secondary">Annulla</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            const aOre = document.getElementById('AOre');
+            const tipo = document.getElementById('Tipo');
+            const aggiorna = () => {
+                document.getElementById('campoAl').hidden = aOre.checked;
+                document.getElementById('campoOre').hidden = !aOre.checked;
+                document.getElementById('etichettaDal').textContent = aOre.checked ? 'Giorno' : 'Dal';
+                document.getElementById('campoProtocollo').hidden = tipo.value !== 'Malattia';
+            };
+            aOre.addEventListener('change', aggiorna);
+            tipo.addEventListener('change', aggiorna);
+            aggiorna();
+        })();
+    </script>
+}

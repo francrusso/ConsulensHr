@@ -1,0 +1,72 @@
+@model CL.Web.Controllers.AziendaForm
+@{
+    var nuova = Model.Id is null;
+    ViewData["Title"] = nuova ? "Nuova azienda" : "Modifica azienda";
+}
+
+<h1 class="titolo-pagina mb-3">@ViewData["Title"]</h1>
+
+<div class="card radius-15 p-4">
+    <form asp-action="Salva" method="post" class="row g-3" novalidate>
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger radius-15" role="alert"></div>
+        <input type="hidden" asp-for="Id" />
+
+        <div class="col-md-8">
+            <label asp-for="RagioneSociale" class="form-label"></label>
+            <input asp-for="RagioneSociale" class="form-control" aria-required="true" />
+            <span asp-validation-for="RagioneSociale" class="text-danger"></span>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="PartitaIva" class="form-label"></label>
+            @if (nuova)
+            {
+                <input asp-for="PartitaIva" class="form-control" aria-required="true" inputmode="numeric" maxlength="13" />
+            }
+            else
+            {
+                <input asp-for="PartitaIva" class="form-control" readonly />
+            }
+            <span asp-validation-for="PartitaIva" class="text-danger"></span>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="CodiceFiscale" class="form-label"></label>
+            <input asp-for="CodiceFiscale" class="form-control text-uppercase" maxlength="16" />
+            <span asp-validation-for="CodiceFiscale" class="text-danger"></span>
+        </div>
+        <div class="col-md-8">
+            <label asp-for="Email" class="form-label"></label>
+            <input asp-for="Email" class="form-control" type="email" />
+            <span asp-validation-for="Email" class="text-danger"></span>
+        </div>
+        <div class="col-md-8">
+            <label asp-for="Indirizzo" class="form-label"></label>
+            <input asp-for="Indirizzo" class="form-control" />
+        </div>
+        <div class="col-md-4">
+            <label asp-for="Comune" class="form-label"></label>
+            <input asp-for="Comune" class="form-control" />
+        </div>
+
+        <fieldset class="col-12">
+            <legend class="form-label fs-6 mb-1">Santo patrono del comune della sede</legend>
+            <p class="text-body-secondary small mb-2">È festivo per i dipendenti e non viene conteggiato nelle ferie. Lascia vuoto se non applicabile.</p>
+            <div class="row g-2" style="max-width: 320px">
+                <div class="col">
+                    <label asp-for="PatronoGiorno" class="form-label small"></label>
+                    <input asp-for="PatronoGiorno" class="form-control" type="number" min="1" max="31" />
+                </div>
+                <div class="col">
+                    <label asp-for="PatronoMese" class="form-label small"></label>
+                    <input asp-for="PatronoMese" class="form-control" type="number" min="1" max="12" />
+                </div>
+            </div>
+            <span asp-validation-for="PatronoGiorno" class="text-danger"></span>
+            <span asp-validation-for="PatronoMese" class="text-danger"></span>
+        </fieldset>
+
+        <div class="col-12 d-flex gap-2 mt-4">
+            <button type="submit" class="btn btn-primary">Salva</button>
+            <a asp-action="@(nuova ? "Index" : "Dettaglio")" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Annulla</a>
+        </div>
+    </form>
+</div>

@@ -1,0 +1,163 @@
+/* Shared controls. Pages own layout; this file owns typography, surfaces and states. */
+.form-control,
+.form-select,
+.select2-search__field {
+    font-family: 'Poppins', sans-serif;
+    font-size: var(--consulens-control-font-size);
+    font-weight: 400;
+    line-height: 1.5;
+    color: var(--consulens-description-text);
+    background-color: var(--consulens-surface);
+    border: 1px solid var(--consulens-border);
+    border-radius: var(--consulens-control-radius);
+    min-height: var(--consulens-control-height);
+    padding: var(--consulens-control-padding-y) var(--consulens-control-padding-x);
+    box-shadow: none;
+}
+.form-select { padding-right: 36px; }
+textarea.form-control { min-height: 100px; height: auto; resize: vertical; }
+.form-select[multiple], .form-select[size]:not([size="1"]) { height: auto; background-image: none; padding-right: var(--consulens-control-padding-x); }
+.form-control[type="color"] { padding: 6px; }
+.form-control[type="file"] { padding-block: 8px; }
+input::placeholder, textarea::placeholder { color: var(--consulens-placeholder); opacity: 1; font-family: 'Poppins', sans-serif; font-weight: 400; }
+label, .form-label, .input-group-text {
+    font-family: 'Poppins', sans-serif;
+    font-size: var(--consulens-control-font-size);
+    font-weight: 400;
+    color: var(--consulens-description-text);
+}
+.form-control:where(:hover:not(:disabled):not([readonly])), .form-select:where(:hover:not(:disabled)) { border-color: var(--consulens-icon); }
+.form-control:focus, .form-select:focus, .select2-search__field:focus {
+    color: var(--consulens-description-text);
+    background-color: var(--consulens-surface);
+    border-color: var(--consulens-accent);
+    outline: 0;
+    box-shadow: none;
+}
+.form-control:focus-visible, .form-select:focus-visible, .select2-search__field:focus-visible { outline: 2px solid var(--consulens-accent); outline-offset: 2px; }
+.form-control:disabled, .form-select:disabled, .form-control[readonly] { color: var(--consulens-muted); background-color: var(--consulens-section-bg); border-color: var(--consulens-border); opacity: 1; }
+.form-control:disabled, .form-select:disabled { cursor: not-allowed; }
+.form-control.is-invalid, .form-select.is-invalid, .form-control.input-validation-error,
+.was-validated .form-control:invalid, .was-validated .form-select:invalid { border-color: var(--consulens-badge-danger-text); box-shadow: none; }
+.form-control.is-valid, .form-select.is-valid,
+.was-validated .form-control:valid, .was-validated .form-select:valid { border-color: var(--consulens-success-text); box-shadow: none; }
+.field-validation-error, .invalid-feedback { color: var(--consulens-badge-danger-text); font-family: 'Poppins', sans-serif; font-size: 12px; }
+.date-wrapper .date-ph { font-family: 'Poppins', sans-serif; color: var(--consulens-placeholder); font-weight: 400; }
+
+/* Add-ons and buttons follow the same geometry as the field they belong to. */
+.input-group-text { min-height: var(--consulens-control-height); padding: var(--consulens-control-padding-y) var(--consulens-control-padding-x); border-color: var(--consulens-border); border-radius: var(--consulens-control-radius); background: var(--consulens-section-bg); }
+.input-group > .btn { min-height: var(--consulens-control-height); }
+.input-group > :is(.form-control, .form-select):not(:first-child) { border-top-left-radius: 0; border-bottom-left-radius: 0; }
+.input-group > :is(.form-control, .form-select):not(:last-child) { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+.form-control-sm, .form-select-sm, .input-group-sm {
+    --consulens-control-height: 36px;
+    --consulens-control-padding-y: 6px;
+    --consulens-control-font-size: 13px;
+}
+.input-group-sm :is(.form-control, .form-select, .input-group-text) { font-size: var(--consulens-control-font-size); padding-block: var(--consulens-control-padding-y); }
+.form-control-lg, .form-select-lg, .input-group-lg { --consulens-control-height: 48px; --consulens-control-padding-y: 12px; }
+
+/* Select2 uses the native controls' tokens, including dropdown search and validation. */
+.select2-container .select2-selection {
+    min-height: var(--consulens-control-height);
+    border: 1px solid var(--consulens-border);
+    border-radius: var(--consulens-control-radius);
+    background: var(--consulens-surface);
+    color: var(--consulens-description-text);
+    font-family: 'Poppins', sans-serif;
+    font-size: var(--consulens-control-font-size);
+    font-weight: 400;
+    box-shadow: none;
+}
+.select2-container .select2-selection--single { height: var(--consulens-control-height); }
+.select2-container .select2-selection--single .select2-selection__rendered { line-height: calc(var(--consulens-control-height) - 2px); padding-left: var(--consulens-control-padding-x); padding-right: 36px; color: var(--consulens-description-text); }
+.select2-container .select2-selection--single .select2-selection__placeholder { color: var(--consulens-muted); line-height: inherit; }
+.select2-container .select2-selection--single .select2-selection__arrow { top: 0; right: 8px; height: calc(var(--consulens-control-height) - 2px); }
+.select2-container .select2-selection--single .select2-selection__arrow b { top: 50%; }
+.select2-container .select2-selection--multiple { padding: 4px 8px; }
+.select2-container .select2-selection--multiple .select2-search__field { min-height: 30px; padding: 0; background: transparent; border: 0; }
+.select2-container.select2-container--focus .select2-selection,
+.select2-container.select2-container--open .select2-selection { border-color: var(--consulens-accent); box-shadow: none; }
+.select2-container.select2-container--disabled .select2-selection { background: var(--consulens-section-bg); border-color: var(--consulens-border); color: var(--consulens-muted); cursor: not-allowed; box-shadow: none; }
+.select2-container.select2-container--disabled .select2-selection__rendered { color: var(--consulens-muted); }
+.select2-dropdown { border-color: var(--consulens-border); border-radius: var(--consulens-control-radius); background: var(--consulens-surface); font-family: 'Poppins', sans-serif; font-size: var(--consulens-control-font-size); }
+.select2-search--dropdown .select2-search__field { border-color: var(--consulens-border); border-radius: var(--consulens-control-radius); }
+.select2-results__option { color: var(--consulens-description-text); }
+select:is(.is-invalid, .input-validation-error) + .select2-container .select2-selection,
+.was-validated select:invalid + .select2-container .select2-selection { border-color: var(--consulens-badge-danger-text); }
+select.is-valid + .select2-container .select2-selection,
+.was-validated select:valid + .select2-container .select2-selection { border-color: var(--consulens-success-text); }
+.input-group > .select2-container:not(:first-child) .select2-selection { border-top-left-radius: 0; border-bottom-left-radius: 0; }
+.input-group > .select2-container:not(:last-child) .select2-selection { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+.select2-sm { --consulens-control-height: 36px; --consulens-control-font-size: 13px; }
+
+/* Visible field labels use the same border treatment as profile controls. */
+.consulens-field { position: relative; min-width: 0; margin-top: 10px; }
+.consulens-field > label {
+    position: absolute; top: -10px; left: 12px; z-index: 2;
+    width: auto; max-width: calc(100% - 24px); padding: 0 5px; margin: 0;
+    background: var(--configuration-field-label-bg, var(--consulens-surface));
+    color: var(--consulens-page-title); font-family: 'Poppins', sans-serif;
+    font-size: 12px; font-weight: 400; line-height: 20px;
+}
+.consulens-field > .select2-container { width: 100% !important; }
+.consulens-field > .iti { width: 100%; }
+.consulens-icon-control { position: relative; flex: 1 1 180px; min-width: 0; }
+.consulens-icon-host { position: relative; }
+.consulens-icon-control > .form-control, .consulens-icon-control > .form-select { width: 100%; }
+.consulens-control-with-icon { padding-left: 40px; }
+.configuration-field .consulens-control-with-icon { padding-left: 40px; }
+.consulens-field-icon { position: absolute; left: 12px; top: 12px; z-index: 2; display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 20px; color: var(--consulens-icon); font-size: 17px; line-height: 1; pointer-events: none; }
+.consulens-icon-host .select2-container .select2-selection--single .select2-selection__rendered { padding-left: 40px; }
+.consulens-icon-host .select2-container .select2-selection--multiple { padding-left: 36px; }
+.consulens-icon-host > .consulens-date-placeholder, .consulens-icon-host > .date-ph { left: 40px; }
+.consulens-icon-host:has(> .form-control-sm) > .consulens-field-icon,
+.consulens-icon-host:has(> .form-select-sm) > .consulens-field-icon { top: 8px; }
+.form-floating { margin-top: 10px; }
+.form-floating > label,
+.form-floating > .form-control:focus ~ label,
+.form-floating > .form-control:not(:placeholder-shown) ~ label,
+.form-floating > .form-select ~ label {
+    top: -10px; left: 12px; z-index: 2; height: auto; padding: 0 5px;
+    max-width: calc(100% - 24px); background: var(--consulens-surface);
+    color: var(--consulens-page-title); font-size: 12px; line-height: 20px;
+    transform: none; opacity: 1;
+}
+.form-floating > label::after { display: none; }
+.form-floating > .form-control, .form-floating > .form-select { height: var(--consulens-control-height); min-height: var(--consulens-control-height); padding-top: var(--consulens-control-padding-y); padding-bottom: var(--consulens-control-padding-y); }
+.form-floating > .form-control:is(:focus, :not(:placeholder-shown)) { padding-top: var(--consulens-control-padding-y); padding-bottom: var(--consulens-control-padding-y); }
+.form-floating > textarea.form-control { height: auto; min-height: 100px; }
+
+/* Native date inputs keep their calendar and keyboard editing, with clear empty text. */
+.consulens-date-control { position: relative; min-width: 0; }
+.consulens-date-placeholder { display: none; position: absolute; top: 50%; left: var(--consulens-control-padding-x); transform: translateY(-50%); right: 44px; max-width: none; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; pointer-events: none; font-size: var(--consulens-control-font-size); color: var(--consulens-placeholder); }
+.configuration-field > .consulens-date-placeholder { left: 36px; }
+.consulens-date-empty:not(:focus-within) > .consulens-date-placeholder { display: block; }
+.consulens-date-empty:not(:focus-within) input[type="date"],
+.consulens-date-empty:not(:focus-within) input[type="date"]::-webkit-datetime-edit { color: transparent; }
+
+/* Date ranges enhance the existing filter inputs; they still submit their original names. */
+.consulens-period-enhanced > :not(.consulens-period-picker) { display: none; }
+.consulens-period-source { display: none; }
+.consulens-period-enhanced > .consulens-period-picker { position: relative; flex: 1 1 0; width: 100%; min-width: 0; }
+.consulens-period-picker > .form-control { width: 100%; border-radius: var(--consulens-control-radius); }
+
+.consulens-period-picker > i { display: inline-block; flex: 0 0 20px; width: 20px; margin-block: 0; font-size: 18px; line-height: 1; color: var(--consulens-icon); }
+.consulens-period-picker > i:first-child { margin-right: 0; }
+.consulens-period-picker i:last-child { margin-left: auto; }
+.consulens-period-picker:hover { border-color: var(--consulens-icon); background: var(--consulens-section-bg); color: var(--consulens-description-text); box-shadow: none; }
+.consulens-period-picker:is(:focus, :focus-visible, :active) { box-shadow: none; }
+.consulens-period-picker:focus-visible { outline: 2px solid var(--consulens-accent); outline-offset: 2px; }
+.daterangepicker { border-color: var(--consulens-border); border-radius: var(--consulens-control-radius); font-family: 'Poppins', sans-serif; color: var(--consulens-description-text); }
+.daterangepicker td.active, .daterangepicker td.active:hover, .daterangepicker .ranges li.active { background: var(--consulens-accent); color: #fff; }
+.daterangepicker td.in-range { background: var(--consulens-hover); color: var(--consulens-breadcrumb-active); }
+.daterangepicker td.active.in-range { background: var(--consulens-accent); color: #fff; }
+
+/* Avoid iOS zoom and retain a usable touch target on narrow screens. */
+@media (max-width: 767px) {
+    :root { --consulens-control-font-size: 16px; }
+    .consulens-icon-host:has(> .form-control-sm) > .consulens-field-icon, .consulens-icon-host:has(> .form-select-sm) > .consulens-field-icon { top: 12px; }
+    .form-control-sm, .form-select-sm, .input-group-sm, .select2-sm { --consulens-control-height: 44px; --consulens-control-font-size: 16px; --consulens-control-padding-y: 10px; }
+}
+
+.consulens-filter-range-column { flex: 0 1 270px; width: 270px; max-width: 100%; }

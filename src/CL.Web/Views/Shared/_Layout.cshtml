@@ -1,50 +1,167 @@
-﻿<!DOCTYPE html>
-<html lang="en">
+﻿@inject CL.Web.Infrastruttura.UtenteCorrente Utente
+@*
+    Struttura ripresa da ConsulensNew (sidebar + topbar + page-content) per avere la stessa estetica;
+    i colori beige vengono da assets/css/tema-beige.css.
+*@
+@{
+    var autenticato = User.Identity?.IsAuthenticated == true && ViewData["AuthPanel"] is not true;
+    var ruolo = Utente.IsConsulente ? "Consulente" : Utente.IsAzienda ? "Referente azienda" : Utente.IsDipendente ? "Dipendente" : "";
+}
+<!DOCTYPE html>
+<html lang="it" class="@(ViewData["AuthPanel"] is true ? "auth-panel-page" : "")">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - CL.Web</title>
-    <script type="importmap"></script>
+    <title>@ViewData["Title"] | Consulens HR</title>
+    <link rel="icon" href="~/assets/images/favicon-32x32.png" type="image/png" />
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/assets/plugins/simplebar/css/simplebar.css" />
+    <link rel="stylesheet" href="~/assets/plugins/perfect-scrollbar/css/perfect-scrollbar.css" />
+    <link rel="stylesheet" href="~/assets/plugins/metismenu/css/metisMenu.min.css" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" />
+    <link rel="stylesheet" href="~/assets/css/icons.css" />
+    <link rel="stylesheet" href="~/assets/css/custom.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/assets/css/authentication.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/assets/css/app.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/assets/css/navigation.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/assets/css/responsive.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/assets/css/utilities.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/assets/css/forms.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/assets/css/tema-beige.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/CL.Web.styles.css" asp-append-version="true" />
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
 </head>
+
 <body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">CL.Web</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+    <div class="wrapper">
+        @if (autenticato)
+        {
+            <div class="sidebar-wrapper">
+                <div class="sidebar-header">
+                    <div class="loghi">
+                        <img src="~/assets/images/logo-img.png" class="logo-img" alt="Consulens" id="logo-img" />
+                        <img src="~/assets/images/logo-icon.png" alt="Consulens" id="logo-icon" style="display:none" width="50" />
+                    </div>
+                    <button type="button" class="toggle-btn sidebar-collapse" aria-label="Riduci o espandi il menù" aria-expanded="true">
+                        <i class="ri-side-bar-line" aria-hidden="true"></i>
+                    </button>
+                    <a href="javascript:;" class="close-menu-mobile" style="display: none">
+                        <i class="ri-close-line ri-xs icon-color-1"></i>
+                    </a>
+                </div>
+                <div class="sidebar-body" data-simplebar="true">
+                    <ul class="metismenu" id="menu">
+                        <li>
+                            <a asp-controller="Home" asp-action="Index">
+                                <div class="parent-icon icon-color-1"><i class="ri-dashboard-line ri-xs"></i></div>
+                                <div class="menu-title">Panoramica</div>
+                            </a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+                        @if (Utente.IsConsulente)
+                        {
+                            <li>
+                                <a asp-controller="Aziende" asp-action="Index">
+                                    <div class="parent-icon icon-color-1"><i class="ri-building-line ri-xs"></i></div>
+                                    <div class="menu-title">Aziende</div>
+                                </a>
+                            </li>
+                        }
+                        @if (Utente.IsConsulente || Utente.IsAzienda)
+                        {
+                            <li>
+                                <a asp-controller="Dipendenti" asp-action="Index">
+                                    <div class="parent-icon icon-color-1"><i class="ri-team-line ri-xs"></i></div>
+                                    <div class="menu-title">Dipendenti</div>
+                                </a>
+                            </li>
+                        }
+                        <li>
+                            <a asp-controller="Assenze" asp-action="Index">
+                                <div class="parent-icon icon-color-1"><i class="ri-calendar-event-line ri-xs"></i></div>
+                                <div class="menu-title">Ferie e permessi</div>
+                            </a>
                         </li>
                     </ul>
                 </div>
+                <div class="sidebar-footer">
+                    <form asp-controller="Account" asp-action="Logout" method="post" class="m-0">
+                        <button type="submit" class="sidebar-logout" title="Esci">
+                            <div class="parent-icon"><i class="ri-logout-circle-line ri-xs"></i></div>
+                            <div class="menu-title-select">Esci</div>
+                        </button>
+                    </form>
+                </div>
             </div>
-        </nav>
-    </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
+
+            <header class="top-header" id="header">
+                <nav class="navbar navbar-expand">
+                    <div class="button right-topbar d-flex">
+                        <a href="javascript:;" class="toggle-btn ms-auto"><i class="ri-menu-2-line ri-xs icon-color-1"></i></a>
+                    </div>
+                    <div class="left-topbar">
+                        <a href="javascript:;" class="toggle-btn-mobile"><i class="ri-menu-2-line ri-xs icon-color-1"></i></a>
+                    </div>
+
+                    <div class="topbar-search" role="search" aria-label="Cerca nelle sezioni">
+                        <i class="ri-search-line" aria-hidden="true"></i>
+                        <input type="search" id="navigation-search" placeholder="Cerca" autocomplete="off" aria-expanded="false"
+                               aria-haspopup="true" aria-label="Cerca nelle sezioni del menù" aria-controls="navigation-search-results" />
+                        <div id="navigation-search-results" class="topbar-search-results" aria-label="Risultati ricerca" hidden></div>
+                        <span class="visually-hidden" id="navigation-search-status" role="status"></span>
+                    </div>
+
+                    <div class="right-topbar ms-auto">
+                        <ul class="navbar-nav">
+                            <li class="nav-item dropdown dropdown-user-profile topbar-profile">
+                                <a class="nav-link dropdown-toggle dropdown-toggle-nocaret" href="javascript:;" data-bs-toggle="dropdown"
+                                   aria-label="Apri menù profilo" aria-expanded="false">
+                                    <div class="d-flex user-box align-items-center">
+                                        <img src="~/assets/images/avatars/avatar-1.jpg" class="user-img" alt="" />
+                                        <div class="user-info">
+                                            <p class="user-name mb-0">@Utente.Nome</p>
+                                            <p class="designattion mb-0">@ruolo</p>
+                                        </div>
+                                        <i class="ri-arrow-down-s-line topbar-profile-chevron" aria-hidden="true"></i>
+                                    </div>
+                                </a>
+                                <div class="dropdown-menu dropdown-menu-end">
+                                    <form asp-controller="Account" asp-action="Logout" method="post" class="m-0">
+                                        <button type="submit" class="dropdown-item"><i class="ri-logout-circle-line"></i><span>Esci</span></button>
+                                    </form>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </nav>
+            </header>
+
+            <div class="page-wrapper">
+                <main role="main" id="body-pd" class="page-content-wrapper">
+                    <div class="page-content">
+                        <partial name="_Messaggi" />
+                        @RenderBody()
+                    </div>
+                    <footer class="page-footer">
+                        <p>&copy; @DateTime.Now.Year Consulens HR | Powered by <a href="https://www.goodware.it" target="_blank" rel="noopener">Goodware Systems</a></p>
+                    </footer>
+                </main>
+            </div>
+        }
+        else
+        {
+            <div class="@(ViewData["AuthPanel"] is true ? "container-fluid p-0" : "container")">
+                <main role="main" id="body-pd">
+                    @RenderBody()
+                </main>
+            </div>
+        }
     </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - CL.Web - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-        </div>
-    </footer>
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/assets/plugins/simplebar/js/simplebar.min.js"></script>
+    <script src="~/assets/plugins/metismenu/js/metisMenu.min.js"></script>
+    <script src="~/assets/plugins/perfect-scrollbar/js/perfect-scrollbar.js"></script>
+    <script src="~/assets/js/app.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

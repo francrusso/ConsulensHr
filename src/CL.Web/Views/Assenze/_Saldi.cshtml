@@ -1,0 +1,27 @@
+@model IReadOnlyList<SaldoAssenza>
+@* Card dei saldi ferie/ROL/ex-festività (ore). *@
+<div class="row g-3">
+    @foreach (var s in Model)
+    {
+        <div class="col-md-4">
+            <section class="card radius-15 h-100 saldo-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-baseline mb-2">
+                        <h3 class="h6 mb-0">@s.Tipo.Descrizione()</h3>
+                        <span class="etichetta">@s.Anno</span>
+                    </div>
+                    <div class="card-numero @(s.Disponibile < 0 ? "text-danger" : "")">@s.Disponibile.ToString("0.##") <small class="fs-6 fw-normal">ore disponibili</small></div>
+                    <dl class="saldo-dettaglio mt-3 mb-0">
+                        <div><dt>Residuo anno precedente</dt><dd>@s.ResiduoPrecedente.ToString("0.##")</dd></div>
+                        <div><dt>Maturato</dt><dd>@(s.Maturato > 0 ? "+" : "")@s.Maturato.ToString("0.##")</dd></div>
+                        <div><dt>Goduto</dt><dd>@(s.Goduto > 0 ? "−" : "")@s.Goduto.ToString("0.##")</dd></div>
+                        @if (s.Prenotato > 0)
+                        {
+                            <div><dt>In attesa di approvazione</dt><dd>−@s.Prenotato.ToString("0.##")</dd></div>
+                        }
+                    </dl>
+                </div>
+            </section>
+        </div>
+    }
+</div>

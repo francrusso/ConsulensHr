@@ -1,0 +1,106 @@
+@model (List<CL.Web.Controllers.RichiestaRiga> Righe, bool Gestore, bool MostraDipendente, bool MostraAzienda, DateOnly Oggi, string Ritorno)
+@{
+    var (righe, gestore, mostraDipendente, mostraAzienda, oggi, ritorno) = Model;
+    var colonne = 5 + (mostraDipendente ? 1 : 0) + (mostraAzienda ? 1 : 0);
+}
+<div class="card radius-15 table-responsive table-actions-responsive p-1 customer-results">
+    <table class="table mb-0 align-middle">
+        <thead>
+            <tr>
+                @if (mostraDipendente) { <th scope="col">Dipendente</th> }
+                @if (mostraAzienda) { <th scope="col">Azienda</th> }
+                <th scope="col">Tipo</th>
+                <th scope="col">Periodo</th>
+                <th scope="col" class="text-end">Ore</th>
+                <th scope="col">Stato</th>
+                <th scope="col" class="text-end">Azioni</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (righe.Count == 0)
+            {
+                <tr><td colspan="@colonne" class="text-center text-muted p-4">Nessuna richiesta</td></tr>
+            }
+            @foreach (var r in righe)
+            {
+                var annullabile = r.Stato == StatoRichiesta.InAttesa || (r.Stato == StatoRichiesta.Approvata && r.Dal > oggi);
+                <tr class="customer-result-row">
+                    @if (mostraDipendente)
+                    {
+                        <td data-label="Dipendente"><a class="customer-name" asp-controller="Dipendenti" asp-action="Dettaglio" asp-route-id="@r.DipendenteId"><i class="ri-user-line" aria-hidden="true"></i><span>@r.Dipendente</span></a></td>
+                    }
+                    @if (mostraAzienda) { <td data-label="Azienda">@r.Azienda</td> }
+                    <td data-label="Tipo">
+                        @r.Tipo.Descrizione()
+                        @if (!string.IsNullOrWhiteSpace(r.Note)) { <i class="ri-chat-3-line text-body-secondary" title="@r.Note" aria-label="Note: @r.Note"></i> }
+                    </td>
+                    <td data-label="Periodo">
+                        @if (r.Dal == r.Al) { @r.Dal.ToString("ddd dd/MM/yyyy") }
+                        else { @($"{r.Dal:dd/MM} – {r.Al:dd/MM/yyyy}") }
+                    </td>
+                    <td data-label="Ore" class="text-end">@r.Ore.ToString("0.##")</td>
+                    <td data-label="Stato">
+                        <partial name="~/Views/Assenze/_StatoRichiesta.cshtml" model="r.Stato" />
+                        @if (r.Stato == StatoRichiesta.Rifiutata && r.MotivoRifiuto is not null)
+                        {
+                            <div class="small text-body-secondary">@r.MotivoRifiuto</div>
+                        }
+                    </td>
+                    <td data-label="Azioni">
+                        <div class="customer-actions">
+                            @if (gestore && r.Stato == StatoRichiesta.InAttesa)
+                            {
+                                <form asp-controller="Assenze" asp-action="Approva" asp-route-id="@r.Id" method="post" class="d-inline">
+                                    <input type="hidden" name="ritorno" value="@ritorno" />
+                                    <button type="submit" class="btn btn-sm btn-primary" title="Approva">Approva</button>
+                                </form>
+                                <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#modaleRifiuto"
+                                        data-azione="@Url.Action("Rifiuta", "Assenze", new { id = r.Id })" data-descrizione="@r.Tipo.Descrizione() di @r.Dipendente">Rifiuta</button>
+                            }
+                            @if (annullabile)
+                            {
+                                <form asp-controller="Assenze" asp-action="Annulla" asp-route-id="@r.Id" method="post" class="d-inline"
+                                      onsubmit="return confirm('Annullare questa richiesta?');">
+                                    <input type="hidden" name="ritorno" value="@ritorno" />
+                                    <button type="submit" aria-label="Annulla richiesta" title="Annulla richiesta"><i class="ri-close-circle-line" aria-hidden="true"></i></button>
+                                </form>
+                            }
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (gestore)
+{
+    <div class="modal fade" id="modaleRifiuto" tabindex="-1" aria-labelledby="modaleRifiutoTitolo" aria-hidden="true">
+        <div class="modal-dialog">
+            <form method="post" class="modal-content radius-15" id="formRifiuto">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="ritorno" value="@ritorno" />
+                <div class="modal-header">
+                    <h2 class="modal-title h5" id="modaleRifiutoTitolo">Rifiuta richiesta</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-2" id="descrizioneRifiuto"></p>
+                    <label for="motivo" class="form-label">Motivo (visibile al dipendente)</label>
+                    <textarea id="motivo" name="motivo" class="form-control" rows="3" required maxlength="1000"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annulla</button>
+                    <button type="submit" class="btn btn-danger">Rifiuta</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script>
+        document.getElementById('modaleRifiuto').addEventListener('show.bs.modal', function (e) {
+            document.getElementById('formRifiuto').action = e.relatedTarget.dataset.azione;
+            document.getElementById('descrizioneRifiuto').textContent = e.relatedTarget.dataset.descrizione;
+            document.getElementById('motivo').value = '';
+        });
+    </script>
+}

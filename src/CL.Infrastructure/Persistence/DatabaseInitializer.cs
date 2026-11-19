@@ -19,8 +19,11 @@ public static class DatabaseInitializer
         var sp = scope.ServiceProvider;
         var logger = sp.GetRequiredService<ILoggerFactory>().CreateLogger(typeof(DatabaseInitializer));
 
-        if (applicaMigrazioni)
-            await sp.GetRequiredService<AppDbContext>().Database.MigrateAsync();
+        var db = sp.GetRequiredService<AppDbContext>();
+        if (db.Database.IsSqlite())
+            await db.Database.EnsureCreatedAsync(); // modalità demo locale
+        else if (applicaMigrazioni)
+            await db.Database.MigrateAsync();
 
         var roleManager = sp.GetRequiredService<RoleManager<IdentityRole>>();
         foreach (var ruolo in Ruoli.Tutti)

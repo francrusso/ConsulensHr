@@ -1,0 +1,61 @@
+@model List<CL.Web.Controllers.AziendaRiga>
+@{
+    ViewData["Title"] = "Aziende";
+}
+
+<div class="breadcrumb-titolo d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+    <h1 class="titolo-pagina mb-0">@ViewData["Title"]</h1>
+    <a asp-action="Nuova" class="btn btn-primary"><i class="ri-add-line" aria-hidden="true"></i> Nuova azienda</a>
+</div>
+
+<section class="customer-directory">
+    <form asp-action="Index" method="get" class="invoice-filter-bar customer-filter-form">
+        <div class="invoice-filter-toolbar">
+            <div class="invoice-filter-client">
+                <div class="input-group">
+                    <span class="input-group-text bg-transparent"><i class="ri-search-line" aria-hidden="true"></i></span>
+                    <input type="text" name="q" class="form-control" placeholder="Cerca per ragione sociale o partita IVA" aria-label="Cerca aziende" value="@ViewBag.Ricerca" />
+                </div>
+            </div>
+            <div class="invoice-filter-actions"><button class="btn invoice-filter-submit" type="submit">Cerca <i class="ri-search-line" aria-hidden="true"></i></button></div>
+        </div>
+    </form>
+
+    <div class="card radius-15 table-responsive table-actions-responsive p-1 customer-results">
+        <table class="table mb-0">
+            <thead>
+                <tr>
+                    <th scope="col">Azienda</th>
+                    <th scope="col">Partita IVA</th>
+                    <th scope="col">Comune</th>
+                    <th scope="col" class="text-end">Dipendenti</th>
+                    <th scope="col" class="text-end">Azioni</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Count == 0)
+                {
+                    <tr><td colspan="5" class="text-center text-muted p-4">Nessuna azienda trovata</td></tr>
+                }
+                @foreach (var a in Model)
+                {
+                    <tr class="customer-result-row">
+                        <td data-label="Azienda">
+                            <a class="customer-name" asp-action="Dettaglio" asp-route-id="@a.Id"><i class="ri-building-line" aria-hidden="true"></i><span>@a.RagioneSociale</span></a>
+                            @if (!a.Attiva) { <span class="badge bg-secondary ms-1">Disattivata</span> }
+                        </td>
+                        <td data-label="Partita IVA">@a.PartitaIva</td>
+                        <td data-label="Comune">@(string.IsNullOrWhiteSpace(a.Comune) ? "—" : a.Comune)</td>
+                        <td data-label="Dipendenti" class="text-end">@a.Dipendenti</td>
+                        <td data-label="Azioni">
+                            <div class="customer-actions">
+                                <a asp-action="Dettaglio" asp-route-id="@a.Id" aria-label="Visualizza azienda" title="Visualizza azienda"><i class="ri-eye-line" aria-hidden="true"></i></a>
+                                <a asp-action="Modifica" asp-route-id="@a.Id" aria-label="Modifica azienda" title="Modifica azienda"><i class="ri-pencil-line" aria-hidden="true"></i></a>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</section>

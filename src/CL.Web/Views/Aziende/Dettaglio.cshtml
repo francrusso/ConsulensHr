@@ -1,0 +1,68 @@
+@model CL.Domain.Aziende.Azienda
+@{
+    ViewData["Title"] = Model.RagioneSociale;
+    var dipendenti = (List<Dipendente>)ViewBag.Dipendenti;
+    var oggi = DateOnly.FromDateTime(DateTime.Today);
+}
+
+<div class="breadcrumb-titolo d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+    <div>
+        <a asp-action="Index" class="small text-body-secondary"><i class="ri-arrow-left-s-line" aria-hidden="true"></i> Aziende</a>
+        <h1 class="titolo-pagina mb-0">
+            @Model.RagioneSociale
+            @if (!Model.Attiva) { <span class="badge bg-secondary align-middle fs-6">Disattivata</span> }
+        </h1>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-action="Modifica" asp-route-id="@Model.Id" class="btn btn-outline-secondary"><i class="ri-pencil-line" aria-hidden="true"></i> Modifica</a>
+        <form asp-action="CambiaStato" asp-route-id="@Model.Id" method="post" class="m-0">
+            <button type="submit" class="btn btn-outline-secondary">@(Model.Attiva ? "Disattiva" : "Riattiva")</button>
+        </form>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-4">
+        <section class="card radius-15 p-4 h-100">
+            <h2 class="h6 mb-3">Dati aziendali</h2>
+            <dl class="scheda mb-0">
+                <dt>Partita IVA</dt><dd>@Model.PartitaIva</dd>
+                <dt>Codice fiscale</dt><dd>@(Model.CodiceFiscale ?? "—")</dd>
+                <dt>Sede</dt><dd>@(string.Join(", ", new[] { Model.Indirizzo, Model.Comune }.Where(s => !string.IsNullOrWhiteSpace(s))) is { Length: > 0 } sede ? sede : "—")</dd>
+                <dt>Email</dt><dd>@(Model.Email ?? "—")</dd>
+                <dt>Santo patrono</dt>
+                <dd>@(Model.SantoPatronoGiorno is { } g && Model.SantoPatronoMese is { } m ? new DateTime(2024, m, g).ToString("d MMMM") : "—")</dd>
+            </dl>
+        </section>
+    </div>
+    <div class="col-lg-8">
+        <section class="card radius-15 p-1 h-100">
+            <div class="d-flex align-items-center justify-content-between px-3 pt-3 pb-2">
+                <h2 class="h6 mb-0">Dipendenti (@dipendenti.Count)</h2>
+                <a asp-controller="Dipendenti" asp-action="Nuovo" asp-route-aziendaId="@Model.Id" class="btn btn-sm btn-primary"><i class="ri-user-add-line" aria-hidden="true"></i> Nuovo dipendente</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table mb-0">
+                    <thead><tr><th scope="col">Dipendente</th><th scope="col">Codice fiscale</th><th scope="col">Stato</th></tr></thead>
+                    <tbody>
+                        @if (dipendenti.Count == 0)
+                        {
+                            <tr><td colspan="3" class="text-center text-muted p-4">Nessun dipendente</td></tr>
+                        }
+                        @foreach (var d in dipendenti)
+                        {
+                            <tr>
+                                <td><a asp-controller="Dipendenti" asp-action="Dettaglio" asp-route-id="@d.Id">@d.NomeCompleto</a></td>
+                                <td>@d.CodiceFiscale</td>
+                                <td>
+                                    @if (d.InForzaIl(oggi)) { <span class="badge bg-success">In forza</span> }
+                                    else { <span class="badge bg-secondary">Non in forza</span> }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+</div>
