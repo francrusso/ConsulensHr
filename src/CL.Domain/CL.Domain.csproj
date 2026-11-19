@@ -1,0 +1,3 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Nessuna dipendenza esterna: il dominio resta testabile e portabile. -->
+</Project>

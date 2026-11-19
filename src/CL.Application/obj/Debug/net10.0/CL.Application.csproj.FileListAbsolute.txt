@@ -1,0 +1,15 @@
+/Users/francescarusso/Desktop/coding/ConsulensHr/src/CL.Application/bin/Debug/net10.0/CL.Application.deps.json
+/Users/francescarusso/Desktop/coding/ConsulensHr/src/CL.Application/bin/Debug/net10.0/CL.Application.dll
+/Users/francescarusso/Desktop/coding/ConsulensHr/src/CL.Application/bin/Debug/net10.0/CL.Application.pdb
+/Users/francescarusso/Desktop/coding/ConsulensHr/src/CL.Application/bin/Debug/net10.0/CL.Domain.dll
+/Users/francescarusso/Desktop/coding/ConsulensHr/src/CL.Application/bin/Debug/net10.0/CL.Domain.pdb
+/Users/francescarusso/Desktop/coding/ConsulensHr/src/CL.Application/obj/Debug/net10.0/CL.Application.csproj.AssemblyReference.cache
+/Users/francescarusso/Desktop/coding/ConsulensHr/src/CL.Application/obj/Debug/net10.0/CL.Application.GeneratedMSBuildEditorConfig.editorconfig
+/Users/francescarusso/Desktop/coding/ConsulensHr/src/CL.Application/obj/Debug/net10.0/CL.Application.AssemblyInfoInputs.cache
+/Users/francescarusso/Desktop/coding/ConsulensHr/src/CL.Application/obj/Debug/net10.0/CL.Application.AssemblyInfo.cs
+/Users/francescarusso/Desktop/coding/ConsulensHr/src/CL.Application/obj/Debug/net10.0/CL.Application.csproj.CoreCompileInputs.cache
+/Users/francescarusso/Desktop/coding/ConsulensHr/src/CL.Application/obj/Debug/net10.0/CL.Appli.C3952CB0.Up2Date
+/Users/francescarusso/Desktop/coding/ConsulensHr/src/CL.Application/obj/Debug/net10.0/CL.Application.dll
+/Users/francescarusso/Desktop/coding/ConsulensHr/src/CL.Application/obj/Debug/net10.0/refint/CL.Application.dll
+/Users/francescarusso/Desktop/coding/ConsulensHr/src/CL.Application/obj/Debug/net10.0/CL.Application.pdb
+/Users/francescarusso/Desktop/coding/ConsulensHr/src/CL.Application/obj/Debug/net10.0/ref/CL.Application.dll
