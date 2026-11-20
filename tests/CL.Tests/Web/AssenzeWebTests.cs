@@ -223,7 +223,7 @@ public sealed class AssenzeWebTests : IDisposable
     public async Task Residui_di_tutto_il_personale_dalla_pagina_ferie_e_permessi()
     {
         var hr = await Prepara(Ruoli.Azienda);
-        Assert.Contains("Inserisci residui anno precedente", WebUtility.HtmlDecode(await hr.GetStringAsync("/Assenze")));
+        Assert.Contains("href=\"/Assenze/Residui\"", await hr.GetStringAsync("/Assenze")); // sottovoce di "Ferie e permessi"
         var anno = DateTime.Today.Year;
         var pagina = WebUtility.HtmlDecode(await hr.GetStringAsync($"/Assenze/Residui?anno={anno}"));
         Assert.Contains("righe[0].Ferie", pagina);
@@ -236,5 +236,68 @@ public sealed class AssenzeWebTests : IDisposable
         var saldi = await _app.ConDb(db => db.SaldiIniziali.Where(s => s.DipendenteId == _dipId && s.Anno == anno).ToListAsync());
         Assert.Equal(12.5m, saldi.Single(s => s.Tipo == TipoAssenza.Ferie).Ore);
         Assert.Equal(-4m, saldi.Single(s => s.Tipo == TipoAssenza.Rol).Ore);
+    }
+
+    [Fact]
+    public async Task Calendario_con_presenti_e_assenti()
+    {
+        var hr = await Prepara(Ruoli.Azienda);
+        var giorno = DateOnly.FromDateTime(DateTime.Today);
+        while (!CalendarioLavorativo.IsLavorativo(giorno, 5)) giorno = giorno.AddDays(1);
+        await _app.ConDb(async db =>
+        {
+            var d = await db.Dipendenti.SingleAsync(x => x.Id == _dipId);
+            var a = await db.Aziende.SingleAsync();
+            var ferie = PianificatoreAssenze.Crea(d, a, TipoAssenza.Ferie, giorno, giorno, [], DateTime.UtcNow);
+            ferie.Approva("hr", DateTime.UtcNow);
+            db.Add(ferie);
+            return await db.SaveChangesAsync();
+        });
+        var html = WebUtility.HtmlDecode(await hr.GetStringAsync($"/Assenze/Calendario?anno={giorno.Year}&mese={giorno.Month}"));
+        var richieste = WebUtility.HtmlDecode(await hr.GetStringAsync("/Assenze"));
+        Assert.Contains($">{giorno.Year}</a>", richieste); // anni dalle richieste presenti
+        Assert.DoesNotContain($">{DateTime.Today.Year - 2}</a>", richieste);
+        Assert.Contains("cal-assenti", html);
+        Assert.Contains("Rossi Mario", html);
+        Assert.Contains("FERIE E PERMESSI", html.ToUpperInvariant());
+        Assert.Empty(_app.ErroriServer);
+    }
+
+    [Fact]
+    public async Task Chiusura_aziendale_registra_ferie_e_si_puo_eliminare()
+    {
+        var hr = await Prepara(Ruoli.Azienda);
+        var lunedi = DateOnly.FromDateTime(DateTime.Today).AddDays(14);
+        while (lunedi.DayOfWeek != DayOfWeek.Monday) lunedi = lunedi.AddDays(1);
+        if (lunedi.AddDays(4).Year != lunedi.Year) lunedi = lunedi.AddDays(-21); // resta nello stesso anno
+        var pagina = "/Assenze/Calendario";
+
+        var html = await Testo(await hr.InviaForm(pagina, "/Assenze/Chiusura", new()
+        {
+            ["dal"] = lunedi.ToString("yyyy-MM-dd"), ["al"] = lunedi.AddDays(4).ToString("yyyy-MM-dd"), ["descrizione"] = "Ponte",
+        }));
+        Assert.Contains("Chiusura \"Ponte\"", html);
+        Assert.Contains("ferie registrate per 1 persona", html);
+        Assert.Contains("cal-chiusura", html);
+        var ferie = await _app.ConDb(db => db.RichiesteAssenza.SingleAsync());
+        Assert.Equal((TipoAssenza.Ferie, StatoRichiesta.Approvata), (ferie.Tipo, ferie.Stato));
+        Assert.True(ferie.Ore is > 0 and <= 40); // giorni lavorativi della settimana (festività escluse)
+        Assert.NotNull(ferie.ChiusuraId);
+
+        var chiusura = await _app.ConDb(db => db.ChiusureAziendali.SingleAsync());
+        Assert.Contains("eliminata", await Testo(await hr.InviaForm(pagina, "/Assenze/EliminaChiusura", new() { ["id"] = chiusura.Id.ToString() })));
+        Assert.Equal(0, await _app.ConDb(db => db.RichiesteAssenza.CountAsync()));
+
+        // Filtro per team: un team senza membri svuota il calendario.
+        var team = await _app.ConDb(async db =>
+        {
+            var t = new CL.Domain.Organizzazione.Team(_aziendaId, "Vuoto");
+            db.Add(t);
+            await db.SaveChangesAsync();
+            return t.Id;
+        });
+        Assert.Contains("Tutti i team", WebUtility.HtmlDecode(await hr.GetStringAsync(pagina)));
+        Assert.DoesNotContain("Rossi Mario", WebUtility.HtmlDecode(await hr.GetStringAsync($"{pagina}?teamId={team}")));
+        Assert.Empty(_app.ErroriServer);
     }
 }

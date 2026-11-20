@@ -19,11 +19,23 @@
             </div>
             break;
         case "team":
-            <div class="org-team @(testo == "#ffffff" ? "org-team-chiaro" : "")" style="--colore-team:@Model.Colore; color:@testo">
-                @if (Model.Emoji is not null) { <span class="org-emoji" aria-hidden="true">@Model.Emoji</span> }
-                <span>@Model.Titolo</span>
-                <span class="org-conteggio" title="Componenti del team" aria-label="@Model.Conteggio componenti">@Model.Conteggio</span>
-            </div>
+            @* Il badge del team apre la sua pagina con i dati in modifica ("Senza team" non è un team vero). *@
+            if (Model.TeamId is { } tid)
+            {
+                <a class="org-team org-team-link @(testo == "#ffffff" ? "org-team-chiaro" : "")" style="--colore-team:@Model.Colore; color:@testo"
+                   href="@Url.Action("Dettaglio", "Team", new { id = tid, modifica = true })" title="Modifica il team @Model.Titolo">
+                    @if (Model.Emoji is not null) { <span class="org-emoji" aria-hidden="true">@Model.Emoji</span> }
+                    <span>@Model.Titolo</span>
+                    <span class="org-conteggio" title="Componenti del team" aria-label="@Model.Conteggio componenti">@Model.Conteggio</span>
+                </a>
+            }
+            else
+            {
+                <div class="org-team @(testo == "#ffffff" ? "org-team-chiaro" : "")" style="--colore-team:@Model.Colore; color:@testo">
+                    <span>@Model.Titolo</span>
+                    <span class="org-conteggio" title="Componenti" aria-label="@Model.Conteggio componenti">@Model.Conteggio</span>
+                </div>
+            }
             break;
         default:
             <a class="org-persona @(Model.Riferimento ? "org-riferimento" : "")" style="--colore-team:@Model.Colore"

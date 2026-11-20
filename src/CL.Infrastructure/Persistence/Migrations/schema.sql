@@ -1084,3 +1084,45 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261120165105_ChiusureAziendali') THEN
+    ALTER TABLE hr."RichiesteAssenza" ADD "ChiusuraId" uuid;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261120165105_ChiusureAziendali') THEN
+    CREATE TABLE hr."ChiusureAziendali" (
+        "Id" uuid NOT NULL,
+        "AziendaId" uuid NOT NULL,
+        "Dal" date NOT NULL,
+        "Al" date NOT NULL,
+        "Descrizione" character varying(150) NOT NULL,
+        "CreataIl" timestamp with time zone NOT NULL,
+        "CreataDa" character varying(256) NOT NULL,
+        CONSTRAINT "PK_ChiusureAziendali" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_ChiusureAziendali_Aziende_AziendaId" FOREIGN KEY ("AziendaId") REFERENCES hr."Aziende" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261120165105_ChiusureAziendali') THEN
+    CREATE INDEX "IX_ChiusureAziendali_AziendaId_Dal" ON hr."ChiusureAziendali" ("AziendaId", "Dal");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261120165105_ChiusureAziendali') THEN
+    INSERT INTO hr."__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261120165105_ChiusureAziendali', '10.0.15');
+    END IF;
+END $EF$;
+COMMIT;
+

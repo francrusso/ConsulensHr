@@ -205,6 +205,7 @@ public sealed class OrganigrammaWebTests : IDisposable
         Assert.Contains("href=\"/Team/Organigramma\"", gestione);
         var html = WebUtility.HtmlDecode(await hr.GetStringAsync("/Team/Organigramma"));
         Assert.Contains("class=\"organigramma\"", html);
+        Assert.Matches(@"<a class=""org-team org-team-link[^""]*""[^>]*href=""/Team/Dettaglio/[0-9a-f-]{36}\?modifica=[Tt]rue""", html); // il team apre la modifica
         Assert.Contains("--colore-team:#8CC98A", html);
         Assert.Contains("🛒", html);
         Assert.Contains("Commerciale", html);

@@ -123,12 +123,29 @@
                                 </a>
                             </li>
                         }
-                        <li>
-                            <a asp-controller="Assenze" asp-action="Index">
-                                <div class="parent-icon icon-color-1"><i class="ri-calendar-event-line ri-xs"></i></div>
-                                <div class="menu-title">Ferie e permessi</div>
-                            </a>
-                        </li>
+                        @if (Utente.IsDipendente)
+                        {
+                            <li>
+                                <a asp-controller="Assenze" asp-action="Index">
+                                    <div class="parent-icon icon-color-1"><i class="ri-calendar-event-line ri-xs"></i></div>
+                                    <div class="menu-title">Ferie e permessi</div>
+                                </a>
+                            </li>
+                        }
+                        else
+                        {
+                            <li>
+                                <a href="javascript:;" class="has-arrow">
+                                    <div class="parent-icon icon-color-1"><i class="ri-calendar-event-line ri-xs"></i></div>
+                                    <div class="menu-title">Ferie e permessi</div>
+                                </a>
+                                <ul>
+                                    <li><a asp-controller="Assenze" asp-action="Calendario">Calendario</a></li>
+                                    <li><a asp-controller="Assenze" asp-action="Index">Richieste</a></li>
+                                    <li><a asp-controller="Assenze" asp-action="Residui">Residui anno precedente</a></li>
+                                </ul>
+                            </li>
+                        }
                         @if (Utente.IsConsulente || Utente.IsAzienda)
                         {
                             <li>

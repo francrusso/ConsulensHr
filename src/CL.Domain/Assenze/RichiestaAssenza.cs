@@ -32,6 +32,8 @@ public sealed class RichiestaAssenza : Entity
     public string? DecisaDa { get; private set; }
     public DateTime? DecisaIl { get; private set; }
     public string? MotivoRifiuto { get; private set; }
+    /// <summary>Ferie generate da una chiusura aziendale (si tolgono insieme alla chiusura).</summary>
+    public Guid? ChiusuraId { get; private set; }
 
     private RichiestaAssenza() { } // EF Core
 
@@ -53,6 +55,8 @@ public sealed class RichiestaAssenza : Entity
         RichiestaIl = adesso;
         Stato = tipo.RichiedeApprovazione() ? StatoRichiesta.InAttesa : StatoRichiesta.Approvata;
     }
+
+    public void CollegaChiusura(Guid chiusuraId) => ChiusuraId = chiusuraId;
 
     /// <summary>Richiesta che occupa il calendario (in attesa o approvata).</summary>
     public bool Attiva => Stato is StatoRichiesta.InAttesa or StatoRichiesta.Approvata;

@@ -47,6 +47,34 @@ public sealed record RichiestaRiga(
     Guid Id, Guid DipendenteId, string Dipendente, string Azienda, TipoAssenza Tipo, DateOnly Dal, DateOnly Al,
     bool AOre, decimal Ore, StatoRichiesta Stato, DateTime RichiestaIl, string? Note, string? DecisaDa, string? MotivoRifiuto);
 
+/// <summary>Persona nel calendario; <paramref name="ColoreTeam"/> fa da bordo alla foto (null senza team).</summary>
+public sealed record PersonaCalendario(Guid Id, string Nome, bool HaFoto, string Segnaposto, string? ColoreTeam);
+public sealed record AssenzaCalendario(PersonaCalendario Persona, TipoAssenza Tipo, StatoRichiesta Stato, bool AOre, decimal Ore);
+public sealed record GiornoCalendario(DateOnly Data, bool DelMese, bool Lavorativo, List<PersonaCalendario> Presenti, List<AssenzaCalendario> Assenti)
+{
+    /// <summary>Chiusure aziendali che comprendono il giorno.</summary>
+    public List<string> Chiusure { get; init; } = [];
+}
+
+public sealed record TeamFiltro(Guid Id, string Nome, string Colore, string? Emoji);
+
+public sealed record ChiusuraRiga(Guid Id, string Azienda, DateOnly Dal, DateOnly Al, string Descrizione);
+
+/// <summary>Vista calendario del mese: chi è presente e chi è assente, giorno per giorno.</summary>
+public sealed class CalendarioAssenzeViewModel
+{
+    public required int Anno { get; init; }
+    public required int Mese { get; init; }
+    public required List<GiornoCalendario> Giorni { get; init; }
+    public required DateOnly Oggi { get; init; }
+    public Guid? AziendaId { get; init; }
+    public List<SelectListItem>? Aziende { get; init; }
+    public List<ChiusuraRiga> Chiusure { get; init; } = [];
+    public Guid? TeamId { get; init; }
+    /// <summary>Team dell'azienda per il filtro (vuoto se il consulente non ha scelto un'azienda).</summary>
+    public List<TeamFiltro> Team { get; init; } = [];
+}
+
 public sealed record RigaResidui(Guid DipendenteId, string Persona, string Azienda, decimal Ferie, decimal Rol);
 
 public sealed class ResiduoForm
@@ -90,8 +118,8 @@ public sealed class AssenzeController(AppDbContext db, UtenteCorrente utente, Se
     public async Task<IActionResult> Index(StatoRichiesta? stato, int? anno, Guid? aziendaId, bool tutte = false)
     {
         var annoScelto = anno ?? Oggi.Year;
-        // Chi approva vede per default ciò che è da decidere; il dipendente vede tutto il proprio anno.
-        var filtroStato = tutte || utente.IsDipendente ? stato : stato ?? StatoRichiesta.InAttesa;
+        // Di default tutte le richieste dell'anno, con quelle da approvare in cima (anche se riguardano un altro anno).
+        var filtroStato = stato;
 
         var dipendenti = utente.Filtra(db.Dipendenti.AsNoTracking());
         if (aziendaId is { } az) dipendenti = dipendenti.Where(d => d.AziendaId == az);
@@ -100,15 +128,20 @@ public sealed class AssenzeController(AppDbContext db, UtenteCorrente utente, Se
                     join d in dipendenti on r.DipendenteId equals d.Id
                     join a in db.Aziende.AsNoTracking() on d.AziendaId equals a.Id
                     select new { r, d.Cognome, d.Nome, a.RagioneSociale };
+        // Anni per cui ci sono richieste (più quello corrente e quello scelto), dal più recente.
+        var anniRichieste = await (from r in db.RichiesteAssenza.AsNoTracking()
+                                   join d in dipendenti on r.DipendenteId equals d.Id
+                                   select r.Dal.Year).Distinct().ToListAsync();
+        ViewBag.Anni = anniRichieste.Append(Oggi.Year).Append(annoScelto).Distinct().OrderDescending().ToList();
+        var (inizioAnno, fineAnno) = Filtri.Anno(annoScelto);
+        query = query.Where(x => x.r.Stato == StatoRichiesta.InAttesa || (x.r.Dal >= inizioAnno && x.r.Dal <= fineAnno));
+        // Conteggi per le pillole di stato (prima del filtro sullo stato).
+        ViewBag.Conteggi = (await query.GroupBy(x => x.r.Stato).Select(g => new { g.Key, N = g.Count() }).ToListAsync())
+            .ToDictionary(x => x.Key, x => x.N);
         if (filtroStato is { } s) query = query.Where(x => x.r.Stato == s);
-        // Le richieste da approvare si vedono tutte, anche se riguardano l'anno prossimo.
-        if (!(Gestore && filtroStato == StatoRichiesta.InAttesa))
-        {
-            var (inizio, fine) = Filtri.Anno(annoScelto);
-            query = query.Where(x => x.r.Dal >= inizio && x.r.Dal <= fine);
-        }
 
-        var risultati = await query.OrderBy(x => x.r.Dal).ThenBy(x => x.Cognome).ToListAsync();
+        var risultati = await query.OrderBy(x => x.r.Stato == StatoRichiesta.InAttesa ? 0 : 1)
+            .ThenByDescending(x => x.r.Dal).ThenBy(x => x.Cognome).ToListAsync();
         var righe = risultati
             .Select(x => new RichiestaRiga(x.r.Id, x.r.DipendenteId, $"{x.Cognome} {x.Nome}", x.RagioneSociale, x.r.Tipo,
                 x.r.Dal, x.r.Al, x.r.AOre, x.r.Ore, x.r.Stato, x.r.RichiestaIl, x.r.Note, x.r.DecisaDa, x.r.MotivoRifiuto))
@@ -130,7 +163,7 @@ public sealed class AssenzeController(AppDbContext db, UtenteCorrente utente, Se
         if (utente.IsDipendente && await dipendenti.FirstOrDefaultAsync() is { } io)
         {
             // Senza filtro di stato le righe sono proprio tutte le richieste dell'anno: si riusano per i saldi.
-            var richiesteAnno = filtroStato is null ? risultati.Select(x => x.r).ToList() : null;
+            List<RichiestaAssenza>? richiesteAnno = null; // si ricalcolano: qui ci sono anche le richieste in attesa di altri anni
             mieiSaldi = await saldi.Calcola(io, annoScelto, annoScelto == Oggi.Year ? Oggi.Month : 12, richiesteAnno);
         }
 
@@ -248,6 +281,154 @@ public sealed class AssenzeController(AppDbContext db, UtenteCorrente utente, Se
         }
         else Errore(PrimoErrore());
         return Torna(ritorno);
+    }
+
+    /// <summary>Calendario del mese con presenti e assenti, giorno per giorno.</summary>
+    [Authorize(Policy = Policy.GestionePersonale)]
+    public async Task<IActionResult> Calendario(int? anno, int? mese, Guid? aziendaId, Guid? teamId)
+    {
+        var a0 = anno ?? Oggi.Year;
+        var m0 = mese is >= 1 and <= 12 ? mese.Value : Oggi.Month;
+        return await CalendarioMese(a0, m0, aziendaId, teamId);
+    }
+
+    private async Task<IActionResult> CalendarioMese(int anno, int mese, Guid? aziendaId, Guid? teamId)
+    {
+        var primo = new DateOnly(anno, mese, 1);
+        var ultimo = primo.AddMonths(1).AddDays(-1);
+        // Settimane intere da lunedì a domenica.
+        var inizio = primo.AddDays(-(((int)primo.DayOfWeek + 6) % 7));
+        var fine = ultimo.AddDays(6 - (((int)ultimo.DayOfWeek + 6) % 7));
+
+        var query = utente.Filtra(db.Dipendenti.AsNoTracking());
+        if (utente.IsConsulente && aziendaId is { } az) query = query.Where(d => d.AziendaId == az);
+        // Team del filtro: quelli dell'azienda; scelto un team valgono anche i suoi sotto-team.
+        var aziendaTeam = utente.IsAzienda ? utente.AziendaId : aziendaId;
+        var teamAzienda = aziendaTeam is { } at ? await db.Team.AsNoTracking().Where(t => t.AziendaId == at).OrderBy(t => t.Nome).ToListAsync() : [];
+        if (teamId is { } tid && teamAzienda.Any(t => t.Id == tid))
+        {
+            var inclusi = new HashSet<Guid> { tid };
+            for (var aggiunti = true; aggiunti;)
+                aggiunti = teamAzienda.Where(t => t.PadreId is { } p && inclusi.Contains(p)).Select(t => inclusi.Add(t.Id)).ToList().Any(x => x);
+            query = query.Where(d => d.TeamId != null && inclusi.Contains(d.TeamId.Value));
+        }
+        else teamId = null;
+        var persone = (await query.Where(d => d.Contratti.Any(c => c.DataInizio <= ultimo && (c.DataFine == null || c.DataFine >= primo)))
+                .OrderBy(d => d.Cognome).ThenBy(d => d.Nome).ToListAsync())
+            .ToDictionary(d => d.Id);
+        var ids = persone.Keys.ToList();
+        var richieste = await db.RichiesteAssenza.AsNoTracking()
+            .Where(r => ids.Contains(r.DipendenteId) && (r.Stato == StatoRichiesta.Approvata || r.Stato == StatoRichiesta.InAttesa)
+                        && r.Dal <= ultimo && r.Al >= primo)
+            .ToListAsync();
+        var aziendePersone = persone.Values.Select(d => d.AziendaId).Distinct().ToList();
+        var tuttiTeam = await db.Team.AsNoTracking().Where(t => aziendePersone.Contains(t.AziendaId)).ToListAsync();
+        var coloriTeam = tuttiTeam.ToDictionary(t => t.Id, t => CL.Domain.Organizzazione.Organigramma.ColoreDi(t, tuttiTeam));
+        PersonaCalendario P(Dipendente d) => new(d.Id, d.NomeCompleto, d.FotoChiave is not null, d.Segnaposto,
+            d.TeamId is { } tid ? coloriTeam.GetValueOrDefault(tid) : null);
+
+        var aziendeVisibili = utente.IsAzienda ? [utente.AziendaId!.Value]
+            : aziendaId is { } azc ? [azc] : await db.Aziende.AsNoTracking().Select(a => a.Id).ToListAsync();
+        var chiusure = await (from c in db.ChiusureAziendali.AsNoTracking()
+                              join a in db.Aziende.AsNoTracking() on c.AziendaId equals a.Id
+                              where aziendeVisibili.Contains(c.AziendaId) && c.Dal <= fine && c.Al >= inizio
+                              orderby c.Dal
+                              select new ChiusuraRiga(c.Id, a.RagioneSociale, c.Dal, c.Al, c.Descrizione)).ToListAsync();
+        var piuAziende = chiusure.Select(c => c.Azienda).Distinct().Count() > 1 || (utente.IsConsulente && aziendaId is null);
+
+        var giorni = new List<GiornoCalendario>();
+        for (var g = inizio; g <= fine; g = g.AddDays(1))
+        {
+            var delMese = g.Month == mese;
+            var lavorativo = CalendarioLavorativo.IsLavorativo(g, 5);
+            var giorno = g;
+            var chiuso = delMese
+                ? chiusure.Where(c => c.Dal <= giorno && c.Al >= giorno).Select(c => piuAziende ? $"{c.Descrizione} · {c.Azienda}" : c.Descrizione).ToList()
+                : [];
+            if (!delMese || !lavorativo) { giorni.Add(new GiornoCalendario(g, delMese, lavorativo, [], []) { Chiusure = chiuso }); continue; }
+            var inForza = persone.Values.Where(d => d.InForzaIl(giorno)).ToList();
+            var assenti = richieste.Where(r => r.Dal <= giorno && r.Al >= giorno && persone.ContainsKey(r.DipendenteId) && persone[r.DipendenteId].InForzaIl(giorno))
+                .OrderBy(r => r.Stato).ThenBy(r => persone[r.DipendenteId].Cognome)
+                .Select(r => new AssenzaCalendario(P(persone[r.DipendenteId]), r.Tipo, r.Stato, r.AOre, r.Ore)).ToList();
+            // Chi è assente tutto il giorno (approvato) non è tra i presenti; le assenze a ore e quelle in attesa sì.
+            var fuori = assenti.Where(a => !a.AOre && a.Stato == StatoRichiesta.Approvata).Select(a => a.Persona.Id).ToHashSet();
+            giorni.Add(new GiornoCalendario(g, true, true, inForza.Where(d => !fuori.Contains(d.Id)).Select(P).ToList(), assenti) { Chiusure = chiuso });
+        }
+        return View("Calendario", new CalendarioAssenzeViewModel
+        {
+            Anno = anno, Mese = mese, Giorni = giorni, Oggi = Oggi, AziendaId = aziendaId, TeamId = teamId,
+            Team = teamAzienda.Select(t => new TeamFiltro(t.Id, t.Nome, CL.Domain.Organizzazione.Organigramma.ColoreDi(t, teamAzienda), t.Emoji)).ToList(),
+            Chiusure = chiusure.Where(c => c.Dal <= new DateOnly(anno, mese, 1).AddMonths(1).AddDays(-1) && c.Al >= new DateOnly(anno, mese, 1)).ToList(),
+            Aziende = utente.IsConsulente
+                ? await db.Aziende.AsNoTracking().OrderBy(a => a.RagioneSociale).Select(a => new SelectListItem(a.RagioneSociale, a.Id.ToString(), a.Id == aziendaId)).ToListAsync()
+                : null,
+        });
+    }
+
+    /// <summary>
+    /// Nuova chiusura aziendale: per ogni persona in forza nel periodo si registrano ferie già approvate, collegate alla chiusura.
+    /// Chi è già assente in quei giorni o non ha un contratto per tutto il periodo viene saltato (e conteggiato nel messaggio).
+    /// </summary>
+    [HttpPost, ValidateAntiForgeryToken, Authorize(Policy = Policy.GestionePersonale)]
+    public async Task<IActionResult> Chiusura(Guid? aziendaId, DateOnly? dal, DateOnly? al, string? descrizione)
+    {
+        var az = utente.IsAzienda ? utente.AziendaId : aziendaId;
+        var azienda = az is { } id ? await db.Aziende.FirstOrDefaultAsync(a => a.Id == id) : null;
+        if (azienda is null)
+        {
+            Errore("Scegli l'azienda della chiusura.");
+            return RedirectToAction(nameof(Calendario));
+        }
+        if (dal is not { } inizio || al is not { } fine)
+        {
+            Errore("Indica le date della chiusura.");
+            return RedirectToAction(nameof(Calendario), new { aziendaId });
+        }
+        ChiusuraAziendale chiusura;
+        try { chiusura = new ChiusuraAziendale(azienda.Id, inizio, fine, descrizione, utente.Email, DateTime.UtcNow); }
+        catch (CL.Domain.Common.DomainException ex)
+        {
+            Errore(ex.Message);
+            return RedirectToAction(nameof(Calendario), new { anno = inizio.Year, mese = inizio.Month, aziendaId });
+        }
+        db.ChiusureAziendali.Add(chiusura);
+
+        var esterni = TipoContrattoExtensions.Esterni.ToList();
+        var persone = await db.Dipendenti.Where(d => d.AziendaId == azienda.Id
+                && d.Contratti.Any(c => !esterni.Contains(c.Tipo) && c.DataInizio <= fine && (c.DataFine == null || c.DataFine >= inizio)))
+            .ToListAsync();
+        var ids = persone.Select(d => d.Id).ToList();
+        var esistenti = await db.RichiesteAssenza.Where(r => ids.Contains(r.DipendenteId) && r.Dal <= fine && r.Al >= inizio).ToListAsync();
+        var adesso = DateTime.UtcNow;
+        int registrate = 0, saltate = 0;
+        foreach (var d in persone)
+        {
+            try
+            {
+                var ferie = PianificatoreAssenze.Crea(d, azienda, TipoAssenza.Ferie, inizio, fine, esistenti, adesso, note: chiusura.Descrizione);
+                ferie.Approva("Chiusura aziendale", adesso);
+                ferie.CollegaChiusura(chiusura.Id);
+                db.RichiesteAssenza.Add(ferie);
+                registrate++;
+            }
+            catch (CL.Domain.Common.DomainException) { saltate++; }
+        }
+        await db.SaveChangesAsync();
+        Conferma($"Chiusura \"{chiusura.Descrizione}\" dal {inizio:dd/MM/yyyy} al {fine:dd/MM/yyyy} salvata: ferie registrate per {registrate} {(registrate == 1 ? "persona" : "persone")}"
+                 + (saltate > 0 ? $", {saltate} {(saltate == 1 ? "saltata" : "saltate")} (già assenti o senza contratto per tutto il periodo)." : "."));
+        return RedirectToAction(nameof(Calendario), new { anno = inizio.Year, mese = inizio.Month, aziendaId });
+    }
+
+    [HttpPost, ValidateAntiForgeryToken, Authorize(Policy = Policy.GestionePersonale)]
+    public async Task<IActionResult> EliminaChiusura(Guid id)
+    {
+        var chiusura = await db.ChiusureAziendali.FirstOrDefaultAsync(c => c.Id == id);
+        if (chiusura is null || !utente.PuoGestireAzienda(chiusura.AziendaId)) return NotFound();
+        db.RichiesteAssenza.RemoveRange(db.RichiesteAssenza.Where(r => r.ChiusuraId == id));
+        db.ChiusureAziendali.Remove(chiusura);
+        await db.SaveChangesAsync();
+        Conferma($"Chiusura \"{chiusura.Descrizione}\" eliminata, con le ferie che aveva registrato.");
+        return RedirectToAction(nameof(Calendario), new { anno = chiusura.Dal.Year, mese = chiusura.Dal.Month });
     }
 
     /// <summary>Residui di ferie e ROL al 1° gennaio per tutto il personale dipendente (dal cedolino di dicembre o dal gestionale paghe).</summary>

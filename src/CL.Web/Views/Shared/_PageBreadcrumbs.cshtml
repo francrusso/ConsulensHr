@@ -10,7 +10,7 @@
         "Home" => ("Panoramica", Url.Action("Index", "Home")),
         "Aziende" => ("Aziende", Url.Action("Index", "Aziende")),
         "Dipendenti" or "Team" => (personale, Url.Action("Index", "Dipendenti")),
-        "Assenze" => (Utente.IsDipendente ? "Le mie ferie e permessi" : "Ferie e permessi", Url.Action("Index", "Assenze")),
+        "Assenze" => (Utente.IsDipendente ? "Le mie ferie e permessi" : "Ferie e permessi", Url.Action(Utente.IsDipendente ? "Index" : "Calendario", "Assenze")),
         "Presenze" => ("Presenze", Url.Action("Index", "Presenze")),
         "BustePaga" or "Documenti" => ("Documenti", null),
         "Utenti" when Utente.IsAzienda => ("Personale", Url.Action("Index", "Dipendenti")),

@@ -1,17 +1,21 @@
 @model CL.Web.Controllers.AssenzeViewModel
 @inject CL.Web.Infrastruttura.UtenteCorrente Utente
 @{
-    ViewData["Title"] = Utente.IsDipendente ? "Le mie ferie e permessi" : "Ferie e permessi";
+    ViewData["Title"] = Utente.IsDipendente ? "Le mie ferie e permessi" : "Richieste";
     var gestore = Utente.IsConsulente || Utente.IsAzienda;
     var ritorno = Context.Request.Path + Context.Request.QueryString;
 }
 
 <div class="breadcrumb-titolo d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
     <h1 class="titolo-pagina mb-0">@ViewData["Title"]</h1>
-    @if (gestore)
-    {
-        <a asp-action="Residui" class="btn btn-outline-secondary"><i class="ri-history-line" aria-hidden="true"></i> Inserisci residui anno precedente</a>
-    }
+    @* Anno come pulsanti affiancati: un clic e la pagina mostra quell'anno. *@
+    <nav class="scelta-anno" aria-label="Anno">
+        @foreach (var a in (List<int>)ViewBag.Anni)
+        {
+            <a class="@(a == Model.Anno ? "attivo" : "")" aria-current="@(a == Model.Anno ? "page" : null)"
+               asp-action="Index" asp-route-anno="@a" asp-route-stato="@Model.Stato" asp-route-aziendaId="@Model.AziendaId">@a</a>
+        }
+    </nav>
 </div>
 
 @if (Model.Saldi is not null)
@@ -29,48 +33,37 @@
 }
 
 <section class="customer-directory">
-    <form asp-action="Index" method="get" class="invoice-filter-bar customer-filter-form">
-        <div class="invoice-filter-toolbar">
-            <div>
-                <select name="stato" class="form-select" aria-label="Stato della richiesta">
-                    @if (Utente.IsAzienda)
-                    {
-                        <option value="InAttesa" selected="@(Model.Stato == StatoRichiesta.InAttesa)">Da approvare</option>
-                    }
-                    else if (Utente.IsConsulente)
-                    {
-                        <option value="InAttesa" selected="@(Model.Stato == StatoRichiesta.InAttesa)">In attesa dell'azienda</option>
-                    }
-                    else
-                    {
-                        <option value="InAttesa" selected="@(Model.Stato == StatoRichiesta.InAttesa)">In attesa</option>
-                    }
-                    <option value="Approvata" selected="@(Model.Stato == StatoRichiesta.Approvata)">Approvate</option>
-                    <option value="Rifiutata" selected="@(Model.Stato == StatoRichiesta.Rifiutata)">Rifiutate</option>
-                    <option value="Annullata" selected="@(Model.Stato == StatoRichiesta.Annullata)">Annullate</option>
-                    <option value="" selected="@(Model.Stato is null)">Tutte</option>
-                </select>
-            </div>
-            <div>
-                <select name="anno" class="form-select" aria-label="Anno">
-                    @for (var a = Model.Oggi.Year + 1; a >= Model.Oggi.Year - 3; a--)
-                    {
-                        <option value="@a" selected="@(a == Model.Anno)">@a</option>
-                    }
-                </select>
-            </div>
-            @if (Model.Aziende is not null)
-            {
-                <div>
-                    <select name="aziendaId" class="form-select" aria-label="Filtra per azienda" asp-items="Model.Aziende">
-                        <option value="">Tutte le aziende</option>
-                    </select>
-                </div>
-            }
-            <input type="hidden" name="tutte" value="true" />
-            <div class="invoice-filter-actions"><button class="btn invoice-filter-submit" type="submit">Filtra <i class="ri-filter-3-line" aria-hidden="true"></i></button></div>
-        </div>
-    </form>
+    @if (Model.Aziende is not null)
+    {
+        <form asp-action="Index" method="get" class="mb-3">
+            <input type="hidden" name="anno" value="@Model.Anno" />
+            @if (Model.Stato is { } statoScelto) { <input type="hidden" name="stato" value="@statoScelto" /> }
+            <select name="aziendaId" class="form-select w-auto" aria-label="Filtra per azienda" asp-items="Model.Aziende" onchange="this.form.submit()">
+                <option value="">Tutte le aziende</option>
+            </select>
+        </form>
+    }
+
+    @{
+        var conteggi = (Dictionary<StatoRichiesta, int>)ViewBag.Conteggi;
+        var stati = new (StatoRichiesta Stato, string Nome, string Colore)[]
+        {
+            (StatoRichiesta.InAttesa, Utente.IsConsulente ? "In attesa dell'azienda" : Utente.IsDipendente ? "In attesa" : "Da approvare", "#F2B544"),
+            (StatoRichiesta.Approvata, "Approvate", "#2FBA6C"), (StatoRichiesta.Rifiutata, "Rifiutate", "#D9534F"), (StatoRichiesta.Annullata, "Annullate", "#9AA3AE"),
+        };
+    }
+    @* Stati come pillole, come nell'elenco del personale: di default tutte, con quelle da approvare in cima. *@
+    <nav class="invoice-filter-categories filtro-stati mb-3" aria-label="Stato della richiesta">
+        <a class="badge-filtro-categoria @(Model.Stato is null ? "active" : "")" aria-current="@(Model.Stato is null ? "page" : null)"
+           asp-action="Index" asp-route-anno="@Model.Anno" asp-route-aziendaId="@Model.AziendaId">Tutte <span>(@conteggi.Values.Sum())</span></a>
+        @foreach (var (st, nome, colore) in stati)
+        {
+            <a class="badge-filtro-categoria @(Model.Stato == st ? "active" : "")" aria-current="@(Model.Stato == st ? "page" : null)"
+               asp-action="Index" asp-route-stato="@st" asp-route-anno="@Model.Anno" asp-route-aziendaId="@Model.AziendaId">
+                <span class="pallino-stato" style="--colore-stato:@colore" aria-hidden="true"></span> @nome <span>(@conteggi.GetValueOrDefault(st))</span>
+            </a>
+        }
+    </nav>
 
     <partial name="_TabellaRichieste" model="(Model.Richieste, Utente.IsAzienda, gestore, Utente.IsConsulente, Model.Oggi, ritorno)" />
 </section>

@@ -14,7 +14,7 @@ public sealed record MembroTeam(Guid Id, string Nome, string? Posizione, Guid? T
 
 /// <summary>Nodo del grafico: l'azienda in cima, i team come badge colorati, le persone come card.</summary>
 public sealed record NodoGrafico(string Tipo, string Titolo, string? Sottotitolo, string Colore, string? Emoji, int? Conteggio,
-    Guid? DipendenteId, bool Riferimento, List<NodoGrafico> Figli, bool HaFoto = false, string Segnaposto = "neutro")
+    Guid? DipendenteId, bool Riferimento, List<NodoGrafico> Figli, bool HaFoto = false, string Segnaposto = "neutro", Guid? TeamId = null)
 {
     public string Iniziali => string.Concat(Titolo.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(p => char.ToUpperInvariant(p[0])));
 }
@@ -65,7 +65,7 @@ public sealed class OrganigrammaViewModel
             var figli = resp is null ? sotto
                 : [new NodoGrafico("persona", resp.Nome, resp.Posizione ?? "Responsabile", ColoreDi(t), null,
                     approvati.GetValueOrDefault(resp.Id) is var n and > 0 ? n : null, resp.Id, resp.TeamId != t.Id, sotto, resp.HaFoto, resp.Segnaposto)];
-            return new NodoGrafico("team", t.Nome, null, ColoreDi(t), t.Emoji, membri.Count, null, false, figli);
+            return new NodoGrafico("team", t.Nome, null, ColoreDi(t), t.Emoji, membri.Count, null, false, figli, TeamId: t.Id);
         }
 
         var radice = Team.Where(t => t.PadreId is null || Team.All(x => x.Id != t.PadreId)).OrderBy(t => t.Nome).Select(TeamNodo).ToList();

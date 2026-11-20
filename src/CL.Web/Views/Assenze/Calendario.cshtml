@@ -1,0 +1,202 @@
+@model CL.Web.Controllers.CalendarioAssenzeViewModel
+@inject UtenteCorrente Utente
+@{
+    ViewData["Title"] = "Calendario";
+    var primo = new DateOnly(Model.Anno, Model.Mese, 1);
+    var prec = primo.AddMonths(-1);
+    var succ = primo.AddMonths(1);
+    var nomeMese = ServizioBustePaga.NomeMese(Model.Mese);
+    string Foto(CL.Web.Controllers.PersonaCalendario p) =>
+        p.HaFoto ? Url.Action("Foto", "Dipendenti", new { id = p.Id })! : Url.Content($"~/assets/images/avatar/{p.Segnaposto}.png");
+    // Bordo della foto nel colore del team della persona (bianco se non ha un team).
+    string Bordo(CL.Web.Controllers.PersonaCalendario p) => p.ColoreTeam is { } c ? $"--colore-bordo:{c}" : "";
+    // Gruppi del calendario, con gli stessi colori del grafico delle assenze e delle card dei saldi.
+    string Categoria(TipoAssenza t) => t switch { TipoAssenza.Ferie => "ferie", TipoAssenza.Malattia => "malattia", _ => "permessi" };
+    var categorie = new[] { ("ferie", "Ferie", "#6096FF"), ("permessi", "Permessi", "#8E6BD8"), ("malattia", "Malattia", "#F08A4B") };
+    string Breve(TipoAssenza t) => t switch
+    {
+        TipoAssenza.Ferie => "Ferie", TipoAssenza.Rol => "ROL", TipoAssenza.Malattia => "Malattia",
+        TipoAssenza.PermessoL104 => "L. 104", TipoAssenza.CongedoParentale => "Congedo", _ => t.Descrizione(),
+    };
+}
+<div class="breadcrumb-titolo d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+    <h1 class="titolo-pagina mb-0">@ViewData["Title"]</h1>
+    <button type="button" class="btn btn-outline-primary" data-bs-toggle="collapse" data-bs-target="#nuovaChiusura" aria-expanded="false" aria-controls="nuovaChiusura">
+        <i class="ri-door-closed-line" aria-hidden="true"></i> Aggiungi chiusura aziendale
+    </button>
+</div>
+
+@* Chiusura aziendale: per chi è in forza vale come ferie, registrate e approvate in automatico. *@
+<div class="collapse mb-3" id="nuovaChiusura">
+    <form asp-action="Chiusura" method="post" class="card radius-15 p-3 p-md-4 modulo-chiusura">
+        <div class="row g-3 align-items-end">
+            @if (Model.Aziende is not null)
+            {
+                <div class="col-md-3">
+                    <label class="form-label" for="chiusuraAzienda">Azienda</label>
+                    <select id="chiusuraAzienda" name="aziendaId" class="form-select" required asp-items="Model.Aziende"><option value="">Scegli…</option></select>
+                </div>
+            }
+            <div class="col-md-2"><label class="form-label" for="chiusuraDal">Dal</label><input id="chiusuraDal" name="dal" type="date" class="form-control" required /></div>
+            <div class="col-md-2"><label class="form-label" for="chiusuraAl">Al</label><input id="chiusuraAl" name="al" type="date" class="form-control" required /></div>
+            <div class="col"><label class="form-label" for="chiusuraDescrizione">Descrizione</label><input id="chiusuraDescrizione" name="descrizione" class="form-control" maxlength="150" placeholder="es. Ferie estive, Ponte di Natale" /></div>
+            <div class="col-auto d-flex gap-2">
+                <button type="button" class="btn btn-outline-secondary" data-bs-toggle="collapse" data-bs-target="#nuovaChiusura">Annulla</button>
+                <button type="submit" class="btn btn-primary">Salva chiusura</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+    @* Filtri: ogni pillola mostra o nasconde una categoria nel calendario. *@
+    <div class="invoice-filter-categories filtro-stati filtri-calendario mb-0" role="group" aria-label="Mostra nel calendario">
+        <button type="button" class="badge-filtro-categoria active" data-filtro="presenti" aria-pressed="true"><span class="pallino-legenda presente" aria-hidden="true"></span> Presenti</button>
+        <button type="button" class="badge-filtro-categoria active" data-filtro="assenze" aria-pressed="true"><span class="pallino-legenda assente" aria-hidden="true"></span> Assenze</button>
+        <button type="button" class="badge-filtro-categoria active" data-filtro="chiusure" aria-pressed="true"><span class="pallino-legenda chiusura" aria-hidden="true"></span> Chiusure aziendali</button>
+        <button type="button" class="badge-filtro-categoria active" data-filtro="attesa" aria-pressed="true"><span class="pallino-legenda in-attesa" aria-hidden="true"></span> In attesa di approvazione</button>
+    </div>
+    @* Filtri per azienda (solo consulente) e per team, applicati appena cambiano. *@
+    <form asp-action="Calendario" method="get" class="d-flex gap-2 m-0">
+        <input type="hidden" name="anno" value="@Model.Anno" /><input type="hidden" name="mese" value="@Model.Mese" />
+        @if (Model.Aziende is not null)
+        {
+            <select name="aziendaId" class="form-select form-select-sm" asp-items="Model.Aziende" aria-label="Filtra per azienda" onchange="this.form.teamId && (this.form.teamId.value = ''); this.form.submit()"><option value="">Tutte le aziende</option></select>
+        }
+        else if (Model.AziendaId is { } azFisso) { <input type="hidden" name="aziendaId" value="@azFisso" /> }
+        @if (Model.Team.Count > 0)
+        {
+            <select name="teamId" class="form-select form-select-sm select-team" aria-label="Filtra per team">
+                <option value="">Tutti i team</option>
+                @foreach (var t in Model.Team)
+                {
+                    <option value="@t.Id" selected="@(t.Id == Model.TeamId)" data-colore="@t.Colore" data-emoji="@t.Emoji">@t.Nome</option>
+                }
+            </select>
+        }
+    </form>
+</div>
+
+@* Mese a tutta larghezza, con le frecce ai due lati. *@
+<div class="barra-mese mb-3">
+    <a asp-action="Calendario" asp-route-anno="@prec.Year" asp-route-mese="@prec.Month" asp-route-aziendaId="@Model.AziendaId" asp-route-teamId="@Model.TeamId" class="btn btn-outline-primary btn-sm" aria-label="Mese precedente"><i class="ri-arrow-left-s-line" aria-hidden="true"></i></a>
+    <div class="d-flex align-items-center gap-2">
+        <h2 class="titolo-mese mb-0">@nomeMese @Model.Anno</h2>
+        @if (Model.Anno != Model.Oggi.Year || Model.Mese != Model.Oggi.Month)
+        {
+            <a asp-action="Calendario" asp-route-aziendaId="@Model.AziendaId" asp-route-teamId="@Model.TeamId" class="btn btn-sm btn-link p-0">Oggi</a>
+        }
+    </div>
+    <a asp-action="Calendario" asp-route-anno="@succ.Year" asp-route-mese="@succ.Month" asp-route-aziendaId="@Model.AziendaId" asp-route-teamId="@Model.TeamId" class="btn btn-outline-primary btn-sm" aria-label="Mese successivo"><i class="ri-arrow-right-s-line" aria-hidden="true"></i></a>
+</div>
+
+<div class="calendario-assenze-scorri">
+    <div class="calendario-assenze" id="calendarioAssenze" role="grid" aria-label="Presenze di @nomeMese @Model.Anno">
+        @foreach (var nome in new[] { "Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom" }) { <div class="cal-intestazione" role="columnheader">@nome</div> }
+        @foreach (var g in Model.Giorni)
+        {
+            var oggi = g.Data == Model.Oggi;
+            <div class="cal-giorno @(g.DelMese ? "" : "fuori-mese") @(g.Lavorativo ? "" : "non-lavorativo") @(oggi ? "oggi" : "")" role="gridcell" aria-label="@g.Data.ToString("dddd d MMMM")">
+                <div class="cal-numero">@g.Data.Day</div>
+                @foreach (var ch in g.Chiusure) { <div class="cal-chiusura" title="Chiusura aziendale: @ch"><i class="ri-door-closed-line" aria-hidden="true"></i> @ch</div> }
+                @if (g.DelMese && g.Lavorativo)
+                {
+                    @if (g.Presenti.Count > 0)
+                    {
+                        <div class="avatar-sovrapposti cal-presenti" title="Presenti: @string.Join(", ", g.Presenti.Select(p => p.Nome))">
+                            @foreach (var p in g.Presenti.Take(5)) { <img src="@Foto(p)" alt="" loading="lazy" style="@Bordo(p)" /> }
+                            @if (g.Presenti.Count > 5) { <span class="avatar-altri">+@(g.Presenti.Count - 5)</span> }
+                        </div>
+                    }
+                    @foreach (var (chiave, nome, colore) in categorie)
+                    {
+                        var gruppo = g.Assenti.Where(x => Categoria(x.Tipo) == chiave).ToList();
+                        if (gruppo.Count == 0) { continue; }
+                        <div class="cal-assenti" data-categoria="@chiave" style="--colore-cat:@colore">
+                            <div class="cal-assenti-titolo">@nome <span class="cal-conteggio">@gruppo.Count</span></div>
+                            @foreach (var x in gruppo)
+                            {
+                                <div class="cal-assente @(x.Stato == StatoRichiesta.InAttesa ? "in-attesa" : "")" title="@x.Persona.Nome · @x.Tipo.Descrizione()@(x.AOre ? $" · {x.Ore:0.##} h" : "")@(x.Stato == StatoRichiesta.InAttesa ? " · in attesa" : "")">
+                                    <img src="@Foto(x.Persona)" alt="" loading="lazy" style="@Bordo(x.Persona)" />
+                                    <span class="cal-assente-nome">@x.Persona.Nome</span>
+                                    <span class="cal-assente-tipo">@(chiave == "permessi" ? Breve(x.Tipo) : "")@(x.AOre ? $" {x.Ore:0.##}h" : "")</span>
+                                </div>
+                            }
+                            <div class="cal-assenti-altri" hidden></div>
+                        </div>
+                    }
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@if (Model.Chiusure.Count > 0)
+{
+    <section class="card radius-15 p-3 p-md-4 mt-3 elenco-chiusure" aria-labelledby="titoloChiusure">
+        <h2 class="titolo-sezione-profilo" id="titoloChiusure">Chiusure aziendali del mese</h2>
+        <ul class="list-unstyled mb-0">
+            @foreach (var c in Model.Chiusure)
+            {
+                <li class="d-flex flex-wrap align-items-center justify-content-between gap-2 py-2">
+                    <div><span class="pallino-legenda chiusura me-2" aria-hidden="true"></span><strong>@c.Descrizione</strong>
+                        <span class="text-body-secondary small">· dal @c.Dal.ToString("dd/MM/yyyy") al @c.Al.ToString("dd/MM/yyyy")@(Model.Aziende is not null ? $" · {c.Azienda}" : "")</span></div>
+                    <form asp-action="EliminaChiusura" method="post" class="m-0" onsubmit="return confirm('Eliminare la chiusura e le ferie che ha registrato?');">
+                        <input type="hidden" name="id" value="@c.Id" />
+                        <button type="submit" class="btn btn-outline-danger btn-sm"><i class="ri-delete-bin-line" aria-hidden="true"></i> Elimina</button>
+                    </form>
+                </li>
+            }
+        </ul>
+    </section>
+}
+
+@section Scripts {
+    <script>
+        // Scelta del team con pallino del suo colore ed emoji (select2); si applica appena cambia.
+        $(function () { // dopo il caricamento di select2 (in fondo alla pagina)
+            const sel = $('.select-team');
+            if (!sel.length || !$.fn.select2) return;
+            const voce = o => {
+                if (!o.id) return $('<span class="voce-team"><i class="ri-team-line" aria-hidden="true"></i> ' + o.text + '</span>');
+                const el = o.element, s = $('<span class="voce-team"></span>');
+                s.append($('<span class="org-pallino" aria-hidden="true"></span>').css('--colore-team', el.dataset.colore));
+                if (el.dataset.emoji) s.append($('<span aria-hidden="true"></span>').text(el.dataset.emoji));
+                return s.append($('<span></span>').text(o.text));
+            };
+            sel.select2({ width: 'style', minimumResultsForSearch: 8, templateResult: voce, templateSelection: voce })
+               .on('change', function () { this.form.submit(); });
+        });
+
+        // Filtri del calendario: presenti, assenti (approvati) e in attesa di approvazione.
+        // Nella card degli assenti si vedono al massimo 3 persone tra quelle filtrate, poi "e altri N".
+        (function () {
+            const cal = document.getElementById('calendarioAssenze');
+            const attivi = { presenti: true, assenze: true, chiusure: true, attesa: true };
+            function aggiorna() {
+                cal.querySelectorAll('.cal-presenti').forEach(p => p.hidden = !attivi.presenti);
+                cal.querySelectorAll('.cal-chiusura').forEach(c => c.hidden = !attivi.chiusure);
+                cal.querySelectorAll('.cal-assenti').forEach(card => {
+                    const tipo = attivi.assenze;
+                    const righe = [...card.querySelectorAll('.cal-assente')]
+                        .filter(r => tipo && (!r.classList.contains('in-attesa') || attivi.attesa));
+                    card.querySelectorAll('.cal-assente').forEach(r => r.hidden = true);
+                    righe.slice(0, 3).forEach(r => r.hidden = false);
+                    card.querySelector('.cal-conteggio').textContent = righe.length;
+                    const altri = card.querySelector('.cal-assenti-altri');
+                    altri.hidden = righe.length <= 3;
+                    altri.textContent = 'e altri ' + (righe.length - 3);
+                    card.hidden = righe.length === 0;
+                });
+            }
+            document.querySelectorAll('[data-filtro]').forEach(b => b.addEventListener('click', () => {
+                const k = b.dataset.filtro;
+                attivi[k] = !attivi[k];
+                b.classList.toggle('active', attivi[k]);
+                b.setAttribute('aria-pressed', String(attivi[k]));
+                aggiorna();
+            }));
+            aggiorna();
+        })();
+    </script>
+}

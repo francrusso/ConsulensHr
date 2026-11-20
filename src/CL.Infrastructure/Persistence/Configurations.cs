@@ -211,6 +211,19 @@ internal sealed class ContrattoConfig : IEntityTypeConfiguration<Contratto>
     }
 }
 
+internal sealed class ChiusuraAziendaleConfig : IEntityTypeConfiguration<ChiusuraAziendale>
+{
+    public void Configure(EntityTypeBuilder<ChiusuraAziendale> b)
+    {
+        b.ToTable("ChiusureAziendali");
+        b.Property(x => x.Id).ValueGeneratedNever();
+        b.Property(x => x.Descrizione).HasMaxLength(150);
+        b.Property(x => x.CreataDa).HasMaxLength(256);
+        b.HasOne<Azienda>().WithMany().HasForeignKey(x => x.AziendaId).OnDelete(DeleteBehavior.Cascade);
+        b.HasIndex(x => new { x.AziendaId, x.Dal });
+    }
+}
+
 internal sealed class RichiestaAssenzaConfig : IEntityTypeConfiguration<RichiestaAssenza>
 {
     public void Configure(EntityTypeBuilder<RichiestaAssenza> b)

@@ -23,6 +23,40 @@ namespace CL.Infrastructure.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("CL.Domain.Assenze.ChiusuraAziendale", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly>("Al")
+                        .HasColumnType("date");
+
+                    b.Property<Guid>("AziendaId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CreataDa")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<DateTime>("CreataIl")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateOnly>("Dal")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Descrizione")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AziendaId", "Dal");
+
+                    b.ToTable("ChiusureAziendali", "hr");
+                });
+
             modelBuilder.Entity("CL.Domain.Assenze.RichiestaAssenza", b =>
                 {
                     b.Property<Guid>("Id")
@@ -33,6 +67,9 @@ namespace CL.Infrastructure.Persistence.Migrations
 
                     b.Property<DateOnly>("Al")
                         .HasColumnType("date");
+
+                    b.Property<Guid?>("ChiusuraId")
+                        .HasColumnType("uuid");
 
                     b.Property<DateOnly>("Dal")
                         .HasColumnType("date");
@@ -1186,6 +1223,15 @@ namespace CL.Infrastructure.Persistence.Migrations
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("AspNetUserTokens", "hr");
+                });
+
+            modelBuilder.Entity("CL.Domain.Assenze.ChiusuraAziendale", b =>
+                {
+                    b.HasOne("CL.Domain.Aziende.Azienda", null)
+                        .WithMany()
+                        .HasForeignKey("AziendaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("CL.Domain.Assenze.RichiestaAssenza", b =>
