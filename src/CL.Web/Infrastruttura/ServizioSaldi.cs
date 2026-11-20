@@ -8,7 +8,8 @@ namespace CL.Web.Infrastruttura;
 /// <summary>Carica richieste e residui dal database e calcola i saldi con le regole di dominio.</summary>
 public sealed class ServizioSaldi(AppDbContext db)
 {
-    public static readonly TipoAssenza[] TipiConSaldo = [TipoAssenza.Ferie, TipoAssenza.Rol, TipoAssenza.ExFestivita];
+    // Le assenze con un conto ore: ferie e ROL.
+    public static readonly TipoAssenza[] TipiConSaldo = [TipoAssenza.Ferie, TipoAssenza.Rol];
 
     /// <summary>Richieste del dipendente che iniziano nell'anno indicato.</summary>
     public Task<List<RichiestaAssenza>> RichiesteAnno(Guid dipendenteId, int anno)

@@ -1,0 +1,125 @@
+@model (Guid DipendenteId, List<CL.Domain.Dipendenti.Contratto> Contratti, DateOnly Oggi)
+@using CL.Domain.Dipendenti
+@{
+    var (idDip, contratti, oggi) = Model;
+    var it = System.Globalization.CultureInfo.GetCultureInfo("it-IT");
+    // Contratto di riferimento: quello in corso, altrimenti il più recente.
+    var corrente = contratti.FirstOrDefault(c => c.AttivoIl(oggi)) ?? contratti.FirstOrDefault();
+    var storico = contratti.Where(c => c != corrente).ToList();
+    string E(decimal v) => v.ToString("C0", it);
+    string Ore(decimal v) => v.ToString("0.##", it) + " h";
+}
+
+<div class="scheda-contratto">
+@if (corrente is null)
+{
+    <section class="card radius-15 p-4 mb-3 text-center">
+        <span class="elenco-vuoto-icona mx-auto" aria-hidden="true"><i class="ri-file-text-line"></i></span>
+        <p class="text-body-secondary mb-3">Nessun contratto registrato.</p>
+        <div><a asp-action="Assumi" asp-route-id="@idDip" class="btn btn-primary"><i class="ri-file-add-line" aria-hidden="true"></i> Registra il contratto</a></div>
+    </section>
+}
+else
+{
+    var subordinato = corrente.Tipo.IsSubordinato();
+    var inCorso = corrente.AttivoIl(oggi);
+    <section class="card radius-15 p-3 p-md-4 mb-3 sezione-profilo" aria-labelledby="titoloContratto">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+            <h2 class="titolo-sezione-profilo mb-0" id="titoloContratto">
+                @(subordinato ? (inCorso ? "Contratto in corso" : corrente.DataInizio > oggi ? "Contratto firmato" : "Ultimo contratto")
+                              : (inCorso ? "Incarico in corso" : corrente.DataInizio > oggi ? "Incarico firmato" : "Ultimo incarico"))
+                @if (!subordinato) { <span class="badge bg-info align-middle ms-1 fs-6">Professionista esterno</span> }
+            </h2>
+            <a asp-action="Assumi" asp-route-id="@idDip" class="btn btn-outline-primary btn-sm">Nuovo contratto <i class="ri-file-add-line" aria-hidden="true"></i></a>
+        </div>
+        <dl class="campi-profilo valori-profilo mb-0 solo-lettura">
+            <div><dt>Tipo di rapporto</dt><dd>@corrente.Tipo.Descrizione()</dd></div>
+            <div><dt>CCNL</dt><dd>@(string.IsNullOrEmpty(corrente.Ccnl) ? "—" : corrente.Ccnl)</dd></div>
+            <div><dt>Livello</dt><dd>@(string.IsNullOrEmpty(corrente.Livello) ? "—" : corrente.Livello)</dd></div>
+            <div>
+                <dt>Mansione</dt>
+                <dd>
+                    @(corrente.Mansione ?? "—")
+                </dd>
+            </div>
+            <div><dt>Data di inizio</dt><dd>@corrente.DataInizio.ToString("dd/MM/yyyy")</dd></div>
+            <div><dt>Scadenza</dt><dd>@(corrente.DataFine?.ToString("dd/MM/yyyy") ?? "Indeterminato")</dd></div>
+            <div><dt>Orario settimanale</dt><dd>@Ore(corrente.OreSettimanali)@(corrente.PercentualePartTime < 100 ? $" · part-time {corrente.PercentualePartTime.ToString("0.##", it)}%" : "")</dd></div>
+            <div><dt>Giorni lavorativi</dt><dd>@corrente.GiorniLavorativiSettimana a settimana</dd></div>
+            <div><dt>Modalità di lavoro</dt><dd>@corrente.Modalita.Descrizione()@(corrente.GiorniInUfficio is { } gu ? $" · {gu} {(gu == 1 ? "giorno" : "giorni")} in ufficio" : "")</dd></div>
+            <div><dt>@(subordinato ? "RAL" : "Compenso annuo")</dt><dd>@E(corrente.RetribuzioneLordaAnnua)</dd></div>
+            <div><dt>Mensilità</dt><dd>@corrente.MensilitaAnnue</dd></div>
+            <div><dt>Mensile lordo</dt><dd>@E(corrente.RetribuzioneMensileLorda)</dd></div>
+            @if (subordinato)
+            {
+                <div><dt>Ferie · ROL</dt><dd>@Ore(corrente.SpettanzaAnnua(CL.Domain.Assenze.TipoAssenza.Ferie)) · @Ore(corrente.SpettanzaAnnua(CL.Domain.Assenze.TipoAssenza.Rol))</dd></div>
+            }
+        </dl>
+        @{ var contratto = CL.Web.Controllers.ContrattoForm.Da(corrente); }
+        <form asp-action="ModificaContratto" asp-route-id="@idDip" method="post" novalidate class="solo-modifica modulo-contratto">
+            <input type="hidden" asp-for="@contratto.ContrattoId" />
+            <div class="campi-profilo">
+                <div class="campo-largo"><label asp-for="@contratto.Tipo" class="form-label">Tipo di rapporto</label><select asp-for="@contratto.Tipo" asp-items="CL.Web.Controllers.ContrattoForm.Tipi" class="form-select"></select></div>
+                <div><label asp-for="@contratto.Ccnl" class="form-label">CCNL</label><input asp-for="@contratto.Ccnl" class="form-control" /></div>
+                <div><label asp-for="@contratto.Livello" class="form-label"></label><input asp-for="@contratto.Livello" class="form-control" /></div>
+                <div class="campo-largo"><label asp-for="@contratto.Mansione" class="form-label"></label><input asp-for="@contratto.Mansione" class="form-control" placeholder="es. Designer" /></div>
+                <div><label asp-for="@contratto.DataInizio" class="form-label"></label><input asp-for="@contratto.DataInizio" type="date" class="form-control" /></div>
+                <div><label asp-for="@contratto.DataFine" class="form-label">Scadenza</label><input asp-for="@contratto.DataFine" type="date" class="form-control" /></div>
+                <div><label asp-for="@contratto.OreSettimanaliFullTime" class="form-label">Ore settimanali full-time</label><input asp-for="@contratto.OreSettimanaliFullTime" type="text" inputmode="decimal" class="form-control" /></div>
+                <div><label asp-for="@contratto.PercentualePartTime" class="form-label">Part-time (%)</label><input asp-for="@contratto.PercentualePartTime" type="text" inputmode="decimal" class="form-control" /></div>
+                <div><label asp-for="@contratto.Modalita" class="form-label">Modalità di lavoro</label><select asp-for="@contratto.Modalita" asp-items="CL.Web.Controllers.ContrattoForm.ElencoModalita" class="form-select" data-mostra="giorniUfficio" data-valore="Ibrido"></select></div>
+                <div id="giorniUfficio"><label asp-for="@contratto.GiorniInUfficio" class="form-label">Giorni in ufficio a settimana</label><input asp-for="@contratto.GiorniInUfficio" type="number" min="1" max="5" class="form-control" /></div>
+                <div><label asp-for="@contratto.GiorniLavorativiSettimana" class="form-label">Giorni a settimana</label><select asp-for="@contratto.GiorniLavorativiSettimana" class="form-select"><option value="5">5</option><option value="6">6</option></select></div>
+                <div><label asp-for="@contratto.RetribuzioneLordaAnnua" class="form-label">@(subordinato ? "RAL (€)" : "Compenso annuo (€)")</label><input asp-for="@contratto.RetribuzioneLordaAnnua" type="text" inputmode="decimal" class="form-control" /></div>
+                <div><label asp-for="@contratto.MensilitaAnnue" class="form-label">Mensilità</label><input asp-for="@contratto.MensilitaAnnue" type="number" min="12" max="16" class="form-control" /></div>
+                <div><label asp-for="@contratto.OreFerieAnnue" class="form-label">Ferie annue (ore)</label><input asp-for="@contratto.OreFerieAnnue" type="text" inputmode="decimal" class="form-control" /></div>
+                <div><label asp-for="@contratto.OreRolAnnue" class="form-label">ROL annui (ore)</label><input asp-for="@contratto.OreRolAnnue" type="text" inputmode="decimal" class="form-control" /></div>
+            </div>
+            <div class="d-flex justify-content-end gap-2 mt-3">
+                <a asp-action="Dettaglio" asp-route-id="@idDip" asp-route-sezione="contratto" class="btn btn-outline-secondary">Annulla</a>
+                <button type="submit" class="btn btn-primary">Salva il contratto</button>
+            </div>
+        </form>
+        @if (inCorso)
+        {
+            <form asp-action="Cessa" asp-route-id="@idDip" method="post" class="d-flex flex-wrap align-items-end gap-2 border-top pt-3 mt-3 solo-lettura"
+                  onsubmit="return confirm('@(subordinato ? "Confermi la cessazione del rapporto di lavoro?" : "Confermi la chiusura dell\'incarico?")');">
+                <div>
+                    <label for="dataCessazione" class="form-label small mb-1">@(subordinato ? "Registra cessazione al" : "Chiudi l'incarico al")</label>
+                    <input type="date" id="dataCessazione" name="dataCessazione" class="form-control form-control-sm" required />
+                </div>
+                <button type="submit" class="btn btn-sm btn-outline-danger">@(subordinato ? "Registra cessazione" : "Chiudi incarico")</button>
+            </form>
+        }
+    </section>
+
+    <section class="card radius-15 p-3 p-md-4 mb-3" aria-labelledby="titoloDocumento">
+        <h2 class="titolo-sezione-profilo" id="titoloDocumento">Documento del contratto</h2>
+        <partial name="_DocumentoContratto" model="(idDip, corrente)" />
+    </section>
+}
+
+@if (storico.Count > 0)
+{
+    <section class="card radius-15 p-3 p-md-4 mb-3" aria-labelledby="titoloStorico">
+        <h2 class="titolo-sezione-profilo" id="titoloStorico">Contratti precedenti</h2>
+        <div class="table-responsive">
+            <table class="table mb-0 align-middle">
+                <thead><tr><th scope="col">Periodo</th><th scope="col">Tipo</th><th scope="col">CCNL e livello</th><th scope="col" class="text-end">RAL</th><th scope="col">Documento</th></tr></thead>
+                <tbody>
+                    @foreach (var c in storico)
+                    {
+                        <tr>
+                            <td class="text-nowrap">@c.DataInizio.ToString("dd/MM/yyyy") – @(c.DataFine?.ToString("dd/MM/yyyy") ?? "…")</td>
+                            <td>@c.Tipo.Descrizione()</td>
+                            <td>@(string.IsNullOrEmpty(c.Ccnl) ? "—" : $"{c.Ccnl} · {c.Livello}")</td>
+                            <td class="text-end text-nowrap">@E(c.RetribuzioneLordaAnnua)</td>
+                            <td><partial name="_DocumentoContratto" model="(idDip, c)" /></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+}
+</div>

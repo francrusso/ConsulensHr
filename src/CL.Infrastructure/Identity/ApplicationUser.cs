@@ -4,7 +4,7 @@ namespace CL.Infrastructure.Identity;
 
 /// <summary>
 /// Utente della piattaforma. Il ruolo determina il perimetro:
-/// Consulente → tutto lo studio; Azienda → solo <see cref="AziendaId"/>; Dipendente → solo <see cref="DipendenteId"/>.
+/// Consulente → tutto il consulente; Azienda → solo <see cref="AziendaId"/>; Dipendente → solo <see cref="DipendenteId"/>.
 /// </summary>
 public sealed class ApplicationUser : IdentityUser
 {

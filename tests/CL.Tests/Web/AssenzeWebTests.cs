@@ -161,7 +161,7 @@ public sealed class AssenzeWebTests : IDisposable
         r = await consulente.InviaForm($"/Dipendenti/Dettaglio/{_dipId}", "/Assenze/ImpostaResidui", new()
         {
             ["dipendenteId"] = _dipId.ToString(), ["anno"] = DateTime.Today.Year.ToString(),
-            ["ferie"] = "12,5", ["rol"] = "-4", ["exFestivita"] = "0",
+            ["ferie"] = "12,5", ["rol"] = "-4",
         });
         html = await Testo(r);
         Assert.Contains("Residui di inizio", html);
@@ -186,13 +186,13 @@ public sealed class AssenzeWebTests : IDisposable
     [Fact]
     public async Task Lo_studio_non_decide_le_ferie_che_restano_in_attesa_dell_azienda()
     {
-        var studio = await Prepara(Ruoli.Consulente);
+        var consulente = await Prepara(Ruoli.Consulente);
         var giorno = DateOnly.FromDateTime(DateTime.Today).AddDays(30);
         while (!CalendarioLavorativo.IsLavorativo(giorno, 5)) giorno = giorno.AddDays(1);
         if (giorno.Year != DateTime.Today.Year) return;
 
-        // Anche con "approva subito" (campo non mostrato allo studio) la richiesta resta in attesa.
-        var r = await studio.InviaForm("/Assenze/Nuova", "/Assenze/Nuova", new()
+        // Anche con "approva subito" (campo non mostrato al consulente) la richiesta resta in attesa.
+        var r = await consulente.InviaForm("/Assenze/Nuova", "/Assenze/Nuova", new()
         {
             ["DipendenteId"] = _dipId.ToString(), ["Tipo"] = "Ferie", ["Dal"] = giorno.ToString("yyyy-MM-dd"), ["ApprovaSubito"] = "true",
         });
@@ -200,13 +200,13 @@ public sealed class AssenzeWebTests : IDisposable
         var richiesta = await _app.ConDb(db => db.RichiesteAssenza.SingleAsync());
         Assert.Equal(StatoRichiesta.InAttesa, richiesta.Stato);
 
-        var html = WebUtility.HtmlDecode(await studio.GetStringAsync("/Assenze"));
+        var html = WebUtility.HtmlDecode(await consulente.GetStringAsync("/Assenze"));
         Assert.Contains("In attesa dell'azienda", html);
-        Assert.DoesNotContain("modaleRifiuto", html); // nessun pulsante approva/rifiuta per lo studio
+        Assert.DoesNotContain("modaleRifiuto", html); // nessun pulsante approva/rifiuta per il consulente
 
-        r = await studio.InviaForm("/Assenze", $"/Assenze/Approva/{richiesta.Id}", new());
+        r = await consulente.InviaForm("/Assenze", $"/Assenze/Approva/{richiesta.Id}", new());
         Assert.Contains("/Account/AccessoNegato", r.RequestMessage!.RequestUri!.AbsolutePath);
-        r = await studio.InviaForm("/Assenze", $"/Assenze/Annulla/{richiesta.Id}", new());
+        r = await consulente.InviaForm("/Assenze", $"/Assenze/Annulla/{richiesta.Id}", new());
         Assert.Contains("/Account/AccessoNegato", r.RequestMessage!.RequestUri!.AbsolutePath);
         Assert.Equal(StatoRichiesta.InAttesa, (await _app.ConDb(db => db.RichiesteAssenza.SingleAsync())).Stato);
 
@@ -217,5 +217,24 @@ public sealed class AssenzeWebTests : IDisposable
         r = await hr.InviaForm("/Assenze", $"/Assenze/Approva/{richiesta.Id}", new());
         Assert.Contains("Richiesta approvata", await Testo(r));
         Assert.Empty(_app.ErroriServer);
+    }
+
+    [Fact]
+    public async Task Residui_di_tutto_il_personale_dalla_pagina_ferie_e_permessi()
+    {
+        var hr = await Prepara(Ruoli.Azienda);
+        Assert.Contains("Inserisci residui anno precedente", WebUtility.HtmlDecode(await hr.GetStringAsync("/Assenze")));
+        var anno = DateTime.Today.Year;
+        var pagina = WebUtility.HtmlDecode(await hr.GetStringAsync($"/Assenze/Residui?anno={anno}"));
+        Assert.Contains("righe[0].Ferie", pagina);
+
+        var r = await hr.InviaForm($"/Assenze/Residui?anno={anno}", "/Assenze/Residui", new()
+        {
+            ["anno"] = anno.ToString(), ["righe[0].DipendenteId"] = _dipId.ToString(), ["righe[0].Ferie"] = "12,5", ["righe[0].Rol"] = "-4",
+        });
+        Assert.Contains($"Residui al 1° gennaio {anno} salvati", WebUtility.HtmlDecode(await r.Content.ReadAsStringAsync()));
+        var saldi = await _app.ConDb(db => db.SaldiIniziali.Where(s => s.DipendenteId == _dipId && s.Anno == anno).ToListAsync());
+        Assert.Equal(12.5m, saldi.Single(s => s.Tipo == TipoAssenza.Ferie).Ore);
+        Assert.Equal(-4m, saldi.Single(s => s.Tipo == TipoAssenza.Rol).Ore);
     }
 }

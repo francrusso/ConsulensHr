@@ -116,6 +116,17 @@ public sealed class UtentiController(
     }
 
     [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> CambiaEmail(string id, string? email, string? ritorno)
+    {
+        var u = await Gestibile(id);
+        if (u is null) return NotFound();
+        var vecchia = u.Email;
+        if (await accessi.CambiaEmailAsync(u, email ?? "") is { } errore) Errore(errore);
+        else if (!string.Equals(vecchia, u.Email, StringComparison.OrdinalIgnoreCase)) Conferma($"Email di accesso cambiata in {u.Email}.");
+        return Torna(ritorno);
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> CambiaStato(string id, string? ritorno)
     {
         var u = await Gestibile(id);

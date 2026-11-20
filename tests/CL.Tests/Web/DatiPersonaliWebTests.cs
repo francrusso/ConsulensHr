@@ -108,21 +108,21 @@ public sealed class DatiPersonaliWebTests : IDisposable
 
         Assert.Contains("dichiarazione di veridicità", await Testo(await Passo(mario, "Conferma", new())));
         html = await Testo(await Passo(mario, "Conferma", new() { ["dichiarazione"] = "true" }));
-        Assert.Contains("I tuoi dati sono stati inviati allo studio", html);
+        Assert.Contains("I tuoi dati sono stati inviati al consulente", html);
 
-        // Portale libero; IBAN, telefono e residenza arrivati all'anagrafica usata dallo studio.
+        // Portale libero; IBAN, telefono e residenza arrivati all'anagrafica usata dal consulente.
         var assenze = await mario.GetAsync("/Assenze");
         Assert.Equal("/Assenze", assenze.RequestMessage!.RequestUri!.AbsolutePath);
         var (dip, profilo) = await _app.ConDb(async db => (await db.Dipendenti.SingleAsync(), await db.ProfiliDipendente.SingleAsync()));
         Assert.Equal("IT60X0542811101000000123456", dip.Iban!.Valore);
         Assert.Equal("333 1234567", dip.Telefono);
-        Assert.Equal("Via Toledo 10, 80134 Napoli (NA)", dip.Indirizzo);
+        Assert.Equal("Via Toledo 10, 80134 Napoli (NA)", dip.IndirizzoCompleto);
         Assert.Equal(2, profilo.Familiari.Count);
         Assert.Equal("NA", profilo.ProvinciaNascita);
 
-        // Modifica successiva: lo studio viene avvisato.
+        // Modifica successiva: il consulente viene avvisato.
         html = await Testo(await Passo(mario, "Residenza", new(Residenza) { ["Via"] = "Via Chiaia 3" }, "/DatiPersonali?passo=2"));
-        Assert.Contains("lo studio è stato avvisato", html);
+        Assert.Contains("il consulente è stato avvisato", html);
         Assert.Empty(_app.ErroriServer);
     }
 

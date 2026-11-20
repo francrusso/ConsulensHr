@@ -37,7 +37,7 @@ public sealed partial class AccessiWebTests : IDisposable
         {
             var a = new Azienda($"Azienda {piva}", PartitaIva.Parse(piva));
             var d = new Dipendente(a.Id, "Mario", "Rossi", CodiceFiscale.Parse("RSSMRA85T10A562S"), new DateOnly(1985, 12, 10));
-            d.AggiornaRecapiti(emailDipendente, null, null);
+            d.AggiornaRecapiti(emailDipendente, null);
             db.AddRange(a, d);
             await db.SaveChangesAsync();
             return (a.Id, d.Id);
@@ -46,9 +46,9 @@ public sealed partial class AccessiWebTests : IDisposable
 
     private async Task<HttpClient> Consulente()
     {
-        await _app.CreaUtente("studio@test.it", Ruoli.Consulente);
+        await _app.CreaUtente("consulente@test.it", Ruoli.Consulente);
         var c = _app.CreateClient();
-        await c.Accedi("studio@test.it");
+        await c.Accedi("consulente@test.it");
         return c;
     }
 
@@ -71,10 +71,10 @@ public sealed partial class AccessiWebTests : IDisposable
     {
         var (aziendaId, _) = await Dati();
         await Dati(null, "12345678903"); // seconda azienda, non deve vederla
-        var studio = await Consulente();
+        var consulente = await Consulente();
         await _app.CompletaProfilo(aziendaId); // il percorso guidato ha i suoi test
 
-        var r = await studio.InviaForm($"/Aziende/Dettaglio/{aziendaId}", "/Utenti/InvitaReferente", new()
+        var r = await consulente.InviaForm($"/Aziende/Dettaglio/{aziendaId}", "/Utenti/InvitaReferente", new()
         {
             ["aziendaId"] = aziendaId.ToString(), ["Nome"] = "Laura", ["Cognome"] = "Bianchi", ["Email"] = "laura@acme.test",
         });
@@ -130,8 +130,8 @@ public sealed partial class AccessiWebTests : IDisposable
     public async Task Dipendente_senza_email_non_si_puo_invitare()
     {
         var (_, dipId) = await Dati(emailDipendente: null);
-        var studio = await Consulente();
-        var r = await studio.InviaForm($"/Dipendenti/Dettaglio/{dipId}", "/Utenti/InvitaDipendente", new() { ["dipendenteId"] = dipId.ToString() });
+        var consulente = await Consulente();
+        var r = await consulente.InviaForm($"/Dipendenti/Dettaglio/{dipId}", "/Utenti/InvitaDipendente", new() { ["dipendenteId"] = dipId.ToString() });
         Assert.Contains("serve la sua email", await Testo(r));
         Assert.False(await _app.ConDb(db => db.Users.AnyAsync(u => u.DipendenteId == dipId)));
     }
@@ -140,21 +140,21 @@ public sealed partial class AccessiWebTests : IDisposable
     public async Task Utente_disattivato_non_entra_e_il_suo_link_non_vale()
     {
         var (aziendaId, _) = await Dati();
-        var studio = await Consulente();
-        var html = await Testo(await studio.InviaForm("/Utenti", "/Utenti/InvitaReferente", new()
+        var consulente = await Consulente();
+        var html = await Testo(await consulente.InviaForm("/Utenti", "/Utenti/InvitaReferente", new()
         {
             ["aziendaId"] = aziendaId.ToString(), ["Nome"] = "Laura", ["Cognome"] = "Bianchi", ["Email"] = "laura@acme.test",
         }));
         var link = Link(html);
         var id = await _app.ConDb(db => db.Users.Where(u => u.Email == "laura@acme.test").Select(u => u.Id).SingleAsync());
 
-        var r = await studio.InviaForm("/Utenti", $"/Utenti/CambiaStato/{id}", new() { ["ritorno"] = "/Utenti" });
+        var r = await consulente.InviaForm("/Utenti", $"/Utenti/CambiaStato/{id}", new() { ["ritorno"] = "/Utenti" });
         Assert.Contains("disattivato", await Testo(r));
         Assert.Contains("Link non valido", WebUtility.HtmlDecode(await _app.CreateClient().GetStringAsync(link)));
 
         // Il consulente non può disattivare sé stesso
-        var mio = await _app.ConDb(db => db.Users.Where(u => u.Email == "studio@test.it").Select(u => u.Id).SingleAsync());
-        r = await studio.InviaForm("/Utenti", $"/Utenti/CambiaStato/{mio}", new() { ["ritorno"] = "/Utenti" });
+        var mio = await _app.ConDb(db => db.Users.Where(u => u.Email == "consulente@test.it").Select(u => u.Id).SingleAsync());
+        r = await consulente.InviaForm("/Utenti", $"/Utenti/CambiaStato/{mio}", new() { ["ritorno"] = "/Utenti" });
         Assert.Contains("Non puoi disattivare il tuo stesso accesso", await Testo(r));
     }
 
@@ -178,7 +178,7 @@ public sealed partial class AccessiWebTests : IDisposable
         Assert.Contains("AccessoNegato", r.Headers.Location?.ToString()); // Forbid → pagina di accesso negato
         Assert.False(await _app.ConDb(db => db.Users.AnyAsync(u => u.Email == "x@b.test")));
 
-        // La pagina utenti dello studio è solo per i consulenti
+        // La pagina utenti del consulente è solo per i consulenti
         r = await hr.GetAsync("/Utenti");
         Assert.Contains("AccessoNegato", r.Headers.Location?.ToString());
     }
@@ -187,10 +187,10 @@ public sealed partial class AccessiWebTests : IDisposable
     public async Task Email_gia_usata_non_crea_un_secondo_accesso()
     {
         var (aziendaId, _) = await Dati();
-        var studio = await Consulente();
-        var r = await studio.InviaForm("/Utenti", "/Utenti/InvitaReferente", new()
+        var consulente = await Consulente();
+        var r = await consulente.InviaForm("/Utenti", "/Utenti/InvitaReferente", new()
         {
-            ["aziendaId"] = aziendaId.ToString(), ["Nome"] = "Studio", ["Cognome"] = "Doppio", ["Email"] = "studio@test.it",
+            ["aziendaId"] = aziendaId.ToString(), ["Nome"] = "Studio", ["Cognome"] = "Doppio", ["Email"] = "consulente@test.it",
         });
         Assert.Contains("Esiste già un accesso", await Testo(r));
     }
@@ -198,9 +198,9 @@ public sealed partial class AccessiWebTests : IDisposable
     [Fact]
     public async Task Password_dimenticata_non_rivela_se_l_email_esiste()
     {
-        await _app.CreaUtente("studio@test.it", Ruoli.Consulente);
+        await _app.CreaUtente("consulente@test.it", Ruoli.Consulente);
         var c = _app.CreateClient();
-        var esistente = await Testo(await c.InviaForm("/Account/PasswordDimenticata", "/Account/PasswordDimenticata", new() { ["Email"] = "studio@test.it" }));
+        var esistente = await Testo(await c.InviaForm("/Account/PasswordDimenticata", "/Account/PasswordDimenticata", new() { ["Email"] = "consulente@test.it" }));
         var inesistente = await Testo(await c.InviaForm("/Account/PasswordDimenticata", "/Account/PasswordDimenticata", new() { ["Email"] = "nessuno@test.it" }));
         const string Risposta = "corrisponde a un accesso attivo, riceverai a breve";
         Assert.Contains(Risposta, esistente);
@@ -212,14 +212,14 @@ public sealed partial class AccessiWebTests : IDisposable
     [Fact]
     public async Task Profilo_cambia_password_solo_con_quella_attuale()
     {
-        var studio = await Consulente();
-        var r = await studio.InviaForm("/Account/Profilo", "/Account/Profilo", new()
+        var consulente = await Consulente();
+        var r = await consulente.InviaForm("/Account/Profilo", "/Account/Profilo", new()
         {
             ["PasswordAttuale"] = "sbagliata-123", ["NuovaPassword"] = NuovaPassword, ["Conferma"] = NuovaPassword,
         });
         Assert.Contains("La password attuale non è corretta", await Testo(r));
 
-        r = await studio.InviaForm("/Account/Profilo", "/Account/Profilo", new()
+        r = await consulente.InviaForm("/Account/Profilo", "/Account/Profilo", new()
         {
             ["PasswordAttuale"] = AppFactory.PasswordTest, ["NuovaPassword"] = NuovaPassword, ["Conferma"] = NuovaPassword,
         });
@@ -227,6 +227,6 @@ public sealed partial class AccessiWebTests : IDisposable
 
         using var scope = _app.Services.CreateScope();
         var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-        Assert.True(await users.CheckPasswordAsync((await users.FindByEmailAsync("studio@test.it"))!, NuovaPassword));
+        Assert.True(await users.CheckPasswordAsync((await users.FindByEmailAsync("consulente@test.it"))!, NuovaPassword));
     }
 }

@@ -43,6 +43,9 @@ public sealed class AppFactory : WebApplicationFactory<Program>
             // Nessuna chiamata a VIES durante i test.
             services.RemoveAll<CL.Infrastructure.Registro.IRicercaPartitaIva>();
             services.AddSingleton<CL.Infrastructure.Registro.IRicercaPartitaIva, RegistroFinto>();
+            // Né a OpenStreetMap per i suggerimenti di indirizzo.
+            services.RemoveAll<CL.Infrastructure.Indirizzi.IRicercaIndirizzi>();
+            services.AddSingleton<CL.Infrastructure.Indirizzi.IRicercaIndirizzi, IndirizziFinti>();
         });
     }
 
@@ -173,4 +176,13 @@ internal sealed class RegistroFinto : CL.Infrastructure.Registro.IRicercaPartita
             "12345678903" => new CL.Infrastructure.Registro.RisultatoRicerca(CL.Infrastructure.Registro.EsitoRicerca.ServizioNonDisponibile),
             _ => new CL.Infrastructure.Registro.RisultatoRicerca(CL.Infrastructure.Registro.EsitoRicerca.NonTrovata),
         });
+}
+
+/// <summary>Suggerimenti di indirizzo finti: un solo indirizzo noto, "Via Roma 10" a Milano.</summary>
+internal sealed class IndirizziFinti : CL.Infrastructure.Indirizzi.IRicercaIndirizzi
+{
+    public Task<IReadOnlyList<CL.Infrastructure.Indirizzi.IndirizzoTrovato>> CercaAsync(string testo, CancellationToken ct = default) =>
+        Task.FromResult<IReadOnlyList<CL.Infrastructure.Indirizzi.IndirizzoTrovato>>(testo.Contains("roma", StringComparison.OrdinalIgnoreCase)
+            ? [new("Via Roma 10, 20121 Milano (MI)", "Via Roma 10", "20121", "Milano", "MI")]
+            : []);
 }

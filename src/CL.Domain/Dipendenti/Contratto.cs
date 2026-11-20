@@ -28,6 +28,19 @@ public static class TipoContrattoExtensions
         [TipoContratto.Collaborazione, TipoContratto.LavoroAutonomo, TipoContratto.PrestazioneOccasionale, TipoContratto.Tirocinio, TipoContratto.Altro];
 }
 
+/// <summary>Dove si svolge il lavoro: in sede, in parte da remoto (con i giorni in ufficio) o del tutto da remoto.</summary>
+public enum ModalitaLavoro { InPresenza, Ibrido, FullRemote }
+
+public static class ModalitaLavoroExtensions
+{
+    public static string Descrizione(this ModalitaLavoro m) => m switch
+    {
+        ModalitaLavoro.Ibrido => "Ibrido",
+        ModalitaLavoro.FullRemote => "Full-remote",
+        _ => "In presenza",
+    };
+}
+
 public enum TipoContratto
 {
     TempoIndeterminato,
@@ -45,7 +58,7 @@ public enum TipoContratto
 
 /// <summary>
 /// Rapporto di lavoro con le condizioni economiche e normative.
-/// Le spettanze annue di ferie/ROL/ex-festività sono in ore riferite al full-time, come da CCNL;
+/// Le spettanze annue di ferie e ROL sono in ore riferite al full-time, come da CCNL;
 /// per i part-time vengono riproporzionate con <see cref="SpettanzaAnnua"/>.
 /// </summary>
 public sealed class Contratto : Entity
@@ -57,6 +70,8 @@ public sealed class Contratto : Entity
     public string? Mansione { get; private set; }
     public DateOnly DataInizio { get; private set; }
     public DateOnly? DataFine { get; private set; }
+    /// <summary>Data della cessazione anticipata (dimissioni, licenziamento…); null se il contratto è arrivato a scadenza o è in corso.</summary>
+    public DateOnly? DataCessazione { get; private set; }
 
     /// <summary>Orario settimanale del full-time da CCNL (es. 40).</summary>
     public decimal OreSettimanaliFullTime { get; private set; }
@@ -70,15 +85,43 @@ public sealed class Contratto : Entity
 
     public decimal OreFerieAnnue { get; private set; }
     public decimal OreRolAnnue { get; private set; }
-    public decimal OreExFestivitaAnnue { get; private set; }
+
+    public ModalitaLavoro Modalita { get; private set; }
+    /// <summary>Giorni in ufficio a settimana, solo per la modalità ibrida.</summary>
+    public int? GiorniInUfficio { get; private set; }
+
+    /// <summary>Contratto firmato (PDF) nell'archivio privato.</summary>
+    public string? DocumentoChiave { get; private set; }
+    /// <summary>Nome del file come l'ha caricato l'utente, per il download.</summary>
+    public string? DocumentoNome { get; private set; }
+    public DateTime? DocumentoCaricatoIl { get; private set; }
 
     private Contratto() { } // EF Core
 
     internal Contratto(Guid dipendenteId, TipoContratto tipo, string ccnl, string livello,
         DateOnly dataInizio, DateOnly? dataFine, decimal oreSettimanaliFullTime, decimal percentualePartTime,
         int giorniLavorativiSettimana, decimal retribuzioneLordaAnnua, int mensilitaAnnue,
-        decimal oreFerieAnnue, decimal oreRolAnnue, decimal oreExFestivitaAnnue, string? mansione)
+        decimal oreFerieAnnue, decimal oreRolAnnue, string? mansione,
+        ModalitaLavoro modalita = ModalitaLavoro.InPresenza, int? giorniInUfficio = null)
     {
+        DipendenteId = dipendenteId;
+        Imposta(tipo, ccnl, livello, dataInizio, dataFine, oreSettimanaliFullTime, percentualePartTime, giorniLavorativiSettimana,
+            retribuzioneLordaAnnua, mensilitaAnnue, oreFerieAnnue, oreRolAnnue, mansione, modalita, giorniInUfficio);
+    }
+
+    /// <summary>Condizioni del contratto (alla registrazione o in una correzione successiva), con gli stessi controlli.</summary>
+    internal void Imposta(TipoContratto tipo, string ccnl, string livello,
+        DateOnly dataInizio, DateOnly? dataFine, decimal oreSettimanaliFullTime, decimal percentualePartTime,
+        int giorniLavorativiSettimana, decimal retribuzioneLordaAnnua, int mensilitaAnnue,
+        decimal oreFerieAnnue, decimal oreRolAnnue, string? mansione,
+        ModalitaLavoro modalita = ModalitaLavoro.InPresenza, int? giorniInUfficio = null)
+    {
+        if (modalita == ModalitaLavoro.Ibrido)
+        {
+            if (giorniInUfficio is not { } g) throw new DomainException("Per il lavoro ibrido indica i giorni in ufficio a settimana.");
+            if (g < 1 || g >= giorniLavorativiSettimana)
+                throw new DomainException($"I giorni in ufficio devono essere tra 1 e {giorniLavorativiSettimana - 1} (altrimenti è in presenza).");
+        }
         if (tipo == TipoContratto.TempoDeterminato && dataFine is null)
             throw new DomainException("Un contratto a tempo determinato richiede una data di fine.");
         if (dataFine is { } f && f < dataInizio)
@@ -91,8 +134,12 @@ public sealed class Contratto : Entity
             throw new DomainException("I giorni lavorativi settimanali devono essere 5 o 6.");
         if (mensilitaAnnue is < 12 or > 16)
             throw new DomainException("Le mensilità annue devono essere comprese tra 12 e 16.");
+        // Tutti i controlli prima di cambiare qualcosa: una correzione rifiutata lascia il contratto com'era.
+        if (tipo.IsSubordinato()) { Guard.NotEmpty(ccnl, "CCNL"); Guard.NotEmpty(livello, "Livello"); }
+        Guard.NonNegative(retribuzioneLordaAnnua, "Retribuzione lorda annua");
+        Guard.NonNegative(oreFerieAnnue, "Ore ferie annue");
+        Guard.NonNegative(oreRolAnnue, "Ore ROL annue");
 
-        DipendenteId = dipendenteId;
         Tipo = tipo;
         if (tipo.IsSubordinato())
         {
@@ -101,10 +148,10 @@ public sealed class Contratto : Entity
         }
         else
         {
-            // Rapporti esterni: CCNL e livello facoltativi, niente ferie/ROL/ex-festività da maturare.
+            // Rapporti esterni: CCNL e livello facoltativi, niente ferie né ROL da maturare.
             Ccnl = ccnl?.Trim() ?? "";
             Livello = livello?.Trim() ?? "";
-            (oreFerieAnnue, oreRolAnnue, oreExFestivitaAnnue) = (0, 0, 0);
+            (oreFerieAnnue, oreRolAnnue) = (0, 0);
         }
         Mansione = mansione?.Trim();
         DataInizio = dataInizio;
@@ -116,7 +163,10 @@ public sealed class Contratto : Entity
         MensilitaAnnue = mensilitaAnnue;
         OreFerieAnnue = Guard.NonNegative(oreFerieAnnue, "Ore ferie annue");
         OreRolAnnue = Guard.NonNegative(oreRolAnnue, "Ore ROL annue");
-        OreExFestivitaAnnue = Guard.NonNegative(oreExFestivitaAnnue, "Ore ex-festività annue");
+        Modalita = modalita;
+        GiorniInUfficio = modalita == ModalitaLavoro.Ibrido ? giorniInUfficio : null;
+        // Una data di fine cambiata a mano non è più quella della cessazione registrata.
+        if (DataCessazione is not null && DataCessazione != dataFine) DataCessazione = null;
     }
 
     public decimal OreSettimanali => Math.Round(OreSettimanaliFullTime * PercentualePartTime / 100m, 2);
@@ -131,16 +181,34 @@ public sealed class Contratto : Entity
     {
         Assenze.TipoAssenza.Ferie => OreFerieAnnue,
         Assenze.TipoAssenza.Rol => OreRolAnnue,
-        Assenze.TipoAssenza.ExFestivita => OreExFestivitaAnnue,
         _ => 0m,
     } * PercentualePartTime / 100m, 2);
 
-    public bool AttivoIl(DateOnly giorno) => giorno >= DataInizio && (DataFine is null || giorno <= DataFine);
+public void ImpostaDocumento(string chiave, string nomeFile, DateTime adesso)
+    {
+        DocumentoChiave = Guard.NotEmpty(chiave, "Documento");
+        var nome = Path.GetFileName(nomeFile ?? "").Trim();
+        DocumentoNome = string.IsNullOrEmpty(nome) ? "contratto.pdf" : nome.Length > 200 ? nome[..200] : nome;
+        DocumentoCaricatoIl = adesso;
+    }
+
+    /// <summary>Mansione svolta (es. "Designer"); vuota = non indicata.</summary>
+    public void ImpostaMansione(string? mansione)
+    {
+        var m = string.IsNullOrWhiteSpace(mansione) ? null : mansione.Trim();
+        if (m is { Length: > 150 }) throw new DomainException("Mansione troppo lunga (massimo 150 caratteri).");
+        Mansione = m;
+    }
+
+    public void RimuoviDocumento() => (DocumentoChiave, DocumentoNome, DocumentoCaricatoIl) = (null, null, null);
+
+        public bool AttivoIl(DateOnly giorno) => giorno >= DataInizio && (DataFine is null || giorno <= DataFine);
 
     internal void Chiudi(DateOnly dataFine)
     {
         if (dataFine < DataInizio)
             throw new DomainException("La data di chiusura precede l'inizio del contratto.");
         DataFine = dataFine;
+        DataCessazione = dataFine;
     }
 }

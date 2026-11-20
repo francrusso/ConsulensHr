@@ -349,3 +349,106 @@ td.elenco-vuoto { text-align: center; padding: 2.5rem 1rem !important; color: va
 /* Team e scadenze nell'elenco del personale */
 .team-elenco { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
 .scadenza-vicina { color: #b5651d; font-weight: 600; }
+
+/* Modifica del dipendente come il profilo di ConsulensNew: intestazione con foto e campi in griglia */
+.scheda-profilo .foto-profilo { width: 90px; height: 90px; border-radius: 50%; object-fit: cover; background: var(--consulens-canvas);
+    border: 2px solid #ead9c8; box-shadow: var(--bs-box-shadow-sm); }
+.scheda-profilo .azienda-profilo { color: #9a858d; font-size: 13px; }
+.scheda-profilo .nome-profilo { font-family: 'Quasimoda', 'Poppins', sans-serif; font-weight: 500; letter-spacing: .02em; }
+.scheda-profilo .campi-profilo { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px 24px; }
+.scheda-profilo .campi-profilo .campo-largo { grid-column: span 2; }
+.scheda-profilo .campi-profilo .form-label { font-family: 'Quasimoda', 'Poppins', sans-serif; text-transform: uppercase; font-size: 12.5px;
+    letter-spacing: .03em; color: var(--consulens-breadcrumb-active); margin-bottom: 6px; }
+.scheda-profilo .sezione-profilo { background: var(--consulens-canvas); border-color: var(--consulens-border); }
+.scheda-profilo .titolo-sezione-profilo { font-family: 'Quasimoda', 'Poppins', sans-serif; font-size: 1.1rem; font-weight: 500;
+    color: var(--consulens-breadcrumb-active); margin-bottom: 1rem; }
+@media (max-width: 1199.98px) { .scheda-profilo .campi-profilo { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 575.98px) { .scheda-profilo .campi-profilo { grid-template-columns: 1fr; } .scheda-profilo .campi-profilo .campo-largo { grid-column: auto; } }
+
+/* Scheda "Contratto" della modifica del dipendente */
+.scheda-profilo .valori-profilo dt { font-family: 'Quasimoda', 'Poppins', sans-serif; text-transform: uppercase; font-size: 12.5px; font-weight: 400;
+    letter-spacing: .03em; color: var(--consulens-muted); margin-bottom: 4px; }
+.scheda-profilo .valori-profilo dd { margin: 0; color: var(--consulens-breadcrumb-active); font-size: 15px; font-weight: 500; overflow-wrap: anywhere; }
+.documento-file { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border: 1px solid var(--consulens-border);
+    border-radius: 10px; background: var(--consulens-canvas); color: var(--consulens-breadcrumb-active); font-weight: 500; }
+.documento-file i { color: #98494E; font-size: 20px; }
+.documento-file:hover { border-color: #98494E; }
+.alert-success::after { -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='m8 12.5 2.8 2.8L16 10'/%3E%3C/svg%3E") center / contain no-repeat;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='m8 12.5 2.8 2.8L16 10'/%3E%3C/svg%3E") center / contain no-repeat; }
+.scheda-profilo .mansione-profilo { color: var(--consulens-breadcrumb-active); font-size: 13.5px; font-weight: 500; margin-top: 2px; }
+
+/* Residenza: suggerimenti sotto la via */
+.suggerimenti-indirizzo { max-height: 280px; overflow-y: auto; border: 1px solid var(--consulens-border); border-radius: 10px; box-shadow: 0 8px 24px rgba(81,45,56,.12); }
+.suggerimenti-indirizzo .dropdown-item { white-space: normal; font-size: 13.5px; padding: 8px 12px; color: var(--consulens-breadcrumb-active); }
+.suggerimenti-indirizzo .dropdown-item i { color: #98494E; }
+.suggerimenti-indirizzo .dropdown-item.active, .suggerimenti-indirizzo .dropdown-item:hover { background: var(--consulens-hover); color: var(--consulens-breadcrumb-active); }
+.btn-matita { border: 0; background: none; padding: 2px 4px; line-height: 1; color: var(--consulens-muted); border-radius: 6px; }
+.btn-matita:hover { color: #98494E; background: var(--consulens-hover); }
+#mansioneModifica:not(.d-none) { display: flex; }
+
+/* Scheda della persona: stessa pagina per vedere e modificare */
+.scheda-profilo:not(.in-modifica) .campo-modifica,
+.scheda-profilo:not(.in-modifica) .solo-modifica,
+.scheda-profilo.in-modifica .valore-campo,
+.scheda-profilo.in-modifica .solo-lettura { display: none !important; }
+.scheda-profilo .valore-campo { color: var(--consulens-breadcrumb-active); font-size: 15px; font-weight: 500; min-height: 22px; overflow-wrap: anywhere; }
+.scheda-profilo:not(.in-modifica) .campi-profilo .form-label { color: var(--consulens-muted); margin-bottom: 4px; }
+.scheda-profilo.in-modifica form.solo-modifica { display: flex; }
+.non-inserito { color: var(--consulens-breadcrumb-muted); font-weight: 400; font-style: italic; }
+.progresso-dati { height: 8px; max-width: 520px; background: var(--consulens-border); border-radius: 50rem; }
+.progresso-dati .progress-bar { background: #98494E; border-radius: 50rem; }
+/* CAP e provincia nella stessa colonna della griglia */
+.scheda-profilo .campo-doppio { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 0 12px; }
+.progresso-dati .progress-bar { height: 100%; }
+.avanzamento-passi { font-size: 12.5px; color: var(--consulens-muted); white-space: nowrap; }
+.avanzamento-passi strong { color: #98494E; font-weight: 600; }
+.avanzamento-data { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--consulens-breadcrumb-muted);
+    background: var(--consulens-canvas); border: 1px solid var(--consulens-border); border-radius: 50rem; padding: 2px 10px; white-space: nowrap; }
+
+/* Dati per le paghe: campi aperti dentro la card della scheda */
+.scheda-paghe:not(.in-modifica-paghe) .modulo-paghe,
+.scheda-paghe.in-modifica-paghe .solo-lettura-paghe { display: none !important; }
+.modulo-paghe .sottotitolo-paghe { font-family: 'Quasimoda', 'Poppins', sans-serif; font-size: .95rem; font-weight: 500; color: var(--consulens-breadcrumb-active);
+    margin: 1.5rem 0 .75rem; padding-top: 1rem; border-top: 1px solid var(--consulens-border); }
+.modulo-paghe .sottotitolo-paghe:first-of-type { margin-top: 0; padding-top: 0; border-top: 0; }
+.modulo-paghe .form-label { font-family: 'Quasimoda', 'Poppins', sans-serif; text-transform: uppercase; font-size: 12.5px; letter-spacing: .03em;
+    color: var(--consulens-breadcrumb-active); margin-bottom: 6px; }
+.modulo-paghe .campi-familiare { display: grid; grid-template-columns: 1fr 1.2fr 1.2fr 1.4fr 1fr .7fr auto; gap: 12px; align-items: start;
+    padding: 12px; border: 1px solid var(--consulens-border); border-radius: 12px; background: #fff; }
+@media (max-width: 1199.98px) { .modulo-paghe .campi-familiare { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 575.98px) { .modulo-paghe .campi-familiare { grid-template-columns: 1fr; } }
+.modulo-contratto .form-label { font-family: 'Quasimoda', 'Poppins', sans-serif; text-transform: uppercase; font-size: 12.5px; letter-spacing: .03em;
+    color: var(--consulens-breadcrumb-active); margin-bottom: 6px; }
+.scheda-profilo.in-modifica form.modulo-contratto { display: block; }
+
+/* Colonna "Contratto" nell'elenco del personale */
+.link-contratto { display: inline-flex; align-items: center; gap: 5px; font-weight: 500; color: #98494E; }
+.link-contratto i { font-size: 17px; }
+.contratto-mancante { display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; color: var(--consulens-breadcrumb-muted); }
+.contratto-mancante:hover { color: #98494E; }
+/* Con "Modifica dati" anche i dati per le paghe si aprono, con un solo "Salva" in fondo */
+.scheda-profilo.in-modifica .scheda-paghe .modulo-paghe { display: block !important; }
+.scheda-profilo.in-modifica .scheda-paghe .solo-lettura-paghe,
+.scheda-profilo.in-modifica .scheda-paghe .azioni-paghe { display: none !important; }
+.nota-paghe { font-size: 12.5px; color: var(--consulens-muted); margin: -4px 0 8px; }
+/* Riga del familiare: "Disabile" e cestino allineati ai campi, centrati in verticale */
+.modulo-paghe .azioni-familiare { align-self: end; display: flex; align-items: center; gap: 14px; height: var(--consulens-control-height, 44px); }
+.modulo-paghe .azioni-familiare .form-check { display: flex; align-items: center; gap: 6px; padding-left: 0; }
+.modulo-paghe .azioni-familiare .form-check-input { float: none; margin: 0; }
+.modulo-paghe .azioni-familiare .form-check-label { font-size: 14px; color: var(--consulens-description-text); }
+.btn-togli-familiare { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; flex: 0 0 40px;
+    border: 0; border-radius: 10px; background: #fbecee; color: #c0392b; font-size: 18px; transition: background-color .15s; }
+.btn-togli-familiare:hover { background: #f6d5da; color: #a93226; }
+.scheda-profilo.in-modifica .valore-campo.valore-fisso { display: flex !important; align-items: center; min-height: var(--consulens-control-height, 44px); }
+.accesso-modifica .form-label { font-family: 'Quasimoda', 'Poppins', sans-serif; text-transform: uppercase; font-size: 12.5px; letter-spacing: .03em;
+    color: var(--consulens-breadcrumb-active); margin-bottom: 6px; }
+.accesso-modifica .btn { min-height: var(--consulens-control-height, 44px); display: inline-flex; align-items: center; gap: 6px; }
+
+/* Card dei saldi ferie e ROL: icona colorata e titolo in maiuscoletto */
+.saldo-icona { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 10px; font-size: 18px;
+    color: color-mix(in srgb, var(--colore-saldo) 80%, #000); background: color-mix(in srgb, var(--colore-saldo) 16%, #fff); }
+.saldo-titolo { font-family: 'Quasimoda', 'Poppins', sans-serif; text-transform: uppercase; font-size: 13.5px; font-weight: 500; letter-spacing: .04em;
+    color: var(--consulens-breadcrumb-active); }
+.saldo-anno { font-size: 12px; color: var(--consulens-breadcrumb-muted); background: var(--consulens-canvas); border: 1px solid var(--consulens-border);
+    border-radius: 50rem; padding: 2px 10px; }
+.tabella-residui input.form-control { max-width: 160px; }

@@ -8,7 +8,7 @@
     {
         ("Ferie", a => a.Ferie),
         ("Malattia", a => a.Malattia),
-        ("ROL e permessi", a => a.Rol + a.ExFestivita),
+        ("ROL e permessi", a => a.Rol),
         ("Altre assenze", a => a.Altre),
     };
     var vuoto = Model.All(m => m.Ore.Totale == 0);

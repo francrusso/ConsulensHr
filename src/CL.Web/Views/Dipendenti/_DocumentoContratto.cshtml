@@ -1,0 +1,29 @@
+@model (Guid DipendenteId, CL.Domain.Dipendenti.Contratto Contratto)
+@{
+    var (idDip, c) = Model;
+    var idCampo = "documento-" + c.Id.ToString("N");
+}
+<div class="documento-contratto d-flex flex-wrap align-items-center gap-2">
+    @if (c.DocumentoChiave is not null)
+    {
+        <a asp-action="DocumentoContratto" asp-route-id="@idDip" asp-route-contrattoId="@c.Id" class="documento-file" target="_blank" rel="noopener">
+            <i class="ri-file-pdf-2-line" aria-hidden="true"></i>
+            <span>@c.DocumentoNome</span>
+        </a>
+        @if (c.DocumentoCaricatoIl is { } il) { <span class="small text-body-secondary">caricato il @il.ToLocalTime().ToString("dd/MM/yyyy")</span> }
+    }
+    else
+    {
+        <span class="text-body-secondary small">Nessun documento caricato.</span>
+    }
+    <form asp-action="CaricaContratto" asp-route-id="@idDip" asp-route-contrattoId="@c.Id" method="post" enctype="multipart/form-data" class="m-0 ms-auto gap-2 solo-modifica">
+        <input type="file" name="documento" id="@idCampo" accept="application/pdf" class="d-none" onchange="this.form.requestSubmit()" />
+        <label for="@idCampo" class="btn btn-outline-primary btn-sm mb-0">@(c.DocumentoChiave is null ? "Carica PDF" : "Sostituisci") <i class="ri-upload-2-line" aria-hidden="true"></i></label>
+    </form>
+    @if (c.DocumentoChiave is not null)
+    {
+        <form asp-action="RimuoviContratto" asp-route-id="@idDip" asp-route-contrattoId="@c.Id" method="post" class="m-0 solo-modifica" onsubmit="return confirm('Rimuovere il documento del contratto?');">
+            <button type="submit" class="btn btn-outline-danger btn-sm" aria-label="Rimuovi il documento"><i class="ri-delete-bin-line" aria-hidden="true"></i></button>
+        </form>
+    }
+</div>

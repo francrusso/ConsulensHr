@@ -35,6 +35,7 @@ builder.Services.Configure<Microsoft.Extensions.WebEncoders.WebEncoderOptions>(o
     o.TextEncoderSettings = new System.Text.Encodings.Web.TextEncoderSettings(System.Text.Unicode.UnicodeRanges.All));
 
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddMemoryCache(o => o.SizeLimit = 5000);
 builder.Services.AddScoped<UtenteCorrente>();
 builder.Services.AddScoped<ServizioSaldi>();
 builder.Services.AddScoped<ServizioAccessi>();

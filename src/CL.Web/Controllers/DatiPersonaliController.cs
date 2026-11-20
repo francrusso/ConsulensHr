@@ -112,6 +112,25 @@ public sealed class AltriDatiForm
     public static readonly string[] Documenti = ["Carta d'identità", "Passaporto", "Patente di guida"];
 }
 
+/// <summary>Tutti i dati per le paghe in un solo modulo: si modificano dalla scheda della persona.</summary>
+public sealed class DatiPagheForm
+{
+    public AnagraficaForm Anagrafica { get; set; } = new();
+    public ResidenzaForm Residenza { get; set; } = new();
+    public PagamentoForm Pagamento { get; set; } = new();
+    public FamigliaForm Famiglia { get; set; } = new();
+    public AltriDatiForm Altri { get; set; } = new();
+
+    public static DatiPagheForm Da(Dipendente d, ProfiloDipendente p) => new()
+    {
+        Anagrafica = (AnagraficaForm)DatiPersonaliController.FormDi(1, d, p)!,
+        Residenza = (ResidenzaForm)DatiPersonaliController.FormDi(2, d, p)!,
+        Pagamento = (PagamentoForm)DatiPersonaliController.FormDi(3, d, p)!,
+        Famiglia = (FamigliaForm)DatiPersonaliController.FormDi(4, d, p)!,
+        Altri = (AltriDatiForm)DatiPersonaliController.FormDi(5, d, p)!,
+    };
+}
+
 #endregion
 
 public sealed class DatiPersonaliViewModel
@@ -154,7 +173,7 @@ public sealed class DatiPersonaliController(
             || !Prova(() => profilo.ImpostaAnagrafica(new DatiAnagrafici(form.ComuneNascita!, form.ProvinciaNascita!, form.Cittadinanza!,
                 form.Telefono, form.EmailPersonale), utente.Email, Adesso)))
             return Mostra(dip, profilo, 1, form);
-        dip.AggiornaRecapiti(dip.Email, form.Telefono ?? dip.Telefono, dip.Indirizzo);
+        dip.AggiornaRecapiti(dip.Email, form.Telefono ?? dip.Telefono);
         dip.ImpostaIdentita(form.Genere, form.Pronomi);
         if (form.Foto is { Length: > 0 } file && await foto.SalvaAsync(dip, file) is { } errore)
         {
@@ -179,8 +198,7 @@ public sealed class DatiPersonaliController(
         var residenza = new Indirizzo(form.Via!, form.Cap!, form.Comune!, form.Provincia!);
         var domicilio = form.DomicilioDiverso ? new Indirizzo(form.DomicilioVia!, form.DomicilioCap!, form.DomicilioComune!, form.DomicilioProvincia!) : null;
         if (!Prova(() => profilo.ImpostaResidenza(residenza, domicilio, utente.Email, Adesso))) return Mostra(dip, profilo, 2, form);
-        var r = profilo.Residenza!;
-        dip.AggiornaRecapiti(dip.Email, dip.Telefono, $"{r.Via}, {r.Cap} {r.Comune} ({r.Provincia})");
+        dip.ImpostaResidenza(profilo.Residenza);
         return await SalvaEAvanza(dip, profilo, 2);
     }
 
@@ -194,7 +212,7 @@ public sealed class DatiPersonaliController(
         if (!Prova(() => iban = Iban.Parse(form.Iban!), nameof(form.Iban))
             || !Prova(() => profilo.ImpostaPagamento(iban!, form.IntestatarioConto, form.Tfr, form.FondoPensione, utente.Email, Adesso), nameof(form.FondoPensione)))
             return Mostra(dip, profilo, 3, form);
-        dip.ImpostaIban(iban); // l'IBAN dell'anagrafica è quello usato dallo studio
+        dip.ImpostaIban(iban); // l'IBAN dell'anagrafica è quello usato dal consulente
         return await SalvaEAvanza(dip, profilo, 3);
     }
 
@@ -254,7 +272,7 @@ public sealed class DatiPersonaliController(
         if (primaVolta) await Avvisa(dip, "ha completato i dati personali per le paghe");
         if (utente.IsDipendente && await signIn.UserManager.GetUserAsync(User) is { } io)
             await signIn.RefreshSignInAsync(io); // toglie il blocco del percorso guidato
-        Conferma(primaVolta ? "Grazie! I tuoi dati sono stati inviati allo studio." : "Dati aggiornati.");
+        Conferma(primaVolta ? "Grazie! I tuoi dati sono stati inviati al consulente." : "Dati aggiornati.");
         return utente.IsDipendente ? RedirectToAction("Index", "Home") : RedirectToAction("Dettaglio", "Dipendenti", new { id = dip.Id });
     }
 
@@ -279,9 +297,9 @@ public sealed class DatiPersonaliController(
         await Salva(profilo);
         if (profilo.Completato)
         {
-            // Modifica dopo il completamento: lo studio deve saperlo per aggiornare le paghe.
+            // Modifica dopo il completamento: il consulente deve saperlo per aggiornare le paghe.
             if (utente.IsDipendente) await Avvisa(dip, $"ha aggiornato i dati personali ({DatiPersonaliViewModel.Titoli[passo - 1].ToLower()})");
-            Conferma("Modifica salvata" + (utente.IsDipendente ? ": lo studio è stato avvisato." : "."));
+            Conferma("Modifica salvata" + (utente.IsDipendente ? ": il consulente è stato avvisato." : "."));
         }
         var prossimo = profilo.Completato ? ProfiloDipendente.UltimoPasso : passo + 1;
         return RedirectToAction(nameof(Index), new { dipendenteId = utente.IsDipendente ? (Guid?)null : dip.Id, passo = prossimo });
@@ -290,7 +308,7 @@ public sealed class DatiPersonaliController(
     private ViewResult Mostra(Dipendente dip, ProfiloDipendente profilo, int passo, object? form) =>
         View("Index", new DatiPersonaliViewModel { Dipendente = dip, Profilo = profilo, Passo = passo, Form = form, PerConto = !utente.IsDipendente });
 
-    private static object? FormDi(int passo, Dipendente d, ProfiloDipendente p) => passo switch
+    internal static object? FormDi(int passo, Dipendente d, ProfiloDipendente p) => passo switch
     {
         1 => new AnagraficaForm
         {
@@ -325,7 +343,7 @@ public sealed class DatiPersonaliController(
         _ => null,
     };
 
-    /// <summary>Avviso allo studio e ai referenti dell'azienda (in background).</summary>
+    /// <summary>Avviso al consulente e ai referenti dell'azienda (in background).</summary>
     private async Task Avvisa(Dipendente dip, string cosa)
     {
         var destinatari = await (

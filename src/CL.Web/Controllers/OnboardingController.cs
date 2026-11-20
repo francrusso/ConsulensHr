@@ -129,7 +129,7 @@ public sealed class PagheForm
     public string? ReferenteEmail { get; set; }
     [StringLength(30), Display(Name = "Telefono")]
     public string? ReferenteTelefono { get; set; }
-    [StringLength(2000), Display(Name = "Note per lo studio")]
+    [StringLength(2000), Display(Name = "Note per il consulente")]
     public string? NoteStudio { get; set; }
 }
 
@@ -142,15 +142,15 @@ public sealed class OnboardingViewModel
     public required ProfiloAzienda Profilo { get; init; }
     public required int Passo { get; init; }
     public object? Form { get; init; }
-    /// <summary>Lo studio che compila per conto dell'azienda (link e testi diversi).</summary>
+    /// <summary>Il consulente che compila per conto dell'azienda (link e testi diversi).</summary>
     public bool PerContoAzienda { get; init; }
 
     public static readonly string[] Titoli = ["Dati societari", "Sedi", "Legale rappresentante", "Contratto e posizioni", "Paghe e referente", "Riepilogo"];
 }
 
 /// <summary>
-/// Percorso guidato con cui l'azienda fornisce allo studio i dati per gestire le pratiche di lavoro.
-/// Obbligatorio per il referente al primo accesso; lo studio può consultarlo e compilarlo per conto dell'azienda.
+/// Percorso guidato con cui l'azienda fornisce al consulente i dati per gestire le pratiche di lavoro.
+/// Obbligatorio per il referente al primo accesso; il consulente può consultarlo e compilarlo per conto dell'azienda.
 /// </summary>
 [Authorize(Policy = Policy.GestionePersonale)]
 public sealed class OnboardingController(
@@ -277,7 +277,7 @@ public sealed class OnboardingController(
 
         if (utente.IsAzienda && await signIn.UserManager.GetUserAsync(User) is { } io)
             await signIn.RefreshSignInAsync(io); // toglie il blocco del percorso guidato dalla sessione
-        Conferma(primaVolta ? "Grazie! Il profilo dell'azienda è completo e lo studio è stato avvisato." : "Profilo aggiornato.");
+        Conferma(primaVolta ? "Grazie! Il profilo dell'azienda è completo e il consulente è stato avvisato." : "Profilo aggiornato.");
         return utente.IsConsulente ? RedirectToAction("Dettaglio", "Aziende", new { id = azienda.Id }) : RedirectToAction("Index", "Home");
     }
 
@@ -356,7 +356,7 @@ public sealed class OnboardingController(
         foreach (var email in consulenti.OfType<string>())
             coda.Accoda(new MessaggioEmail(email, $"Profilo completato: {azienda.RagioneSociale}",
                 $"""
-                <p>{nome} ha completato il profilo per lo studio (compilato da {WebUtility.HtmlEncode(profilo.CompletatoDa)}).</p>
+                <p>{nome} ha completato il profilo per il consulente (compilato da {WebUtility.HtmlEncode(profilo.CompletatoDa)}).</p>
                 <p>Dati societari, sedi, legale rappresentante, posizioni INPS/INAIL e referente paghe sono nella scheda dell'azienda:</p>
                 <p><a href="{link}">{link}</a></p>
                 <p>Consulens HR</p>

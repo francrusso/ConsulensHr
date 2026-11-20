@@ -1,0 +1,78 @@
+@model CL.Web.Controllers.ResiduiViewModel
+@inject UtenteCorrente Utente
+@{
+    ViewData["Title"] = "Residui anno precedente";
+    var ritorno = Context.Request.Path + Context.Request.QueryString;
+}
+<div class="breadcrumb-titolo d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+    <h1 class="titolo-pagina mb-0">@ViewData["Title"]</h1>
+</div>
+
+<form asp-action="Residui" method="get" class="invoice-filter-bar customer-filter-form mb-3">
+    <div class="invoice-filter-toolbar flex-wrap">
+        <div class="invoice-filter-client">
+            <div class="input-group">
+                <span class="input-group-text"><i class="ri-search-line" aria-hidden="true"></i></span>
+                <input type="search" name="q" value="@Model.Ricerca" class="form-control" placeholder="Cerca per nome o cognome" aria-label="Cerca per nome o cognome" />
+            </div>
+        </div>
+        <div>
+            <select name="anno" class="form-select" aria-label="Anno">
+                @for (var a = DateTime.Today.Year + 1; a >= DateTime.Today.Year - 3; a--) { <option value="@a" selected="@(a == Model.Anno)">Al 1° gennaio @a</option> }
+            </select>
+        </div>
+        @if (Model.Aziende is not null)
+        {
+            <div>
+                <select name="aziendaId" class="form-select" aria-label="Filtra per azienda" asp-items="Model.Aziende"><option value="">Tutte le aziende</option></select>
+            </div>
+        }
+        <div class="invoice-filter-actions"><button class="btn invoice-filter-submit" type="submit">Cerca <i class="ri-search-line" aria-hidden="true"></i></button></div>
+    </div>
+</form>
+<partial name="_ChipRicerca" />
+
+<p class="small text-body-secondary">Ore residue al 1° gennaio @Model.Anno, dal cedolino di dicembre o dal gestionale paghe. Possono essere negative.</p>
+
+<form asp-action="Residui" method="post">
+    <input type="hidden" name="anno" value="@Model.Anno" />
+    <input type="hidden" name="ritorno" value="@ritorno" />
+    <div class="card radius-15 table-responsive p-1 customer-results">
+        <table class="table mb-0 align-middle tabella-residui">
+            <thead>
+                <tr>
+                    <th scope="col">Persona</th>
+                    @if (Utente.IsConsulente) { <th scope="col">Azienda</th> }
+                    <th scope="col">Ferie (ore)</th>
+                    <th scope="col">ROL (ore)</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Righe.Count == 0)
+                {
+                    <tr><td colspan="4" class="elenco-vuoto"><span class="elenco-vuoto-icona" aria-hidden="true"><i class="ri-history-line"></i></span><div>Nessuna persona con un contratto nell'anno</div></td></tr>
+                }
+                @for (var i = 0; i < Model.Righe.Count; i++)
+                {
+                    var r = Model.Righe[i];
+                    <tr>
+                        <td data-label="Persona">
+                            <input type="hidden" name="righe[@i].DipendenteId" value="@r.DipendenteId" />
+                            <a asp-controller="Dipendenti" asp-action="Dettaglio" asp-route-id="@r.DipendenteId" asp-route-sezione="ferie" class="customer-name"><span>@r.Persona</span></a>
+                        </td>
+                        @if (Utente.IsConsulente) { <td data-label="Azienda">@r.Azienda</td> }
+                        <td data-label="Ferie (ore)"><input class="form-control" name="righe[@i].Ferie" type="text" inputmode="decimal" value="@r.Ferie.ToString("0.##")" aria-label="Residuo ferie di @r.Persona" /></td>
+                        <td data-label="ROL (ore)"><input class="form-control" name="righe[@i].Rol" type="text" inputmode="decimal" value="@r.Rol.ToString("0.##")" aria-label="Residuo ROL di @r.Persona" /></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    @if (Model.Righe.Count > 0)
+    {
+        <div class="d-flex justify-content-end gap-2 mt-3">
+            <a asp-action="Index" class="btn btn-outline-secondary">Annulla</a>
+            <button type="submit" class="btn btn-primary">Salva residui</button>
+        </div>
+    }
+</form>

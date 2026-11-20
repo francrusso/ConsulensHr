@@ -1,0 +1,31 @@
+@model (string Azione, string? Ricerca, Guid? AziendaId, List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>? Aziende, int? Anno, List<int>? Anni)
+@{ var (azione, ricerca, aziendaId, aziende, anno, anni) = Model; }
+<form asp-action="@azione" method="get" class="invoice-filter-bar customer-filter-form mb-3">
+    <div class="invoice-filter-toolbar flex-wrap">
+        <div class="invoice-filter-client">
+            <div class="input-group">
+                <span class="input-group-text"><i class="ri-search-line" aria-hidden="true"></i></span>
+                <input type="search" name="q" value="@ricerca" class="form-control" placeholder="Cerca per nome o cognome" aria-label="Cerca per nome o cognome" />
+            </div>
+        </div>
+        @if (anni is not null)
+        {
+            <div>
+                <select name="anno" class="form-select" aria-label="Anno d'imposta">
+                    @foreach (var a in anni) { <option value="@a" selected="@(a == anno)">Redditi @a</option> }
+                </select>
+            </div>
+        }
+        @if (aziende is not null)
+        {
+            <div>
+                <select name="aziendaId" class="form-select" aria-label="Filtra per azienda">
+                    <option value="">Tutte le aziende</option>
+                    @foreach (var a in aziende) { <option value="@a.Value" selected="@a.Selected">@a.Text</option> }
+                </select>
+            </div>
+        }
+        <div class="invoice-filter-actions"><button class="btn invoice-filter-submit" type="submit">Cerca <i class="ri-search-line" aria-hidden="true"></i></button></div>
+    </div>
+</form>
+<partial name="_ChipRicerca" />

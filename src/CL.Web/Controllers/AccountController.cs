@@ -91,7 +91,7 @@ public sealed class AccountController(SignInManager<ApplicationUser> signIn, Use
         var utente = await users.FindByEmailAsync(model.Email);
         if (utente is { Attivo: false })
         {
-            ModelState.AddModelError("", "Utente disattivato. Contatta lo studio.");
+            ModelState.AddModelError("", "Utente disattivato. Contatta il consulente.");
             return View(model);
         }
 

@@ -65,23 +65,30 @@ public sealed class ServizioAccessi(
         if (await users.FindByEmailAsync(indirizzo) is not null)
             return EsitoInvito.Fallito($"Esiste già un accesso con l'email {indirizzo}.");
 
-        var utente = new ApplicationUser
+        // Con i nuovi tentativi automatici la transazione va dentro la strategia di esecuzione: se la connessione cade
+        // a metà si riparte da capo (utente nuovo), senza lasciare accessi creati a metà.
+        ApplicationUser utente = null!;
+        string? errore = null;
+        await db.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
         {
-            UserName = indirizzo, Email = indirizzo, Nome = nome.Trim(), Cognome = cognome.Trim(),
-            AziendaId = aziendaId, DipendenteId = dipendenteId,
-        };
-
-        await using var tx = await db.Database.BeginTransactionAsync();
-        var creato = await users.CreateAsync(utente); // senza password: la sceglierà dal link
-        if (!creato.Succeeded) return EsitoInvito.Fallito(string.Join(" ", creato.Errors.Select(e => e.Description)));
-        await users.AddToRoleAsync(utente, ruolo);
-
-        if (dipendenteId is { } d && await db.Dipendenti.FindAsync(d) is { } dip)
-        {
-            dip.CollegaUtente(utente.Id);
-            await db.SaveChangesAsync();
-        }
-        await tx.CommitAsync();
+            db.ChangeTracker.Clear();
+            utente = new ApplicationUser
+            {
+                UserName = indirizzo, Email = indirizzo, Nome = nome.Trim(), Cognome = cognome.Trim(),
+                AziendaId = aziendaId, DipendenteId = dipendenteId,
+            };
+            await using var tx = await db.Database.BeginTransactionAsync();
+            var creato = await users.CreateAsync(utente); // senza password: la sceglierà dal link
+            if (!creato.Succeeded) { errore = string.Join(" ", creato.Errors.Select(e => e.Description)); return; }
+            await users.AddToRoleAsync(utente, ruolo);
+            if (dipendenteId is { } d && await db.Dipendenti.FindAsync(d) is { } dip)
+            {
+                dip.CollegaUtente(utente.Id);
+                await db.SaveChangesAsync();
+            }
+            await tx.CommitAsync();
+        });
+        if (errore is not null) return EsitoInvito.Fallito(errore);
 
         return await InviaLinkAsync(utente, invito: true);
     }
@@ -99,7 +106,7 @@ public sealed class ServizioAccessi(
         var href = WebUtility.HtmlEncode(url);
         var (oggetto, testo) = invito
             ? ("Il tuo accesso a Consulens HR",
-               "lo studio ti ha creato un accesso a Consulens HR, dove puoi consultare i tuoi dati, le ferie e i permessi.<br>Per attivarlo scegli la tua password")
+               "il consulente ti ha creato un accesso a Consulens HR, dove puoi consultare i tuoi dati, le ferie e i permessi.<br>Per attivarlo scegli la tua password")
             : ("Reimposta la password di Consulens HR",
                "abbiamo ricevuto una richiesta di reimpostazione della password. Se non l'hai fatta tu puoi ignorare questa email.<br>Per scegliere una nuova password");
 
@@ -122,6 +129,38 @@ public sealed class ServizioAccessi(
         if (config["App:UrlPubblico"] is { Length: > 0 } baseUrl) return baseUrl.TrimEnd('/') + percorso;
         var req = http.HttpContext?.Request ?? throw new InvalidOperationException("Serve una richiesta HTTP per comporre il link.");
         return $"{req.Scheme}://{req.Host}{req.PathBase}{percorso}";
+    }
+
+    /// <summary>
+    /// Nuova email di accesso (è anche il nome utente). Le sessioni aperte decadono; la persona riceve un avviso al nuovo indirizzo.
+    /// Se l'anagrafica del dipendente usava la vecchia email, si aggiorna anche quella.
+    /// </summary>
+    public async Task<string?> CambiaEmailAsync(ApplicationUser utente, string nuova)
+    {
+        nuova = (nuova ?? "").Trim();
+        if (!new System.ComponentModel.DataAnnotations.EmailAddressAttribute().IsValid(nuova) || nuova.Length == 0) return "Email non valida.";
+        if (string.Equals(utente.Email, nuova, StringComparison.OrdinalIgnoreCase)) return null;
+        if (await users.FindByEmailAsync(nuova) is not null) return $"Esiste già un accesso con l'email {nuova}.";
+
+        var vecchia = utente.Email;
+        var confermata = utente.EmailConfirmed;
+        utente.Email = nuova;
+        utente.UserName = nuova;
+        utente.EmailConfirmed = confermata; // l'indirizzo lo indica chi gestisce il personale: la persona non deve riattivarsi
+        var esito = await users.UpdateAsync(utente);
+        if (!esito.Succeeded) return string.Join(" ", esito.Errors.Select(e => e.Description));
+        await users.UpdateSecurityStampAsync(utente);
+
+        if (utente.DipendenteId is { } d && await db.Dipendenti.FindAsync(d) is { } dip
+            && string.Equals(dip.Email, vecchia, StringComparison.OrdinalIgnoreCase))
+        {
+            dip.AggiornaRecapiti(nuova, dip.Telefono);
+            await db.SaveChangesAsync();
+        }
+        var nome = WebUtility.HtmlEncode(string.IsNullOrWhiteSpace(utente.Nome) ? nuova : utente.Nome);
+        await email.InviaAsync(nuova, "La tua email di accesso a Consulens HR è cambiata",
+            $"<p>Ciao {nome},</p><p>da ora per entrare in Consulens HR usa questo indirizzo: {WebUtility.HtmlEncode(nuova)}. La password resta la stessa.</p><p>Consulens HR</p>");
+        return null;
     }
 
     public async Task<bool> ImpostaAttivoAsync(ApplicationUser utente, bool attivo)

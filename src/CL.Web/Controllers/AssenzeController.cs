@@ -47,6 +47,24 @@ public sealed record RichiestaRiga(
     Guid Id, Guid DipendenteId, string Dipendente, string Azienda, TipoAssenza Tipo, DateOnly Dal, DateOnly Al,
     bool AOre, decimal Ore, StatoRichiesta Stato, DateTime RichiestaIl, string? Note, string? DecisaDa, string? MotivoRifiuto);
 
+public sealed record RigaResidui(Guid DipendenteId, string Persona, string Azienda, decimal Ferie, decimal Rol);
+
+public sealed class ResiduoForm
+{
+    public Guid DipendenteId { get; set; }
+    public decimal? Ferie { get; set; }
+    public decimal? Rol { get; set; }
+}
+
+public sealed class ResiduiViewModel
+{
+    public required List<RigaResidui> Righe { get; init; }
+    public int Anno { get; init; }
+    public string? Ricerca { get; init; }
+    public Guid? AziendaId { get; init; }
+    public List<SelectListItem>? Aziende { get; init; }
+}
+
 public sealed class AssenzeViewModel
 {
     public required List<RichiestaRiga> Richieste { get; init; }
@@ -171,7 +189,7 @@ public sealed class AssenzeController(AppDbContext db, UtenteCorrente utente, Se
                 form.AOre ? form.Ore : null, disponibile, form.Note, form.ProtocolloCertificato)))
             return await MostraForm(form);
 
-        // Solo l'azienda decide: se registra lo studio, ferie e permessi restano in attesa del referente.
+        // Solo l'azienda decide: se registra il consulente, ferie e permessi restano in attesa del referente.
         if (utente.IsAzienda && form.ApprovaSubito && richiesta!.Stato == StatoRichiesta.InAttesa)
             richiesta.Approva(utente.Email, AdessoUtc);
 
@@ -184,7 +202,7 @@ public sealed class AssenzeController(AppDbContext db, UtenteCorrente utente, Se
             : $"Richiesta di {richiesta.Tipo.Descrizione().ToLower()} inviata ({richiesta.Ore:0.##} ore): in attesa di approvazione dell'azienda.");
         return utente.IsDipendente
             ? RedirectToAction(nameof(Index))
-            : RedirectToAction("Dettaglio", "Dipendenti", new { id = dip.Id });
+            : RedirectToAction("Dettaglio", "Dipendenti", new { id = dip.Id, sezione = "ferie" });
     }
 
     [HttpPost, ValidateAntiForgeryToken]
@@ -232,14 +250,64 @@ public sealed class AssenzeController(AppDbContext db, UtenteCorrente utente, Se
         return Torna(ritorno);
     }
 
+    /// <summary>Residui di ferie e ROL al 1° gennaio per tutto il personale dipendente (dal cedolino di dicembre o dal gestionale paghe).</summary>
+    [Authorize(Policy = Policy.GestionePersonale)]
+    public async Task<IActionResult> Residui(int? anno, Guid? aziendaId, string? q)
+    {
+        var a = anno ?? Oggi.Year;
+        var (inizio, fine) = Filtri.Anno(a);
+        var esterni = TipoContrattoExtensions.Esterni.ToList();
+        var persone = utente.Filtra(db.Dipendenti.AsNoTracking().IgnoreAutoIncludes())
+            .Where(d => db.Contratti.Any(c => c.DipendenteId == d.Id && !esterni.Contains(c.Tipo) && c.DataInizio <= fine && (c.DataFine == null || c.DataFine >= inizio)));
+        if (utente.IsConsulente && aziendaId is { } az) persone = persone.Where(d => d.AziendaId == az);
+        if (!string.IsNullOrWhiteSpace(q))
+        {
+            var t = q.Trim().ToLower();
+            persone = persone.Where(d => d.Cognome.ToLower().Contains(t) || d.Nome.ToLower().Contains(t));
+        }
+        var righe = await (
+            from d in persone
+            join az2 in db.Aziende.AsNoTracking() on d.AziendaId equals az2.Id
+            orderby d.Cognome, d.Nome
+            select new RigaResidui(d.Id, d.Cognome + " " + d.Nome, az2.RagioneSociale,
+                db.SaldiIniziali.Where(s => s.DipendenteId == d.Id && s.Anno == a && s.Tipo == TipoAssenza.Ferie).Select(s => s.Ore).FirstOrDefault(),
+                db.SaldiIniziali.Where(s => s.DipendenteId == d.Id && s.Anno == a && s.Tipo == TipoAssenza.Rol).Select(s => s.Ore).FirstOrDefault()))
+            .ToListAsync();
+        return View(new ResiduiViewModel
+        {
+            Righe = righe, Anno = a, Ricerca = q, AziendaId = aziendaId,
+            Aziende = utente.IsConsulente
+                ? await db.Aziende.AsNoTracking().OrderBy(x => x.RagioneSociale).Select(x => new SelectListItem(x.RagioneSociale, x.Id.ToString(), x.Id == aziendaId)).ToListAsync()
+                : null,
+        });
+    }
+
+    [HttpPost, ValidateAntiForgeryToken, Authorize(Policy = Policy.GestionePersonale)]
+    public async Task<IActionResult> Residui(int anno, List<ResiduoForm> righe, string? ritorno)
+    {
+        var ids = righe.Select(r => r.DipendenteId).ToList();
+        var visibili = await utente.Filtra(db.Dipendenti).Where(d => ids.Contains(d.Id)).Select(d => d.Id).ToListAsync();
+        var esistenti = await db.SaldiIniziali.Where(s => visibili.Contains(s.DipendenteId) && s.Anno == anno).ToListAsync();
+        foreach (var r in righe.Where(r => visibili.Contains(r.DipendenteId)))
+            foreach (var (tipo, ore) in new[] { (TipoAssenza.Ferie, r.Ferie), (TipoAssenza.Rol, r.Rol) })
+            {
+                var s = esistenti.FirstOrDefault(x => x.DipendenteId == r.DipendenteId && x.Tipo == tipo);
+                if (s is null) { if (ore is { } o && o != 0) db.SaldiIniziali.Add(new SaldoIniziale(r.DipendenteId, anno, tipo, o)); }
+                else s.Rettifica(ore ?? 0);
+            }
+        await db.SaveChangesAsync();
+        Conferma($"Residui al 1° gennaio {anno} salvati.");
+        return Url.IsLocalUrl(ritorno) ? LocalRedirect(ritorno) : RedirectToAction(nameof(Residui), new { anno });
+    }
+
     /// <summary>Residuo dell'anno precedente (o saldo di partenza dal gestionale paghe).</summary>
     [HttpPost, ValidateAntiForgeryToken, Authorize(Policy = Policy.GestionePersonale)]
-    public async Task<IActionResult> ImpostaResidui(Guid dipendenteId, int anno, decimal? ferie, decimal? rol, decimal? exFestivita)
+    public async Task<IActionResult> ImpostaResidui(Guid dipendenteId, int anno, decimal? ferie, decimal? rol)
     {
         if (!await utente.Filtra(db.Dipendenti).AnyAsync(d => d.Id == dipendenteId)) return NotFound();
         var esistenti = await db.SaldiIniziali.Where(s => s.DipendenteId == dipendenteId && s.Anno == anno).ToListAsync();
 
-        foreach (var (tipo, ore) in new[] { (TipoAssenza.Ferie, ferie), (TipoAssenza.Rol, rol), (TipoAssenza.ExFestivita, exFestivita) })
+        foreach (var (tipo, ore) in new[] { (TipoAssenza.Ferie, ferie), (TipoAssenza.Rol, rol) })
         {
             var s = esistenti.FirstOrDefault(x => x.Tipo == tipo);
             if (s is null) db.SaldiIniziali.Add(new SaldoIniziale(dipendenteId, anno, tipo, ore ?? 0));
@@ -247,12 +315,12 @@ public sealed class AssenzeController(AppDbContext db, UtenteCorrente utente, Se
         }
         await db.SaveChangesAsync();
         Conferma($"Residui di inizio {anno} salvati.");
-        return RedirectToAction("Dettaglio", "Dipendenti", new { id = dipendenteId });
+        return RedirectToAction("Dettaglio", "Dipendenti", new { id = dipendenteId, sezione = "ferie" });
     }
 
     /// <summary>
     /// Richiesta che l'utente può approvare o rifiutare: il referente per tutta la propria azienda, un dipendente
-    /// solo se l'organigramma lo indica come responsabile del richiedente. Lo studio non decide.
+    /// solo se l'organigramma lo indica come responsabile del richiedente. Il consulente non decide.
     /// </summary>
     private async Task<RichiestaAssenza?> DaDecidere(Guid id)
     {
@@ -269,7 +337,7 @@ public sealed class AssenzeController(AppDbContext db, UtenteCorrente utente, Se
         return db.RichiesteAssenza.FirstOrDefaultAsync(r => r.Id == id && ids.Contains(r.DipendenteId));
     }
 
-    /// <summary>Lo studio annulla solo ciò che non richiede la decisione dell'azienda (es. malattia registrata per errore).</summary>
+    /// <summary>Il consulente annulla solo ciò che non richiede la decisione dell'azienda (es. malattia registrata per errore).</summary>
     private bool PuoAnnullare(TipoAssenza tipo) => !utente.IsConsulente || !tipo.RichiedeApprovazione();
 
     private string PrimoErrore() => ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).FirstOrDefault() ?? "Operazione non riuscita.";

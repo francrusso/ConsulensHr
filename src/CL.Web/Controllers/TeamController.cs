@@ -90,7 +90,7 @@ public sealed class OrganigrammaViewModel
 
 /// <summary>
 /// Organigramma dell'azienda: team con gerarchia e responsabile, posizione e responsabile diretto dei dipendenti.
-/// Lo gestiscono il referente (la propria azienda) e lo studio (per conto di qualsiasi azienda).
+/// Lo gestiscono il referente (la propria azienda) e il consulente (per conto di qualsiasi azienda).
 /// </summary>
 [Authorize(Policy = Policy.GestionePersonale)]
 public sealed class TeamController(AppDbContext db, UtenteCorrente utente, ServizioOrganigramma organigramma, TimeProvider clock) : AppController

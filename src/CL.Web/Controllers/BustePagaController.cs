@@ -36,7 +36,7 @@ public sealed class CaricaBusteForm
 }
 
 /// <summary>
-/// Cedolini: li carica e pubblica lo studio; il referente vede quelli della propria azienda;
+/// Cedolini: li carica e pubblica il consulente; il referente vede quelli della propria azienda;
 /// il dipendente vede solo i propri, una volta pubblicati (la prima apertura vale come consegna).
 /// </summary>
 [Authorize]
@@ -96,7 +96,7 @@ public sealed class BustePagaController(
     public async Task<IActionResult> CaricaPerDipendente(Guid dipendenteId, int anno, int mese, TipoCedolino tipo,
         decimal? lordo, decimal? netto, bool pubblica, IFormFile? file)
     {
-        var ritorno = Url.Action("Dettaglio", "Dipendenti", new { id = dipendenteId })!;
+        var ritorno = Url.Action("Dettaglio", "Dipendenti", new { id = dipendenteId, sezione = "buste" })!;
         var dip = await db.Dipendenti.AsNoTracking().IgnoreAutoIncludes().FirstOrDefaultAsync(d => d.Id == dipendenteId);
         if (dip is null) return NotFound();
         if (file is null)

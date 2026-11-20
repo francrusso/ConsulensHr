@@ -130,20 +130,20 @@ public sealed class OnboardingWebTests : IDisposable
     public async Task Lo_studio_vede_lo_stato_e_puo_compilare_per_conto_dell_azienda()
     {
         await ReferenteNuovo();
-        await _app.CreaUtente("studio@test.it", Ruoli.Consulente);
-        var studio = _app.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = true });
-        await studio.Accedi("studio@test.it");
+        await _app.CreaUtente("consulente@test.it", Ruoli.Consulente);
+        var consulente = _app.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = true });
+        await consulente.Accedi("consulente@test.it");
 
-        var scheda = WebUtility.HtmlDecode(await studio.GetStringAsync($"/Aziende/Dettaglio/{_aziendaId}"));
+        var scheda = WebUtility.HtmlDecode(await consulente.GetStringAsync($"/Aziende/Dettaglio/{_aziendaId}"));
         Assert.Contains("Non iniziato", scheda);
-        Assert.Contains("Profilo da completare", WebUtility.HtmlDecode(await studio.GetStringAsync("/Aziende")));
+        Assert.Contains("Profilo da completare", WebUtility.HtmlDecode(await consulente.GetStringAsync("/Aziende")));
 
         var pagina = $"/Onboarding?aziendaId={_aziendaId}";
-        var html = await Testo(await Passo(studio, "Societari", new(Societari) { ["aziendaId"] = _aziendaId.ToString() }, pagina));
+        var html = await Testo(await Passo(consulente, "Societari", new(Societari) { ["aziendaId"] = _aziendaId.ToString() }, pagina));
         Assert.Contains("Profilo di Acme S.r.l.", html);
         Assert.Contains("2. Sedi", html);
 
-        scheda = WebUtility.HtmlDecode(await studio.GetStringAsync($"/Aziende/Dettaglio/{_aziendaId}"));
+        scheda = WebUtility.HtmlDecode(await consulente.GetStringAsync($"/Aziende/Dettaglio/{_aziendaId}"));
         Assert.Contains("In compilazione", scheda);
         Assert.Contains("passo 2 di 6", scheda);
     }

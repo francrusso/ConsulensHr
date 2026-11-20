@@ -3,7 +3,7 @@ using CL.Domain.ValueObjects;
 
 namespace CL.Domain.Aziende;
 
-/// <summary>Azienda cliente dello studio di consulenza del lavoro.</summary>
+/// <summary>Azienda cliente del consulente di consulenza del lavoro.</summary>
 public sealed class Azienda : Entity
 {
     public string RagioneSociale { get; private set; } = null!;

@@ -91,7 +91,7 @@ public sealed class PersistenzaTests : IDisposable
         using (var db = NuovoContesto())
         {
             var r = db.RichiesteAssenza.Single();
-            r.Approva("consulente@studio.test", Fixture.Adesso);
+            r.Approva("consulente@consulente.test", Fixture.Adesso);
             db.BustePaga.Single().Pubblica(Fixture.Adesso);
             db.SaveChanges();
         }

@@ -1,3 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <!-- Nessuna dipendenza esterna: il dominio resta testabile e portabile. -->
+  <ItemGroup>
+    <!-- Elenco ufficiale ISTAT dei comuni con la sigla della provincia. -->
+    <EmbeddedResource Include="ValueObjects\comuni.csv" LogicalName="CL.Domain.comuni.csv" />
+  </ItemGroup>
 </Project>

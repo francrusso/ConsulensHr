@@ -9,7 +9,6 @@
 
 <div class="breadcrumb-titolo d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
     <div>
-        <a asp-action="Index" class="small text-body-secondary"><i class="ri-arrow-left-s-line" aria-hidden="true"></i> Aziende</a>
         <h1 class="titolo-pagina mb-0 d-flex align-items-center gap-2">
             @if (Model.LogoChiave is not null) { <img src="@Url.Action("Logo", new { id = Model.Id })" alt="" class="logo-azienda" /> }
             @Model.RagioneSociale
@@ -25,9 +24,9 @@
     </div>
 </div>
 
-<section class="card radius-15 p-3 mb-3 d-flex flex-row flex-wrap align-items-center justify-content-between gap-2" aria-label="Profilo azienda per lo studio">
+<section class="card radius-15 p-3 mb-3 d-flex flex-row flex-wrap align-items-center justify-content-between gap-2" aria-label="Profilo azienda per il consulente">
     <div>
-        <h2 class="h6 mb-1">Profilo per lo studio</h2>
+        <h2 class="h6 mb-1">Profilo per il consulente</h2>
         @if (profilo?.Completato == true)
         {
             <p class="small mb-0"><span class="badge bg-success">Completo</span> Compilato il @profilo.CompletatoIl!.Value.ToLocalTime().ToString("dd/MM/yyyy") da @profilo.CompletatoDa: dati societari, sedi, legale rappresentante, INPS/INAIL e referente paghe.</p>

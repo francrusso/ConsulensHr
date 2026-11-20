@@ -1,0 +1,99 @@
+@model CL.Web.Controllers.ElencoDocumentiViewModel<CL.Web.Controllers.RigaCu>
+@inject UtenteCorrente Utente
+@{
+    ViewData["Title"] = Utente.IsDipendente ? "Le mie CU" : "Certificazioni Uniche";
+    var gestore = !Utente.IsDipendente;
+    var ritorno = Context.Request.Path + Context.Request.QueryString;
+    var mie = ViewBag.Mie as List<CL.Domain.Documenti.CertificazioneUnica>;
+}
+<div class="breadcrumb-titolo d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+    <h1 class="titolo-pagina mb-0">@ViewData["Title"]</h1>
+</div>
+
+@if (mie is not null)
+{
+    <div class="card radius-15 table-responsive p-1 customer-results">
+        <table class="table mb-0">
+            <thead><tr><th scope="col">Redditi dell'anno</th><th scope="col">Documento</th><th scope="col">Disponibile dal</th></tr></thead>
+            <tbody>
+                @if (mie.Count == 0)
+                {
+                    <tr><td colspan="3" class="elenco-vuoto"><span class="elenco-vuoto-icona" aria-hidden="true"><i class="ri-file-shield-2-line"></i></span><div>Nessuna CU disponibile</div></td></tr>
+                }
+                @foreach (var c in mie)
+                {
+                    <tr>
+                        <td data-label="Redditi dell'anno">@c.AnnoImposta</td>
+                        <td data-label="Documento"><a asp-action="ApriCu" asp-route-id="@c.Id" target="_blank" rel="noopener" class="link-contratto"><i class="ri-file-pdf-2-line" aria-hidden="true"></i> CU @(c.AnnoImposta + 1)</a></td>
+                        <td data-label="Disponibile dal">@c.CaricataIl.ToLocalTime().ToString("dd/MM/yyyy")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <partial name="_Filtri" model="(nameof(CL.Web.Controllers.DocumentiController.Cu), Model.Ricerca, Model.AziendaId, Model.Aziende, (int?)Model.Anno, Model.Anni)" />
+    <p class="small text-body-secondary">CU @(Model.Anno + 1) sui redditi @Model.Anno: @Model.Righe.Count(r => r.CuId is not null) caricate su @Model.Righe.Count.</p>
+
+    <div class="card radius-15 table-responsive table-actions-responsive p-1 customer-results">
+        <table class="table mb-0 align-middle">
+            <thead>
+                <tr>
+                    <th scope="col">Persona</th>
+                    @if (Utente.IsConsulente) { <th scope="col">Azienda</th> }
+                    <th scope="col">CU @(Model.Anno + 1)</th>
+                    <th scope="col">Caricata il</th>
+                    <th scope="col">Vista dalla persona</th>
+                    <th scope="col" class="text-end">Azioni</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Righe.Count == 0)
+                {
+                    <tr><td colspan="6" class="elenco-vuoto"><span class="elenco-vuoto-icona" aria-hidden="true"><i class="ri-file-shield-2-line"></i></span><div>Nessuna persona trovata</div></td></tr>
+                }
+                @foreach (var r in Model.Righe)
+                {
+                    var idCampo = "cu-" + r.DipendenteId.ToString("N");
+                    <tr>
+                        <td data-label="Persona"><a asp-controller="Dipendenti" asp-action="Dettaglio" asp-route-id="@r.DipendenteId" class="customer-name"><span>@r.Persona</span></a></td>
+                        @if (Utente.IsConsulente) { <td data-label="Azienda">@r.Azienda</td> }
+                        <td data-label="CU">
+                            @if (r.CuId is { } cid)
+                            {
+                                <a asp-action="ApriCu" asp-route-id="@cid" target="_blank" rel="noopener" class="link-contratto"><i class="ri-file-pdf-2-line" aria-hidden="true"></i> Apri</a>
+                            }
+                            else { <span class="contratto-mancante">Da caricare</span> }
+                        </td>
+                        <td data-label="Caricata il">@(r.CaricataIl?.ToLocalTime().ToString("dd/MM/yyyy") ?? "—")</td>
+                        <td data-label="Vista dalla persona">@(r.VisualizzataIl?.ToLocalTime().ToString("dd/MM/yyyy") ?? "—")</td>
+                        <td data-label="Azioni">
+                            @if (gestore)
+                            {
+                                <div class="customer-actions">
+                                    <form asp-action="CaricaCu" method="post" enctype="multipart/form-data" class="m-0">
+                                        <input type="hidden" name="dipendenteId" value="@r.DipendenteId" />
+                                        <input type="hidden" name="anno" value="@Model.Anno" />
+                                        <input type="hidden" name="ritorno" value="@ritorno" />
+                                        <input type="file" name="documento" id="@idCampo" accept="application/pdf" class="d-none" onchange="this.form.requestSubmit()" />
+                                        <label for="@idCampo" class="mb-0" title="@(r.CuId is null ? "Carica la CU" : "Sostituisci la CU")" aria-label="@(r.CuId is null ? "Carica la CU" : "Sostituisci la CU") di @r.Persona" role="button"><i class="ri-upload-2-line" aria-hidden="true"></i></label>
+                                    </form>
+                                    @if (r.CuId is { } elimina)
+                                    {
+                                        <form asp-action="EliminaCu" method="post" class="m-0" onsubmit="return confirm('Eliminare la CU di @r.Persona?');">
+                                            <input type="hidden" name="id" value="@elimina" />
+                                            <input type="hidden" name="ritorno" value="@ritorno" />
+                                            <button type="submit" title="Elimina" aria-label="Elimina la CU di @r.Persona"><i class="ri-delete-bin-line" aria-hidden="true"></i></button>
+                                        </form>
+                                    }
+                                </div>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

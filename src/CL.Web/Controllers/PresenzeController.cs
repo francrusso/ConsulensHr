@@ -32,7 +32,7 @@ public sealed class CruscottoPresenzeViewModel
 }
 
 /// <summary>
-/// Presenze e variazioni del mese: l'azienda compila e invia, lo studio controlla, esporta per il gestionale paghe,
+/// Presenze e variazioni del mese: l'azienda compila e invia, il consulente controlla, esporta per il gestionale paghe,
 /// sollecita chi non ha inviato e segna il mese come elaborato (o lo riapre per correzioni).
 /// </summary>
 [Authorize(Policy = Policy.GestionePersonale)]
@@ -95,7 +95,7 @@ public sealed class PresenzeController(AppDbContext db, UtenteCorrente utente, S
         if (invia)
         {
             await servizio.AvvisaStudioAsync(foglio.Azienda, c);
-            Conferma($"Presenze di {foglio.Periodo.ToLower()} inviate allo studio.");
+            Conferma($"Presenze di {foglio.Periodo.ToLower()} inviate al consulente.");
         }
         else Conferma("Bozza salvata: puoi completarla e inviarla quando è pronta.");
         return ritorno;

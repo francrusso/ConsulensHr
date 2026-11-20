@@ -29,19 +29,19 @@ public sealed class FlussiWebTests : IDisposable
     [Fact]
     public async Task Password_errata_mostra_errore()
     {
-        await _app.CreaUtente("consulente@studio.test", Ruoli.Consulente);
+        await _app.CreaUtente("consulente@consulente.test", Ruoli.Consulente);
         var client = Client();
         var r = await client.InviaForm("/Account/Login", "/Account/Login",
-            new() { ["Email"] = "consulente@studio.test", ["Password"] = "sbagliata-123" });
+            new() { ["Email"] = "consulente@consulente.test", ["Password"] = "sbagliata-123" });
         Assert.Contains("Email o password non corretti", await Testo(r));
     }
 
     [Fact]
     public async Task Consulente_crea_azienda_dipendente_e_contratto()
     {
-        await _app.CreaUtente("consulente@studio.test", Ruoli.Consulente);
+        await _app.CreaUtente("consulente@consulente.test", Ruoli.Consulente);
         var client = Client();
-        await client.Accedi("consulente@studio.test");
+        await client.Accedi("consulente@consulente.test");
 
         // Azienda
         var r = await client.InviaForm("/Aziende/Nuova", "/Aziende/Salva", new()
@@ -80,12 +80,12 @@ public sealed class FlussiWebTests : IDisposable
             ["DipendenteId"] = dipId.ToString(), ["Tipo"] = "TempoIndeterminato", ["DataInizio"] = "2026-01-01",
             ["Ccnl"] = "Commercio", ["Livello"] = "4", ["RetribuzioneLordaAnnua"] = "28.000,50", ["MensilitaAnnue"] = "14",
             ["OreSettimanaliFullTime"] = "40", ["PercentualePartTime"] = "50", ["GiorniLavorativiSettimana"] = "5",
-            ["OreFerieAnnue"] = "160", ["OreRolAnnue"] = "72", ["OreExFestivitaAnnue"] = "32",
+            ["OreFerieAnnue"] = "160", ["OreRolAnnue"] = "72"
         });
         html = await Testo(r);
         Assert.Contains("Contratto registrato", html);
-        Assert.Contains("In forza", html);
-        Assert.Contains("Ferie 80 h", html);
+        Assert.Contains("Attivo", html); // badge di stato nella scheda
+        Assert.Contains("80 h · 36 h", html); // ferie e ROL riproporzionati al part-time
 
         var contratto = await _app.ConDb(db => db.Contratti.SingleAsync());
         Assert.Equal(28000.50m, contratto.RetribuzioneLordaAnnua);

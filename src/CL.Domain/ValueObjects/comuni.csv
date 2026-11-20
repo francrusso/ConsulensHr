@@ -1,0 +1,8004 @@
+# Fonte: ISTAT, Elenco dei comuni italiani (licenza CC BY 4.0). Formato: P;sigla;nome provincia oppure C;nome comune;sigla
+P;AG;Agrigento
+P;AL;Alessandria
+P;AN;Ancona
+P;AO;Valle d'Aosta/Vallée d'Aoste
+P;AP;Ascoli Piceno
+P;AQ;L'Aquila
+P;AR;Arezzo
+P;AT;Asti
+P;AV;Avellino
+P;BA;Bari
+P;BG;Bergamo
+P;BI;Biella
+P;BL;Belluno
+P;BN;Benevento
+P;BO;Bologna
+P;BR;Brindisi
+P;BS;Brescia
+P;BT;Barletta-Andria-Trani
+P;BZ;Bolzano/Bozen
+P;CA;Cagliari
+P;CB;Campobasso
+P;CE;Caserta
+P;CH;Chieti
+P;CL;Caltanissetta
+P;CN;Cuneo
+P;CO;Como
+P;CR;Cremona
+P;CS;Cosenza
+P;CT;Catania
+P;CZ;Catanzaro
+P;EN;Enna
+P;FC;Forlì-Cesena
+P;FE;Ferrara
+P;FG;Foggia
+P;FI;Firenze
+P;FM;Fermo
+P;FR;Frosinone
+P;GE;Genova
+P;GO;Gorizia
+P;GR;Grosseto
+P;IM;Imperia
+P;IS;Isernia
+P;KR;Crotone
+P;LC;Lecco
+P;LE;Lecce
+P;LI;Livorno
+P;LO;Lodi
+P;LT;Latina
+P;LU;Lucca
+P;MB;Monza e della Brianza
+P;MC;Macerata
+P;ME;Messina
+P;MI;Milano
+P;MN;Mantova
+P;MO;Modena
+P;MS;Massa-Carrara
+P;MT;Matera
+P;NA;Napoli
+P;NO;Novara
+P;NU;Nuoro
+P;OR;Oristano
+P;PA;Palermo
+P;PC;Piacenza
+P;PD;Padova
+P;PE;Pescara
+P;PG;Perugia
+P;PI;Pisa
+P;PN;Pordenone
+P;PO;Prato
+P;PR;Parma
+P;PT;Pistoia
+P;PU;Pesaro e Urbino
+P;PV;Pavia
+P;PZ;Potenza
+P;RA;Ravenna
+P;RC;Reggio Calabria
+P;RE;Reggio nell'Emilia
+P;RG;Ragusa
+P;RI;Rieti
+P;RM;Roma
+P;RN;Rimini
+P;RO;Rovigo
+P;SA;Salerno
+P;SI;Siena
+P;SO;Sondrio
+P;SP;La Spezia
+P;SR;Siracusa
+P;SS;Sassari
+P;SU;Sud Sardegna
+P;SV;Savona
+P;TA;Taranto
+P;TE;Teramo
+P;TN;Trento
+P;TO;Torino
+P;TP;Trapani
+P;TR;Terni
+P;TS;Trieste
+P;TV;Treviso
+P;UD;Udine
+P;VA;Varese
+P;VB;Verbano-Cusio-Ossola
+P;VC;Vercelli
+P;VE;Venezia
+P;VI;Vicenza
+P;VR;Verona
+P;VT;Viterbo
+P;VV;Vibo Valentia
+C;Abano Terme;PD
+C;Abbadia Cerreto;LO
+C;Abbadia Lariana;LC
+C;Abbadia San Salvatore;SI
+C;Abbasanta;OR
+C;Abbateggio;PE
+C;Abbiategrasso;MI
+C;Abetone Cutigliano;PT
+C;Abriola;PZ
+C;Acate;RG
+C;Accadia;FG
+C;Acceglio;CN
+C;Accettura;MT
+C;Acciano;AQ
+C;Accumoli;RI
+C;Acerenza;PZ
+C;Acerno;SA
+C;Acerra;NA
+C;Aci Bonaccorsi;CT
+C;Aci Castello;CT
+C;Aci Catena;CT
+C;Aci Sant'Antonio;CT
+C;Acireale;CT
+C;Acquafondata;FR
+C;Acquaformosa;CS
+C;Acquafredda;BS
+C;Acqualagna;PU
+C;Acquanegra Cremonese;CR
+C;Acquanegra sul Chiese;MN
+C;Acquapendente;VT
+C;Acquappesa;CS
+C;Acquaro;VV
+C;Acquasanta Terme;AP
+C;Acquasparta;TR
+C;Acquaviva Collecroce;CB
+C;Acquaviva d'Isernia;IS
+C;Acquaviva delle Fonti;BA
+C;Acquaviva Picena;AP
+C;Acquaviva Platani;CL
+C;Acquedolci;ME
+C;Acqui Terme;AL
+C;Acri;CS
+C;Acuto;FR
+C;Adelfia;BA
+C;Adrano;CT
+C;Adrara San Martino;BG
+C;Adrara San Rocco;BG
+C;Adria;RO
+C;Adro;BS
+C;Affi;VR
+C;Affile;RM
+C;Afragola;NA
+C;Africo;RC
+C;Agazzano;PC
+C;Agerola;NA
+C;Aggius;SS
+C;Agira;EN
+C;Agliana;PT
+C;Agliano Terme;AT
+C;Aglientu;SS
+C;Agliè;TO
+C;Agna;PD
+C;Agnadello;CR
+C;Agnana Calabra;RC
+C;Agnone;IS
+C;Agnosine;BS
+C;Agordo;BL
+C;Agosta;RM
+C;Agra;VA
+C;Agrate Brianza;MB
+C;Agrate Conturbia;NO
+C;Agrigento;AG
+C;Agropoli;SA
+C;Agugliano;AN
+C;Agugliaro;VI
+C;Aicurzio;MB
+C;Aidomaggiore;OR
+C;Aidone;EN
+C;Aielli;AQ
+C;Aiello Calabro;CS
+C;Aiello del Friuli;UD
+C;Aiello del Sabato;AV
+C;Aieta;CS
+C;Ailano;CE
+C;Ailoche;BI
+C;Airasca;TO
+C;Airola;BN
+C;Airole;IM
+C;Airuno;LC
+C;Aisone;CN
+C;Ala;TN
+C;Ala di Stura;TO
+C;Alagna;PV
+C;Alagna Valsesia;VC
+C;Alanno;PE
+C;Alassio;SV
+C;Alatri;FR
+C;Alba;CN
+C;Alba Adriatica;TE
+C;Albagiara;OR
+C;Albairate;MI
+C;Albanella;SA
+C;Albano di Lucania;PZ
+C;Albano Laziale;RM
+C;Albano Sant'Alessandro;BG
+C;Albano Vercellese;VC
+C;Albaredo d'Adige;VR
+C;Albaredo per San Marco;SO
+C;Albareto;PR
+C;Albaretto della Torre;CN
+C;Albavilla;CO
+C;Albenga;SV
+C;Albera Ligure;AL
+C;Alberobello;BA
+C;Alberona;FG
+C;Albese con Cassano;CO
+C;Albettone;VI
+C;Albi;CZ
+C;Albiano;TN
+C;Albiano d'Ivrea;TO
+C;Albiate;MB
+C;Albidona;CS
+C;Albignasego;PD
+C;Albinea;RE
+C;Albino;BG
+C;Albiolo;CO
+C;Albisola Superiore;SV
+C;Albissola Marina;SV
+C;Albizzate;VA
+C;Albonese;PV
+C;Albosaggia;SO
+C;Albugnano;AT
+C;Albuzzano;PV
+C;Alcamo;TP
+C;Alcara li Fusi;ME
+C;Aldeno;TN
+C;Aldino;BZ
+C;Ales;OR
+C;Alessandria;AL
+C;Alessandria del Carretto;CS
+C;Alessandria della Rocca;AG
+C;Alessano;LE
+C;Alezio;LE
+C;Alfano;SA
+C;Alfedena;AQ
+C;Alfianello;BS
+C;Alfiano Natta;AL
+C;Alfonsine;RA
+C;Alghero;SS
+C;Algua;BG
+C;Alia;PA
+C;Aliano;MT
+C;Alice Bel Colle;AL
+C;Alice Castello;VC
+C;Alife;CE
+C;Alimena;PA
+C;Aliminusa;PA
+C;Allai;OR
+C;Alleghe;BL
+C;Allein;AO
+C;Allerona;TR
+C;Alliste;LE
+C;Allumiere;RM
+C;Alluvioni Piovera;AL
+C;Almenno San Bartolomeo;BG
+C;Almenno San Salvatore;BG
+C;Almese;TO
+C;Almè;BG
+C;Alonte;VI
+C;Alpago;BL
+C;Alpette;TO
+C;Alpignano;TO
+C;Alseno;PC
+C;Alserio;CO
+C;Alta Val Tidone;PC
+C;Alta Valle Intelvi;CO
+C;Altamura;BA
+C;Altare;SV
+C;Altavalle;TN
+C;Altavilla Irpina;AV
+C;Altavilla Milicia;PA
+C;Altavilla Monferrato;AL
+C;Altavilla Silentina;SA
+C;Altavilla Vicentina;VI
+C;Altidona;FM
+C;Altilia;CS
+C;Altino;CH
+C;Altissimo;VI
+C;Altivole;TV
+C;Alto;CN
+C;Alto Reno Terme;BO
+C;Alto Sermenza;VC
+C;Altofonte;PA
+C;Altomonte;CS
+C;Altopascio;LU
+C;Altopiano della Vigolana;TN
+C;Alviano;TR
+C;Alvignano;CE
+C;Alvito;FR
+C;Alzano Lombardo;BG
+C;Alzano Scrivia;AL
+C;Alzate Brianza;CO
+C;Alà dei Sardi;SS
+C;Alì;ME
+C;Alì Terme;ME
+C;Amalfi;SA
+C;Amandola;FM
+C;Amantea;CS
+C;Amaro;UD
+C;Amaroni;CZ
+C;Amaseno;FR
+C;Amato;CZ
+C;Amatrice;RI
+C;Ambivere;BG
+C;Amblar-Don;TN
+C;Ameglia;SP
+C;Amelia;TR
+C;Amendolara;CS
+C;Ameno;NO
+C;Amorosi;BN
+C;Ampezzo;UD
+C;Anacapri;NA
+C;Anagni;FR
+C;Ancarano;TE
+C;Ancona;AN
+C;Andali;CZ
+C;Andalo;TN
+C;Andalo Valtellino;SO
+C;Andezeno;TO
+C;Andora;SV
+C;Andorno Micca;BI
+C;Andrano;LE
+C;Andrate;TO
+C;Andreis;PN
+C;Andretta;AV
+C;Andria;BT
+C;Andriano;BZ
+C;Anela;SS
+C;Anfo;BS
+C;Angera;VA
+C;Anghiari;AR
+C;Angiari;VR
+C;Angolo Terme;BS
+C;Angri;SA
+C;Angrogna;TO
+C;Anguillara Sabazia;RM
+C;Anguillara Veneta;PD
+C;Annicco;CR
+C;Annone di Brianza;LC
+C;Annone Veneto;VE
+C;Anoia;RC
+C;Antegnate;BG
+C;Anterivo;BZ
+C;Antey-Saint-André;AO
+C;Anticoli Corrado;RM
+C;Antignano;AT
+C;Antillo;ME
+C;Antonimina;RC
+C;Antrodoco;RI
+C;Antrona Schieranco;VB
+C;Anversa degli Abruzzi;AQ
+C;Anzano del Parco;CO
+C;Anzano di Puglia;FG
+C;Anzi;PZ
+C;Anzio;RM
+C;Anzola d'Ossola;VB
+C;Anzola dell'Emilia;BO
+C;Aosta;AO
+C;Apecchio;PU
+C;Apice;BN
+C;Apiro;MC
+C;Apollosa;BN
+C;Appiano Gentile;CO
+C;Appiano sulla strada del vino;BZ
+C;Appignano;MC
+C;Appignano del Tronto;AP
+C;Aprica;SO
+C;Apricale;IM
+C;Apricena;FG
+C;Aprigliano;CS
+C;Aprilia;LT
+C;Aquara;SA
+C;Aquila d'Arroscia;IM
+C;Aquileia;UD
+C;Aquilonia;AV
+C;Aquino;FR
+C;Aradeo;LE
+C;Aragona;AG
+C;Aramengo;AT
+C;Arba;PN
+C;Arborea;OR
+C;Arborio;VC
+C;Arbus;SU
+C;Arcade;TV
+C;Arce;FR
+C;Arcene;BG
+C;Arcevia;AN
+C;Archi;CH
+C;Arcidosso;GR
+C;Arcinazzo Romano;RM
+C;Arcisate;VA
+C;Arco;TN
+C;Arcola;SP
+C;Arcole;VR
+C;Arconate;MI
+C;Arcore;MB
+C;Arcugnano;VI
+C;Ardara;SS
+C;Ardauli;OR
+C;Ardea;RM
+C;Ardenno;SO
+C;Ardesio;BG
+C;Ardore;RC
+C;Arena;VV
+C;Arena Po;PV
+C;Arenzano;GE
+C;Arese;MI
+C;Arezzo;AR
+C;Argegno;CO
+C;Argelato;BO
+C;Argenta;FE
+C;Argentera;CN
+C;Arguello;CN
+C;Argusto;CZ
+C;Ari;CH
+C;Ariano Irpino;AV
+C;Ariano nel Polesine;RO
+C;Ariccia;RM
+C;Arielli;CH
+C;Arienzo;CE
+C;Arignano;TO
+C;Aritzo;NU
+C;Arizzano;VB
+C;Arlena di Castro;VT
+C;Arluno;MI
+C;Armeno;NO
+C;Armento;PZ
+C;Armo;IM
+C;Armungia;SU
+C;Arnad;AO
+C;Arnara;FR
+C;Arnasco;SV
+C;Arnesano;LE
+C;Arola;VB
+C;Arona;NO
+C;Arosio;CO
+C;Arpaia;BN
+C;Arpaise;BN
+C;Arpino;FR
+C;Arquata del Tronto;AP
+C;Arquata Scrivia;AL
+C;Arquà Petrarca;PD
+C;Arquà Polesine;RO
+C;Arre;PD
+C;Arrone;TR
+C;Arsago Seprio;VA
+C;Arsiero;VI
+C;Arsita;TE
+C;Arsiè;BL
+C;Arsoli;RM
+C;Arta Terme;UD
+C;Artegna;UD
+C;Artena;RM
+C;Artogne;BS
+C;Arvier;AO
+C;Arzachena;SS
+C;Arzago d'Adda;BG
+C;Arzana;NU
+C;Arzano;NA
+C;Arzergrande;PD
+C;Arzignano;VI
+C;Ascea;SA
+C;Asciano;SI
+C;Ascoli Piceno;AP
+C;Ascoli Satriano;FG
+C;Ascrea;RI
+C;Asiago;VI
+C;Asigliano Veneto;VI
+C;Asigliano Vercellese;VC
+C;Asola;MN
+C;Asolo;TV
+C;Assago;MI
+C;Assemini;CA
+C;Assisi;PG
+C;Asso;CO
+C;Assolo;OR
+C;Assoro;EN
+C;Asti;AT
+C;Asuni;OR
+C;Ateleta;AQ
+C;Atella;PZ
+C;Atena Lucana;SA
+C;Atessa;CH
+C;Atina;FR
+C;Atrani;SA
+C;Atri;TE
+C;Atripalda;AV
+C;Attigliano;TR
+C;Attimis;UD
+C;Atzara;NU
+C;Augusta;SR
+C;Auletta;SA
+C;Aulla;MS
+C;Aurano;VB
+C;Aurigo;IM
+C;Auronzo di Cadore;BL
+C;Ausonia;FR
+C;Austis;NU
+C;Avegno;GE
+C;Avelengo;BZ
+C;Avella;AV
+C;Avellino;AV
+C;Averara;BG
+C;Aversa;CE
+C;Avetrana;TA
+C;Avezzano;AQ
+C;Aviano;PN
+C;Aviatico;BG
+C;Avigliana;TO
+C;Avigliano;PZ
+C;Avigliano Umbro;TR
+C;Avio;TN
+C;Avise;AO
+C;Avola;SR
+C;Avolasca;AL
+C;Ayas;AO
+C;Aymavilles;AO
+C;Azeglio;TO
+C;Azzanello;CR
+C;Azzano d'Asti;AT
+C;Azzano Decimo;PN
+C;Azzano Mella;BS
+C;Azzano San Paolo;BG
+C;Azzate;VA
+C;Azzio;VA
+C;Azzone;BG
+C;Baceno;VB
+C;Bacoli;NA
+C;Badalucco;IM
+C;Badesi;SS
+C;Badia;BZ
+C;Badia Calavena;VR
+C;Badia Pavese;PV
+C;Badia Polesine;RO
+C;Badia Tedalda;AR
+C;Badolato;CZ
+C;Bagaladi;RC
+C;Bagheria;PA
+C;Bagnacavallo;RA
+C;Bagnara Calabra;RC
+C;Bagnara di Romagna;RA
+C;Bagnaria;PV
+C;Bagnaria Arsa;UD
+C;Bagnasco;CN
+C;Bagnatica;BG
+C;Bagni di Lucca;LU
+C;Bagno a Ripoli;FI
+C;Bagno di Romagna;FC
+C;Bagnoli del Trigno;IS
+C;Bagnoli di Sopra;PD
+C;Bagnoli Irpino;AV
+C;Bagnolo Cremasco;CR
+C;Bagnolo del Salento;LE
+C;Bagnolo di Po;RO
+C;Bagnolo in Piano;RE
+C;Bagnolo Mella;BS
+C;Bagnolo Piemonte;CN
+C;Bagnolo San Vito;MN
+C;Bagnone;MS
+C;Bagnoregio;VT
+C;Bagolino;BS
+C;Baia e Latina;CE
+C;Baiano;AV
+C;Bairo;TO
+C;Baiso;RE
+C;Bajardo;IM
+C;Balangero;TO
+C;Baldichieri d'Asti;AT
+C;Baldissero Canavese;TO
+C;Baldissero d'Alba;CN
+C;Baldissero Torinese;TO
+C;Balestrate;PA
+C;Balestrino;SV
+C;Ballabio;LC
+C;Ballao;SU
+C;Balme;TO
+C;Balmuccia;VC
+C;Balocco;VC
+C;Balsorano;AQ
+C;Balvano;PZ
+C;Balzola;AL
+C;Banari;SS
+C;Banchette;TO
+C;Bannio Anzino;VB
+C;Banzi;PZ
+C;Baone;PD
+C;Baradili;OR
+C;Baragiano;PZ
+C;Baranello;CB
+C;Barano d'Ischia;NA
+C;Baranzate;MI
+C;Barasso;VA
+C;Baratili San Pietro;OR
+C;Barbania;TO
+C;Barbara;AN
+C;Barbarano Mossano;VI
+C;Barbarano Romano;VT
+C;Barbaresco;CN
+C;Barbariga;BS
+C;Barbata;BG
+C;Barberino di Mugello;FI
+C;Barberino Tavarnelle;FI
+C;Barbianello;PV
+C;Barbiano;BZ
+C;Barbona;PD
+C;Barcellona Pozzo di Gotto;ME
+C;Barcis;PN
+C;Bard;AO
+C;Bardello con Malgesso e Bregano;VA
+C;Bardi;PR
+C;Bardineto;SV
+C;Bardolino;VR
+C;Bardonecchia;TO
+C;Bareggio;MI
+C;Barengo;NO
+C;Baressa;OR
+C;Barete;AQ
+C;Barga;LU
+C;Bargagli;GE
+C;Barge;CN
+C;Barghe;BS
+C;Bari;BA
+C;Bari Sardo;NU
+C;Bariano;BG
+C;Baricella;BO
+C;Barile;PZ
+C;Barisciano;AQ
+C;Barlassina;MB
+C;Barletta;BT
+C;Barni;CO
+C;Barolo;CN
+C;Barone Canavese;TO
+C;Baronissi;SA
+C;Barrafranca;EN
+C;Barrali;SU
+C;Barrea;AQ
+C;Barumini;SU
+C;Barzago;LC
+C;Barzana;BG
+C;Barzanò;LC
+C;Barzio;LC
+C;Basaluzzo;AL
+C;Bascapè;PV
+C;Baschi;TR
+C;Basciano;TE
+C;Baselga di Pinè;TN
+C;Baselice;BN
+C;Basiano;MI
+C;Basicò;ME
+C;Basiglio;MI
+C;Basiliano;UD
+C;Bassano Bresciano;BS
+C;Bassano del Grappa;VI
+C;Bassano in Teverina;VT
+C;Bassano Romano;VT
+C;Bassiano;LT
+C;Bassignana;AL
+C;Bastia Mondovì;CN
+C;Bastia Umbra;PG
+C;Bastida Pancarana;PV
+C;Bastiglia;MO
+C;Battaglia Terme;PD
+C;Battifollo;CN
+C;Battipaglia;SA
+C;Battuda;PV
+C;Baucina;PA
+C;Bauladu;OR
+C;Baunei;NU
+C;Baveno;VB
+C;Bedero Valcuvia;VA
+C;Bedizzole;BS
+C;Bedollo;TN
+C;Bedonia;PR
+C;Bedulita;BG
+C;Bee;VB
+C;Beinasco;TO
+C;Beinette;CN
+C;Belcastro;CZ
+C;Belfiore;VR
+C;Belforte all'Isauro;PU
+C;Belforte del Chienti;MC
+C;Belforte Monferrato;AL
+C;Belgioioso;PV
+C;Belgirate;VB
+C;Bella;PZ
+C;Bellagio;CO
+C;Bellano;LC
+C;Bellante;TE
+C;Bellaria-Igea Marina;RN
+C;Bellegra;RM
+C;Bellino;CN
+C;Bellinzago Lombardo;MI
+C;Bellinzago Novarese;NO
+C;Bellizzi;SA
+C;Bellona;CE
+C;Bellosguardo;SA
+C;Belluno;BL
+C;Bellusco;MB
+C;Belmonte Calabro;CS
+C;Belmonte Castello;FR
+C;Belmonte del Sannio;IS
+C;Belmonte in Sabina;RI
+C;Belmonte Mezzagno;PA
+C;Belmonte Piceno;FM
+C;Belpasso;CT
+C;Belsito;CS
+C;Belvedere di Spinello;KR
+C;Belvedere Langhe;CN
+C;Belvedere Marittimo;CS
+C;Belvedere Ostrense;AN
+C;Belveglio;AT
+C;Belvì;NU
+C;Bema;SO
+C;Bene Lario;CO
+C;Bene Vagienna;CN
+C;Benestare;RC
+C;Benetutti;SS
+C;Benevello;CN
+C;Benevento;BN
+C;Benna;BI
+C;Bentivoglio;BO
+C;Berbenno;BG
+C;Berbenno di Valtellina;SO
+C;Berceto;PR
+C;Berchidda;SS
+C;Beregazzo con Figliaro;CO
+C;Bereguardo;PV
+C;Bergamasco;AL
+C;Bergamo;BG
+C;Bergantino;RO
+C;Bergeggi;SV
+C;Bergolo;CN
+C;Berlingo;BS
+C;Bernalda;MT
+C;Bernareggio;MB
+C;Bernate Ticino;MI
+C;Bernezzo;CN
+C;Bertinoro;FC
+C;Bertiolo;UD
+C;Bertonico;LO
+C;Berzano di San Pietro;AT
+C;Berzano di Tortona;AL
+C;Berzo Demo;BS
+C;Berzo Inferiore;BS
+C;Berzo San Fermo;BG
+C;Besana in Brianza;MB
+C;Besano;VA
+C;Besate;MI
+C;Besenello;TN
+C;Besenzone;PC
+C;Besnate;VA
+C;Besozzo;VA
+C;Bessude;SS
+C;Bettola;PC
+C;Bettona;PG
+C;Beura-Cardezza;VB
+C;Bevagna;PG
+C;Beverino;SP
+C;Bevilacqua;VR
+C;Biancavilla;CT
+C;Bianchi;CS
+C;Bianco;RC
+C;Biandrate;NO
+C;Biandronno;VA
+C;Bianzano;BG
+C;Bianzone;SO
+C;Bianzè;VC
+C;Biassono;MB
+C;Bibbiano;RE
+C;Bibbiena;AR
+C;Bibbona;LI
+C;Bibiana;TO
+C;Biccari;FG
+C;Bicinicco;UD
+C;Bidonì;OR
+C;Biella;BI
+C;Bienno;BS
+C;Bieno;TN
+C;Bientina;PI
+C;Binago;CO
+C;Binasco;MI
+C;Binetto;BA
+C;Bioglio;BI
+C;Bionaz;AO
+C;Bione;BS
+C;Birori;NU
+C;Bisaccia;AV
+C;Bisacquino;PA
+C;Bisceglie;BT
+C;Bisegna;AQ
+C;Bisenti;TE
+C;Bisignano;CS
+C;Bistagno;AL
+C;Bisuschio;VA
+C;Bitetto;BA
+C;Bitonto;BA
+C;Bitritto;BA
+C;Bitti;NU
+C;Bivona;AG
+C;Bivongi;RC
+C;Bizzarone;CO
+C;Bleggio Superiore;TN
+C;Blello;BG
+C;Blera;VT
+C;Blessagno;CO
+C;Blevio;CO
+C;Blufi;PA
+C;Boara Pisani;PD
+C;Bobbio;PC
+C;Bobbio Pellice;TO
+C;Boca;NO
+C;Bocchigliero;CS
+C;Boccioleto;VC
+C;Bocenago;TN
+C;Bodio Lomnago;VA
+C;Boffalora d'Adda;LO
+C;Boffalora sopra Ticino;MI
+C;Bogliasco;GE
+C;Bognanco;VB
+C;Bogogno;NO
+C;Boissano;SV
+C;Bojano;CB
+C;Bolano;SP
+C;Bolgare;BG
+C;Bollate;MI
+C;Bollengo;TO
+C;Bologna;BO
+C;Bolognano;PE
+C;Bolognetta;PA
+C;Bolognola;MC
+C;Bolotana;NU
+C;Bolsena;VT
+C;Boltiere;BG
+C;Bolzano;BZ
+C;Bolzano Novarese;NO
+C;Bolzano Vicentino;VI
+C;Bomarzo;VT
+C;Bomba;CH
+C;Bompensiere;CL
+C;Bompietro;PA
+C;Bomporto;MO
+C;Bonarcado;OR
+C;Bonassola;SP
+C;Bonate Sopra;BG
+C;Bonate Sotto;BG
+C;Bonavigo;VR
+C;Bondeno;FE
+C;Bondone;TN
+C;Bonea;BN
+C;Bonefro;CB
+C;Bonemerse;CR
+C;Bonifati;CS
+C;Bonito;AV
+C;Bonnanaro;SS
+C;Bono;SS
+C;Bonorva;SS
+C;Bonvicino;CN
+C;Borbona;RI
+C;Borca di Cadore;BL
+C;Bordano;UD
+C;Bordighera;IM
+C;Bordolano;CR
+C;Bore;PR
+C;Boretto;RE
+C;Borgarello;PV
+C;Borgaro Torinese;TO
+C;Borgetto;PA
+C;Borghetto d'Arroscia;IM
+C;Borghetto di Borbera;AL
+C;Borghetto di Vara;SP
+C;Borghetto Lodigiano;LO
+C;Borghetto Santo Spirito;SV
+C;Borghi;FC
+C;Borgia;CZ
+C;Borgiallo;TO
+C;Borgio Verezzi;SV
+C;Borgo a Mozzano;LU
+C;Borgo Chiese;TN
+C;Borgo d'Ale;VC
+C;Borgo d'Anaunia;TN
+C;Borgo di Terzo;BG
+C;Borgo Lares;TN
+C;Borgo Mantovano;MN
+C;Borgo Pace;PU
+C;Borgo Priolo;PV
+C;Borgo San Dalmazzo;CN
+C;Borgo San Giacomo;BS
+C;Borgo San Giovanni;LO
+C;Borgo San Lorenzo;FI
+C;Borgo San Martino;AL
+C;Borgo San Siro;PV
+C;Borgo Ticino;NO
+C;Borgo Tossignano;BO
+C;Borgo Val di Taro;PR
+C;Borgo Valbelluna;BL
+C;Borgo Valsugana;TN
+C;Borgo Velino;RI
+C;Borgo Veneto;PD
+C;Borgo Vercelli;VC
+C;Borgo Virgilio;MN
+C;Borgocarbonara;MN
+C;Borgofranco d'Ivrea;TO
+C;Borgolavezzaro;NO
+C;Borgomale;CN
+C;Borgomanero;NO
+C;Borgomaro;IM
+C;Borgomasino;TO
+C;Borgomezzavalle;VB
+C;Borgone Susa;TO
+C;Borgonovo Val Tidone;PC
+C;Borgoratto Alessandrino;AL
+C;Borgoratto Mormorolo;PV
+C;Borgoricco;PD
+C;Borgorose;RI
+C;Borgosatollo;BS
+C;Borgosesia;VC
+C;Bormida;SV
+C;Bormio;SO
+C;Bornasco;PV
+C;Borno;BS
+C;Boroneddu;OR
+C;Borore;NU
+C;Borrello;CH
+C;Borriana;BI
+C;Borso del Grappa;TV
+C;Bortigali;NU
+C;Bortigiadas;SS
+C;Borutta;SS
+C;Borzonasca;GE
+C;Bosa;OR
+C;Bosaro;RO
+C;Boschi Sant'Anna;VR
+C;Bosco Chiesanuova;VR
+C;Bosco Marengo;AL
+C;Bosconero;TO
+C;Boscoreale;NA
+C;Boscotrecase;NA
+C;Bosia;CN
+C;Bosio;AL
+C;Bosisio Parini;LC
+C;Bosnasco;PV
+C;Bossico;BG
+C;Bossolasco;CN
+C;Botricello;CZ
+C;Botrugno;LE
+C;Bottanuco;BG
+C;Botticino;BS
+C;Bottidda;SS
+C;Bova;RC
+C;Bova Marina;RC
+C;Bovalino;RC
+C;Bovegno;BS
+C;Boves;CN
+C;Bovezzo;BS
+C;Boville Ernica;FR
+C;Bovino;FG
+C;Bovisio-Masciago;MB
+C;Bovolenta;PD
+C;Bovolone;VR
+C;Bozzole;AL
+C;Bozzolo;MN
+C;Bra;CN
+C;Bracca;BG
+C;Bracciano;RM
+C;Bracigliano;SA
+C;Braies;BZ
+C;Brallo di Pregola;PV
+C;Brancaleone;RC
+C;Brandico;BS
+C;Brandizzo;TO
+C;Branzi;BG
+C;Braone;BS
+C;Brebbia;VA
+C;Breda di Piave;TV
+C;Breganze;VI
+C;Bregnano;CO
+C;Brembate;BG
+C;Brembate di Sopra;BG
+C;Brembio;LO
+C;Breme;PV
+C;Brendola;VI
+C;Brenna;CO
+C;Brennero;BZ
+C;Breno;BS
+C;Brenta;VA
+C;Brentino Belluno;VR
+C;Brentonico;TN
+C;Brenzone sul Garda;VR
+C;Brescello;RE
+C;Brescia;BS
+C;Bresimo;TN
+C;Bressana Bottarone;PV
+C;Bressanone;BZ
+C;Bressanvido;VI
+C;Bresso;MI
+C;Brezzo di Bedero;VA
+C;Briaglia;CN
+C;Briatico;VV
+C;Bricherasio;TO
+C;Brienno;CO
+C;Brienza;PZ
+C;Briga Alta;CN
+C;Briga Novarese;NO
+C;Brignano Gera d'Adda;BG
+C;Brignano-Frascata;AL
+C;Brindisi;BR
+C;Brindisi Montagna;PZ
+C;Brinzio;VA
+C;Briona;NO
+C;Brione;BS
+C;Briosco;MB
+C;Brisighella;RA
+C;Brissago-Valtravaglia;VA
+C;Brissogne;AO
+C;Brittoli;PE
+C;Brivio;LC
+C;Broccostella;FR
+C;Brogliano;VI
+C;Brognaturo;VV
+C;Brolo;ME
+C;Brondello;CN
+C;Broni;PV
+C;Bronte;CT
+C;Bronzolo;BZ
+C;Brossasco;CN
+C;Brosso;TO
+C;Brovello-Carpugnino;VB
+C;Brozolo;TO
+C;Brugherio;MB
+C;Brugine;PD
+C;Brugnato;SP
+C;Brugnera;PN
+C;Bruino;TO
+C;Brumano;BG
+C;Brunate;CO
+C;Brunello;VA
+C;Brunico;BZ
+C;Bruno;AT
+C;Brusaporto;BG
+C;Brusasco;TO
+C;Brusciano;NA
+C;Brusimpiano;VA
+C;Brusnengo;BI
+C;Brusson;AO
+C;Bruzolo;TO
+C;Bruzzano Zeffirio;RC
+C;Bubbiano;MI
+C;Bubbio;AT
+C;Buccheri;SR
+C;Bucchianico;CH
+C;Bucciano;BN
+C;Buccinasco;MI
+C;Buccino;SA
+C;Bucine;AR
+C;Buddusò;SS
+C;Budoia;PN
+C;Budoni;SS
+C;Budrio;BO
+C;Buggerru;SU
+C;Buggiano;PT
+C;Buglio in Monte;SO
+C;Bugnara;AQ
+C;Buguggiate;VA
+C;Buja;UD
+C;Bulciago;LC
+C;Bulgarograsso;CO
+C;Bultei;SS
+C;Bulzi;SS
+C;Buonabitacolo;SA
+C;Buonalbergo;BN
+C;Buonconvento;SI
+C;Buonvicino;CS
+C;Burago di Molgora;MB
+C;Burcei;SU
+C;Burgio;AG
+C;Burgos;SS
+C;Buriasco;TO
+C;Burolo;TO
+C;Buronzo;VC
+C;Busachi;OR
+C;Busalla;GE
+C;Busano;TO
+C;Busca;CN
+C;Buscate;MI
+C;Buscemi;SR
+C;Buseto Palizzolo;TP
+C;Busnago;MB
+C;Bussero;MI
+C;Busseto;PR
+C;Bussi sul Tirino;PE
+C;Busso;CB
+C;Bussolengo;VR
+C;Bussoleno;TO
+C;Busto Arsizio;VA
+C;Busto Garolfo;MI
+C;Butera;CL
+C;Buti;PI
+C;Buttapietra;VR
+C;Buttigliera Alta;TO
+C;Buttigliera d'Asti;AT
+C;Buttrio;UD
+C;Cabella Ligure;AL
+C;Cabiate;CO
+C;Cabras;OR
+C;Caccamo;PA
+C;Caccuri;KR
+C;Cadegliano-Viconago;VA
+C;Cadelbosco di Sopra;RE
+C;Cadeo;PC
+C;Caderzone Terme;TN
+C;Cadoneghe;PD
+C;Cadorago;CO
+C;Cadrezzate con Osmate;VA
+C;Caerano di San Marco;TV
+C;Cafasse;TO
+C;Caggiano;SA
+C;Cagli;PU
+C;Cagliari;CA
+C;Caglio;CO
+C;Cagnano Amiterno;AQ
+C;Cagnano Varano;FG
+C;Caianello;CE
+C;Caiazzo;CE
+C;Caines;BZ
+C;Caino;BS
+C;Caiolo;SO
+C;Cairano;AV
+C;Cairate;VA
+C;Cairo Montenotte;SV
+C;Caivano;NA
+C;Calabritto;AV
+C;Calalzo di Cadore;BL
+C;Calamandrana;AT
+C;Calamonaci;AG
+C;Calangianus;SS
+C;Calanna;RC
+C;Calasca-Castiglione;VB
+C;Calascibetta;EN
+C;Calascio;AQ
+C;Calasetta;SU
+C;Calatabiano;CT
+C;Calatafimi-Segesta;TP
+C;Calcata;VT
+C;Calceranica al Lago;TN
+C;Calci;PI
+C;Calciano;MT
+C;Calcinaia;PI
+C;Calcinate;BG
+C;Calcinato;BS
+C;Calcio;BG
+C;Calco;LC
+C;Caldaro sulla strada del vino;BZ
+C;Caldarola;MC
+C;Calderara di Reno;BO
+C;Caldes;TN
+C;Caldiero;VR
+C;Caldogno;VI
+C;Caldonazzo;TN
+C;Calendasco;PC
+C;Calenzano;FI
+C;Calestano;PR
+C;Calice al Cornoviglio;SP
+C;Calice Ligure;SV
+C;Calimera;LE
+C;Calitri;AV
+C;Calizzano;SV
+C;Callabiana;BI
+C;Calliano;TN
+C;Calliano Monferrato;AT
+C;Calolziocorte;LC
+C;Calopezzati;CS
+C;Calosso;AT
+C;Caloveto;CS
+C;Caltabellotta;AG
+C;Caltagirone;CT
+C;Caltanissetta;CL
+C;Caltavuturo;PA
+C;Caltignaga;NO
+C;Calto;RO
+C;Caltrano;VI
+C;Calusco d'Adda;BG
+C;Caluso;TO
+C;Calvagese della Riviera;BS
+C;Calvanico;SA
+C;Calvatone;CR
+C;Calvello;PZ
+C;Calvene;VI
+C;Calvenzano;BG
+C;Calvera;PZ
+C;Calvi;BN
+C;Calvi dell'Umbria;TR
+C;Calvi Risorta;CE
+C;Calvignano;PV
+C;Calvignasco;MI
+C;Calvisano;BS
+C;Calvizzano;NA
+C;Camagna Monferrato;AL
+C;Camaiore;LU
+C;Camandona;BI
+C;Camastra;AG
+C;Cambiago;MI
+C;Cambiano;TO
+C;Cambiasca;VB
+C;Camburzano;BI
+C;Camerana;CN
+C;Camerano;AN
+C;Camerano Casasco;AT
+C;Camerata Cornello;BG
+C;Camerata Nuova;RM
+C;Camerata Picena;AN
+C;Cameri;NO
+C;Camerino;MC
+C;Camerota;SA
+C;Camigliano;CE
+C;Camini;RC
+C;Camino;AL
+C;Camino al Tagliamento;UD
+C;Camisano;CR
+C;Camisano Vicentino;VI
+C;Cammarata;AG
+C;Camogli;GE
+C;Campagna;SA
+C;Campagna Lupia;VE
+C;Campagnano di Roma;RM
+C;Campagnatico;GR
+C;Campagnola Cremasca;CR
+C;Campagnola Emilia;RE
+C;Campana;CS
+C;Camparada;MB
+C;Campegine;RE
+C;Campello sul Clitunno;PG
+C;Campertogno;VC
+C;Campi Bisenzio;FI
+C;Campi Salentina;LE
+C;Campiglia Cervo;BI
+C;Campiglia dei Berici;VI
+C;Campiglia Marittima;LI
+C;Campiglione Fenile;TO
+C;Campione d'Italia;CO
+C;Campitello di Fassa;TN
+C;Campli;TE
+C;Campo Calabro;RC
+C;Campo di Giove;AQ
+C;Campo di Trens;BZ
+C;Campo Ligure;GE
+C;Campo nell'Elba;LI
+C;Campo San Martino;PD
+C;Campo Tures;BZ
+C;Campobasso;CB
+C;Campobello di Licata;AG
+C;Campobello di Mazara;TP
+C;Campochiaro;CB
+C;Campodarsego;PD
+C;Campodenno;TN
+C;Campodimele;LT
+C;Campodipietra;CB
+C;Campodolcino;SO
+C;Campodoro;PD
+C;Campofelice di Fitalia;PA
+C;Campofelice di Roccella;PA
+C;Campofilone;FM
+C;Campofiorito;PA
+C;Campoformido;UD
+C;Campofranco;CL
+C;Campogalliano;MO
+C;Campolattaro;BN
+C;Campoli Appennino;FR
+C;Campoli del Monte Taburno;BN
+C;Campolieto;CB
+C;Campolongo Maggiore;VE
+C;Campolongo Tapogliano;UD
+C;Campomaggiore;PZ
+C;Campomarino;CB
+C;Campomorone;GE
+C;Camponogara;VE
+C;Campora;SA
+C;Camporeale;PA
+C;Camporgiano;LU
+C;Camporosso;IM
+C;Camporotondo di Fiastrone;MC
+C;Camporotondo Etneo;CT
+C;Camposampiero;PD
+C;Camposano;NA
+C;Camposanto;MO
+C;Campospinoso Albaredo;PV
+C;Campotosto;AQ
+C;Camugnano;BO
+C;Canal San Bovo;TN
+C;Canale;CN
+C;Canale d'Agordo;BL
+C;Canale Monterano;RM
+C;Canaro;RO
+C;Canazei;TN
+C;Cancellara;PZ
+C;Cancello ed Arnone;CE
+C;Canda;RO
+C;Candela;FG
+C;Candelo;BI
+C;Candia Canavese;TO
+C;Candia Lomellina;PV
+C;Candiana;PD
+C;Candida;AV
+C;Candidoni;RC
+C;Candiolo;TO
+C;Canegrate;MI
+C;Canelli;AT
+C;Canepina;VT
+C;Caneva;PN
+C;Canicattini Bagni;SR
+C;Canicattì;AG
+C;Canino;VT
+C;Canischio;TO
+C;Canistro;AQ
+C;Canna;CS
+C;Cannalonga;SA
+C;Cannara;PG
+C;Cannero Riviera;VB
+C;Canneto Pavese;PV
+C;Canneto sull'Oglio;MN
+C;Cannobio;VB
+C;Cannole;LE
+C;Canolo;RC
+C;Canonica d'Adda;BG
+C;Canosa di Puglia;BT
+C;Canosa Sannita;CH
+C;Canosio;CN
+C;Canossa;RE
+C;Cansano;AQ
+C;Cantagallo;PO
+C;Cantalice;RI
+C;Cantalupa;TO
+C;Cantalupo in Sabina;RI
+C;Cantalupo Ligure;AL
+C;Cantalupo nel Sannio;IS
+C;Cantarana;AT
+C;Cantello;VA
+C;Canterano;RM
+C;Cantiano;PU
+C;Cantoira;TO
+C;Cantù;CO
+C;Canzano;TE
+C;Canzo;CO
+C;Caorle;VE
+C;Caorso;PC
+C;Capaccio Paestum;SA
+C;Capaci;PA
+C;Capalbio;GR
+C;Capannoli;PI
+C;Capannori;LU
+C;Capena;RM
+C;Capergnanica;CR
+C;Capestrano;AQ
+C;Capiago Intimiano;CO
+C;Capistrano;VV
+C;Capistrello;AQ
+C;Capitignano;AQ
+C;Capizzi;ME
+C;Capizzone;BG
+C;Capo d'Orlando;ME
+C;Capo di Ponte;BS
+C;Capodimonte;VT
+C;Capodrise;CE
+C;Capoliveri;LI
+C;Capolona;AR
+C;Caponago;MB
+C;Caporciano;AQ
+C;Caposele;AV
+C;Capoterra;CA
+C;Capovalle;BS
+C;Cappadocia;AQ
+C;Cappella Cantone;CR
+C;Cappella de' Picenardi;CR
+C;Cappella Maggiore;TV
+C;Cappelle sul Tavo;PE
+C;Capracotta;IS
+C;Capraia e Limite;FI
+C;Capraia Isola;LI
+C;Capralba;CR
+C;Capranica;VT
+C;Capranica Prenestina;RM
+C;Caprarica di Lecce;LE
+C;Caprarola;VT
+C;Caprauna;CN
+C;Caprese Michelangelo;AR
+C;Caprezzo;VB
+C;Capri;NA
+C;Capri Leone;ME
+C;Capriana;TN
+C;Capriano del Colle;BS
+C;Capriata d'Orba;AL
+C;Capriate San Gervasio;BG
+C;Capriati a Volturno;CE
+C;Caprie;TO
+C;Capriglia Irpina;AV
+C;Capriglio;AT
+C;Caprile;BI
+C;Caprino Bergamasco;BG
+C;Caprino Veronese;VR
+C;Capriolo;BS
+C;Capriva del Friuli;GO
+C;Capua;CE
+C;Capurso;BA
+C;Caraffa del Bianco;RC
+C;Caraffa di Catanzaro;CZ
+C;Caraglio;CN
+C;Caramagna Piemonte;CN
+C;Caramanico Terme;PE
+C;Carapelle;FG
+C;Carapelle Calvisio;AQ
+C;Carasco;GE
+C;Carassai;AP
+C;Carate Brianza;MB
+C;Carate Urio;CO
+C;Caravaggio;BG
+C;Caravate;VA
+C;Caravino;TO
+C;Caravonica;IM
+C;Carbognano;VT
+C;Carbonara al Ticino;PV
+C;Carbonara di Nola;NA
+C;Carbonara Scrivia;AL
+C;Carbonate;CO
+C;Carbone;PZ
+C;Carbonera;TV
+C;Carbonia;SU
+C;Carcare;SV
+C;Carcoforo;VC
+C;Cardano al Campo;VA
+C;Cardedu;NU
+C;Cardeto;RC
+C;Cardinale;CZ
+C;Cardito;NA
+C;Cardè;CN
+C;Careggine;LU
+C;Carema;TO
+C;Carenno;LC
+C;Carentino;AL
+C;Careri;RC
+C;Caresana;VC
+C;Caresanablot;VC
+C;Carezzano;AL
+C;Carfizzi;KR
+C;Cargeghe;SS
+C;Cariati;CS
+C;Carife;AV
+C;Carignano;TO
+C;Carimate;CO
+C;Carinaro;CE
+C;Carini;PA
+C;Carinola;CE
+C;Carisio;VC
+C;Carisolo;TN
+C;Carlantino;FG
+C;Carlazzo;CO
+C;Carlentini;SR
+C;Carlino;UD
+C;Carloforte;SU
+C;Carlopoli;CZ
+C;Carmagnola;TO
+C;Carmiano;LE
+C;Carmignano;PO
+C;Carmignano di Brenta;PD
+C;Carnago;VA
+C;Carnate;MB
+C;Carobbio degli Angeli;BG
+C;Carolei;CS
+C;Carona;BG
+C;Caronia;ME
+C;Caronno Pertusella;VA
+C;Caronno Varesino;VA
+C;Carosino;TA
+C;Carovigno;BR
+C;Carovilli;IS
+C;Carpaneto Piacentino;PC
+C;Carpanzano;CS
+C;Carpegna;PU
+C;Carpenedolo;BS
+C;Carpeneto;AL
+C;Carpi;MO
+C;Carpiano;MI
+C;Carpignano Salentino;LE
+C;Carpignano Sesia;NO
+C;Carpineti;RE
+C;Carpineto della Nora;PE
+C;Carpineto Romano;RM
+C;Carpineto Sinello;CH
+C;Carpino;FG
+C;Carpinone;IS
+C;Carrara;MS
+C;Carrega Ligure;AL
+C;Carro;SP
+C;Carrodano;SP
+C;Carrosio;AL
+C;Carrè;VI
+C;Carrù;CN
+C;Carsoli;AQ
+C;Cartigliano;VI
+C;Cartignano;CN
+C;Cartoceto;PU
+C;Cartosio;AL
+C;Cartura;PD
+C;Carugate;MI
+C;Carugo;CO
+C;Carunchio;CH
+C;Carvico;BG
+C;Carzano;TN
+C;Casabona;KR
+C;Casacalenda;CB
+C;Casacanditella;CH
+C;Casagiove;CE
+C;Casal Cermelli;AL
+C;Casal di Principe;CE
+C;Casal Velino;SA
+C;Casalanguida;CH
+C;Casalattico;FR
+C;Casalbeltrame;NO
+C;Casalbordino;CH
+C;Casalbore;AV
+C;Casalborgone;TO
+C;Casalbuono;SA
+C;Casalbuttano ed Uniti;CR
+C;Casalciprano;CB
+C;Casalduni;BN
+C;Casale Corte Cerro;VB
+C;Casale Cremasco-Vidolasco;CR
+C;Casale di Scodosia;PD
+C;Casale Litta;VA
+C;Casale Marittimo;PI
+C;Casale Monferrato;AL
+C;Casale sul Sile;TV
+C;Casalecchio di Reno;BO
+C;Casaleggio Boiro;AL
+C;Casaleggio Novara;NO
+C;Casaleone;VR
+C;Casaletto Ceredano;CR
+C;Casaletto di Sopra;CR
+C;Casaletto Lodigiano;LO
+C;Casaletto Spartano;SA
+C;Casaletto Vaprio;CR
+C;Casalfiumanese;BO
+C;Casalgrande;RE
+C;Casalgrasso;CN
+C;Casali del Manco;CS
+C;Casalincontrada;CH
+C;Casalino;NO
+C;Casalmaggiore;CR
+C;Casalmaiocco;LO
+C;Casalmorano;CR
+C;Casalmoro;MN
+C;Casalnoceto;AL
+C;Casalnuovo di Napoli;NA
+C;Casalnuovo Monterotaro;FG
+C;Casaloldo;MN
+C;Casalpusterlengo;LO
+C;Casalromano;MN
+C;Casalserugo;PD
+C;Casaluce;CE
+C;Casalvecchio di Puglia;FG
+C;Casalvecchio Siculo;ME
+C;Casalvieri;FR
+C;Casalvolone;NO
+C;Casalzuigno;VA
+C;Casamarciano;NA
+C;Casamassima;BA
+C;Casamicciola Terme;NA
+C;Casandrino;NA
+C;Casanova Elvo;VC
+C;Casanova Lerrone;SV
+C;Casanova Lonati;PV
+C;Casape;RM
+C;Casapesenna;CE
+C;Casapinta;BI
+C;Casaprota;RI
+C;Casapulla;CE
+C;Casarano;LE
+C;Casargo;LC
+C;Casarile;MI
+C;Casarsa della Delizia;PN
+C;Casarza Ligure;GE
+C;Casasco;AL
+C;Casatenovo;LC
+C;Casatisma;PV
+C;Casavatore;NA
+C;Casazza;BG
+C;Cascia;PG
+C;Casciago;VA
+C;Casciana Terme Lari;PI
+C;Cascina;PI
+C;Cascinette d'Ivrea;TO
+C;Casei Gerola;PV
+C;Caselette;TO
+C;Casella;GE
+C;Caselle in Pittari;SA
+C;Caselle Landi;LO
+C;Caselle Lurani;LO
+C;Caselle Torinese;TO
+C;Caserta;CE
+C;Casier;TV
+C;Casignana;RC
+C;Casina;RE
+C;Casirate d'Adda;BG
+C;Caslino d'Erba;CO
+C;Casnate con Bernate;CO
+C;Casnigo;BG
+C;Casola di Napoli;NA
+C;Casola in Lunigiana;MS
+C;Casola Valsenio;RA
+C;Casole d'Elsa;SI
+C;Casoli;CH
+C;Casorate Primo;PV
+C;Casorate Sempione;VA
+C;Casorezzo;MI
+C;Casoria;NA
+C;Casorzo Monferrato;AT
+C;Casperia;RI
+C;Caspoggio;SO
+C;Cassacco;UD
+C;Cassago Brianza;LC
+C;Cassano all'Ionio;CS
+C;Cassano d'Adda;MI
+C;Cassano delle Murge;BA
+C;Cassano Irpino;AV
+C;Cassano Magnago;VA
+C;Cassano Spinola;AL
+C;Cassano Valcuvia;VA
+C;Cassaro;SR
+C;Cassiglio;BG
+C;Cassina de' Pecchi;MI
+C;Cassina Rizzardi;CO
+C;Cassina Valsassina;LC
+C;Cassinasco;AT
+C;Cassine;AL
+C;Cassinelle;AL
+C;Cassinetta di Lugagnano;MI
+C;Cassino;FR
+C;Cassola;VI
+C;Cassolnovo;PV
+C;Castagnaro;VR
+C;Castagneto Carducci;LI
+C;Castagneto Po;TO
+C;Castagnito;CN
+C;Castagnole delle Lanze;AT
+C;Castagnole Monferrato;AT
+C;Castagnole Piemonte;TO
+C;Castana;PV
+C;Castano Primo;MI
+C;Casteggio;PV
+C;Castegnato;BS
+C;Castegnero;VI
+C;Castel Baronia;AV
+C;Castel Boglione;AT
+C;Castel Bolognese;RA
+C;Castel Campagnano;CE
+C;Castel Castagna;TE
+C;Castel Condino;TN
+C;Castel d'Aiano;BO
+C;Castel d'Ario;MN
+C;Castel d'Azzano;VR
+C;Castel del Giudice;IS
+C;Castel del Monte;AQ
+C;Castel del Piano;GR
+C;Castel del Rio;BO
+C;Castel di Casio;BO
+C;Castel di Ieri;AQ
+C;Castel di Iudica;CT
+C;Castel di Lama;AP
+C;Castel di Lucio;ME
+C;Castel di Sangro;AQ
+C;Castel di Sasso;CE
+C;Castel di Tora;RI
+C;Castel Focognano;AR
+C;Castel Frentano;CH
+C;Castel Gabbiano;CR
+C;Castel Gandolfo;RM
+C;Castel Giorgio;TR
+C;Castel Goffredo;MN
+C;Castel Guelfo di Bologna;BO
+C;Castel Ivano;TN
+C;Castel Madama;RM
+C;Castel Maggiore;BO
+C;Castel Mella;BS
+C;Castel Morrone;CE
+C;Castel Ritaldi;PG
+C;Castel Rocchero;AT
+C;Castel Rozzone;BG
+C;Castel San Giorgio;SA
+C;Castel San Giovanni;PC
+C;Castel San Lorenzo;SA
+C;Castel San Niccolò;AR
+C;Castel San Pietro Romano;RM
+C;Castel San Pietro Terme;BO
+C;Castel San Vincenzo;IS
+C;Castel Sant'Angelo;RI
+C;Castel Sant'Elia;VT
+C;Castel Viscardo;TR
+C;Castel Vittorio;IM
+C;Castel Volturno;CE
+C;Castelbaldo;PD
+C;Castelbelforte;MN
+C;Castelbellino;AN
+C;Castelbello-Ciardes;BZ
+C;Castelbianco;SV
+C;Castelbottaccio;CB
+C;Castelbuono;PA
+C;Castelcivita;SA
+C;Castelcovati;BS
+C;Castelcucco;TV
+C;Casteldaccia;PA
+C;Casteldelci;RN
+C;Casteldelfino;CN
+C;Casteldidone;CR
+C;Castelfidardo;AN
+C;Castelfiorentino;FI
+C;Castelforte;LT
+C;Castelfranci;AV
+C;Castelfranco di Sotto;PI
+C;Castelfranco Emilia;MO
+C;Castelfranco in Miscano;BN
+C;Castelfranco Piandiscò;AR
+C;Castelfranco Veneto;TV
+C;Castelgerundo;LO
+C;Castelgomberto;VI
+C;Castelgrande;PZ
+C;Castelguglielmo;RO
+C;Castelguidone;CH
+C;Castell'Alfero;AT
+C;Castell'Arquato;PC
+C;Castell'Azzara;GR
+C;Castell'Umberto;ME
+C;Castellabate;SA
+C;Castellafiume;AQ
+C;Castellalto;TE
+C;Castellammare del Golfo;TP
+C;Castellammare di Stabia;NA
+C;Castellamonte;TO
+C;Castellana Grotte;BA
+C;Castellana Sicula;PA
+C;Castellaneta;TA
+C;Castellania Coppi;AL
+C;Castellanza;VA
+C;Castellar Guidobono;AL
+C;Castellarano;RE
+C;Castellaro;IM
+C;Castellazzo Bormida;AL
+C;Castellazzo Novarese;NO
+C;Castelleone;CR
+C;Castelleone di Suasa;AN
+C;Castellero;AT
+C;Castelletto Cervo;BI
+C;Castelletto d'Erro;AL
+C;Castelletto d'Orba;AL
+C;Castelletto di Branduzzo;PV
+C;Castelletto Merli;AL
+C;Castelletto Molina;AT
+C;Castelletto Monferrato;AL
+C;Castelletto sopra Ticino;NO
+C;Castelletto Stura;CN
+C;Castelletto Uzzone;CN
+C;Castelli;TE
+C;Castelli Calepio;BG
+C;Castellina in Chianti;SI
+C;Castellina Marittima;PI
+C;Castellinaldo d'Alba;CN
+C;Castellino del Biferno;CB
+C;Castellino Tanaro;CN
+C;Castelliri;FR
+C;Castello Cabiaglio;VA
+C;Castello d'Agogna;PV
+C;Castello d'Argile;BO
+C;Castello del Matese;CE
+C;Castello dell'Acqua;SO
+C;Castello di Annone;AT
+C;Castello di Brianza;LC
+C;Castello di Cisterna;NA
+C;Castello di Godego;TV
+C;Castello Tesino;TN
+C;Castello-Molina di Fiemme;TN
+C;Castellucchio;MN
+C;Castelluccio dei Sauri;FG
+C;Castelluccio Inferiore;PZ
+C;Castelluccio Superiore;PZ
+C;Castelluccio Valmaggiore;FG
+C;Castelmagno;CN
+C;Castelmarte;CO
+C;Castelmassa;RO
+C;Castelmauro;CB
+C;Castelmezzano;PZ
+C;Castelmola;ME
+C;Castelnovetto;PV
+C;Castelnovo Bariano;RO
+C;Castelnovo del Friuli;PN
+C;Castelnovo di Sotto;RE
+C;Castelnovo ne' Monti;RE
+C;Castelnuovo;TN
+C;Castelnuovo Belbo;AT
+C;Castelnuovo Berardenga;SI
+C;Castelnuovo Bocca d'Adda;LO
+C;Castelnuovo Bormida;AL
+C;Castelnuovo Bozzente;CO
+C;Castelnuovo Calcea;AT
+C;Castelnuovo Cilento;SA
+C;Castelnuovo del Garda;VR
+C;Castelnuovo della Daunia;FG
+C;Castelnuovo di Ceva;CN
+C;Castelnuovo di Conza;SA
+C;Castelnuovo di Farfa;RI
+C;Castelnuovo di Garfagnana;LU
+C;Castelnuovo di Porto;RM
+C;Castelnuovo di Val di Cecina;PI
+C;Castelnuovo Don Bosco;AT
+C;Castelnuovo Magra;SP
+C;Castelnuovo Nigra;TO
+C;Castelnuovo Parano;FR
+C;Castelnuovo Rangone;MO
+C;Castelnuovo Scrivia;AL
+C;Castelpagano;BN
+C;Castelpetroso;IS
+C;Castelpizzuto;IS
+C;Castelplanio;AN
+C;Castelpoto;BN
+C;Castelraimondo;MC
+C;Castelrotto;BZ
+C;Castelsantangelo sul Nera;MC
+C;Castelsaraceno;PZ
+C;Castelsardo;SS
+C;Castelseprio;VA
+C;Castelsilano;KR
+C;Castelspina;AL
+C;Casteltermini;AG
+C;Castelveccana;VA
+C;Castelvecchio Calvisio;AQ
+C;Castelvecchio di Rocca Barbena;SV
+C;Castelvecchio Subequo;AQ
+C;Castelvenere;BN
+C;Castelverde;CR
+C;Castelverrino;IS
+C;Castelvetere in Val Fortore;BN
+C;Castelvetere sul Calore;AV
+C;Castelvetrano;TP
+C;Castelvetro di Modena;MO
+C;Castelvetro Piacentino;PC
+C;Castelvisconti;CR
+C;Castenaso;BO
+C;Castenedolo;BS
+C;Castiadas;SU
+C;Castiglion Fibocchi;AR
+C;Castiglion Fiorentino;AR
+C;Castiglione a Casauria;PE
+C;Castiglione Chiavarese;GE
+C;Castiglione Cosentino;CS
+C;Castiglione d'Adda;LO
+C;Castiglione d'Orcia;SI
+C;Castiglione dei Pepoli;BO
+C;Castiglione del Genovesi;SA
+C;Castiglione del Lago;PG
+C;Castiglione della Pescaia;GR
+C;Castiglione delle Stiviere;MN
+C;Castiglione di Garfagnana;LU
+C;Castiglione di Sicilia;CT
+C;Castiglione Falletto;CN
+C;Castiglione in Teverina;VT
+C;Castiglione Messer Marino;CH
+C;Castiglione Messer Raimondo;TE
+C;Castiglione Olona;VA
+C;Castiglione Tinella;CN
+C;Castiglione Torinese;TO
+C;Castignano;AP
+C;Castilenti;TE
+C;Castino;CN
+C;Castione Andevenno;SO
+C;Castione della Presolana;BG
+C;Castions di Strada;UD
+C;Castiraga Vidardo;LO
+C;Casto;BS
+C;Castorano;AP
+C;Castrezzato;BS
+C;Castri di Lecce;LE
+C;Castrignano de' Greci;LE
+C;Castrignano del Capo;LE
+C;Castro;BG
+C;Castro;LE
+C;Castro dei Volsci;FR
+C;Castrocaro Terme e Terra del Sole;FC
+C;Castrocielo;FR
+C;Castrofilippo;AG
+C;Castrolibero;CS
+C;Castronno;VA
+C;Castronovo di Sicilia;PA
+C;Castronuovo di Sant'Andrea;PZ
+C;Castropignano;CB
+C;Castroreale;ME
+C;Castroregio;CS
+C;Castrovillari;CS
+C;Catania;CT
+C;Catanzaro;CZ
+C;Catenanuova;EN
+C;Catignano;PE
+C;Cattolica;RN
+C;Cattolica Eraclea;AG
+C;Caulonia;RC
+C;Cautano;BN
+C;Cava de' Tirreni;SA
+C;Cava Manara;PV
+C;Cavaglietto;NO
+C;Cavaglio d'Agogna;NO
+C;Cavaglià;BI
+C;Cavagnolo;TO
+C;Cavaion Veronese;VR
+C;Cavalese;TN
+C;Cavallerleone;CN
+C;Cavallermaggiore;CN
+C;Cavallino;LE
+C;Cavallino-Treporti;VE
+C;Cavallirio;NO
+C;Cavareno;TN
+C;Cavargna;CO
+C;Cavaria con Premezzo;VA
+C;Cavarzere;VE
+C;Cavaso del Tomba;TV
+C;Cavasso Nuovo;PN
+C;Cavatore;AL
+C;Cavazzo Carnico;UD
+C;Cave;RM
+C;Cavedago;TN
+C;Cavedine;TN
+C;Cavenago d'Adda;LO
+C;Cavenago di Brianza;MB
+C;Cavernago;BG
+C;Cavezzo;MO
+C;Cavizzana;TN
+C;Cavour;TO
+C;Cavriago;RE
+C;Cavriana;MN
+C;Cavriglia;AR
+C;Cazzago Brabbia;VA
+C;Cazzago San Martino;BS
+C;Cazzano di Tramigna;VR
+C;Cazzano Sant'Andrea;BG
+C;Ceccano;FR
+C;Cecima;PV
+C;Cecina;LI
+C;Cedegolo;BS
+C;Cedrasco;SO
+C;Cefalà Diana;PA
+C;Cefalù;PA
+C;Ceggia;VE
+C;Ceglie Messapica;BR
+C;Celano;AQ
+C;Celenza sul Trigno;CH
+C;Celenza Valfortore;FG
+C;Celico;CS
+C;Cella Dati;CR
+C;Cella Monte;AL
+C;Cellamare;BA
+C;Cellara;CS
+C;Cellarengo;AT
+C;Cellatica;BS
+C;Celle di Bulgheria;SA
+C;Celle di Macra;CN
+C;Celle di San Vito;FG
+C;Celle Enomondo;AT
+C;Celle Ligure;SV
+C;Celleno;VT
+C;Cellere;VT
+C;Cellino Attanasio;TE
+C;Cellino San Marco;BR
+C;Cellio con Breia;VC
+C;Cellole;CE
+C;Cembra Lisignago;TN
+C;Cenadi;CZ
+C;Cenate Sopra;BG
+C;Cenate Sotto;BG
+C;Cencenighe Agordino;BL
+C;Cene;BG
+C;Ceneselli;RO
+C;Cengio;SV
+C;Centallo;CN
+C;Cento;FE
+C;Centola;SA
+C;Centrache;CZ
+C;Centro Valle Intelvi;CO
+C;Centuripe;EN
+C;Cepagatti;PE
+C;Ceppaloni;BN
+C;Ceppo Morelli;VB
+C;Ceprano;FR
+C;Cerami;EN
+C;Ceranesi;GE
+C;Cerano;NO
+C;Cerano d'Intelvi;CO
+C;Ceranova;PV
+C;Ceraso;SA
+C;Cercemaggiore;CB
+C;Cercenasco;TO
+C;Cercepiccola;CB
+C;Cerchiara di Calabria;CS
+C;Cerchio;AQ
+C;Cercino;SO
+C;Cercivento;UD
+C;Cercola;NA
+C;Cerda;PA
+C;Cerea;VR
+C;Ceregnano;RO
+C;Cerenzia;KR
+C;Ceres;TO
+C;Ceresara;MN
+C;Cereseto;AL
+C;Ceresole Alba;CN
+C;Ceresole Reale;TO
+C;Cerete;BG
+C;Ceretto Lomellina;PV
+C;Cergnago;PV
+C;Ceriale;SV
+C;Ceriana;IM
+C;Ceriano Laghetto;MB
+C;Cerignale;PC
+C;Cerignola;FG
+C;Cerisano;CS
+C;Cermenate;CO
+C;Cermes;BZ
+C;Cermignano;TE
+C;Cernobbio;CO
+C;Cernusco Lombardone;LC
+C;Cernusco sul Naviglio;MI
+C;Cerreto d'Asti;AT
+C;Cerreto d'Esi;AN
+C;Cerreto di Spoleto;PG
+C;Cerreto Grue;AL
+C;Cerreto Guidi;FI
+C;Cerreto Laziale;RM
+C;Cerreto Sannita;BN
+C;Cerretto Langhe;CN
+C;Cerrina Monferrato;AL
+C;Cerrione;BI
+C;Cerro al Lambro;MI
+C;Cerro al Volturno;IS
+C;Cerro Maggiore;MI
+C;Cerro Tanaro;AT
+C;Cerro Veronese;VR
+C;Cersosimo;PZ
+C;Certaldo;FI
+C;Certosa di Pavia;PV
+C;Cerva;CZ
+C;Cervara di Roma;RM
+C;Cervarese Santa Croce;PD
+C;Cervaro;FR
+C;Cervasca;CN
+C;Cervatto;VC
+C;Cerveno;BS
+C;Cervere;CN
+C;Cervesina;PV
+C;Cerveteri;RM
+C;Cervia;RA
+C;Cervicati;CS
+C;Cervignano d'Adda;LO
+C;Cervignano del Friuli;UD
+C;Cervinara;AV
+C;Cervino;CE
+C;Cervo;IM
+C;Cerzeto;CS
+C;Cesa;CE
+C;Cesana Brianza;LC
+C;Cesana Torinese;TO
+C;Cesano Boscone;MI
+C;Cesano Maderno;MB
+C;Cesara;VB
+C;Cesarò;ME
+C;Cesate;MI
+C;Cesena;FC
+C;Cesenatico;FC
+C;Cesinali;AV
+C;Cesio;IM
+C;Cesiomaggiore;BL
+C;Cessalto;TV
+C;Cessaniti;VV
+C;Cessapalombo;MC
+C;Cessole;AT
+C;Cetara;SA
+C;Ceto;BS
+C;Cetona;SI
+C;Cetraro;CS
+C;Ceva;CN
+C;Cevo;BS
+C;Challand-Saint-Anselme;AO
+C;Challand-Saint-Victor;AO
+C;Chambave;AO
+C;Chamois;AO
+C;Champdepraz;AO
+C;Champorcher;AO
+C;Charvensod;AO
+C;Cherasco;CN
+C;Cheremule;SS
+C;Chialamberto;TO
+C;Chiampo;VI
+C;Chianche;AV
+C;Chianciano Terme;SI
+C;Chianni;PI
+C;Chianocco;TO
+C;Chiaramonte Gulfi;RG
+C;Chiaramonti;SS
+C;Chiarano;TV
+C;Chiaravalle;AN
+C;Chiaravalle Centrale;CZ
+C;Chiari;BS
+C;Chiaromonte;PZ
+C;Chiauci;IS
+C;Chiavari;GE
+C;Chiavenna;SO
+C;Chiaverano;TO
+C;Chienes;BZ
+C;Chieri;TO
+C;Chies d'Alpago;BL
+C;Chiesa in Valmalenco;SO
+C;Chiesanuova;TO
+C;Chiesina Uzzanese;PT
+C;Chieti;CH
+C;Chieuti;FG
+C;Chieve;CR
+C;Chignolo d'Isola;BG
+C;Chignolo Po;PV
+C;Chioggia;VE
+C;Chiomonte;TO
+C;Chions;PN
+C;Chiopris-Viscone;UD
+C;Chitignano;AR
+C;Chiuduno;BG
+C;Chiuppano;VI
+C;Chiuro;SO
+C;Chiusa;BZ
+C;Chiusa di Pesio;CN
+C;Chiusa di San Michele;TO
+C;Chiusa Sclafani;PA
+C;Chiusaforte;UD
+C;Chiusanico;IM
+C;Chiusano d'Asti;AT
+C;Chiusano di San Domenico;AV
+C;Chiusavecchia;IM
+C;Chiusdino;SI
+C;Chiusi;SI
+C;Chiusi della Verna;AR
+C;Chivasso;TO
+C;Châtillon;AO
+C;Ciampino;RM
+C;Cianciana;AG
+C;Cibiana di Cadore;BL
+C;Cicagna;GE
+C;Cicala;CZ
+C;Cicciano;NA
+C;Cicerale;SA
+C;Ciciliano;RM
+C;Cicognolo;CR
+C;Ciconio;TO
+C;Cigliano;VC
+C;Cigliè;CN
+C;Cigognola;PV
+C;Cigole;BS
+C;Cilavegna;PV
+C;Cimadolmo;TV
+C;Cimbergo;BS
+C;Ciminna;PA
+C;Ciminà;RC
+C;Cimitile;NA
+C;Cimolais;PN
+C;Cimone;TN
+C;Cinaglio;AT
+C;Cineto Romano;RM
+C;Cingia de' Botti;CR
+C;Cingoli;MC
+C;Cinigiano;GR
+C;Cinisello Balsamo;MI
+C;Cinisi;PA
+C;Cino;SO
+C;Cinquefrondi;RC
+C;Cintano;TO
+C;Cinte Tesino;TN
+C;Cinto Caomaggiore;VE
+C;Cinto Euganeo;PD
+C;Cinzano;TO
+C;Ciorlano;CE
+C;Cipressa;IM
+C;Circello;BN
+C;Cirigliano;MT
+C;Cirimido;CO
+C;Ciriè;TO
+C;Cirò;KR
+C;Cirò Marina;KR
+C;Cis;TN
+C;Cisano Bergamasco;BG
+C;Cisano sul Neva;SV
+C;Ciserano;BG
+C;Cislago;VA
+C;Cisliano;MI
+C;Cison di Valmarino;TV
+C;Cissone;CN
+C;Cisterna d'Asti;AT
+C;Cisterna di Latina;LT
+C;Cisternino;BR
+C;Citerna;PG
+C;Cittadella;PD
+C;Cittaducale;RI
+C;Cittanova;RC
+C;Cittareale;RI
+C;Cittiglio;VA
+C;Città della Pieve;PG
+C;Città di Castello;PG
+C;Città Sant'Angelo;PE
+C;Civate;LC
+C;Civezza;IM
+C;Civezzano;TN
+C;Civiasco;VC
+C;Cividale del Friuli;UD
+C;Cividate al Piano;BG
+C;Cividate Camuno;BS
+C;Civita;CS
+C;Civita Castellana;VT
+C;Civita d'Antino;AQ
+C;Civitacampomarano;CB
+C;Civitaluparella;CH
+C;Civitanova del Sannio;IS
+C;Civitanova Marche;MC
+C;Civitaquana;PE
+C;Civitavecchia;RM
+C;Civitella Alfedena;AQ
+C;Civitella Casanova;PE
+C;Civitella d'Agliano;VT
+C;Civitella del Tronto;TE
+C;Civitella di Romagna;FC
+C;Civitella in Val di Chiana;AR
+C;Civitella Messer Raimondo;CH
+C;Civitella Paganico;GR
+C;Civitella Roveto;AQ
+C;Civitella San Paolo;RM
+C;Civo;SO
+C;Claino con Osteno;CO
+C;Claut;PN
+C;Clauzetto;PN
+C;Clavesana;CN
+C;Claviere;TO
+C;Cles;TN
+C;Cleto;CS
+C;Clivio;VA
+C;Clusone;BG
+C;Coassolo Torinese;TO
+C;Coazze;TO
+C;Coazzolo;AT
+C;Coccaglio;BS
+C;Cocconato;AT
+C;Cocquio-Trevisago;VA
+C;Cocullo;AQ
+C;Codevigo;PD
+C;Codevilla;PV
+C;Codigoro;FE
+C;Codogno;LO
+C;Codognè;TV
+C;Codroipo;UD
+C;Codrongianos;SS
+C;Coggiola;BI
+C;Cogliate;MB
+C;Cogne;AO
+C;Cogoleto;GE
+C;Cogollo del Cengio;VI
+C;Cogorno;GE
+C;Colazza;NO
+C;Colceresa;VI
+C;Colere;BG
+C;Colfelice;FR
+C;Coli;PC
+C;Colico;LC
+C;Collalto Sabino;RI
+C;Collarmele;AQ
+C;Collazzone;PG
+C;Colle Brianza;LC
+C;Colle d'Anchise;CB
+C;Colle di Tora;RI
+C;Colle di Val d'Elsa;SI
+C;Colle San Magno;FR
+C;Colle Sannita;BN
+C;Colle Santa Lucia;BL
+C;Colle Umberto;TV
+C;Collebeato;BS
+C;Collecchio;PR
+C;Collecorvino;PE
+C;Colledara;TE
+C;Colledimacine;CH
+C;Colledimezzo;CH
+C;Colleferro;RM
+C;Collegiove;RI
+C;Collegno;TO
+C;Collelongo;AQ
+C;Collepardo;FR
+C;Collepasso;LE
+C;Collepietro;AQ
+C;Colleretto Castelnuovo;TO
+C;Colleretto Giacosa;TO
+C;Collesalvetti;LI
+C;Collesano;PA
+C;Colletorto;CB
+C;Collevecchio;RI
+C;Colli a Volturno;IS
+C;Colli al Metauro;PU
+C;Colli del Tronto;AP
+C;Colli sul Velino;RI
+C;Colli Verdi;PV
+C;Colliano;SA
+C;Collinas;SU
+C;Collio;BS
+C;Collobiano;VC
+C;Colloredo di Monte Albano;UD
+C;Colmurano;MC
+C;Colobraro;MT
+C;Cologna Veneta;VR
+C;Cologne;BS
+C;Cologno al Serio;BG
+C;Cologno Monzese;MI
+C;Colognola ai Colli;VR
+C;Colonna;RM
+C;Colonnella;TE
+C;Colonno;CO
+C;Colorina;SO
+C;Colorno;PR
+C;Colosimi;CS
+C;Colturano;MI
+C;Colverde;CO
+C;Colzate;BG
+C;Comabbio;VA
+C;Comacchio;FE
+C;Comano;MS
+C;Comano Terme;TN
+C;Comazzo;LO
+C;Comeglians;UD
+C;Comelico Superiore;BL
+C;Comerio;VA
+C;Comezzano-Cizzago;BS
+C;Comignago;NO
+C;Comiso;RG
+C;Comitini;AG
+C;Comiziano;NA
+C;Commessaggio;MN
+C;Commezzadura;TN
+C;Como;CO
+C;Compiano;PR
+C;Comun Nuovo;BG
+C;Comunanza;AP
+C;Cona;VE
+C;Conca Casale;IS
+C;Conca dei Marini;SA
+C;Conca della Campania;CE
+C;Concamarise;VR
+C;Concerviano;RI
+C;Concesio;BS
+C;Concordia Sagittaria;VE
+C;Concordia sulla Secchia;MO
+C;Concorezzo;MB
+C;Condofuri;RC
+C;Condove;TO
+C;Condrò;ME
+C;Conegliano;TV
+C;Confienza;PV
+C;Configni;RI
+C;Conflenti;CZ
+C;Coniolo;AL
+C;Conselice;RA
+C;Conselve;PD
+C;Contessa Entellina;PA
+C;Contigliano;RI
+C;Contrada;AV
+C;Controguerra;TE
+C;Controne;SA
+C;Contursi Terme;SA
+C;Contà;TN
+C;Conversano;BA
+C;Conza della Campania;AV
+C;Conzano;AL
+C;Copertino;LE
+C;Copiano;PV
+C;Copparo;FE
+C;Corana;PV
+C;Corato;BA
+C;Corbara;SA
+C;Corbetta;MI
+C;Corbola;RO
+C;Corchiano;VT
+C;Corciano;PG
+C;Cordenons;PN
+C;Cordignano;TV
+C;Cordovado;PN
+C;Coreglia Antelminelli;LU
+C;Coreglia Ligure;GE
+C;Coreno Ausonio;FR
+C;Corfinio;AQ
+C;Cori;LT
+C;Coriano;RN
+C;Corigliano d'Otranto;LE
+C;Corigliano-Rossano;CS
+C;Corinaldo;AN
+C;Corio;TO
+C;Corleone;PA
+C;Corleto Monforte;SA
+C;Corleto Perticara;PZ
+C;Cormano;MI
+C;Cormons;GO
+C;Corna Imagna;BG
+C;Cornalba;BG
+C;Cornale e Bastida;PV
+C;Cornaredo;MI
+C;Cornate d'Adda;MB
+C;Cornedo all'Isarco;BZ
+C;Cornedo Vicentino;VI
+C;Cornegliano Laudense;LO
+C;Corneliano d'Alba;CN
+C;Corniglio;PR
+C;Corno di Rosazzo;UD
+C;Corno Giovine;LO
+C;Cornovecchio;LO
+C;Cornuda;TV
+C;Correggio;RE
+C;Correzzana;MB
+C;Correzzola;PD
+C;Corrido;CO
+C;Corridonia;MC
+C;Corropoli;TE
+C;Corsano;LE
+C;Corsico;MI
+C;Corsione;AT
+C;Cortaccia sulla strada del vino;BZ
+C;Cortale;CZ
+C;Cortandone;AT
+C;Cortanze;AT
+C;Cortazzone;AT
+C;Corte Brugnatella;PC
+C;Corte de' Cortesi con Cignone;CR
+C;Corte de' Frati;CR
+C;Corte Franca;BS
+C;Corte Palasio;LO
+C;Cortemaggiore;PC
+C;Cortemilia;CN
+C;Corteno Golgi;BS
+C;Cortenova;LC
+C;Cortenuova;BG
+C;Corteolona e Genzone;PV
+C;Cortiglione;AT
+C;Cortina d'Ampezzo;BL
+C;Cortina sulla strada del vino;BZ
+C;Cortino;TE
+C;Cortona;AR
+C;Corvara;PE
+C;Corvara in Badia;BZ
+C;Corvino San Quirico;PV
+C;Corzano;BS
+C;Coseano;UD
+C;Cosenza;CS
+C;Cosio d'Arroscia;IM
+C;Cosio Valtellino;SO
+C;Cosoleto;RC
+C;Cossano Belbo;CN
+C;Cossano Canavese;TO
+C;Cossato;BI
+C;Cosseria;SV
+C;Cossignano;AP
+C;Cossogno;VB
+C;Cossoine;SS
+C;Cossombrato;AT
+C;Costa de' Nobili;PV
+C;Costa di Mezzate;BG
+C;Costa di Rovigo;RO
+C;Costa Masnaga;LC
+C;Costa Serina;BG
+C;Costa Valle Imagna;BG
+C;Costa Vescovato;AL
+C;Costa Volpino;BG
+C;Costabissara;VI
+C;Costacciaro;PG
+C;Costanzana;VC
+C;Costarainera;IM
+C;Costermano sul Garda;VR
+C;Costigliole d'Asti;AT
+C;Costigliole Saluzzo;CN
+C;Cotignola;RA
+C;Cotronei;KR
+C;Cottanello;RI
+C;Courmayeur;AO
+C;Covo;BG
+C;Cozzo;PV
+C;Craco;MT
+C;Crandola Valsassina;LC
+C;Cravagliana;VC
+C;Cravanzana;CN
+C;Craveggia;VB
+C;Creazzo;VI
+C;Crecchio;CH
+C;Credaro;BG
+C;Credera Rubbiano;CR
+C;Crema;CR
+C;Cremella;LC
+C;Cremenaga;VA
+C;Cremeno;LC
+C;Cremia;CO
+C;Cremolino;AL
+C;Cremona;CR
+C;Cremosano;CR
+C;Crescentino;VC
+C;Crespadoro;VI
+C;Crespiatica;LO
+C;Crespina Lorenzana;PI
+C;Crespino;RO
+C;Cressa;NO
+C;Crevacuore;BI
+C;Crevalcore;BO
+C;Crevoladossola;VB
+C;Crispano;NA
+C;Crispiano;TA
+C;Crissolo;CN
+C;Crocefieschi;GE
+C;Crocetta del Montello;TV
+C;Crodo;VB
+C;Crognaleto;TE
+C;Cropalati;CS
+C;Cropani;CZ
+C;Crosia;CS
+C;Crosio della Valle;VA
+C;Crotone;KR
+C;Crotta d'Adda;CR
+C;Crova;VC
+C;Croviana;TN
+C;Crucoli;KR
+C;Cuasso al Monte;VA
+C;Cuccaro Vetere;SA
+C;Cucciago;CO
+C;Cuceglio;TO
+C;Cuggiono;MI
+C;Cugliate-Fabiasco;VA
+C;Cuglieri;OR
+C;Cugnoli;PE
+C;Cumiana;TO
+C;Cumignano sul Naviglio;CR
+C;Cunardo;VA
+C;Cuneo;CN
+C;Cunico;AT
+C;Cuorgnè;TO
+C;Cupello;CH
+C;Cupra Marittima;AP
+C;Cupramontana;AN
+C;Cura Carpignano;PV
+C;Curcuris;OR
+C;Cureggio;NO
+C;Curiglia con Monteviasco;VA
+C;Curinga;CZ
+C;Curino;BI
+C;Curno;BG
+C;Curon Venosta;BZ
+C;Cursi;LE
+C;Curtarolo;PD
+C;Curtatone;MN
+C;Curti;CE
+C;Cusago;MI
+C;Cusano Milanino;MI
+C;Cusano Mutri;BN
+C;Cusino;CO
+C;Cusio;BG
+C;Custonaci;TP
+C;Cutro;KR
+C;Cutrofiano;LE
+C;Cuveglio;VA
+C;Cuvio;VA
+C;Dairago;MI
+C;Dalmine;BG
+C;Dambel;TN
+C;Danta di Cadore;BL
+C;Darfo Boario Terme;BS
+C;Dasà;VV
+C;Davagna;GE
+C;Daverio;VA
+C;Davoli;CZ
+C;Dazio;SO
+C;Decimomannu;CA
+C;Decimoputzu;SU
+C;Decollatura;CZ
+C;Dego;SV
+C;Deiva Marina;SP
+C;Delebio;SO
+C;Delia;CL
+C;Delianuova;RC
+C;Deliceto;FG
+C;Dello;BS
+C;Demonte;CN
+C;Denice;AL
+C;Denno;TN
+C;Dernice;AL
+C;Derovere;CR
+C;Deruta;PG
+C;Dervio;LC
+C;Desana;VC
+C;Desenzano del Garda;BS
+C;Desio;MB
+C;Desulo;NU
+C;Diamante;CS
+C;Diano Arentino;IM
+C;Diano Castello;IM
+C;Diano d'Alba;CN
+C;Diano Marina;IM
+C;Diano San Pietro;IM
+C;Dicomano;FI
+C;Dignano;UD
+C;Dimaro Folgarida;TN
+C;Dinami;VV
+C;Dipignano;CS
+C;Diso;LE
+C;Divignano;NO
+C;Dizzasco;CO
+C;Dobbiaco;BZ
+C;Doberdò del Lago;GO
+C;Dogliani;CN
+C;Dogliola;CH
+C;Dogna;UD
+C;Dolceacqua;IM
+C;Dolcedo;IM
+C;Dolcè;VR
+C;Dolegna del Collio;GO
+C;Dolianova;SU
+C;Dolo;VE
+C;Dolzago;LC
+C;Domanico;CS
+C;Domaso;CO
+C;Domegge di Cadore;BL
+C;Domicella;AV
+C;Domodossola;VB
+C;Domus de Maria;SU
+C;Domusnovas;SU
+C;Donato;BI
+C;Dongo;CO
+C;Donnas;AO
+C;Donori;SU
+C;Dorgali;NU
+C;Dorio;LC
+C;Dormelletto;NO
+C;Dorno;PV
+C;Dorzano;BI
+C;Dosolo;MN
+C;Dossena;BG
+C;Dosso del Liro;CO
+C;Doues;AO
+C;Dovadola;FC
+C;Dovera;CR
+C;Dozza;BO
+C;Dragoni;CE
+C;Drapia;VV
+C;Drena;TN
+C;Drenchia;UD
+C;Dresano;MI
+C;Dro;TN
+C;Dronero;CN
+C;Druento;TO
+C;Druogno;VB
+C;Dualchi;NU
+C;Dubino;SO
+C;Due Carrare;PD
+C;Dueville;VI
+C;Dugenta;BN
+C;Duino Aurisina;TS
+C;Dumenza;VA
+C;Duno;VA
+C;Durazzano;BN
+C;Duronia;CB
+C;Dusino San Michele;AT
+C;Eboli;SA
+C;Edolo;BS
+C;Egna;BZ
+C;Elice;PE
+C;Elini;NU
+C;Ello;LC
+C;Elmas;CA
+C;Elva;CN
+C;Emarèse;AO
+C;Empoli;FI
+C;Endine Gaiano;BG
+C;Enego;VI
+C;Enemonzo;UD
+C;Enna;EN
+C;Entracque;CN
+C;Entratico;BG
+C;Envie;CN
+C;Episcopia;PZ
+C;Eraclea;VE
+C;Erba;CO
+C;Erbezzo;VR
+C;Erbusco;BS
+C;Erbè;VR
+C;Erchie;BR
+C;Ercolano;NA
+C;Erice;TP
+C;Erli;SV
+C;Erto e Casso;PN
+C;Erula;SS
+C;Erve;LC
+C;Esanatoglia;MC
+C;Escalaplano;SU
+C;Escolca;SU
+C;Esine;BS
+C;Esino Lario;LC
+C;Esperia;FR
+C;Esporlatu;SS
+C;Este;PD
+C;Esterzili;SU
+C;Etroubles;AO
+C;Eupilio;CO
+C;Exilles;TO
+C;Fabbrica Curone;AL
+C;Fabbriche di Vergemoli;LU
+C;Fabbrico;RE
+C;Fabriano;AN
+C;Fabrica di Roma;VT
+C;Fabrizia;VV
+C;Fabro;TR
+C;Faedis;UD
+C;Faedo Valtellino;SO
+C;Faenza;RA
+C;Faeto;FG
+C;Fagagna;UD
+C;Faggeto Lario;CO
+C;Faggiano;TA
+C;Fagnano Alto;AQ
+C;Fagnano Castello;CS
+C;Fagnano Olona;VA
+C;Fai della Paganella;TN
+C;Faicchio;BN
+C;Falcade;BL
+C;Falciano del Massico;CE
+C;Falconara Albanese;CS
+C;Falconara Marittima;AN
+C;Falcone;ME
+C;Faleria;VT
+C;Falerna;CZ
+C;Falerone;FM
+C;Fallo;CH
+C;Faloppio;CO
+C;Falvaterra;FR
+C;Falzes;BZ
+C;Fanano;MO
+C;Fanna;PN
+C;Fano;PU
+C;Fano Adriano;TE
+C;Fara Filiorum Petri;CH
+C;Fara Gera d'Adda;BG
+C;Fara in Sabina;RI
+C;Fara Novarese;NO
+C;Fara Olivana con Sola;BG
+C;Fara San Martino;CH
+C;Fara Vicentino;VI
+C;Fardella;PZ
+C;Farigliano;CN
+C;Farindola;PE
+C;Farini;PC
+C;Farnese;VT
+C;Farra d'Isonzo;GO
+C;Farra di Soligo;TV
+C;Fasano;BR
+C;Fascia;GE
+C;Fauglia;PI
+C;Faule;CN
+C;Favale di Malvaro;GE
+C;Favara;AG
+C;Favignana;TP
+C;Favria;TO
+C;Feisoglio;CN
+C;Feletto;TO
+C;Felino;PR
+C;Felitto;SA
+C;Felizzano;AL
+C;Feltre;BL
+C;Fenegrò;CO
+C;Fenestrelle;TO
+C;Ferentillo;TR
+C;Ferentino;FR
+C;Ferla;SR
+C;Fermignano;PU
+C;Fermo;FM
+C;Ferno;VA
+C;Feroleto Antico;CZ
+C;Feroleto della Chiesa;RC
+C;Ferrandina;MT
+C;Ferrara;FE
+C;Ferrara di Monte Baldo;VR
+C;Ferrazzano;CB
+C;Ferrera di Varese;VA
+C;Ferrera Erbognone;PV
+C;Ferrere;AT
+C;Ferriere;PC
+C;Ferruzzano;RC
+C;Fiamignano;RI
+C;Fiano;TO
+C;Fiano Romano;RM
+C;Fiastra;MC
+C;Fiavè;TN
+C;Ficarazzi;PA
+C;Ficarolo;RO
+C;Ficarra;ME
+C;Ficulle;TR
+C;Fidenza;PR
+C;Fierozzo;TN
+C;Fiesco;CR
+C;Fiesole;FI
+C;Fiesse;BS
+C;Fiesso d'Artico;VE
+C;Fiesso Umbertiano;RO
+C;Figino Serenza;CO
+C;Figline e Incisa Valdarno;FI
+C;Figline Vegliaturo;CS
+C;Filacciano;RM
+C;Filadelfia;VV
+C;Filago;BG
+C;Filandari;VV
+C;Filattiera;MS
+C;Filettino;FR
+C;Filetto;CH
+C;Filiano;PZ
+C;Filighera;PV
+C;Filignano;IS
+C;Filogaso;VV
+C;Filottrano;AN
+C;Finale Emilia;MO
+C;Finale Ligure;SV
+C;Fino del Monte;BG
+C;Fino Mornasco;CO
+C;Fiorano al Serio;BG
+C;Fiorano Canavese;TO
+C;Fiorano Modenese;MO
+C;Fiorenzuola d'Arda;PC
+C;Firenze;FI
+C;Firenzuola;FI
+C;Firmo;CS
+C;Fiscaglia;FE
+C;Fisciano;SA
+C;Fiuggi;FR
+C;Fiumalbo;MO
+C;Fiumara;RC
+C;Fiume Veneto;PN
+C;Fiumedinisi;ME
+C;Fiumefreddo Bruzio;CS
+C;Fiumefreddo di Sicilia;CT
+C;Fiumicello Villa Vicentina;UD
+C;Fiumicino;RM
+C;Fiuminata;MC
+C;Fivizzano;MS
+C;Fiè allo Sciliar;BZ
+C;Flaibano;UD
+C;Flero;BS
+C;Floresta;ME
+C;Floridia;SR
+C;Florinas;SS
+C;Flumeri;AV
+C;Fluminimaggiore;SU
+C;Flussio;OR
+C;Fobello;VC
+C;Foggia;FG
+C;Foglianise;BN
+C;Fogliano Redipuglia;GO
+C;Foglizzo;TO
+C;Foiano della Chiana;AR
+C;Foiano di Val Fortore;BN
+C;Folgaria;TN
+C;Folignano;AP
+C;Foligno;PG
+C;Follina;TV
+C;Follo;SP
+C;Follonica;GR
+C;Fombio;LO
+C;Fondachelli-Fantina;ME
+C;Fondi;LT
+C;Fonni;NU
+C;Fontainemore;AO
+C;Fontana Liri;FR
+C;Fontanafredda;PN
+C;Fontanarosa;AV
+C;Fontanelice;BO
+C;Fontanella;BG
+C;Fontanellato;PR
+C;Fontanelle;TV
+C;Fontaneto d'Agogna;NO
+C;Fontanetto Po;VC
+C;Fontanigorda;GE
+C;Fontanile;AT
+C;Fontaniva;PD
+C;Fonte;TV
+C;Fonte Nuova;RM
+C;Fontecchio;AQ
+C;Fontechiari;FR
+C;Fontegreca;CE
+C;Fonteno;BG
+C;Fontevivo;PR
+C;Fonzaso;BL
+C;Foppolo;BG
+C;Forano;RI
+C;Force;AP
+C;Forchia;BN
+C;Forcola;SO
+C;Fordongianus;OR
+C;Forenza;PZ
+C;Foresto Sparso;BG
+C;Forgaria nel Friuli;UD
+C;Forino;AV
+C;Forio;NA
+C;Forlimpopoli;FC
+C;Forlì;FC
+C;Forlì del Sannio;IS
+C;Formazza;VB
+C;Formello;RM
+C;Formia;LT
+C;Formicola;CE
+C;Formigara;CR
+C;Formigine;MO
+C;Formigliana;VC
+C;Fornace;TN
+C;Fornelli;IS
+C;Forni Avoltri;UD
+C;Forni di Sopra;UD
+C;Forni di Sotto;UD
+C;Forno Canavese;TO
+C;Fornovo di Taro;PR
+C;Fornovo San Giovanni;BG
+C;Forte dei Marmi;LU
+C;Fortezza;BZ
+C;Fortunago;PV
+C;Forza d'Agrò;ME
+C;Fosciandora;LU
+C;Fosdinovo;MS
+C;Fossa;AQ
+C;Fossacesia;CH
+C;Fossalta di Piave;VE
+C;Fossalta di Portogruaro;VE
+C;Fossalto;CB
+C;Fossano;CN
+C;Fossato di Vico;PG
+C;Fossato Serralta;CZ
+C;Fossombrone;PU
+C;Fossò;VE
+C;Foza;VI
+C;Frabosa Soprana;CN
+C;Frabosa Sottana;CN
+C;Fraconalto;AL
+C;Fragagnano;TA
+C;Fragneto l'Abate;BN
+C;Fragneto Monforte;BN
+C;Fraine;CH
+C;Framura;SP
+C;Francavilla al Mare;CH
+C;Francavilla Angitola;VV
+C;Francavilla Bisio;AL
+C;Francavilla d'Ete;FM
+C;Francavilla di Sicilia;ME
+C;Francavilla Fontana;BR
+C;Francavilla in Sinni;PZ
+C;Francavilla Marittima;CS
+C;Francica;VV
+C;Francofonte;SR
+C;Francolise;CE
+C;Frascaro;AL
+C;Frascarolo;PV
+C;Frascati;RM
+C;Frascineto;CS
+C;Frassilongo;TN
+C;Frassinelle Polesine;RO
+C;Frassinello Monferrato;AL
+C;Frassineto Po;AL
+C;Frassinetto;TO
+C;Frassino;CN
+C;Frassinoro;MO
+C;Frasso Sabino;RI
+C;Frasso Telesino;BN
+C;Fratta Polesine;RO
+C;Fratta Todina;PG
+C;Frattamaggiore;NA
+C;Frattaminore;NA
+C;Fratte Rosa;PU
+C;Frazzanò;ME
+C;Fregona;TV
+C;Fresagrandinaria;CH
+C;Fresonara;AL
+C;Frigento;AV
+C;Frignano;CE
+C;Frinco;AT
+C;Frisa;CH
+C;Frisanco;PN
+C;Front;TO
+C;Frontino;PU
+C;Frontone;PU
+C;Frosinone;FR
+C;Frosolone;IS
+C;Frossasco;TO
+C;Frugarolo;AL
+C;Fubine Monferrato;AL
+C;Fucecchio;FI
+C;Fuipiano Valle Imagna;BG
+C;Fumane;VR
+C;Fumone;FR
+C;Funes;BZ
+C;Furci;CH
+C;Furci Siculo;ME
+C;Furnari;ME
+C;Furore;SA
+C;Furtei;SU
+C;Fuscaldo;CS
+C;Fusignano;RA
+C;Fusine;SO
+C;Futani;SA
+C;Fénis;AO
+C;Gabbioneta-Binanuova;CR
+C;Gabiano;AL
+C;Gabicce Mare;PU
+C;Gaby;AO
+C;Gadesco-Pieve Delmona;CR
+C;Gadoni;NU
+C;Gaeta;LT
+C;Gaggi;ME
+C;Gaggiano;MI
+C;Gaggio Montano;BO
+C;Gaglianico;BI
+C;Gagliano Aterno;AQ
+C;Gagliano Castelferrato;EN
+C;Gagliano del Capo;LE
+C;Gagliato;CZ
+C;Gagliole;MC
+C;Gaiarine;TV
+C;Gaiba;RO
+C;Gaiola;CN
+C;Gaiole in Chianti;SI
+C;Gairo;NU
+C;Gais;BZ
+C;Galati Mamertino;ME
+C;Galatina;LE
+C;Galatone;LE
+C;Galatro;RC
+C;Galbiate;LC
+C;Galeata;FC
+C;Galgagnano;LO
+C;Gallarate;VA
+C;Gallese;VT
+C;Galliate;NO
+C;Galliate Lombardo;VA
+C;Galliavola;PV
+C;Gallicano;LU
+C;Gallicano nel Lazio;RM
+C;Gallicchio;PZ
+C;Galliera;BO
+C;Galliera Veneta;PD
+C;Gallinaro;FR
+C;Gallio;VI
+C;Gallipoli;LE
+C;Gallo Matese;CE
+C;Gallodoro;ME
+C;Galluccio;CE
+C;Galtellì;NU
+C;Galzignano Terme;PD
+C;Gamalero;AL
+C;Gambara;BS
+C;Gambarana;PV
+C;Gambasca;CN
+C;Gambassi Terme;FI
+C;Gambatesa;CB
+C;Gambellara;VI
+C;Gamberale;CH
+C;Gambettola;FC
+C;Gambolò;PV
+C;Gandellino;BG
+C;Gandino;BG
+C;Gandosso;BG
+C;Gangi;PA
+C;Garaguso;MT
+C;Garbagna;AL
+C;Garbagna Novarese;NO
+C;Garbagnate Milanese;MI
+C;Garbagnate Monastero;LC
+C;Garda;VR
+C;Gardone Riviera;BS
+C;Gardone Val Trompia;BS
+C;Garessio;CN
+C;Gargallo;NO
+C;Gargazzone;BZ
+C;Gargnano;BS
+C;Garlasco;PV
+C;Garlate;LC
+C;Garlenda;SV
+C;Garniga Terme;TN
+C;Garzeno;CO
+C;Garzigliana;TO
+C;Gasperina;CZ
+C;Gassino Torinese;TO
+C;Gattatico;RE
+C;Gatteo;FC
+C;Gattico-Veruno;NO
+C;Gattinara;VC
+C;Gavardo;BS
+C;Gavello;RO
+C;Gaverina Terme;BG
+C;Gavi;AL
+C;Gavignano;RM
+C;Gavirate;VA
+C;Gavoi;NU
+C;Gavorrano;GR
+C;Gazoldo degli Ippoliti;MN
+C;Gazzada Schianno;VA
+C;Gazzaniga;BG
+C;Gazzo;PD
+C;Gazzo Veronese;VR
+C;Gazzola;PC
+C;Gazzuolo;MN
+C;Gela;CL
+C;Gemmano;RN
+C;Gemona del Friuli;UD
+C;Gemonio;VA
+C;Genazzano;RM
+C;Genga;AN
+C;Genivolta;CR
+C;Genola;CN
+C;Genoni;SU
+C;Genova;GE
+C;Genuri;SU
+C;Genzano di Lucania;PZ
+C;Genzano di Roma;RM
+C;Gera Lario;CO
+C;Gerace;RC
+C;Geraci Siculo;PA
+C;Gerano;RM
+C;Gerenzago;PV
+C;Gerenzano;VA
+C;Gergei;SU
+C;Germagnano;TO
+C;Germagno;VB
+C;Germignaga;VA
+C;Gerocarne;VV
+C;Gerola Alta;SO
+C;Gerre de' Caprioli;CR
+C;Gesico;SU
+C;Gessate;MI
+C;Gessopalena;CH
+C;Gesturi;SU
+C;Gesualdo;AV
+C;Ghedi;BS
+C;Ghemme;NO
+C;Ghiffa;VB
+C;Ghilarza;OR
+C;Ghisalba;BG
+C;Ghislarengo;VC
+C;Giacciano con Baruchella;RO
+C;Giaglione;TO
+C;Gianico;BS
+C;Giano dell'Umbria;PG
+C;Giano Vetusto;CE
+C;Giardinello;PA
+C;Giardini-Naxos;ME
+C;Giarole;AL
+C;Giarratana;RG
+C;Giarre;CT
+C;Giave;SS
+C;Giaveno;TO
+C;Giavera del Montello;TV
+C;Giba;SU
+C;Gibellina;TP
+C;Gifflenga;BI
+C;Giffone;RC
+C;Giffoni Sei Casali;SA
+C;Giffoni Valle Piana;SA
+C;Gignese;VB
+C;Gignod;AO
+C;Gildone;CB
+C;Gimigliano;CZ
+C;Ginestra;PZ
+C;Ginestra degli Schiavoni;BN
+C;Ginosa;TA
+C;Gioi;SA
+C;Gioia dei Marsi;AQ
+C;Gioia del Colle;BA
+C;Gioia Sannitica;CE
+C;Gioia Tauro;RC
+C;Gioiosa Ionica;RC
+C;Gioiosa Marea;ME
+C;Giove;TR
+C;Giovinazzo;BA
+C;Giovo;TN
+C;Girasole;NU
+C;Girifalco;CZ
+C;Gissi;CH
+C;Giuggianello;LE
+C;Giugliano in Campania;NA
+C;Giuliana;PA
+C;Giuliano di Roma;FR
+C;Giuliano Teatino;CH
+C;Giulianova;TE
+C;Giungano;SA
+C;Giurdignano;LE
+C;Giussago;PV
+C;Giussano;MB
+C;Giustenice;SV
+C;Giustino;TN
+C;Giusvalla;SV
+C;Givoletto;TO
+C;Gizzeria;CZ
+C;Glorenza;BZ
+C;Godega di Sant'Urbano;TV
+C;Godiasco Salice Terme;PV
+C;Godrano;PA
+C;Goito;MN
+C;Golasecca;VA
+C;Golferenzo;PV
+C;Golfo Aranci;SS
+C;Gombito;CR
+C;Gonars;UD
+C;Goni;SU
+C;Gonnesa;SU
+C;Gonnoscodina;OR
+C;Gonnosfanadiga;SU
+C;Gonnosnò;OR
+C;Gonnostramatza;OR
+C;Gonzaga;MN
+C;Gordona;SO
+C;Gorga;RM
+C;Gorgo al Monticano;TV
+C;Gorgoglione;MT
+C;Gorgonzola;MI
+C;Goriano Sicoli;AQ
+C;Gorizia;GO
+C;Gorla Maggiore;VA
+C;Gorla Minore;VA
+C;Gorlago;BG
+C;Gorle;BG
+C;Gornate Olona;VA
+C;Gorno;BG
+C;Goro;FE
+C;Gorreto;GE
+C;Gorzegno;CN
+C;Gosaldo;BL
+C;Gossolengo;PC
+C;Gottasecca;CN
+C;Gottolengo;BS
+C;Govone;CN
+C;Gozzano;NO
+C;Gradara;PU
+C;Gradisca d'Isonzo;GO
+C;Grado;GO
+C;Gradoli;VT
+C;Graffignana;LO
+C;Graffignano;VT
+C;Graglia;BI
+C;Gragnano;NA
+C;Gragnano Trebbiense;PC
+C;Grammichele;CT
+C;Grana Monferrato;AT
+C;Granarolo dell'Emilia;BO
+C;Grandate;CO
+C;Grandola ed Uniti;CO
+C;Graniti;ME
+C;Granozzo con Monticello;NO
+C;Grantola;VA
+C;Grantorto;PD
+C;Granze;PD
+C;Grassano;MT
+C;Grassobbio;BG
+C;Gratteri;PA
+C;Gravedona ed Uniti;CO
+C;Gravellona Lomellina;PV
+C;Gravellona Toce;VB
+C;Gravere;TO
+C;Gravina di Catania;CT
+C;Gravina in Puglia;BA
+C;Grazzanise;CE
+C;Grazzano Badoglio;AT
+C;Greccio;RI
+C;Greci;AV
+C;Greggio;VC
+C;Gremiasco;AL
+C;Gressan;AO
+C;Gressoney-La-Trinité;AO
+C;Gressoney-Saint-Jean;AO
+C;Greve in Chianti;FI
+C;Grezzago;MI
+C;Grezzana;VR
+C;Griante;CO
+C;Gricignano di Aversa;CE
+C;Grignasco;NO
+C;Grigno;TN
+C;Grimacco;UD
+C;Grimaldi;CS
+C;Grinzane Cavour;CN
+C;Grisignano di Zocco;VI
+C;Grisolia;CS
+C;Grizzana Morandi;BO
+C;Grognardo;AL
+C;Gromo;BG
+C;Grondona;AL
+C;Grone;BG
+C;Grontardo;CR
+C;Gropello Cairoli;PV
+C;Gropparello;PC
+C;Groscavallo;TO
+C;Grosio;SO
+C;Grosotto;SO
+C;Grosseto;GR
+C;Grosso;TO
+C;Grottaferrata;RM
+C;Grottaglie;TA
+C;Grottaminarda;AV
+C;Grottammare;AP
+C;Grottazzolina;FM
+C;Grotte;AG
+C;Grotte di Castro;VT
+C;Grotteria;RC
+C;Grottole;MT
+C;Grottolella;AV
+C;Gruaro;VE
+C;Grugliasco;TO
+C;Grumello Cremonese ed Uniti;CR
+C;Grumello del Monte;BG
+C;Grumento Nova;PZ
+C;Grumo Appula;BA
+C;Grumo Nevano;NA
+C;Grumolo delle Abbadesse;VI
+C;Guagnano;LE
+C;Gualdo;MC
+C;Gualdo Cattaneo;PG
+C;Gualdo Tadino;PG
+C;Gualtieri;RE
+C;Gualtieri Sicaminò;ME
+C;Guamaggiore;SU
+C;Guanzate;CO
+C;Guarcino;FR
+C;Guarda Veneta;RO
+C;Guardabosone;VC
+C;Guardamiglio;LO
+C;Guardavalle;CZ
+C;Guardea;TR
+C;Guardia Lombardi;AV
+C;Guardia Perticara;PZ
+C;Guardia Piemontese;CS
+C;Guardia Sanframondi;BN
+C;Guardiagrele;CH
+C;Guardialfiera;CB
+C;Guardiaregia;CB
+C;Guardistallo;PI
+C;Guarene;CN
+C;Guasila;SU
+C;Guastalla;RE
+C;Guazzora;AL
+C;Gubbio;PG
+C;Gudo Visconti;MI
+C;Guglionesi;CB
+C;Guidizzolo;MN
+C;Guidonia Montecelio;RM
+C;Guiglia;MO
+C;Guilmi;CH
+C;Gurro;VB
+C;Guspini;SU
+C;Gussago;BS
+C;Gussola;CR
+C;Hône;AO
+C;Idro;BS
+C;Iglesias;SU
+C;Igliano;CN
+C;Ilbono;NU
+C;Illasi;VR
+C;Illorai;SS
+C;Imbersago;LC
+C;Imer;TN
+C;Imola;BO
+C;Imperia;IM
+C;Impruneta;FI
+C;Inarzo;VA
+C;Incisa Scapaccino;AT
+C;Incudine;BS
+C;Induno Olona;VA
+C;Ingria;TO
+C;Intragna;VB
+C;Introbio;LC
+C;Introd;AO
+C;Introdacqua;AQ
+C;Inverigo;CO
+C;Inverno e Monteleone;PV
+C;Inverso Pinasca;TO
+C;Inveruno;MI
+C;Invorio;NO
+C;Inzago;MI
+C;Ionadi;VV
+C;Irgoli;NU
+C;Irma;BS
+C;Irsina;MT
+C;Isasca;CN
+C;Isca sullo Ionio;CZ
+C;Ischia;NA
+C;Ischia di Castro;VT
+C;Ischitella;FG
+C;Iseo;BS
+C;Isera;TN
+C;Isernia;IS
+C;Isili;SU
+C;Isnello;PA
+C;Isola d'Asti;AT
+C;Isola del Cantone;GE
+C;Isola del Giglio;GR
+C;Isola del Gran Sasso d'Italia;TE
+C;Isola del Liri;FR
+C;Isola del Piano;PU
+C;Isola della Scala;VR
+C;Isola delle Femmine;PA
+C;Isola di Capo Rizzuto;KR
+C;Isola di Fondra;BG
+C;Isola Dovarese;CR
+C;Isola Rizza;VR
+C;Isola Sant'Antonio;AL
+C;Isola Vicentina;VI
+C;Isolabella;TO
+C;Isolabona;IM
+C;Isole Tremiti;FG
+C;Isorella;BS
+C;Ispani;SA
+C;Ispica;RG
+C;Ispra;VA
+C;Issiglio;TO
+C;Issime;AO
+C;Isso;BG
+C;Issogne;AO
+C;Istrana;TV
+C;Itala;ME
+C;Itri;LT
+C;Ittireddu;SS
+C;Ittiri;SS
+C;Ivrea;TO
+C;Izano;CR
+C;Jacurso;CZ
+C;Jelsi;CB
+C;Jenne;RM
+C;Jerago con Orago;VA
+C;Jerzu;NU
+C;Jesi;AN
+C;Jesolo;VE
+C;Jolanda di Savoia;FE
+C;Joppolo;VV
+C;Joppolo Giancaxio;AG
+C;Jovençan;AO
+C;L'Aquila;AQ
+C;La Cassa;TO
+C;La Loggia;TO
+C;La Maddalena;SS
+C;La Magdeleine;AO
+C;La Morra;CN
+C;La Salle;AO
+C;La Spezia;SP
+C;La Thuile;AO
+C;La Valle;BZ
+C;La Valle Agordina;BL
+C;La Valletta Brianza;LC
+C;Labico;RM
+C;Labro;RI
+C;Lacchiarella;MI
+C;Lacco Ameno;NA
+C;Lacedonia;AV
+C;Laces;BZ
+C;Laconi;OR
+C;Ladispoli;RM
+C;Laerru;SS
+C;Laganadi;RC
+C;Laghi;VI
+C;Laglio;CO
+C;Lagnasco;CN
+C;Lago;CS
+C;Lagonegro;PZ
+C;Lagosanto;FE
+C;Lagundo;BZ
+C;Laigueglia;SV
+C;Lainate;MI
+C;Laino;CO
+C;Laino Borgo;CS
+C;Laino Castello;CS
+C;Laion;BZ
+C;Laives;BZ
+C;Lajatico;PI
+C;Lallio;BG
+C;Lama dei Peligni;CH
+C;Lama Mocogno;MO
+C;Lambrugo;CO
+C;Lamezia Terme;CZ
+C;Lamon;BL
+C;Lampedusa e Linosa;AG
+C;Lamporecchio;PT
+C;Lamporo;VC
+C;Lana;BZ
+C;Lanciano;CH
+C;Landiona;NO
+C;Landriano;PV
+C;Langhirano;PR
+C;Langosco;PV
+C;Lanusei;NU
+C;Lanuvio;RM
+C;Lanzada;SO
+C;Lanzo Torinese;TO
+C;Lapedona;FM
+C;Lapio;AV
+C;Lappano;CS
+C;Larciano;PT
+C;Lardirago;PV
+C;Lariano;RM
+C;Larino;CB
+C;Las Plassas;SU
+C;Lasa;BZ
+C;Lascari;PA
+C;Lasnigo;CO
+C;Lastebasse;VI
+C;Lastra a Signa;FI
+C;Latera;VT
+C;Laterina Pergine Valdarno;AR
+C;Laterza;TA
+C;Latiano;BR
+C;Latina;LT
+C;Latisana;UD
+C;Latronico;PZ
+C;Lattarico;CS
+C;Lauco;UD
+C;Laureana Cilento;SA
+C;Laureana di Borrello;RC
+C;Lauregno;BZ
+C;Laurenzana;PZ
+C;Lauria;PZ
+C;Lauriano;TO
+C;Laurino;SA
+C;Laurito;SA
+C;Lauro;AV
+C;Lavagna;GE
+C;Lavagno;VR
+C;Lavarone;TN
+C;Lavello;PZ
+C;Lavena Ponte Tresa;VA
+C;Laveno-Mombello;VA
+C;Lavenone;BS
+C;Laviano;SA
+C;Lavis;TN
+C;Lazise;VR
+C;Lazzate;MB
+C;Lecce;LE
+C;Lecce nei Marsi;AQ
+C;Lecco;LC
+C;Ledro;TN
+C;Leffe;BG
+C;Leggiuno;VA
+C;Legnago;VR
+C;Legnano;MI
+C;Legnaro;PD
+C;Lei;NU
+C;Leini;TO
+C;Leivi;GE
+C;Lemie;TO
+C;Lendinara;RO
+C;Leni;ME
+C;Lenna;BG
+C;Leno;BS
+C;Lenola;LT
+C;Lenta;VC
+C;Lentate sul Seveso;MB
+C;Lentella;CH
+C;Lentini;SR
+C;Leonessa;RI
+C;Leonforte;EN
+C;Leporano;TA
+C;Lequile;LE
+C;Lequio Berria;CN
+C;Lequio Tanaro;CN
+C;Lercara Friddi;PA
+C;Lerici;SP
+C;Lerma;AL
+C;Lesa;NO
+C;Lesegno;CN
+C;Lesignano de' Bagni;PR
+C;Lesina;FG
+C;Lesmo;MB
+C;Lessolo;TO
+C;Lessona;BI
+C;Lestizza;UD
+C;Letino;CE
+C;Letojanni;ME
+C;Lettere;NA
+C;Lettomanoppello;PE
+C;Lettopalena;CH
+C;Levanto;SP
+C;Levate;BG
+C;Leverano;LE
+C;Levice;CN
+C;Levico Terme;TN
+C;Levone;TO
+C;Lezzeno;CO
+C;Liberi;CE
+C;Librizzi;ME
+C;Licata;AG
+C;Licciana Nardi;MS
+C;Licenza;RM
+C;Licodia Eubea;CT
+C;Lierna;LC
+C;Lignana;VC
+C;Lignano Sabbiadoro;UD
+C;Lillianes;AO
+C;Limana;BL
+C;Limatola;BN
+C;Limbadi;VV
+C;Limbiate;MB
+C;Limena;PD
+C;Limido Comasco;CO
+C;Limina;ME
+C;Limone Piemonte;CN
+C;Limone sul Garda;BS
+C;Limosano;CB
+C;Linarolo;PV
+C;Linguaglossa;CT
+C;Lioni;AV
+C;Lipari;ME
+C;Lipomo;CO
+C;Lirio;PV
+C;Liscate;MI
+C;Liscia;CH
+C;Lisciano Niccone;PG
+C;Lisio;CN
+C;Lissone;MB
+C;Liveri;NA
+C;Livigno;SO
+C;Livinallongo del Col di Lana;BL
+C;Livo;CO
+C;Livo;TN
+C;Livorno;LI
+C;Livorno Ferraris;VC
+C;Livraga;LO
+C;Lizzanello;LE
+C;Lizzano;TA
+C;Lizzano in Belvedere;BO
+C;Loano;SV
+C;Loazzolo;AT
+C;Locana;TO
+C;Locate di Triulzi;MI
+C;Locate Varesino;CO
+C;Locatello;BG
+C;Loceri;NU
+C;Locorotondo;BA
+C;Locri;RC
+C;Loculi;NU
+C;Lodi;LO
+C;Lodi Vecchio;LO
+C;Lodine;NU
+C;Lodrino;BS
+C;Lodè;NU
+C;Lograto;BS
+C;Loiano;BO
+C;Loiri Porto San Paolo;SS
+C;Lomagna;LC
+C;Lomazzo;CO
+C;Lombardore;TO
+C;Lombriasco;TO
+C;Lomello;PV
+C;Lona-Lases;TN
+C;Lonate Ceppino;VA
+C;Lonate Pozzolo;VA
+C;Lonato del Garda;BS
+C;Londa;FI
+C;Longano;IS
+C;Longare;VI
+C;Longarone;BL
+C;Longhena;BS
+C;Longi;ME
+C;Longiano;FC
+C;Longobardi;CS
+C;Longobucco;CS
+C;Longone al Segrino;CO
+C;Longone Sabino;RI
+C;Lonigo;VI
+C;Loranzè;TO
+C;Loreggia;PD
+C;Loreglia;VB
+C;Lorenzago di Cadore;BL
+C;Loreo;RO
+C;Loreto;AN
+C;Loreto Aprutino;PE
+C;Loria;TV
+C;Loro Ciuffenna;AR
+C;Loro Piceno;MC
+C;Lorsica;GE
+C;Losine;BS
+C;Lotzorai;NU
+C;Lovere;BG
+C;Lovero;SO
+C;Lozio;BS
+C;Lozza;VA
+C;Lozzo Atestino;PD
+C;Lozzo di Cadore;BL
+C;Lozzolo;VC
+C;Lu e Cuccaro Monferrato;AL
+C;Lubriano;VT
+C;Lucca;LU
+C;Lucca Sicula;AG
+C;Lucera;FG
+C;Lucignano;AR
+C;Lucinasco;IM
+C;Lucito;CB
+C;Luco dei Marsi;AQ
+C;Lucoli;AQ
+C;Lugagnano Val d'Arda;PC
+C;Lugnano in Teverina;TR
+C;Lugo;RA
+C;Lugo di Vicenza;VI
+C;Luino;VA
+C;Luisago;CO
+C;Lula;NU
+C;Lumarzo;GE
+C;Lumezzane;BS
+C;Lunamatrona;SU
+C;Lunano;PU
+C;Lungavilla;PV
+C;Lungro;CS
+C;Luni;SP
+C;Luogosano;AV
+C;Luogosanto;SS
+C;Lupara;CB
+C;Lurago d'Erba;CO
+C;Lurago Marinone;CO
+C;Lurano;BG
+C;Luras;SS
+C;Lurate Caccivio;CO
+C;Lusciano;CE
+C;Luserna;TN
+C;Luserna San Giovanni;TO
+C;Lusernetta;TO
+C;Lusevera;UD
+C;Lusia;RO
+C;Lusiana Conco;VI
+C;Lusigliè;TO
+C;Luson;BZ
+C;Lustra;SA
+C;Luvinate;VA
+C;Luzzana;BG
+C;Luzzara;RE
+C;Luzzi;CS
+C;Maccagno con Pino e Veddasca;VA
+C;Maccastorna;LO
+C;Macchia d'Isernia;IS
+C;Macchia Valfortore;CB
+C;Macchiagodena;IS
+C;Macello;TO
+C;Macerata;MC
+C;Macerata Campania;CE
+C;Macerata Feltria;PU
+C;Macherio;MB
+C;Maclodio;BS
+C;Macomer;NU
+C;Macra;CN
+C;Macugnaga;VB
+C;Maddaloni;CE
+C;Madesimo;SO
+C;Madignano;CR
+C;Madone;BG
+C;Madonna del Sasso;VB
+C;Madruzzo;TN
+C;Maenza;LT
+C;Mafalda;CB
+C;Magasa;BS
+C;Magenta;MI
+C;Maggiora;NO
+C;Magherno;PV
+C;Magione;PG
+C;Magisano;CZ
+C;Magliano Alfieri;CN
+C;Magliano Alpi;CN
+C;Magliano de' Marsi;AQ
+C;Magliano di Tenna;FM
+C;Magliano in Toscana;GR
+C;Magliano Romano;RM
+C;Magliano Sabina;RI
+C;Magliano Vetere;SA
+C;Maglie;LE
+C;Magliolo;SV
+C;Maglione;TO
+C;Magnacavallo;MN
+C;Magnago;MI
+C;Magnano;BI
+C;Magnano in Riviera;UD
+C;Magomadas;OR
+C;Magreglio;CO
+C;Magrè sulla strada del vino;BZ
+C;Maida;CZ
+C;Maierato;VV
+C;Maierà;CS
+C;Maiolati Spontini;AN
+C;Maiolo;RN
+C;Maiori;SA
+C;Mairago;LO
+C;Mairano;BS
+C;Maissana;SP
+C;Majano;UD
+C;Malagnino;CR
+C;Malalbergo;BO
+C;Malborghetto Valbruna;UD
+C;Malcesine;VR
+C;Malegno;BS
+C;Maleo;LO
+C;Malesco;VB
+C;Maletto;CT
+C;Malfa;ME
+C;Malgrate;LC
+C;Malito;CS
+C;Mallare;SV
+C;Malles Venosta;BZ
+C;Malnate;VA
+C;Malo;VI
+C;Malonno;BS
+C;Maltignano;AP
+C;Malvagna;ME
+C;Malvicino;AL
+C;Malvito;CS
+C;Malé;TN
+C;Mammola;RC
+C;Mamoiada;NU
+C;Manciano;GR
+C;Mandanici;ME
+C;Mandas;SU
+C;Mandatoriccio;CS
+C;Mandela;RM
+C;Mandello del Lario;LC
+C;Mandello Vitta;NO
+C;Manduria;TA
+C;Manerba del Garda;BS
+C;Manerbio;BS
+C;Manfredonia;FG
+C;Mango;CN
+C;Mangone;CS
+C;Maniace;CT
+C;Maniago;PN
+C;Manocalzati;AV
+C;Manoppello;PE
+C;Mansuè;TV
+C;Manta;CN
+C;Mantello;SO
+C;Mantova;MN
+C;Manzano;UD
+C;Manziana;RM
+C;Mapello;BG
+C;Mappano;TO
+C;Mara;SS
+C;Maracalagonis;CA
+C;Maranello;MO
+C;Marano di Napoli;NA
+C;Marano di Valpolicella;VR
+C;Marano Equo;RM
+C;Marano Lagunare;UD
+C;Marano Marchesato;CS
+C;Marano Principato;CS
+C;Marano sul Panaro;MO
+C;Marano Ticino;NO
+C;Marano Vicentino;VI
+C;Maranzana;AT
+C;Maratea;PZ
+C;Marcallo con Casone;MI
+C;Marcaria;MN
+C;Marcedusa;CZ
+C;Marcellina;RM
+C;Marcellinara;CZ
+C;Marcetelli;RI
+C;Marcheno;BS
+C;Marchirolo;VA
+C;Marciana;LI
+C;Marciana Marina;LI
+C;Marcianise;CE
+C;Marciano della Chiana;AR
+C;Marcignago;PV
+C;Marcon;VE
+C;Marebbe;BZ
+C;Marene;CN
+C;Mareno di Piave;TV
+C;Marentino;TO
+C;Maretto;AT
+C;Margarita;CN
+C;Margherita di Savoia;BT
+C;Margno;LC
+C;Mariana Mantovana;MN
+C;Mariano Comense;CO
+C;Mariano del Friuli;GO
+C;Marianopoli;CL
+C;Mariglianella;NA
+C;Marigliano;NA
+C;Marina di Gioiosa Ionica;RC
+C;Marineo;PA
+C;Marino;RM
+C;Marlengo;BZ
+C;Marliana;PT
+C;Marmentino;BS
+C;Marmirolo;MN
+C;Marmora;CN
+C;Marnate;VA
+C;Marone;BS
+C;Maropati;RC
+C;Marostica;VI
+C;Marradi;FI
+C;Marrubiu;OR
+C;Marsaglia;CN
+C;Marsala;TP
+C;Marsciano;PG
+C;Marsico Nuovo;PZ
+C;Marsicovetere;PZ
+C;Marta;VT
+C;Martano;LE
+C;Martellago;VE
+C;Martello;BZ
+C;Martignacco;UD
+C;Martignana di Po;CR
+C;Martignano;LE
+C;Martina Franca;TA
+C;Martinengo;BG
+C;Martiniana Po;CN
+C;Martinsicuro;TE
+C;Martirano;CZ
+C;Martirano Lombardo;CZ
+C;Martis;SS
+C;Martone;RC
+C;Marudo;LO
+C;Maruggio;TA
+C;Marzabotto;BO
+C;Marzano;PV
+C;Marzano Appio;CE
+C;Marzano di Nola;AV
+C;Marzi;CS
+C;Marzio;VA
+C;Masainas;SU
+C;Masate;MI
+C;Mascali;CT
+C;Mascalucia;CT
+C;Maschito;PZ
+C;Masciago Primo;VA
+C;Maser;TV
+C;Masera;VB
+C;Maserada sul Piave;TV
+C;Maserà di Padova;PD
+C;Masi;PD
+C;Masi Torello;FE
+C;Masio;AL
+C;Maslianico;CO
+C;Masone;GE
+C;Massa;MS
+C;Massa d'Albe;AQ
+C;Massa di Somma;NA
+C;Massa e Cozzile;PT
+C;Massa Fermana;FM
+C;Massa Lombarda;RA
+C;Massa Lubrense;NA
+C;Massa Marittima;GR
+C;Massa Martana;PG
+C;Massafra;TA
+C;Massalengo;LO
+C;Massanzago;PD
+C;Massarosa;LU
+C;Massazza;BI
+C;Massello;TO
+C;Masserano;BI
+C;Massignano;AP
+C;Massimeno;TN
+C;Massimino;SV
+C;Massino Visconti;NO
+C;Massiola;VB
+C;Masullas;OR
+C;Matelica;MC
+C;Matera;MT
+C;Mathi;TO
+C;Matino;LE
+C;Matrice;CB
+C;Mattie;TO
+C;Mattinata;FG
+C;Mazara del Vallo;TP
+C;Mazzano;BS
+C;Mazzano Romano;RM
+C;Mazzarino;CL
+C;Mazzarrone;CT
+C;Mazzarrà Sant'Andrea;ME
+C;Mazzin;TN
+C;Mazzo di Valtellina;SO
+C;Mazzè;TO
+C;Meana di Susa;TO
+C;Meana Sardo;NU
+C;Meda;MB
+C;Mede;PV
+C;Medea;GO
+C;Medesano;PR
+C;Medicina;BO
+C;Mediglia;MI
+C;Medolago;BG
+C;Medole;MN
+C;Medolla;MO
+C;Meduna di Livenza;TV
+C;Meduno;PN
+C;Megliadino San Vitale;PD
+C;Meina;NO
+C;Melara;RO
+C;Melazzo;AL
+C;Meldola;FC
+C;Mele;GE
+C;Melegnano;MI
+C;Melendugno;LE
+C;Meleti;LO
+C;Melfi;PZ
+C;Melicucco;RC
+C;Melicuccà;RC
+C;Melilli;SR
+C;Melissa;KR
+C;Melissano;LE
+C;Melito di Napoli;NA
+C;Melito di Porto Salvo;RC
+C;Melito Irpino;AV
+C;Melizzano;BN
+C;Melle;CN
+C;Mello;SO
+C;Melpignano;LE
+C;Meltina;BZ
+C;Melzo;MI
+C;Menaggio;CO
+C;Menconico;PV
+C;Mendatica;IM
+C;Mendicino;CS
+C;Menfi;AG
+C;Mentana;RM
+C;Meolo;VE
+C;Merana;AL
+C;Merano;BZ
+C;Merate;LC
+C;Mercallo;VA
+C;Mercatello sul Metauro;PU
+C;Mercatino Conca;PU
+C;Mercato San Severino;SA
+C;Mercato Saraceno;FC
+C;Mercenasco;TO
+C;Mercogliano;AV
+C;Mereto di Tomba;UD
+C;Mergo;AN
+C;Mergozzo;VB
+C;Merlara;PD
+C;Merlino;LO
+C;Merone;CO
+C;Merì;ME
+C;Mesagne;BR
+C;Mese;SO
+C;Mesenzana;VA
+C;Mesero;MI
+C;Mesola;FE
+C;Mesoraca;KR
+C;Messina;ME
+C;Mestrino;PD
+C;Meta;NA
+C;Mezzago;MB
+C;Mezzana;TN
+C;Mezzana Bigli;PV
+C;Mezzana Mortigliengo;BI
+C;Mezzana Rabattone;PV
+C;Mezzane di Sotto;VR
+C;Mezzanego;GE
+C;Mezzanino;PV
+C;Mezzano;TN
+C;Mezzenile;TO
+C;Mezzocorona;TN
+C;Mezzojuso;PA
+C;Mezzoldo;BG
+C;Mezzolombardo;TN
+C;Mezzomerico;NO
+C;Miagliano;BI
+C;Miane;TV
+C;Miasino;NO
+C;Miazzina;VB
+C;Micigliano;RI
+C;Miggiano;LE
+C;Miglianico;CH
+C;Miglierina;CZ
+C;Miglionico;MT
+C;Mignanego;GE
+C;Mignano Monte Lungo;CE
+C;Milano;MI
+C;Milazzo;ME
+C;Milena;CL
+C;Mileto;VV
+C;Milis;OR
+C;Militello in Val di Catania;CT
+C;Militello Rosmarino;ME
+C;Millesimo;SV
+C;Milo;CT
+C;Milzano;BS
+C;Mineo;CT
+C;Minerbe;VR
+C;Minerbio;BO
+C;Minervino di Lecce;LE
+C;Minervino Murge;BT
+C;Minori;SA
+C;Minturno;LT
+C;Minucciano;LU
+C;Mioglia;SV
+C;Mira;VE
+C;Mirabella Eclano;AV
+C;Mirabella Imbaccari;CT
+C;Mirabello Monferrato;AL
+C;Mirabello Sannitico;CB
+C;Miradolo Terme;PV
+C;Miranda;IS
+C;Mirandola;MO
+C;Mirano;VE
+C;Mirto;ME
+C;Misano Adriatico;RN
+C;Misano di Gera d'Adda;BG
+C;Misiliscemi;TP
+C;Misilmeri;PA
+C;Misinto;MB
+C;Missaglia;LC
+C;Missanello;PZ
+C;Misterbianco;CT
+C;Mistretta;ME
+C;Moasca;AT
+C;Moconesi;GE
+C;Modena;MO
+C;Modica;RG
+C;Modigliana;FC
+C;Modolo;OR
+C;Modugno;BA
+C;Moena;TN
+C;Moggio;LC
+C;Moggio Udinese;UD
+C;Moglia;MN
+C;Mogliano;MC
+C;Mogliano Veneto;TV
+C;Mogorella;OR
+C;Mogoro;OR
+C;Moiano;BN
+C;Moimacco;UD
+C;Moio Alcantara;ME
+C;Moio de' Calvi;BG
+C;Moio della Civitella;SA
+C;Moiola;CN
+C;Mola di Bari;BA
+C;Molare;AL
+C;Molazzana;LU
+C;Molfetta;BA
+C;Molina Aterno;AQ
+C;Molinara;BN
+C;Molinella;BO
+C;Molini di Triora;IM
+C;Molino dei Torti;AL
+C;Molise;CB
+C;Moliterno;PZ
+C;Mollia;VC
+C;Molochio;RC
+C;Molteno;LC
+C;Moltrasio;CO
+C;Molveno;TN
+C;Mombaldone;AT
+C;Mombarcaro;CN
+C;Mombaroccio;PU
+C;Mombaruzzo;AT
+C;Mombasiglio;CN
+C;Mombello di Torino;TO
+C;Mombello Monferrato;AL
+C;Mombercelli;AT
+C;Momo;NO
+C;Mompantero;TO
+C;Mompeo;RI
+C;Momperone;AL
+C;Monacilioni;CB
+C;Monale;AT
+C;Monasterace;RC
+C;Monastero Bormida;AT
+C;Monastero di Lanzo;TO
+C;Monastero di Vasco;CN
+C;Monasterolo Casotto;CN
+C;Monasterolo del Castello;BG
+C;Monasterolo di Savigliano;CN
+C;Monastier di Treviso;TV
+C;Monastir;SU
+C;Moncalieri;TO
+C;Moncalvo;AT
+C;Moncenisio;TO
+C;Moncestino;AL
+C;Monchiero;CN
+C;Monchio delle Corti;PR
+C;Moncrivello;VC
+C;Moncucco Torinese;AT
+C;Mondaino;RN
+C;Mondavio;PU
+C;Mondolfo;PU
+C;Mondovì;CN
+C;Mondragone;CE
+C;Moneglia;GE
+C;Monesiglio;CN
+C;Monfalcone;GO
+C;Monforte d'Alba;CN
+C;Monforte San Giorgio;ME
+C;Monfumo;TV
+C;Mongardino;AT
+C;Monghidoro;BO
+C;Mongiana;VV
+C;Mongiardino Ligure;AL
+C;Mongiuffi Melia;ME
+C;Mongrando;BI
+C;Mongrassano;CS
+C;Monguelfo-Tesido;BZ
+C;Monguzzo;CO
+C;Moniga del Garda;BS
+C;Monleale;AL
+C;Monno;BS
+C;Monopoli;BA
+C;Monreale;PA
+C;Monrupino;TS
+C;Monsampietro Morico;FM
+C;Monsampolo del Tronto;AP
+C;Monsano;AN
+C;Monselice;PD
+C;Monserrato;CA
+C;Monsummano Terme;PT
+C;Montabone;AT
+C;Montacuto;AL
+C;Montafia;AT
+C;Montagano;CB
+C;Montagna in Valtellina;SO
+C;Montagna sulla strada del vino;BZ
+C;Montagnana;PD
+C;Montagnareale;ME
+C;Montaguto;AV
+C;Montaione;FI
+C;Montalbano Elicona;ME
+C;Montalbano Jonico;MT
+C;Montalcino;SI
+C;Montaldeo;AL
+C;Montaldo Bormida;AL
+C;Montaldo di Mondovì;CN
+C;Montaldo Roero;CN
+C;Montaldo Scarampi;AT
+C;Montaldo Torinese;TO
+C;Montale;PT
+C;Montalenghe;TO
+C;Montallegro;AG
+C;Montalto Carpasio;IM
+C;Montalto delle Marche;AP
+C;Montalto di Castro;VT
+C;Montalto Dora;TO
+C;Montalto Pavese;PV
+C;Montalto Uffugo;CS
+C;Montanaro;TO
+C;Montanaso Lombardo;LO
+C;Montanera;CN
+C;Montano Antilia;SA
+C;Montano Lucino;CO
+C;Montappone;FM
+C;Montaquila;IS
+C;Montasola;RI
+C;Montauro;CZ
+C;Montazzoli;CH
+C;Monte Argentario;GR
+C;Monte Castello di Vibio;PG
+C;Monte Cavallo;MC
+C;Monte Cerignone;PU
+C;Monte Compatri;RM
+C;Monte Cremasco;CR
+C;Monte di Malo;VI
+C;Monte di Procida;NA
+C;Monte Giberto;FM
+C;Monte Grimano Terme;PU
+C;Monte Isola;BS
+C;Monte Marenzo;LC
+C;Monte Porzio;PU
+C;Monte Porzio Catone;RM
+C;Monte Rinaldo;FM
+C;Monte Roberto;AN
+C;Monte Romano;VT
+C;Monte San Biagio;LT
+C;Monte San Giacomo;SA
+C;Monte San Giovanni Campano;FR
+C;Monte San Giovanni in Sabina;RI
+C;Monte San Giusto;MC
+C;Monte San Martino;MC
+C;Monte San Pietrangeli;FM
+C;Monte San Pietro;BO
+C;Monte San Savino;AR
+C;Monte San Vito;AN
+C;Monte Sant'Angelo;FG
+C;Monte Santa Maria Tiberina;PG
+C;Monte Urano;FM
+C;Monte Vidon Combatte;FM
+C;Monte Vidon Corrado;FM
+C;Montebello della Battaglia;PV
+C;Montebello di Bertona;PE
+C;Montebello Jonico;RC
+C;Montebello sul Sangro;CH
+C;Montebello Vicentino;VI
+C;Montebelluna;TV
+C;Montebruno;GE
+C;Montebuono;RI
+C;Montecalvo in Foglia;PU
+C;Montecalvo Irpino;AV
+C;Montecalvo Versiggia;PV
+C;Montecarlo;LU
+C;Montecarotto;AN
+C;Montecassiano;MC
+C;Montecastello;AL
+C;Montecastrilli;TR
+C;Montecatini Val di Cecina;PI
+C;Montecatini-Terme;PT
+C;Montecchia di Crosara;VR
+C;Montecchio;TR
+C;Montecchio Emilia;RE
+C;Montecchio Maggiore;VI
+C;Montecchio Precalcino;VI
+C;Montechiaro d'Acqui;AL
+C;Montechiaro d'Asti;AT
+C;Montechiarugolo;PR
+C;Montecilfone;CB
+C;Montecopiolo;RN
+C;Montecorice;SA
+C;Montecorvino Pugliano;SA
+C;Montecorvino Rovella;SA
+C;Montecosaro;MC
+C;Montecrestese;VB
+C;Montecreto;MO
+C;Montedinove;AP
+C;Montedoro;CL
+C;Montefalcione;AV
+C;Montefalco;PG
+C;Montefalcone Appennino;FM
+C;Montefalcone di Val Fortore;BN
+C;Montefalcone nel Sannio;CB
+C;Montefano;MC
+C;Montefelcino;PU
+C;Monteferrante;CH
+C;Montefiascone;VT
+C;Montefino;TE
+C;Montefiore Conca;RN
+C;Montefiore dell'Aso;AP
+C;Montefiorino;MO
+C;Monteflavio;RM
+C;Monteforte Cilento;SA
+C;Monteforte d'Alpone;VR
+C;Monteforte Irpino;AV
+C;Montefortino;FM
+C;Montefranco;TR
+C;Montefredane;AV
+C;Montefusco;AV
+C;Montegabbione;TR
+C;Montegalda;VI
+C;Montegaldella;VI
+C;Montegallo;AP
+C;Montegioco;AL
+C;Montegiordano;CS
+C;Montegiorgio;FM
+C;Montegranaro;FM
+C;Montegridolfo;RN
+C;Montegrino Valtravaglia;VA
+C;Montegrosso d'Asti;AT
+C;Montegrosso Pian Latte;IM
+C;Montegrotto Terme;PD
+C;Monteiasi;TA
+C;Montelabbate;PU
+C;Montelanico;RM
+C;Montelapiano;CH
+C;Monteleone d'Orvieto;TR
+C;Monteleone di Fermo;FM
+C;Monteleone di Puglia;FG
+C;Monteleone di Spoleto;PG
+C;Monteleone Rocca Doria;SS
+C;Monteleone Sabino;RI
+C;Montelepre;PA
+C;Montelibretti;RM
+C;Montella;AV
+C;Montello;BG
+C;Montelongo;CB
+C;Montelparo;FM
+C;Montelupo Albese;CN
+C;Montelupo Fiorentino;FI
+C;Montelupone;MC
+C;Montemaggiore Belsito;PA
+C;Montemagno Monferrato;AT
+C;Montemale di Cuneo;CN
+C;Montemarano;AV
+C;Montemarciano;AN
+C;Montemarzino;AL
+C;Montemesola;TA
+C;Montemezzo;CO
+C;Montemignaio;AR
+C;Montemiletto;AV
+C;Montemilone;PZ
+C;Montemitro;CB
+C;Montemonaco;AP
+C;Montemurlo;PO
+C;Montemurro;PZ
+C;Montenars;UD
+C;Montenero di Bisaccia;CB
+C;Montenero Sabino;RI
+C;Montenero Val Cocchiara;IS
+C;Montenerodomo;CH
+C;Monteodorisio;CH
+C;Montepaone;CZ
+C;Monteparano;TA
+C;Monteprandone;AP
+C;Montepulciano;SI
+C;Monterchi;AR
+C;Montereale;AQ
+C;Montereale Valcellina;PN
+C;Monterenzio;BO
+C;Monteriggioni;SI
+C;Monteroduni;IS
+C;Monteroni d'Arbia;SI
+C;Monteroni di Lecce;LE
+C;Monterosi;VT
+C;Monterosso al Mare;SP
+C;Monterosso Almo;RG
+C;Monterosso Calabro;VV
+C;Monterosso Grana;CN
+C;Monterotondo;RM
+C;Monterotondo Marittimo;GR
+C;Monterubbiano;FM
+C;Montesano Salentino;LE
+C;Montesano sulla Marcellana;SA
+C;Montesarchio;BN
+C;Montescaglioso;MT
+C;Montescano;PV
+C;Montescheno;VB
+C;Montescudaio;PI
+C;Montescudo-Monte Colombo;RN
+C;Montese;MO
+C;Montesegale;PV
+C;Montesilvano;PE
+C;Montespertoli;FI
+C;Monteu da Po;TO
+C;Monteu Roero;CN
+C;Montevago;AG
+C;Montevarchi;AR
+C;Montevecchia;LC
+C;Monteverde;AV
+C;Monteverdi Marittimo;PI
+C;Monteviale;VI
+C;Montezemolo;CN
+C;Monti;SS
+C;Montiano;FC
+C;Monticelli Brusati;BS
+C;Monticelli d'Ongina;PC
+C;Monticelli Pavese;PV
+C;Monticello Brianza;LC
+C;Monticello Conte Otto;VI
+C;Monticello d'Alba;CN
+C;Montichiari;BS
+C;Monticiano;SI
+C;Montieri;GR
+C;Montiglio Monferrato;AT
+C;Montignoso;MS
+C;Montirone;BS
+C;Montjovet;AO
+C;Montodine;CR
+C;Montoggio;GE
+C;Montone;PG
+C;Montopoli di Sabina;RI
+C;Montopoli in Val d'Arno;PI
+C;Montorfano;CO
+C;Montorio al Vomano;TE
+C;Montorio nei Frentani;CB
+C;Montorio Romano;RM
+C;Montoro;AV
+C;Montorso Vicentino;VI
+C;Montottone;FM
+C;Montresta;OR
+C;Montà;CN
+C;Montù Beccaria;PV
+C;Monvalle;VA
+C;Monza;MB
+C;Monzambano;MN
+C;Monzuno;BO
+C;Morano Calabro;CS
+C;Morano sul Po;AL
+C;Moransengo-Tonengo;AT
+C;Moraro;GO
+C;Morazzone;VA
+C;Morbegno;SO
+C;Morbello;AL
+C;Morciano di Leuca;LE
+C;Morciano di Romagna;RN
+C;Morcone;BN
+C;Mordano;BO
+C;Morengo;BG
+C;Mores;SS
+C;Moresco;FM
+C;Moretta;CN
+C;Morfasso;PC
+C;Morgano;TV
+C;Morgex;AO
+C;Morgongiori;OR
+C;Mori;TN
+C;Moriago della Battaglia;TV
+C;Moricone;RM
+C;Morigerati;SA
+C;Morimondo;MI
+C;Morino;AQ
+C;Moriondo Torinese;TO
+C;Morlupo;RM
+C;Mormanno;CS
+C;Mornago;VA
+C;Mornese;AL
+C;Mornico al Serio;BG
+C;Mornico Losana;PV
+C;Morolo;FR
+C;Morozzo;CN
+C;Morra De Sanctis;AV
+C;Morro d'Alba;AN
+C;Morro d'Oro;TE
+C;Morro Reatino;RI
+C;Morrone del Sannio;CB
+C;Morrovalle;MC
+C;Morsano al Tagliamento;PN
+C;Morsasco;AL
+C;Mortara;PV
+C;Mortegliano;UD
+C;Morterone;LC
+C;Moruzzo;UD
+C;Moscazzano;CR
+C;Moschiano;AV
+C;Mosciano Sant'Angelo;TE
+C;Moscufo;PE
+C;Moso in Passiria;BZ
+C;Mossa;GO
+C;Motta Baluffi;CR
+C;Motta Camastra;ME
+C;Motta d'Affermo;ME
+C;Motta de' Conti;VC
+C;Motta di Livenza;TV
+C;Motta Montecorvino;FG
+C;Motta San Giovanni;RC
+C;Motta Sant'Anastasia;CT
+C;Motta Santa Lucia;CZ
+C;Motta Visconti;MI
+C;Mottafollone;CS
+C;Mottalciata;BI
+C;Motteggiana;MN
+C;Mottola;TA
+C;Mozzagrogna;CH
+C;Mozzanica;BG
+C;Mozzate;CO
+C;Mozzecane;VR
+C;Mozzo;BG
+C;Muccia;MC
+C;Muggia;TS
+C;Muggiò;MB
+C;Mugnano del Cardinale;AV
+C;Mugnano di Napoli;NA
+C;Mulazzano;LO
+C;Mulazzo;MS
+C;Mura;BS
+C;Muravera;SU
+C;Murazzano;CN
+C;Murello;CN
+C;Murialdo;SV
+C;Murisengo;AL
+C;Murlo;SI
+C;Muro Leccese;LE
+C;Muro Lucano;PZ
+C;Muros;SS
+C;Muscoline;BS
+C;Musei;SU
+C;Musile di Piave;VE
+C;Musso;CO
+C;Mussolente;VI
+C;Mussomeli;CL
+C;Muzzana del Turgnano;UD
+C;Muzzano;BI
+C;Nago-Torbole;TN
+C;Nalles;BZ
+C;Nanto;VI
+C;Napoli;NA
+C;Narbolia;OR
+C;Narcao;SU
+C;Nardodipace;VV
+C;Nardò;LE
+C;Narni;TR
+C;Naro;AG
+C;Narzole;CN
+C;Nasino;SV
+C;Naso;ME
+C;Naturno;BZ
+C;Nave;BS
+C;Navelli;AQ
+C;Naz-Sciaves;BZ
+C;Nazzano;RM
+C;Ne;GE
+C;Nebbiuno;NO
+C;Negrar di Valpolicella;VR
+C;Neirone;GE
+C;Neive;CN
+C;Nembro;BG
+C;Nemi;RM
+C;Nemoli;PZ
+C;Neoneli;OR
+C;Nepi;VT
+C;Nereto;TE
+C;Nerola;RM
+C;Nervesa della Battaglia;TV
+C;Nerviano;MI
+C;Nespolo;RI
+C;Nesso;CO
+C;Netro;BI
+C;Nettuno;RM
+C;Neviano;LE
+C;Neviano degli Arduini;PR
+C;Neviglie;CN
+C;Niardo;BS
+C;Nibbiola;NO
+C;Nibionno;LC
+C;Nichelino;TO
+C;Nicolosi;CT
+C;Nicorvo;PV
+C;Nicosia;EN
+C;Nicotera;VV
+C;Niella Belbo;CN
+C;Niella Tanaro;CN
+C;Nimis;UD
+C;Niscemi;CL
+C;Nissoria;EN
+C;Nizza di Sicilia;ME
+C;Nizza Monferrato;AT
+C;Noale;VE
+C;Noasca;TO
+C;Nocara;CS
+C;Nocciano;PE
+C;Nocera Inferiore;SA
+C;Nocera Superiore;SA
+C;Nocera Terinese;CZ
+C;Nocera Umbra;PG
+C;Noceto;PR
+C;Noci;BA
+C;Nociglia;LE
+C;Noepoli;PZ
+C;Nogara;VR
+C;Nogaredo;TN
+C;Nogarole Rocca;VR
+C;Nogarole Vicentino;VI
+C;Noicattaro;BA
+C;Nola;NA
+C;Nole;TO
+C;Noli;SV
+C;Nomaglio;TO
+C;Nomi;TN
+C;Nonantola;MO
+C;None;TO
+C;Nonio;VB
+C;Noragugume;NU
+C;Norbello;OR
+C;Norcia;PG
+C;Norma;LT
+C;Nosate;MI
+C;Notaresco;TE
+C;Noto;SR
+C;Nova Levante;BZ
+C;Nova Milanese;MB
+C;Nova Ponente;BZ
+C;Nova Siri;MT
+C;Novafeltria;RN
+C;Novaledo;TN
+C;Novalesa;TO
+C;Novara;NO
+C;Novara di Sicilia;ME
+C;Novate Mezzola;SO
+C;Novate Milanese;MI
+C;Nove;VI
+C;Novedrate;CO
+C;Novella;TN
+C;Novellara;RE
+C;Novello;CN
+C;Noventa di Piave;VE
+C;Noventa Padovana;PD
+C;Noventa Vicentina;VI
+C;Novi di Modena;MO
+C;Novi Ligure;AL
+C;Novi Velia;SA
+C;Noviglio;MI
+C;Novoli;LE
+C;Nucetto;CN
+C;Nughedu San Nicolò;SS
+C;Nughedu Santa Vittoria;OR
+C;Nule;SS
+C;Nulvi;SS
+C;Numana;AN
+C;Nuoro;NU
+C;Nurachi;OR
+C;Nuragus;SU
+C;Nurallao;SU
+C;Nuraminis;SU
+C;Nureci;OR
+C;Nurri;SU
+C;Nus;AO
+C;Nusco;AV
+C;Nuvolento;BS
+C;Nuvolera;BS
+C;Nuxis;SU
+C;Occhieppo Inferiore;BI
+C;Occhieppo Superiore;BI
+C;Occhiobello;RO
+C;Occimiano;AL
+C;Ocre;AQ
+C;Odalengo Grande;AL
+C;Odalengo Piccolo;AL
+C;Oderzo;TV
+C;Odolo;BS
+C;Ofena;AQ
+C;Offagna;AN
+C;Offanengo;CR
+C;Offida;AP
+C;Offlaga;BS
+C;Oggebbio;VB
+C;Oggiona con Santo Stefano;VA
+C;Oggiono;LC
+C;Oglianico;TO
+C;Ogliastro Cilento;SA
+C;Olbia;SS
+C;Olcenengo;VC
+C;Oldenico;VC
+C;Oleggio;NO
+C;Oleggio Castello;NO
+C;Olevano di Lomellina;PV
+C;Olevano Romano;RM
+C;Olevano sul Tusciano;SA
+C;Olgiate Comasco;CO
+C;Olgiate Molgora;LC
+C;Olgiate Olona;VA
+C;Olginate;LC
+C;Oliena;NU
+C;Oliva Gessi;PV
+C;Olivadi;CZ
+C;Oliveri;ME
+C;Oliveto Citra;SA
+C;Oliveto Lario;LC
+C;Oliveto Lucano;MT
+C;Olivetta San Michele;IM
+C;Olivola;AL
+C;Ollastra;OR
+C;Ollolai;NU
+C;Ollomont;AO
+C;Olmedo;SS
+C;Olmeneta;CR
+C;Olmo al Brembo;BG
+C;Olmo Gentile;AT
+C;Oltre il Colle;BG
+C;Oltressenda Alta;BG
+C;Oltrona di San Mamette;CO
+C;Olzai;NU
+C;Ome;BS
+C;Omegna;VB
+C;Omignano;SA
+C;Onano;VT
+C;Onanì;NU
+C;Oncino;CN
+C;Oneta;BG
+C;Onifai;NU
+C;Oniferi;NU
+C;Ono San Pietro;BS
+C;Onore;BG
+C;Onzo;SV
+C;Opera;MI
+C;Opi;AQ
+C;Oppeano;VR
+C;Oppido Lucano;PZ
+C;Oppido Mamertina;RC
+C;Ora;BZ
+C;Orani;NU
+C;Oratino;CB
+C;Orbassano;TO
+C;Orbetello;GR
+C;Orciano Pisano;PI
+C;Orco Feglino;SV
+C;Ordona;FG
+C;Orero;GE
+C;Orgiano;VI
+C;Orgosolo;NU
+C;Oria;BR
+C;Oricola;AQ
+C;Origgio;VA
+C;Orino;VA
+C;Orio al Serio;BG
+C;Orio Canavese;TO
+C;Orio Litta;LO
+C;Oriolo;CS
+C;Oriolo Romano;VT
+C;Oristano;OR
+C;Ormea;CN
+C;Ormelle;TV
+C;Ornago;MB
+C;Ornavasso;VB
+C;Ornica;BG
+C;Orosei;NU
+C;Orotelli;NU
+C;Orria;SA
+C;Orroli;SU
+C;Orsago;TV
+C;Orsara Bormida;AL
+C;Orsara di Puglia;FG
+C;Orsenigo;CO
+C;Orsogna;CH
+C;Orsomarso;CS
+C;Orta di Atella;CE
+C;Orta Nova;FG
+C;Orta San Giulio;NO
+C;Ortacesus;SU
+C;Orte;VT
+C;Ortelle;LE
+C;Ortezzano;FM
+C;Ortignano Raggiolo;AR
+C;Ortisei;BZ
+C;Ortona;CH
+C;Ortona dei Marsi;AQ
+C;Ortovero;SV
+C;Ortucchio;AQ
+C;Ortueri;NU
+C;Orune;NU
+C;Orvieto;TR
+C;Orvinio;RI
+C;Orzinuovi;BS
+C;Orzivecchi;BS
+C;Osasco;TO
+C;Osasio;TO
+C;Oschiri;SS
+C;Osidda;NU
+C;Osiglia;SV
+C;Osilo;SS
+C;Osimo;AN
+C;Osini;NU
+C;Osio Sopra;BG
+C;Osio Sotto;BG
+C;Osnago;LC
+C;Osoppo;UD
+C;Ospedaletti;IM
+C;Ospedaletto;TN
+C;Ospedaletto d'Alpinolo;AV
+C;Ospedaletto Euganeo;PD
+C;Ospedaletto Lodigiano;LO
+C;Ospitale di Cadore;BL
+C;Ospitaletto;BS
+C;Ossago Lodigiano;LO
+C;Ossana;TN
+C;Ossi;SS
+C;Ossimo;BS
+C;Ossona;MI
+C;Ostana;CN
+C;Ostellato;FE
+C;Ostiano;CR
+C;Ostiglia;MN
+C;Ostra;AN
+C;Ostra Vetere;AN
+C;Ostuni;BR
+C;Otranto;LE
+C;Otricoli;TR
+C;Ottana;NU
+C;Ottati;SA
+C;Ottaviano;NA
+C;Ottiglio;AL
+C;Ottobiano;PV
+C;Ottone;PC
+C;Oulx;TO
+C;Ovada;AL
+C;Ovaro;UD
+C;Oviglio;AL
+C;Ovindoli;AQ
+C;Ovodda;NU
+C;Oyace;AO
+C;Ozegna;TO
+C;Ozieri;SS
+C;Ozzano dell'Emilia;BO
+C;Ozzano Monferrato;AL
+C;Ozzero;MI
+C;Pabillonis;SU
+C;Pace del Mela;ME
+C;Paceco;TP
+C;Pacentro;AQ
+C;Pachino;SR
+C;Paciano;PG
+C;Padenghe sul Garda;BS
+C;Paderna;AL
+C;Paderno d'Adda;LC
+C;Paderno Dugnano;MI
+C;Paderno Franciacorta;BS
+C;Paderno Ponchielli;CR
+C;Padova;PD
+C;Padria;SS
+C;Padru;SS
+C;Padula;SA
+C;Paduli;BN
+C;Paesana;CN
+C;Paese;TV
+C;Pagani;SA
+C;Paganico Sabino;RI
+C;Pagazzano;BG
+C;Pagliara;ME
+C;Paglieta;CH
+C;Pagnacco;UD
+C;Pagno;CN
+C;Pagnona;LC
+C;Pago del Vallo di Lauro;AV
+C;Pago Veiano;BN
+C;Paisco Loveno;BS
+C;Paitone;BS
+C;Paladina;BG
+C;Palagano;MO
+C;Palagianello;TA
+C;Palagiano;TA
+C;Palagonia;CT
+C;Palaia;PI
+C;Palanzano;PR
+C;Palata;CB
+C;Palau;SS
+C;Palazzago;BG
+C;Palazzo Adriano;PA
+C;Palazzo Canavese;TO
+C;Palazzo Pignano;CR
+C;Palazzo San Gervasio;PZ
+C;Palazzolo Acreide;SR
+C;Palazzolo dello Stella;UD
+C;Palazzolo sull'Oglio;BS
+C;Palazzolo Vercellese;VC
+C;Palazzuolo sul Senio;FI
+C;Palena;CH
+C;Palermiti;CZ
+C;Palermo;PA
+C;Palestrina;RM
+C;Palestro;PV
+C;Paliano;FR
+C;Palizzi;RC
+C;Pallagorio;KR
+C;Pallanzeno;VB
+C;Pallare;SV
+C;Palma Campania;NA
+C;Palma di Montechiaro;AG
+C;Palmanova;UD
+C;Palmariggi;LE
+C;Palmas Arborea;OR
+C;Palmi;RC
+C;Palmiano;AP
+C;Palmoli;CH
+C;Palo del Colle;BA
+C;Palombara Sabina;RM
+C;Palombaro;CH
+C;Palomonte;SA
+C;Palosco;BG
+C;Paludi;CS
+C;Paluzza;UD
+C;Palù;VR
+C;Palù del Fersina;TN
+C;Pamparato;CN
+C;Pancalieri;TO
+C;Pancarana;PV
+C;Panchià;TN
+C;Pandino;CR
+C;Panettieri;CS
+C;Panicale;PG
+C;Pannarano;BN
+C;Panni;FG
+C;Pantelleria;TP
+C;Pantigliate;MI
+C;Paola;CS
+C;Paolisi;BN
+C;Papasidero;CS
+C;Papozze;RO
+C;Parabiago;MI
+C;Parabita;LE
+C;Paratico;BS
+C;Parcines;BZ
+C;Parella;TO
+C;Parenti;CS
+C;Parete;CE
+C;Pareto;AL
+C;Parghelia;VV
+C;Parlasco;LC
+C;Parma;PR
+C;Parodi Ligure;AL
+C;Paroldo;CN
+C;Parolise;AV
+C;Parona;PV
+C;Parrano;TR
+C;Parre;BG
+C;Partanna;TP
+C;Partinico;PA
+C;Paruzzaro;NO
+C;Parzanica;BG
+C;Pasian di Prato;UD
+C;Pasiano di Pordenone;PN
+C;Paspardo;BS
+C;Passerano Marmorito;AT
+C;Passignano sul Trasimeno;PG
+C;Passirano;BS
+C;Pastena;FR
+C;Pastorano;CE
+C;Pastrengo;VR
+C;Pasturana;AL
+C;Pasturo;LC
+C;Paterno;PZ
+C;Paterno Calabro;CS
+C;Paternopoli;AV
+C;Paternò;CT
+C;Patrica;FR
+C;Pattada;SS
+C;Patti;ME
+C;Patù;LE
+C;Pau;OR
+C;Paularo;UD
+C;Pauli Arbarei;SU
+C;Paulilatino;OR
+C;Paullo;MI
+C;Paupisi;BN
+C;Pavarolo;TO
+C;Pavia;PV
+C;Pavia di Udine;UD
+C;Pavone Canavese;TO
+C;Pavone del Mella;BS
+C;Pavullo nel Frignano;MO
+C;Pazzano;RC
+C;Peccioli;PI
+C;Pecetto di Valenza;AL
+C;Pecetto Torinese;TO
+C;Pedara;CT
+C;Pedaso;FM
+C;Pedavena;BL
+C;Pedemonte;VI
+C;Pederobba;TV
+C;Pedesina;SO
+C;Pedivigliano;CS
+C;Pedrengo;BG
+C;Peglio;CO
+C;Peglio;PU
+C;Pegognaga;MN
+C;Peia;BG
+C;Peio;TN
+C;Pelago;FI
+C;Pella;NO
+C;Pellegrino Parmense;PR
+C;Pellezzano;SA
+C;Pellizzano;TN
+C;Pelugo;TN
+C;Penango;AT
+C;Penna in Teverina;TR
+C;Penna San Giovanni;MC
+C;Penna Sant'Andrea;TE
+C;Pennabilli;RN
+C;Pennadomo;CH
+C;Pennapiedimonte;CH
+C;Penne;PE
+C;Pentone;CZ
+C;Perano;CH
+C;Perarolo di Cadore;BL
+C;Perca;BZ
+C;Percile;RM
+C;Perdasdefogu;NU
+C;Perdaxius;SU
+C;Perdifumo;SA
+C;Pereto;AQ
+C;Perfugas;SS
+C;Pergine Valsugana;TN
+C;Pergola;PU
+C;Perinaldo;IM
+C;Perito;SA
+C;Perledo;LC
+C;Perletto;CN
+C;Perlo;CN
+C;Perloz;AO
+C;Pernumia;PD
+C;Pero;MI
+C;Perosa Argentina;TO
+C;Perosa Canavese;TO
+C;Perrero;TO
+C;Persico Dosimo;CR
+C;Pertengo;VC
+C;Pertica Alta;BS
+C;Pertica Bassa;BS
+C;Pertosa;SA
+C;Pertusio;TO
+C;Perugia;PG
+C;Pesaro;PU
+C;Pescaglia;LU
+C;Pescantina;VR
+C;Pescara;PE
+C;Pescarolo ed Uniti;CR
+C;Pescasseroli;AQ
+C;Pescate;LC
+C;Pesche;IS
+C;Peschici;FG
+C;Peschiera Borromeo;MI
+C;Peschiera del Garda;VR
+C;Pescia;PT
+C;Pescina;AQ
+C;Pesco Sannita;BN
+C;Pescocostanzo;AQ
+C;Pescolanciano;IS
+C;Pescopagano;PZ
+C;Pescopennataro;IS
+C;Pescorocchiano;RI
+C;Pescosansonesco;PE
+C;Pescosolido;FR
+C;Pessano con Bornago;MI
+C;Pessina Cremonese;CR
+C;Pessinetto;TO
+C;Petacciato;CB
+C;Petilia Policastro;KR
+C;Petina;SA
+C;Petralia Soprana;PA
+C;Petralia Sottana;PA
+C;Petrella Salto;RI
+C;Petrella Tifernina;CB
+C;Petriano;PU
+C;Petriolo;MC
+C;Petritoli;FM
+C;Petrizzi;CZ
+C;Petronà;CZ
+C;Petrosino;TP
+C;Petruro Irpino;AV
+C;Pettenasco;NO
+C;Pettinengo;BI
+C;Pettineo;ME
+C;Pettoranello del Molise;IS
+C;Pettorano sul Gizio;AQ
+C;Pettorazza Grimani;RO
+C;Peveragno;CN
+C;Pezzana;VC
+C;Pezzaze;BS
+C;Pezzolo Valle Uzzone;CN
+C;Piacenza;PC
+C;Piacenza d'Adige;PD
+C;Piadena Drizzona;CR
+C;Piaggine;SA
+C;Pian Camuno;BS
+C;Piana Crixia;SV
+C;Piana degli Albanesi;PA
+C;Piana di Monte Verna;CE
+C;Piancastagnaio;SI
+C;Piancogno;BS
+C;Piandimeleto;PU
+C;Piane Crati;CS
+C;Pianella;PE
+C;Pianello del Lario;CO
+C;Pianello Val Tidone;PC
+C;Pianengo;CR
+C;Pianezza;TO
+C;Pianezze;VI
+C;Pianfei;CN
+C;Pianico;BG
+C;Pianiga;VE
+C;Piano di Sorrento;NA
+C;Pianopoli;CZ
+C;Pianoro;BO
+C;Piansano;VT
+C;Piantedo;SO
+C;Piario;BG
+C;Piasco;CN
+C;Piateda;SO
+C;Piatto;BI
+C;Piazza al Serchio;LU
+C;Piazza Armerina;EN
+C;Piazza Brembana;BG
+C;Piazzatorre;BG
+C;Piazzola sul Brenta;PD
+C;Piazzolo;BG
+C;Picciano;PE
+C;Picerno;PZ
+C;Picinisco;FR
+C;Pico;FR
+C;Piea;AT
+C;Piedicavallo;BI
+C;Piedimonte Etneo;CT
+C;Piedimonte Matese;CE
+C;Piedimonte San Germano;FR
+C;Piedimulera;VB
+C;Piegaro;PG
+C;Pienza;SI
+C;Pieranica;CR
+C;Pietra de' Giorgi;PV
+C;Pietra Ligure;SV
+C;Pietra Marazzi;AL
+C;Pietrabbondante;IS
+C;Pietrabruna;IM
+C;Pietracamela;TE
+C;Pietracatella;CB
+C;Pietracupa;CB
+C;Pietradefusi;AV
+C;Pietraferrazzana;CH
+C;Pietrafitta;CS
+C;Pietragalla;PZ
+C;Pietralunga;PG
+C;Pietramelara;CE
+C;Pietramontecorvino;FG
+C;Pietranico;PE
+C;Pietrapaola;CS
+C;Pietrapertosa;PZ
+C;Pietraperzia;EN
+C;Pietraporzio;CN
+C;Pietraroja;BN
+C;Pietrarubbia;PU
+C;Pietrasanta;LU
+C;Pietrastornina;AV
+C;Pietravairano;CE
+C;Pietrelcina;BN
+C;Pieve a Nievole;PT
+C;Pieve Albignola;PV
+C;Pieve d'Olmi;CR
+C;Pieve del Cairo;PV
+C;Pieve del Grappa;TV
+C;Pieve di Bono-Prezzo;TN
+C;Pieve di Cadore;BL
+C;Pieve di Cento;BO
+C;Pieve di Soligo;TV
+C;Pieve di Teco;IM
+C;Pieve Emanuele;MI
+C;Pieve Fissiraga;LO
+C;Pieve Fosciana;LU
+C;Pieve Ligure;GE
+C;Pieve Porto Morone;PV
+C;Pieve San Giacomo;CR
+C;Pieve Santo Stefano;AR
+C;Pieve Tesino;TN
+C;Pieve Torina;MC
+C;Pieve Vergonte;VB
+C;Pievepelago;MO
+C;Piglio;FR
+C;Pigna;IM
+C;Pignataro Interamna;FR
+C;Pignataro Maggiore;CE
+C;Pignola;PZ
+C;Pignone;SP
+C;Pigra;CO
+C;Pila;VC
+C;Pimentel;SU
+C;Pimonte;NA
+C;Pinarolo Po;PV
+C;Pinasca;TO
+C;Pincara;RO
+C;Pinerolo;TO
+C;Pineto;TE
+C;Pino d'Asti;AT
+C;Pino Torinese;TO
+C;Pinzano al Tagliamento;PN
+C;Pinzolo;TN
+C;Piobbico;PU
+C;Piobesi d'Alba;CN
+C;Piobesi Torinese;TO
+C;Piode;VC
+C;Pioltello;MI
+C;Piombino;LI
+C;Piombino Dese;PD
+C;Pioraco;MC
+C;Piossasco;TO
+C;Piove di Sacco;PD
+C;Piovene Rocchette;VI
+C;Piovà Massaia;AT
+C;Piozzano;PC
+C;Piozzo;CN
+C;Piraino;ME
+C;Pisa;PI
+C;Pisano;NO
+C;Piscina;TO
+C;Piscinas;SU
+C;Pisciotta;SA
+C;Pisogne;BS
+C;Pisoniano;RM
+C;Pisticci;MT
+C;Pistoia;PT
+C;Pitigliano;GR
+C;Piubega;MN
+C;Piuro;SO
+C;Piverone;TO
+C;Pizzale;PV
+C;Pizzighettone;CR
+C;Pizzo;VV
+C;Pizzoferrato;CH
+C;Pizzoli;AQ
+C;Pizzone;IS
+C;Pizzoni;VV
+C;Placanica;RC
+C;Plataci;CS
+C;Platania;CZ
+C;Platì;RC
+C;Plaus;BZ
+C;Plesio;CO
+C;Ploaghe;SS
+C;Plodio;SV
+C;Pocapaglia;CN
+C;Pocenia;UD
+C;Podenzana;MS
+C;Podenzano;PC
+C;Pofi;FR
+C;Poggiardo;LE
+C;Poggibonsi;SI
+C;Poggio a Caiano;PO
+C;Poggio Bustone;RI
+C;Poggio Catino;RI
+C;Poggio Imperiale;FG
+C;Poggio Mirteto;RI
+C;Poggio Moiano;RI
+C;Poggio Nativo;RI
+C;Poggio Picenze;AQ
+C;Poggio Renatico;FE
+C;Poggio Rusco;MN
+C;Poggio San Lorenzo;RI
+C;Poggio San Marcello;AN
+C;Poggio San Vicino;MC
+C;Poggio Sannita;IS
+C;Poggio Torriana;RN
+C;Poggiodomo;PG
+C;Poggiofiorito;CH
+C;Poggiomarino;NA
+C;Poggioreale;TP
+C;Poggiorsini;BA
+C;Poggiridenti;SO
+C;Pogliano Milanese;MI
+C;Pognana Lario;CO
+C;Pognano;BG
+C;Pogno;NO
+C;Poirino;TO
+C;Pojana Maggiore;VI
+C;Polaveno;BS
+C;Polcenigo;PN
+C;Polesella;RO
+C;Polesine Zibello;PR
+C;Poli;RM
+C;Polia;VV
+C;Policoro;MT
+C;Polignano a Mare;BA
+C;Polinago;MO
+C;Polino;TR
+C;Polistena;RC
+C;Polizzi Generosa;PA
+C;Polla;SA
+C;Pollein;AO
+C;Pollena Trocchia;NA
+C;Pollenza;MC
+C;Pollica;SA
+C;Pollina;PA
+C;Pollone;BI
+C;Pollutri;CH
+C;Polonghera;CN
+C;Polpenazze del Garda;BS
+C;Polverara;PD
+C;Polverigi;AN
+C;Pomarance;PI
+C;Pomaretto;TO
+C;Pomarico;MT
+C;Pomaro Monferrato;AL
+C;Pomarolo;TN
+C;Pombia;NO
+C;Pomezia;RM
+C;Pomigliano d'Arco;NA
+C;Pompei;NA
+C;Pompeiana;IM
+C;Pompiano;BS
+C;Pomponesco;MN
+C;Pompu;OR
+C;Poncarale;BS
+C;Ponderano;BI
+C;Ponna;CO
+C;Ponsacco;PI
+C;Ponso;PD
+C;Pont Canavese;TO
+C;Pont-Saint-Martin;AO
+C;Pontassieve;FI
+C;Pontboset;AO
+C;Ponte;BN
+C;Ponte Buggianese;PT
+C;Ponte dell'Olio;PC
+C;Ponte di Legno;BS
+C;Ponte di Piave;TV
+C;Ponte Gardena;BZ
+C;Ponte in Valtellina;SO
+C;Ponte Lambro;CO
+C;Ponte nelle Alpi;BL
+C;Ponte Nizza;PV
+C;Ponte Nossa;BG
+C;Ponte San Nicolò;PD
+C;Ponte San Pietro;BG
+C;Pontebba;UD
+C;Pontecagnano Faiano;SA
+C;Pontecchio Polesine;RO
+C;Pontechianale;CN
+C;Pontecorvo;FR
+C;Pontecurone;AL
+C;Pontedassio;IM
+C;Pontedera;PI
+C;Pontelandolfo;BN
+C;Pontelatone;CE
+C;Pontelongo;PD
+C;Pontenure;PC
+C;Ponteranica;BG
+C;Pontestura;AL
+C;Pontevico;BS
+C;Pontey;AO
+C;Ponti;AL
+C;Ponti sul Mincio;MN
+C;Pontida;BG
+C;Pontinia;LT
+C;Pontinvrea;SV
+C;Pontirolo Nuovo;BG
+C;Pontoglio;BS
+C;Pontremoli;MS
+C;Ponza;LT
+C;Ponzano di Fermo;FM
+C;Ponzano Monferrato;AL
+C;Ponzano Romano;RM
+C;Ponzano Veneto;TV
+C;Ponzone;AL
+C;Popoli Terme;PE
+C;Poppi;AR
+C;Porano;TR
+C;Porcari;LU
+C;Porcia;PN
+C;Pordenone;PN
+C;Porlezza;CO
+C;Pornassio;IM
+C;Porpetto;UD
+C;Portacomaro;AT
+C;Portalbera;PV
+C;Porte;TO
+C;Porte di Rendena;TN
+C;Portici;NA
+C;Portico di Caserta;CE
+C;Portico e San Benedetto;FC
+C;Portigliola;RC
+C;Porto Azzurro;LI
+C;Porto Ceresio;VA
+C;Porto Cesareo;LE
+C;Porto Empedocle;AG
+C;Porto Mantovano;MN
+C;Porto Recanati;MC
+C;Porto San Giorgio;FM
+C;Porto Sant'Elpidio;FM
+C;Porto Tolle;RO
+C;Porto Torres;SS
+C;Porto Valtravaglia;VA
+C;Porto Viro;RO
+C;Portobuffolè;TV
+C;Portocannone;CB
+C;Portoferraio;LI
+C;Portofino;GE
+C;Portogruaro;VE
+C;Portomaggiore;FE
+C;Portopalo di Capo Passero;SR
+C;Portoscuso;SU
+C;Portovenere;SP
+C;Portula;BI
+C;Posada;NU
+C;Posina;VI
+C;Positano;SA
+C;Possagno;TV
+C;Posta;RI
+C;Posta Fibreno;FR
+C;Postal;BZ
+C;Postalesio;SO
+C;Postiglione;SA
+C;Postua;VC
+C;Potenza;PZ
+C;Potenza Picena;MC
+C;Pove del Grappa;VI
+C;Povegliano;TV
+C;Povegliano Veronese;VR
+C;Poviglio;RE
+C;Povoletto;UD
+C;Pozzaglia Sabina;RI
+C;Pozzaglio ed Uniti;CR
+C;Pozzallo;RG
+C;Pozzilli;IS
+C;Pozzo d'Adda;MI
+C;Pozzol Groppo;AL
+C;Pozzolengo;BS
+C;Pozzoleone;VI
+C;Pozzolo Formigaro;AL
+C;Pozzomaggiore;SS
+C;Pozzonovo;PD
+C;Pozzuoli;NA
+C;Pozzuolo del Friuli;UD
+C;Pozzuolo Martesana;MI
+C;Pradalunga;BG
+C;Pradamano;UD
+C;Pradleves;CN
+C;Pragelato;TO
+C;Praia a Mare;CS
+C;Praiano;SA
+C;Pralboino;BS
+C;Prali;TO
+C;Pralormo;TO
+C;Pralungo;BI
+C;Pramaggiore;VE
+C;Pramollo;TO
+C;Prarolo;VC
+C;Prarostino;TO
+C;Prasco;AL
+C;Prascorsano;TO
+C;Prata Camportaccio;SO
+C;Prata d'Ansidonia;AQ
+C;Prata di Pordenone;PN
+C;Prata di Principato Ultra;AV
+C;Prata Sannita;CE
+C;Pratella;CE
+C;Pratiglione;TO
+C;Prato;PO
+C;Prato allo Stelvio;BZ
+C;Prato Carnico;UD
+C;Prato Sesia;NO
+C;Pratola Peligna;AQ
+C;Pratola Serra;AV
+C;Pratovecchio Stia;AR
+C;Pravisdomini;PN
+C;Pray;BI
+C;Prazzo;CN
+C;Precenicco;UD
+C;Preci;PG
+C;Predaia;TN
+C;Predappio;FC
+C;Predazzo;TN
+C;Predoi;BZ
+C;Predore;BG
+C;Predosa;AL
+C;Preganziol;TV
+C;Pregnana Milanese;MI
+C;Prelà;IM
+C;Premana;LC
+C;Premariacco;UD
+C;Premeno;VB
+C;Premia;VB
+C;Premilcuore;FC
+C;Premolo;BG
+C;Premosello-Chiovenda;VB
+C;Preone;UD
+C;Prepotto;UD
+C;Preseglie;BS
+C;Presenzano;CE
+C;Presezzo;BG
+C;Presicce-Acquarica;LE
+C;Pressana;VR
+C;Pretoro;CH
+C;Prevalle;BS
+C;Prezza;AQ
+C;Priero;CN
+C;Prignano Cilento;SA
+C;Prignano sulla Secchia;MO
+C;Primaluna;LC
+C;Primiero San Martino di Castrozza;TN
+C;Priocca;CN
+C;Priola;CN
+C;Priolo Gargallo;SR
+C;Priverno;LT
+C;Prizzi;PA
+C;Proceno;VT
+C;Procida;NA
+C;Propata;GE
+C;Proserpio;CO
+C;Prossedi;LT
+C;Provaglio d'Iseo;BS
+C;Provaglio Val Sabbia;BS
+C;Proves;BZ
+C;Provvidenti;CB
+C;Prunetto;CN
+C;Pré-Saint-Didier;AO
+C;Puegnago del Garda;BS
+C;Puglianello;BN
+C;Pula;CA
+C;Pulfero;UD
+C;Pulsano;TA
+C;Pumenengo;BG
+C;Pusiano;CO
+C;Putifigari;SS
+C;Putignano;BA
+C;Quadrelle;AV
+C;Quadri;CH
+C;Quagliuzzo;TO
+C;Qualiano;NA
+C;Quaranti;AT
+C;Quaregna Cerreto;BI
+C;Quargnento;AL
+C;Quarna Sopra;VB
+C;Quarna Sotto;VB
+C;Quarona;VC
+C;Quarrata;PT
+C;Quart;AO
+C;Quarto;NA
+C;Quarto d'Altino;VE
+C;Quartu Sant'Elena;CA
+C;Quartucciu;CA
+C;Quassolo;TO
+C;Quattordio;AL
+C;Quattro Castella;RE
+C;Quiliano;SV
+C;Quincinetto;TO
+C;Quindici;AV
+C;Quingentole;MN
+C;Quintano;CR
+C;Quinto di Treviso;TV
+C;Quinto Vercellese;VC
+C;Quinto Vicentino;VI
+C;Quinzano d'Oglio;BS
+C;Quistello;MN
+C;Rabbi;TN
+C;Racale;LE
+C;Racalmuto;AG
+C;Racconigi;CN
+C;Raccuja;ME
+C;Racines;BZ
+C;Radda in Chianti;SI
+C;Raddusa;CT
+C;Radicofani;SI
+C;Radicondoli;SI
+C;Raffadali;AG
+C;Ragalna;CT
+C;Ragogna;UD
+C;Ragusa;RG
+C;Raiano;AQ
+C;Ramacca;CT
+C;Rancio Valcuvia;VA
+C;Ranco;VA
+C;Randazzo;CT
+C;Ranica;BG
+C;Ranzanico;BG
+C;Ranzo;IM
+C;Rapagnano;FM
+C;Rapallo;GE
+C;Rapino;CH
+C;Rapolano Terme;SI
+C;Rapolla;PZ
+C;Rapone;PZ
+C;Rassa;VC
+C;Rasun-Anterselva;BZ
+C;Rasura;SO
+C;Ravanusa;AG
+C;Ravarino;MO
+C;Ravascletto;UD
+C;Ravello;SA
+C;Ravenna;RA
+C;Raveo;UD
+C;Raviscanina;CE
+C;Re;VB
+C;Rea;PV
+C;Realmonte;AG
+C;Reana del Rojale;UD
+C;Reano;TO
+C;Recale;CE
+C;Recanati;MC
+C;Recco;GE
+C;Recetto;NO
+C;Recoaro Terme;VI
+C;Redavalle;PV
+C;Redondesco;MN
+C;Refrancore;AT
+C;Refrontolo;TV
+C;Regalbuto;EN
+C;Reggello;FI
+C;Reggio di Calabria;RC
+C;Reggio nell'Emilia;RE
+C;Reggiolo;RE
+C;Reino;BN
+C;Reitano;ME
+C;Remanzacco;UD
+C;Remedello;BS
+C;Renate;MB
+C;Rende;CS
+C;Renon;BZ
+C;Resana;TV
+C;Rescaldina;MI
+C;Resia;UD
+C;Resiutta;UD
+C;Resuttano;CL
+C;Retorbido;PV
+C;Revello;CN
+C;Revigliasco d'Asti;AT
+C;Revine Lago;TV
+C;Rezzago;CO
+C;Rezzato;BS
+C;Rezzo;IM
+C;Rezzoaglio;GE
+C;Rho;MI
+C;Rhêmes-Notre-Dame;AO
+C;Rhêmes-Saint-Georges;AO
+C;Riace;RC
+C;Rialto;SV
+C;Riano;RM
+C;Riardo;CE
+C;Ribera;AG
+C;Ribordone;TO
+C;Ricadi;VV
+C;Ricaldone;AL
+C;Riccia;CB
+C;Riccione;RN
+C;Riccò del Golfo di Spezia;SP
+C;Ricengo;CR
+C;Ricigliano;SA
+C;Riese Pio X;TV
+C;Riesi;CL
+C;Rieti;RI
+C;Rifiano;BZ
+C;Rifreddo;CN
+C;Rignano Flaminio;RM
+C;Rignano Garganico;FG
+C;Rignano sull'Arno;FI
+C;Rigolato;UD
+C;Rimella;VC
+C;Rimini;RN
+C;Rio;LI
+C;Rio di Pusteria;BZ
+C;Rio Saliceto;RE
+C;Riofreddo;RM
+C;Riola Sardo;OR
+C;Riolo Terme;RA
+C;Riolunato;MO
+C;Riomaggiore;SP
+C;Rionero in Vulture;PZ
+C;Rionero Sannitico;IS
+C;Ripa Teatina;CH
+C;Ripabottoni;CB
+C;Ripacandida;PZ
+C;Ripalimosani;CB
+C;Ripalta Arpina;CR
+C;Ripalta Cremasca;CR
+C;Ripalta Guerina;CR
+C;Riparbella;PI
+C;Ripatransone;AP
+C;Ripe San Ginesio;MC
+C;Ripi;FR
+C;Riposto;CT
+C;Rittana;CN
+C;Riva del Garda;TN
+C;Riva del Po;FE
+C;Riva di Solto;BG
+C;Riva Ligure;IM
+C;Riva presso Chieri;TO
+C;Rivalba;TO
+C;Rivalta Bormida;AL
+C;Rivalta di Torino;TO
+C;Rivamonte Agordino;BL
+C;Rivanazzano Terme;PV
+C;Rivara;TO
+C;Rivarolo Canavese;TO
+C;Rivarolo del Re ed Uniti;CR
+C;Rivarolo Mantovano;MN
+C;Rivarone;AL
+C;Rivarossa;TO
+C;Rive;VC
+C;Rive d'Arcano;UD
+C;Rivello;PZ
+C;Rivergaro;PC
+C;Rivignano Teor;UD
+C;Rivisondoli;AQ
+C;Rivodutri;RI
+C;Rivoli;TO
+C;Rivoli Veronese;VR
+C;Rivolta d'Adda;CR
+C;Rizziconi;RC
+C;Roana;VI
+C;Roaschia;CN
+C;Roascio;CN
+C;Roasio;VC
+C;Roatto;AT
+C;Robassomero;TO
+C;Robbiate;LC
+C;Robbio;PV
+C;Robecchetto con Induno;MI
+C;Robecco d'Oglio;CR
+C;Robecco Pavese;PV
+C;Robecco sul Naviglio;MI
+C;Robella;AT
+C;Robilante;CN
+C;Roburent;CN
+C;Rocca Canavese;TO
+C;Rocca Canterano;RM
+C;Rocca Cigliè;CN
+C;Rocca d'Arazzo;AT
+C;Rocca d'Arce;FR
+C;Rocca d'Evandro;CE
+C;Rocca de' Baldi;CN
+C;Rocca de' Giorgi;PV
+C;Rocca di Botte;AQ
+C;Rocca di Cambio;AQ
+C;Rocca di Cave;RM
+C;Rocca di Mezzo;AQ
+C;Rocca di Neto;KR
+C;Rocca di Papa;RM
+C;Rocca Grimalda;AL
+C;Rocca Imperiale;CS
+C;Rocca Massima;LT
+C;Rocca Pia;AQ
+C;Rocca Pietore;BL
+C;Rocca Priora;RM
+C;Rocca San Casciano;FC
+C;Rocca San Felice;AV
+C;Rocca San Giovanni;CH
+C;Rocca Santa Maria;TE
+C;Rocca Santo Stefano;RM
+C;Rocca Sinibalda;RI
+C;Rocca Susella;PV
+C;Roccabascerana;AV
+C;Roccabernarda;KR
+C;Roccabianca;PR
+C;Roccabruna;CN
+C;Roccacasale;AQ
+C;Roccadaspide;SA
+C;Roccafiorita;ME
+C;Roccafluvione;AP
+C;Roccaforte del Greco;RC
+C;Roccaforte Ligure;AL
+C;Roccaforte Mondovì;CN
+C;Roccaforzata;TA
+C;Roccafranca;BS
+C;Roccagiovine;RM
+C;Roccagloriosa;SA
+C;Roccagorga;LT
+C;Roccalbegna;GR
+C;Roccalumera;ME
+C;Roccamandolfi;IS
+C;Roccamena;PA
+C;Roccamonfina;CE
+C;Roccamontepiano;CH
+C;Roccamorice;PE
+C;Roccanova;PZ
+C;Roccantica;RI
+C;Roccapalumba;PA
+C;Roccapiemonte;SA
+C;Roccarainola;NA
+C;Roccaraso;AQ
+C;Roccaromana;CE
+C;Roccascalegna;CH
+C;Roccasecca;FR
+C;Roccasecca dei Volsci;LT
+C;Roccasicura;IS
+C;Roccasparvera;CN
+C;Roccaspinalveti;CH
+C;Roccastrada;GR
+C;Roccavaldina;ME
+C;Roccaverano;AT
+C;Roccavignale;SV
+C;Roccavione;CN
+C;Roccavivara;CB
+C;Roccella Ionica;RC
+C;Roccella Valdemone;ME
+C;Rocchetta a Volturno;IS
+C;Rocchetta Belbo;CN
+C;Rocchetta di Vara;SP
+C;Rocchetta e Croce;CE
+C;Rocchetta Ligure;AL
+C;Rocchetta Nervina;IM
+C;Rocchetta Palafea;AT
+C;Rocchetta Sant'Antonio;FG
+C;Rocchetta Tanaro;AT
+C;Rodano;MI
+C;Roddi;CN
+C;Roddino;CN
+C;Rodello;CN
+C;Rodengo;BZ
+C;Rodengo Saiano;BS
+C;Rodero;CO
+C;Rodi Garganico;FG
+C;Rodigo;MN
+C;Rodì Milici;ME
+C;Rofrano;SA
+C;Rogeno;LC
+C;Roggiano Gravina;CS
+C;Roghudi;RC
+C;Rogliano;CS
+C;Rognano;PV
+C;Rogno;BG
+C;Rogolo;SO
+C;Roiate;RM
+C;Roio del Sangro;CH
+C;Roisan;AO
+C;Roletto;TO
+C;Rolo;RE
+C;Roma;RM
+C;Romagnano al Monte;SA
+C;Romagnano Sesia;NO
+C;Romagnese;PV
+C;Romana;SS
+C;Romanengo;CR
+C;Romano Canavese;TO
+C;Romano d'Ezzelino;VI
+C;Romano di Lombardia;BG
+C;Romans d'Isonzo;GO
+C;Rombiolo;VV
+C;Romeno;TN
+C;Romentino;NO
+C;Rometta;ME
+C;Roncade;TV
+C;Roncadelle;BS
+C;Roncaro;PV
+C;Roncegno Terme;TN
+C;Roncello;MB
+C;Ronchi dei Legionari;GO
+C;Ronchi Valsugana;TN
+C;Ronchis;UD
+C;Ronciglione;VT
+C;Ronco all'Adige;VR
+C;Ronco Biellese;BI
+C;Ronco Briantino;MB
+C;Ronco Canavese;TO
+C;Ronco Scrivia;GE
+C;Roncobello;BG
+C;Roncoferraro;MN
+C;Roncofreddo;FC
+C;Roncola;BG
+C;Roncà;VR
+C;Rondanina;GE
+C;Rondissone;TO
+C;Ronsecco;VC
+C;Ronzo-Chienis;TN
+C;Ronzone;TN
+C;Roppolo;BI
+C;Rorà;TO
+C;Rosarno;RC
+C;Rosasco;PV
+C;Rosate;MI
+C;Rosazza;BI
+C;Rosciano;PE
+C;Roscigno;SA
+C;Rose;CS
+C;Rosello;CH
+C;Roseto Capo Spulico;CS
+C;Roseto degli Abruzzi;TE
+C;Roseto Valfortore;FG
+C;Rosignano Marittimo;LI
+C;Rosignano Monferrato;AL
+C;Rosolina;RO
+C;Rosolini;SR
+C;Rosora;AN
+C;Rossa;VC
+C;Rossana;CN
+C;Rossano Veneto;VI
+C;Rossiglione;GE
+C;Rosta;TO
+C;Rosà;VI
+C;Rota d'Imagna;BG
+C;Rota Greca;CS
+C;Rotella;AP
+C;Rotello;CB
+C;Rotonda;PZ
+C;Rotondella;MT
+C;Rotondi;AV
+C;Rottofreno;PC
+C;Rotzo;VI
+C;Roure;TO
+C;Rovasenda;VC
+C;Rovato;BS
+C;Rovegno;GE
+C;Rovellasca;CO
+C;Rovello Porro;CO
+C;Roverbella;MN
+C;Roverchiara;VR
+C;Roveredo di Guà;VR
+C;Roveredo in Piano;PN
+C;Rovereto;TN
+C;Roverè della Luna;TN
+C;Roverè Veronese;VR
+C;Rovescala;PV
+C;Rovetta;BG
+C;Roviano;RM
+C;Rovigo;RO
+C;Rovito;CS
+C;Rovolon;PD
+C;Rozzano;MI
+C;Roè Volciano;BS
+C;Rubano;PD
+C;Rubiana;TO
+C;Rubiera;RE
+C;Ruda;UD
+C;Rudiano;BS
+C;Rueglio;TO
+C;Ruffano;LE
+C;Ruffia;CN
+C;Ruffrè-Mendola;TN
+C;Rufina;FI
+C;Ruinas;OR
+C;Rumo;TN
+C;Ruoti;PZ
+C;Russi;RA
+C;Rutigliano;BA
+C;Rutino;SA
+C;Ruviano;CE
+C;Ruvo del Monte;PZ
+C;Ruvo di Puglia;BA
+C;Sabaudia;LT
+C;Sabbio Chiese;BS
+C;Sabbioneta;MN
+C;Sacco;SA
+C;Saccolongo;PD
+C;Sacile;PN
+C;Sacrofano;RM
+C;Sadali;SU
+C;Sagama;OR
+C;Sagliano Micca;BI
+C;Sagrado;GO
+C;Sagron Mis;TN
+C;Saint-Christophe;AO
+C;Saint-Denis;AO
+C;Saint-Marcel;AO
+C;Saint-Nicolas;AO
+C;Saint-Oyen;AO
+C;Saint-Pierre;AO
+C;Saint-Rhémy-en-Bosses;AO
+C;Saint-Vincent;AO
+C;Sala Baganza;PR
+C;Sala Biellese;BI
+C;Sala Bolognese;BO
+C;Sala Comacina;CO
+C;Sala Consilina;SA
+C;Sala Monferrato;AL
+C;Salandra;MT
+C;Salaparuta;TP
+C;Salara;RO
+C;Salasco;VC
+C;Salassa;TO
+C;Salbertrand;TO
+C;Salcedo;VI
+C;Salcito;CB
+C;Sale;AL
+C;Sale delle Langhe;CN
+C;Sale Marasino;BS
+C;Sale San Giovanni;CN
+C;Salemi;TP
+C;Salento;SA
+C;Salerano Canavese;TO
+C;Salerano sul Lambro;LO
+C;Salerno;SA
+C;Salgareda;TV
+C;Sali Vercellese;VC
+C;Salice Salentino;LE
+C;Saliceto;CN
+C;Salisano;RI
+C;Salizzole;VR
+C;Salle;PE
+C;Salmour;CN
+C;Salorno sulla strada del vino;BZ
+C;Salsomaggiore Terme;PR
+C;Saltrio;VA
+C;Saludecio;RN
+C;Saluggia;VC
+C;Salussola;BI
+C;Saluzzo;CN
+C;Salve;LE
+C;Salvirola;CR
+C;Salvitelle;SA
+C;Salza di Pinerolo;TO
+C;Salza Irpina;AV
+C;Salzano;VE
+C;Salò;BS
+C;Samarate;VA
+C;Samassi;SU
+C;Samatzai;SU
+C;Sambuca di Sicilia;AG
+C;Sambuca Pistoiese;PT
+C;Sambuci;RM
+C;Sambuco;CN
+C;Sammichele di Bari;BA
+C;Samo;RC
+C;Samolaco;SO
+C;Samone;TN
+C;Samone;TO
+C;Sampeyre;CN
+C;Samugheo;OR
+C;San Bartolomeo al Mare;IM
+C;San Bartolomeo in Galdo;BN
+C;San Bartolomeo Val Cavargna;CO
+C;San Basile;CS
+C;San Basilio;SU
+C;San Bassano;CR
+C;San Bellino;RO
+C;San Benedetto Belbo;CN
+C;San Benedetto dei Marsi;AQ
+C;San Benedetto del Tronto;AP
+C;San Benedetto in Perillis;AQ
+C;San Benedetto Po;MN
+C;San Benedetto Ullano;CS
+C;San Benedetto Val di Sambro;BO
+C;San Benigno Canavese;TO
+C;San Bernardino Verbano;VB
+C;San Biagio della Cima;IM
+C;San Biagio di Callalta;TV
+C;San Biagio Platani;AG
+C;San Biagio Saracinisco;FR
+C;San Biase;CB
+C;San Bonifacio;VR
+C;San Buono;CH
+C;San Calogero;VV
+C;San Candido;BZ
+C;San Canzian d'Isonzo;GO
+C;San Carlo Canavese;TO
+C;San Casciano dei Bagni;SI
+C;San Casciano in Val di Pesa;FI
+C;San Cassiano;LE
+C;San Cataldo;CL
+C;San Cesareo;RM
+C;San Cesario di Lecce;LE
+C;San Cesario sul Panaro;MO
+C;San Chirico Nuovo;PZ
+C;San Chirico Raparo;PZ
+C;San Cipirello;PA
+C;San Cipriano d'Aversa;CE
+C;San Cipriano Picentino;SA
+C;San Cipriano Po;PV
+C;San Clemente;RN
+C;San Colombano al Lambro;MI
+C;San Colombano Belmonte;TO
+C;San Colombano Certenoli;GE
+C;San Cono;CT
+C;San Cosmo Albanese;CS
+C;San Costantino Albanese;PZ
+C;San Costantino Calabro;VV
+C;San Costanzo;PU
+C;San Cristoforo;AL
+C;San Damiano al Colle;PV
+C;San Damiano d'Asti;AT
+C;San Damiano Macra;CN
+C;San Daniele del Friuli;UD
+C;San Daniele Po;CR
+C;San Demetrio Corone;CS
+C;San Demetrio ne' Vestini;AQ
+C;San Didero;TO
+C;San Donaci;BR
+C;San Donato di Lecce;LE
+C;San Donato di Ninea;CS
+C;San Donato Milanese;MI
+C;San Donato Val di Comino;FR
+C;San Donà di Piave;VE
+C;San Dorligo della Valle;TS
+C;San Fele;PZ
+C;San Felice a Cancello;CE
+C;San Felice Circeo;LT
+C;San Felice del Benaco;BS
+C;San Felice del Molise;CB
+C;San Felice sul Panaro;MO
+C;San Ferdinando;RC
+C;San Ferdinando di Puglia;BT
+C;San Fermo della Battaglia;CO
+C;San Fili;CS
+C;San Filippo del Mela;ME
+C;San Fior;TV
+C;San Fiorano;LO
+C;San Floriano del Collio;GO
+C;San Floro;CZ
+C;San Francesco al Campo;TO
+C;San Fratello;ME
+C;San Gavino Monreale;SU
+C;San Gemini;TR
+C;San Genesio Atesino;BZ
+C;San Genesio ed Uniti;PV
+C;San Gennaro Vesuviano;NA
+C;San Germano Chisone;TO
+C;San Germano Vercellese;VC
+C;San Gervasio Bresciano;BS
+C;San Giacomo degli Schiavoni;CB
+C;San Giacomo delle Segnate;MN
+C;San Giacomo Filippo;SO
+C;San Giacomo Vercellese;VC
+C;San Gillio;TO
+C;San Gimignano;SI
+C;San Ginesio;MC
+C;San Giorgio a Cremano;NA
+C;San Giorgio a Liri;FR
+C;San Giorgio Albanese;CS
+C;San Giorgio Bigarello;MN
+C;San Giorgio Canavese;TO
+C;San Giorgio del Sannio;BN
+C;San Giorgio della Richinvelda;PN
+C;San Giorgio delle Pertiche;PD
+C;San Giorgio di Lomellina;PV
+C;San Giorgio di Nogaro;UD
+C;San Giorgio di Piano;BO
+C;San Giorgio in Bosco;PD
+C;San Giorgio Ionico;TA
+C;San Giorgio La Molara;BN
+C;San Giorgio Lucano;MT
+C;San Giorgio Monferrato;AL
+C;San Giorgio Morgeto;RC
+C;San Giorgio Piacentino;PC
+C;San Giorgio Scarampi;AT
+C;San Giorgio su Legnano;MI
+C;San Giorio di Susa;TO
+C;San Giovanni a Piro;SA
+C;San Giovanni al Natisone;UD
+C;San Giovanni Bianco;BG
+C;San Giovanni del Dosso;MN
+C;San Giovanni di Fassa;TN
+C;San Giovanni di Gerace;RC
+C;San Giovanni Gemini;AG
+C;San Giovanni Ilarione;VR
+C;San Giovanni in Croce;CR
+C;San Giovanni in Fiore;CS
+C;San Giovanni in Galdo;CB
+C;San Giovanni in Marignano;RN
+C;San Giovanni in Persiceto;BO
+C;San Giovanni Incarico;FR
+C;San Giovanni la Punta;CT
+C;San Giovanni Lipioni;CH
+C;San Giovanni Lupatoto;VR
+C;San Giovanni Rotondo;FG
+C;San Giovanni Suergiu;SU
+C;San Giovanni Teatino;CH
+C;San Giovanni Valdarno;AR
+C;San Giuliano del Sannio;CB
+C;San Giuliano di Puglia;CB
+C;San Giuliano Milanese;MI
+C;San Giuliano Terme;PI
+C;San Giuseppe Jato;PA
+C;San Giuseppe Vesuviano;NA
+C;San Giustino;PG
+C;San Giusto Canavese;TO
+C;San Godenzo;FI
+C;San Gregorio d'Ippona;VV
+C;San Gregorio da Sassola;RM
+C;San Gregorio di Catania;CT
+C;San Gregorio Magno;SA
+C;San Gregorio Matese;CE
+C;San Gregorio nelle Alpi;BL
+C;San Lazzaro di Savena;BO
+C;San Leo;RN
+C;San Leonardo;UD
+C;San Leonardo in Passiria;BZ
+C;San Leucio del Sannio;BN
+C;San Lorenzello;BN
+C;San Lorenzo;RC
+C;San Lorenzo al Mare;IM
+C;San Lorenzo Bellizzi;CS
+C;San Lorenzo del Vallo;CS
+C;San Lorenzo di Sebato;BZ
+C;San Lorenzo Dorsino;TN
+C;San Lorenzo in Campo;PU
+C;San Lorenzo Isontino;GO
+C;San Lorenzo Maggiore;BN
+C;San Lorenzo Nuovo;VT
+C;San Luca;RC
+C;San Lucido;CS
+C;San Lupo;BN
+C;San Mango d'Aquino;CZ
+C;San Mango Piemonte;SA
+C;San Mango sul Calore;AV
+C;San Marcellino;CE
+C;San Marcello;AN
+C;San Marcello Piteglio;PT
+C;San Marco Argentano;CS
+C;San Marco d'Alunzio;ME
+C;San Marco dei Cavoti;BN
+C;San Marco Evangelista;CE
+C;San Marco in Lamis;FG
+C;San Marco la Catola;FG
+C;San Martino al Tagliamento;PN
+C;San Martino Alfieri;AT
+C;San Martino Buon Albergo;VR
+C;San Martino Canavese;TO
+C;San Martino d'Agri;PZ
+C;San Martino dall'Argine;MN
+C;San Martino del Lago;CR
+C;San Martino di Finita;CS
+C;San Martino di Lupari;PD
+C;San Martino di Venezze;RO
+C;San Martino in Badia;BZ
+C;San Martino in Passiria;BZ
+C;San Martino in Pensilis;CB
+C;San Martino in Rio;RE
+C;San Martino in Strada;LO
+C;San Martino Sannita;BN
+C;San Martino Siccomario;PV
+C;San Martino sulla Marrucina;CH
+C;San Martino Valle Caudina;AV
+C;San Marzano di San Giuseppe;TA
+C;San Marzano Oliveto;AT
+C;San Marzano sul Sarno;SA
+C;San Massimo;CB
+C;San Maurizio Canavese;TO
+C;San Maurizio d'Opaglio;NO
+C;San Mauro Castelverde;PA
+C;San Mauro Cilento;SA
+C;San Mauro di Saline;VR
+C;San Mauro Forte;MT
+C;San Mauro la Bruca;SA
+C;San Mauro Marchesato;KR
+C;San Mauro Pascoli;FC
+C;San Mauro Torinese;TO
+C;San Michele al Tagliamento;VE
+C;San Michele all'Adige;TN
+C;San Michele di Ganzaria;CT
+C;San Michele di Serino;AV
+C;San Michele Mondovì;CN
+C;San Michele Salentino;BR
+C;San Miniato;PI
+C;San Nazzaro;BN
+C;San Nazzaro Sesia;NO
+C;San Nazzaro Val Cavargna;CO
+C;San Nicandro Garganico;FG
+C;San Nicola Arcella;CS
+C;San Nicola Baronia;AV
+C;San Nicola da Crissa;VV
+C;San Nicola dell'Alto;KR
+C;San Nicola la Strada;CE
+C;San Nicola Manfredi;BN
+C;San Nicolò d'Arcidano;OR
+C;San Nicolò di Comelico;BL
+C;San Nicolò Gerrei;SU
+C;San Pancrazio;BZ
+C;San Pancrazio Salentino;BR
+C;San Paolo;BS
+C;San Paolo Albanese;PZ
+C;San Paolo Bel Sito;NA
+C;San Paolo d'Argon;BG
+C;San Paolo di Civitate;FG
+C;San Paolo di Jesi;AN
+C;San Paolo Solbrito;AT
+C;San Pellegrino Terme;BG
+C;San Pier d'Isonzo;GO
+C;San Pier Niceto;ME
+C;San Piero Patti;ME
+C;San Pietro a Maida;CZ
+C;San Pietro al Natisone;UD
+C;San Pietro al Tanagro;SA
+C;San Pietro Apostolo;CZ
+C;San Pietro Avellana;IS
+C;San Pietro Clarenza;CT
+C;San Pietro di Cadore;BL
+C;San Pietro di Caridà;RC
+C;San Pietro di Feletto;TV
+C;San Pietro di Morubio;VR
+C;San Pietro in Amantea;CS
+C;San Pietro in Cariano;VR
+C;San Pietro in Casale;BO
+C;San Pietro in Cerro;PC
+C;San Pietro in Gu;PD
+C;San Pietro in Guarano;CS
+C;San Pietro in Lama;LE
+C;San Pietro Infine;CE
+C;San Pietro Mosezzo;NO
+C;San Pietro Mussolino;VI
+C;San Pietro Val Lemina;TO
+C;San Pietro Vernotico;BR
+C;San Pietro Viminario;PD
+C;San Pio delle Camere;AQ
+C;San Polo d'Enza;RE
+C;San Polo dei Cavalieri;RM
+C;San Polo di Piave;TV
+C;San Polo Matese;CB
+C;San Ponso;TO
+C;San Possidonio;MO
+C;San Potito Sannitico;CE
+C;San Potito Ultra;AV
+C;San Prisco;CE
+C;San Procopio;RC
+C;San Prospero;MO
+C;San Quirico d'Orcia;SI
+C;San Quirino;PN
+C;San Raffaele Cimena;TO
+C;San Roberto;RC
+C;San Rocco al Porto;LO
+C;San Romano in Garfagnana;LU
+C;San Rufo;SA
+C;San Salvatore di Fitalia;ME
+C;San Salvatore Monferrato;AL
+C;San Salvatore Telesino;BN
+C;San Salvo;CH
+C;San Sebastiano al Vesuvio;NA
+C;San Sebastiano Curone;AL
+C;San Sebastiano da Po;TO
+C;San Secondo di Pinerolo;TO
+C;San Secondo Parmense;PR
+C;San Severino Lucano;PZ
+C;San Severino Marche;MC
+C;San Severo;FG
+C;San Siro;CO
+C;San Sossio Baronia;AV
+C;San Sostene;CZ
+C;San Sosti;CS
+C;San Sperate;SU
+C;San Stino di Livenza;VE
+C;San Tammaro;CE
+C;San Teodoro;ME
+C;San Teodoro;SS
+C;San Tomaso Agordino;BL
+C;San Valentino in Abruzzo Citeriore;PE
+C;San Valentino Torio;SA
+C;San Venanzo;TR
+C;San Vendemiano;TV
+C;San Vero Milis;OR
+C;San Vincenzo;LI
+C;San Vincenzo La Costa;CS
+C;San Vincenzo Valle Roveto;AQ
+C;San Vitaliano;NA
+C;San Vito;SU
+C;San Vito al Tagliamento;PN
+C;San Vito al Torre;UD
+C;San Vito Chietino;CH
+C;San Vito dei Normanni;BR
+C;San Vito di Cadore;BL
+C;San Vito di Fagagna;UD
+C;San Vito di Leguzzano;VI
+C;San Vito Lo Capo;TP
+C;San Vito Romano;RM
+C;San Vito sullo Ionio;CZ
+C;San Vittore del Lazio;FR
+C;San Vittore Olona;MI
+C;San Zeno di Montagna;VR
+C;San Zeno Naviglio;BS
+C;San Zenone al Lambro;MI
+C;San Zenone al Po;PV
+C;San Zenone degli Ezzelini;TV
+C;Sanarica;LE
+C;Sandigliano;BI
+C;Sandrigo;VI
+C;Sanfront;CN
+C;Sanfrè;CN
+C;Sangano;TO
+C;Sangiano;VA
+C;Sangineto;CS
+C;Sanguinetto;VR
+C;Sanluri;SU
+C;Sannazzaro de' Burgondi;PV
+C;Sannicandro di Bari;BA
+C;Sannicola;LE
+C;Sanremo;IM
+C;Sansepolcro;AR
+C;Sant'Agapito;IS
+C;Sant'Agata Bolognese;BO
+C;Sant'Agata de' Goti;BN
+C;Sant'Agata del Bianco;RC
+C;Sant'Agata di Esaro;CS
+C;Sant'Agata di Militello;ME
+C;Sant'Agata di Puglia;FG
+C;Sant'Agata Feltria;RN
+C;Sant'Agata Fossili;AL
+C;Sant'Agata li Battiati;CT
+C;Sant'Agata sul Santerno;RA
+C;Sant'Agnello;NA
+C;Sant'Albano Stura;CN
+C;Sant'Alessio con Vialone;PV
+C;Sant'Alessio in Aspromonte;RC
+C;Sant'Alessio Siculo;ME
+C;Sant'Alfio;CT
+C;Sant'Ambrogio di Torino;TO
+C;Sant'Ambrogio di Valpolicella;VR
+C;Sant'Ambrogio sul Garigliano;FR
+C;Sant'Anastasia;NA
+C;Sant'Anatolia di Narco;PG
+C;Sant'Andrea Apostolo dello Ionio;CZ
+C;Sant'Andrea del Garigliano;FR
+C;Sant'Andrea di Conza;AV
+C;Sant'Andrea Frius;SU
+C;Sant'Angelo a Cupolo;BN
+C;Sant'Angelo a Fasanella;SA
+C;Sant'Angelo a Scala;AV
+C;Sant'Angelo all'Esca;AV
+C;Sant'Angelo d'Alife;CE
+C;Sant'Angelo dei Lombardi;AV
+C;Sant'Angelo del Pesco;IS
+C;Sant'Angelo di Brolo;ME
+C;Sant'Angelo di Piove di Sacco;PD
+C;Sant'Angelo in Pontano;MC
+C;Sant'Angelo in Vado;PU
+C;Sant'Angelo Le Fratte;PZ
+C;Sant'Angelo Limosano;CB
+C;Sant'Angelo Lodigiano;LO
+C;Sant'Angelo Lomellina;PV
+C;Sant'Angelo Muxaro;AG
+C;Sant'Angelo Romano;RM
+C;Sant'Anna Arresi;SU
+C;Sant'Anna d'Alfaedo;VR
+C;Sant'Antimo;NA
+C;Sant'Antioco;SU
+C;Sant'Antonino di Susa;TO
+C;Sant'Antonio Abate;NA
+C;Sant'Antonio di Gallura;SS
+C;Sant'Apollinare;FR
+C;Sant'Arcangelo;PZ
+C;Sant'Arcangelo Trimonte;BN
+C;Sant'Arpino;CE
+C;Sant'Arsenio;SA
+C;Sant'Egidio alla Vibrata;TE
+C;Sant'Egidio del Monte Albino;SA
+C;Sant'Elena;PD
+C;Sant'Elena Sannita;IS
+C;Sant'Elia a Pianisi;CB
+C;Sant'Elia Fiumerapido;FR
+C;Sant'Elpidio a Mare;FM
+C;Sant'Eufemia a Maiella;PE
+C;Sant'Eufemia d'Aspromonte;RC
+C;Sant'Eusanio del Sangro;CH
+C;Sant'Eusanio Forconese;AQ
+C;Sant'Ilario d'Enza;RE
+C;Sant'Ilario dello Ionio;RC
+C;Sant'Ippolito;PU
+C;Sant'Olcese;GE
+C;Sant'Omero;TE
+C;Sant'Omobono Terme;BG
+C;Sant'Onofrio;VV
+C;Sant'Oreste;RM
+C;Sant'Orsola Terme;TN
+C;Sant'Urbano;PD
+C;Santa Brigida;BG
+C;Santa Caterina Albanese;CS
+C;Santa Caterina d'Este;PD
+C;Santa Caterina dello Ionio;CZ
+C;Santa Caterina Villarmosa;CL
+C;Santa Cesarea Terme;LE
+C;Santa Cristina d'Aspromonte;RC
+C;Santa Cristina e Bissone;PV
+C;Santa Cristina Gela;PA
+C;Santa Cristina Valgardena;BZ
+C;Santa Croce Camerina;RG
+C;Santa Croce del Sannio;BN
+C;Santa Croce di Magliano;CB
+C;Santa Croce sull'Arno;PI
+C;Santa Domenica Talao;CS
+C;Santa Domenica Vittoria;ME
+C;Santa Elisabetta;AG
+C;Santa Fiora;GR
+C;Santa Flavia;PA
+C;Santa Giuletta;PV
+C;Santa Giusta;OR
+C;Santa Giustina;BL
+C;Santa Giustina in Colle;PD
+C;Santa Luce;PI
+C;Santa Lucia del Mela;ME
+C;Santa Lucia di Piave;TV
+C;Santa Lucia di Serino;AV
+C;Santa Margherita di Belice;AG
+C;Santa Margherita di Staffora;PV
+C;Santa Margherita Ligure;GE
+C;Santa Maria a Monte;PI
+C;Santa Maria a Vico;CE
+C;Santa Maria Capua Vetere;CE
+C;Santa Maria Coghinas;SS
+C;Santa Maria del Cedro;CS
+C;Santa Maria del Molise;IS
+C;Santa Maria della Versa;PV
+C;Santa Maria di Licodia;CT
+C;Santa Maria di Sala;VE
+C;Santa Maria Hoè;LC
+C;Santa Maria Imbaro;CH
+C;Santa Maria la Carità;NA
+C;Santa Maria la Fossa;CE
+C;Santa Maria la Longa;UD
+C;Santa Maria Maggiore;VB
+C;Santa Maria Nuova;AN
+C;Santa Marina;SA
+C;Santa Marina Salina;ME
+C;Santa Marinella;RM
+C;Santa Ninfa;TP
+C;Santa Paolina;AV
+C;Santa Severina;KR
+C;Santa Sofia;FC
+C;Santa Sofia d'Epiro;CS
+C;Santa Teresa di Riva;ME
+C;Santa Teresa Gallura;SS
+C;Santa Venerina;CT
+C;Santa Vittoria d'Alba;CN
+C;Santa Vittoria in Matenano;FM
+C;Santadi;SU
+C;Santarcangelo di Romagna;RN
+C;Sante Marie;AQ
+C;Santena;TO
+C;Santeramo in Colle;BA
+C;Santhià;VC
+C;Santi Cosma e Damiano;LT
+C;Santo Stefano al Mare;IM
+C;Santo Stefano Belbo;CN
+C;Santo Stefano d'Aveto;GE
+C;Santo Stefano del Sole;AV
+C;Santo Stefano di Cadore;BL
+C;Santo Stefano di Camastra;ME
+C;Santo Stefano di Magra;SP
+C;Santo Stefano di Rogliano;CS
+C;Santo Stefano di Sessanio;AQ
+C;Santo Stefano in Aspromonte;RC
+C;Santo Stefano Lodigiano;LO
+C;Santo Stefano Quisquina;AG
+C;Santo Stefano Roero;CN
+C;Santo Stefano Ticino;MI
+C;Santomenna;SA
+C;Santopadre;FR
+C;Santorso;VI
+C;Santu Lussurgiu;OR
+C;Sanza;SA
+C;Sanzeno;TN
+C;Saonara;PD
+C;Saponara;ME
+C;Sappada;UD
+C;Sapri;SA
+C;Saracena;CS
+C;Saracinesco;RM
+C;Sarcedo;VI
+C;Sarconi;PZ
+C;Sardara;SU
+C;Sardigliano;AL
+C;Sarego;VI
+C;Sarentino;BZ
+C;Sarezzano;AL
+C;Sarezzo;BS
+C;Sarmato;PC
+C;Sarmede;TV
+C;Sarnano;MC
+C;Sarnico;BG
+C;Sarno;SA
+C;Sarnonico;TN
+C;Saronno;VA
+C;Sarre;AO
+C;Sarroch;CA
+C;Sarsina;FC
+C;Sarteano;SI
+C;Sartirana Lomellina;PV
+C;Sarule;NU
+C;Sarzana;SP
+C;Sassano;SA
+C;Sassari;SS
+C;Sassello;SV
+C;Sassetta;LI
+C;Sassinoro;BN
+C;Sasso di Castalda;PZ
+C;Sasso Marconi;BO
+C;Sassocorvaro Auditore;PU
+C;Sassofeltrio;RN
+C;Sassoferrato;AN
+C;Sassuolo;MO
+C;Satriano;CZ
+C;Satriano di Lucania;PZ
+C;Sauris;UD
+C;Sauze d'Oulx;TO
+C;Sauze di Cesana;TO
+C;Sava;TA
+C;Savelli;KR
+C;Saviano;NA
+C;Savigliano;CN
+C;Savignano Irpino;AV
+C;Savignano sul Panaro;MO
+C;Savignano sul Rubicone;FC
+C;Savignone;GE
+C;Saviore dell'Adamello;BS
+C;Savoca;ME
+C;Savogna;UD
+C;Savogna d'Isonzo;GO
+C;Savoia di Lucania;PZ
+C;Savona;SV
+C;Scafa;PE
+C;Scafati;SA
+C;Scagnello;CN
+C;Scala;SA
+C;Scala Coeli;CS
+C;Scaldasole;PV
+C;Scalea;CS
+C;Scalenghe;TO
+C;Scaletta Zanclea;ME
+C;Scampitella;AV
+C;Scandale;KR
+C;Scandiano;RE
+C;Scandicci;FI
+C;Scandolara Ravara;CR
+C;Scandolara Ripa d'Oglio;CR
+C;Scandriglia;RI
+C;Scanno;AQ
+C;Scano di Montiferro;OR
+C;Scansano;GR
+C;Scanzano Jonico;MT
+C;Scanzorosciate;BG
+C;Scapoli;IS
+C;Scarlino;GR
+C;Scarmagno;TO
+C;Scarnafigi;CN
+C;Scarperia e San Piero;FI
+C;Scena;BZ
+C;Scerni;CH
+C;Scheggia e Pascelupo;PG
+C;Scheggino;PG
+C;Schiavi di Abruzzo;CH
+C;Schiavon;VI
+C;Schignano;CO
+C;Schilpario;BG
+C;Schio;VI
+C;Schivenoglia;MN
+C;Sciacca;AG
+C;Sciara;PA
+C;Scicli;RG
+C;Scido;RC
+C;Scigliano;CS
+C;Scilla;RC
+C;Scillato;PA
+C;Sciolze;TO
+C;Scisciano;NA
+C;Sclafani Bagni;PA
+C;Scontrone;AQ
+C;Scopa;VC
+C;Scopello;VC
+C;Scoppito;AQ
+C;Scordia;CT
+C;Scorrano;LE
+C;Scorzè;VE
+C;Scurcola Marsicana;AQ
+C;Scurelle;TN
+C;Scurzolengo;AT
+C;Seborga;IM
+C;Secinaro;AQ
+C;Seclì;LE
+C;Secugnago;LO
+C;Sedegliano;UD
+C;Sedico;BL
+C;Sedilo;OR
+C;Sedini;SS
+C;Sedriano;MI
+C;Sedrina;BG
+C;Sefro;MC
+C;Segariu;SU
+C;Seggiano;GR
+C;Segni;RM
+C;Segonzano;TN
+C;Segrate;MI
+C;Segusino;TV
+C;Selargius;CA
+C;Selci;RI
+C;Selegas;SU
+C;Sella Giudicarie;TN
+C;Sellano;PG
+C;Sellero;BS
+C;Sellia;CZ
+C;Sellia Marina;CZ
+C;Selva dei Molini;BZ
+C;Selva di Cadore;BL
+C;Selva di Progno;VR
+C;Selva di Val Gardena;BZ
+C;Selvazzano Dentro;PD
+C;Selvino;BG
+C;Semestene;SS
+C;Semiana;PV
+C;Seminara;RC
+C;Semproniano;GR
+C;Senago;MI
+C;Senale-San Felice;BZ
+C;Senales;BZ
+C;Seneghe;OR
+C;Senerchia;AV
+C;Seniga;BS
+C;Senigallia;AN
+C;Senis;OR
+C;Senise;PZ
+C;Senna Comasco;CO
+C;Senna Lodigiana;LO
+C;Sennariolo;OR
+C;Sennori;SS
+C;Senorbì;SU
+C;Sepino;CB
+C;Sequals;PN
+C;Seravezza;LU
+C;Serdiana;SU
+C;Seregno;MB
+C;Seren del Grappa;BL
+C;Sergnano;CR
+C;Seriate;BG
+C;Serina;BG
+C;Serino;AV
+C;Serle;BS
+C;Sermide e Felonica;MN
+C;Sermoneta;LT
+C;Sernaglia della Battaglia;TV
+C;Sernio;SO
+C;Serole;AT
+C;Serra d'Aiello;CS
+C;Serra de' Conti;AN
+C;Serra Riccò;GE
+C;Serra San Bruno;VV
+C;Serra San Quirico;AN
+C;Serra Sant'Abbondio;PU
+C;Serracapriola;FG
+C;Serradifalco;CL
+C;Serralunga d'Alba;CN
+C;Serralunga di Crea;AL
+C;Serramanna;SU
+C;Serramazzoni;MO
+C;Serramezzana;SA
+C;Serramonacesca;PE
+C;Serrapetrona;MC
+C;Serrara Fontana;NA
+C;Serrastretta;CZ
+C;Serrata;RC
+C;Serravalle a Po;MN
+C;Serravalle di Chienti;MC
+C;Serravalle Langhe;CN
+C;Serravalle Pistoiese;PT
+C;Serravalle Scrivia;AL
+C;Serravalle Sesia;VC
+C;Serre;SA
+C;Serrenti;SU
+C;Serri;SU
+C;Serrone;FR
+C;Sersale;CZ
+C;Servigliano;FM
+C;Sessa Aurunca;CE
+C;Sessa Cilento;SA
+C;Sessame;AT
+C;Sessano del Molise;IS
+C;Sesta Godano;SP
+C;Sestino;AR
+C;Sesto;BZ
+C;Sesto al Reghena;PN
+C;Sesto Calende;VA
+C;Sesto Campano;IS
+C;Sesto ed Uniti;CR
+C;Sesto Fiorentino;FI
+C;Sesto San Giovanni;MI
+C;Sestola;MO
+C;Sestri Levante;GE
+C;Sestriere;TO
+C;Sestu;CA
+C;Settala;MI
+C;Settefrati;FR
+C;Setteville;BL
+C;Settime;AT
+C;Settimo Milanese;MI
+C;Settimo Rottaro;TO
+C;Settimo San Pietro;CA
+C;Settimo Torinese;TO
+C;Settimo Vittone;TO
+C;Settingiano;CZ
+C;Setzu;SU
+C;Seui;SU
+C;Seulo;SU
+C;Seveso;MB
+C;Sezzadio;AL
+C;Sezze;LT
+C;Sfruz;TN
+C;Sgonico;TS
+C;Sgurgola;FR
+C;Siamaggiore;OR
+C;Siamanna;OR
+C;Siano;SA
+C;Siapiccia;OR
+C;Sicignano degli Alburni;SA
+C;Siculiana;AG
+C;Siddi;SU
+C;Siderno;RC
+C;Siena;SI
+C;Sigillo;PG
+C;Signa;FI
+C;Silandro;BZ
+C;Silanus;NU
+C;Silea;TV
+C;Siligo;SS
+C;Siliqua;SU
+C;Silius;SU
+C;Sillano Giuncugnano;LU
+C;Sillavengo;NO
+C;Silvano d'Orba;AL
+C;Silvano Pietra;PV
+C;Silvi;TE
+C;Simala;OR
+C;Simaxis;OR
+C;Simbario;VV
+C;Simeri Crichi;CZ
+C;Sinagra;ME
+C;Sinalunga;SI
+C;Sindia;NU
+C;Sini;OR
+C;Sinio;CN
+C;Siniscola;NU
+C;Sinnai;CA
+C;Sinopoli;RC
+C;Siracusa;SR
+C;Sirignano;AV
+C;Siris;OR
+C;Sirmione;BS
+C;Sirolo;AN
+C;Sirone;LC
+C;Sirtori;LC
+C;Sissa Trecasali;PR
+C;Siurgus Donigala;SU
+C;Siziano;PV
+C;Sizzano;NO
+C;Sluderno;BZ
+C;Smerillo;FM
+C;Soave;VR
+C;Socchieve;UD
+C;Soddì;OR
+C;Sogliano al Rubicone;FC
+C;Sogliano Cavour;LE
+C;Soglio;AT
+C;Soiano del Lago;BS
+C;Solagna;VI
+C;Solarino;SR
+C;Solaro;MI
+C;Solarolo;RA
+C;Solarolo Rainerio;CR
+C;Solarussa;OR
+C;Solbiate Arno;VA
+C;Solbiate con Cagno;CO
+C;Solbiate Olona;VA
+C;Soldano;IM
+C;Soleminis;SU
+C;Solero;AL
+C;Solesino;PD
+C;Soleto;LE
+C;Solferino;MN
+C;Soliera;MO
+C;Solignano;PR
+C;Solofra;AV
+C;Solonghello;AL
+C;Solopaca;BN
+C;Solto Collina;BG
+C;Solza;BG
+C;Somaglia;LO
+C;Somano;CN
+C;Somma Lombardo;VA
+C;Somma Vesuviana;NA
+C;Sommacampagna;VR
+C;Sommariva del Bosco;CN
+C;Sommariva Perno;CN
+C;Sommatino;CL
+C;Sommo;PV
+C;Sona;VR
+C;Soncino;CR
+C;Sondalo;SO
+C;Sondrio;SO
+C;Songavazzo;BG
+C;Sonico;BS
+C;Sonnino;LT
+C;Sora;FR
+C;Soraga di Fassa;TN
+C;Soragna;PR
+C;Sorano;GR
+C;Sorbo San Basile;CZ
+C;Sorbo Serpico;AV
+C;Sorbolo Mezzani;PR
+C;Sordevolo;BI
+C;Sordio;LO
+C;Soresina;CR
+C;Sorgono;NU
+C;Sorgà;VR
+C;Sori;GE
+C;Sorianello;VV
+C;Soriano Calabro;VV
+C;Soriano nel Cimino;VT
+C;Sorico;CO
+C;Soriso;NO
+C;Sorisole;BG
+C;Sormano;CO
+C;Sorradile;OR
+C;Sorrento;NA
+C;Sorso;SS
+C;Sortino;SR
+C;Sospiro;CR
+C;Sospirolo;BL
+C;Sossano;VI
+C;Sostegno;BI
+C;Sotto il Monte Giovanni XXIII;BG
+C;Sover;TN
+C;Soverato;CZ
+C;Sovere;BG
+C;Soveria Mannelli;CZ
+C;Soveria Simeri;CZ
+C;Soverzene;BL
+C;Sovicille;SI
+C;Sovico;MB
+C;Sovizzo;VI
+C;Sovramonte;BL
+C;Sozzago;NO
+C;Spadafora;ME
+C;Spadola;VV
+C;Sparanise;CE
+C;Sparone;TO
+C;Specchia;LE
+C;Spello;PG
+C;Sperlinga;EN
+C;Sperlonga;LT
+C;Sperone;AV
+C;Spessa;PV
+C;Spezzano Albanese;CS
+C;Spezzano della Sila;CS
+C;Spiazzo;TN
+C;Spigno Monferrato;AL
+C;Spigno Saturnia;LT
+C;Spilamberto;MO
+C;Spilimbergo;PN
+C;Spilinga;VV
+C;Spinadesco;CR
+C;Spinazzola;BT
+C;Spinea;VE
+C;Spineda;CR
+C;Spinete;CB
+C;Spineto Scrivia;AL
+C;Spinetoli;AP
+C;Spino d'Adda;CR
+C;Spinone al Lago;BG
+C;Spinoso;PZ
+C;Spirano;BG
+C;Spoleto;PG
+C;Spoltore;PE
+C;Spongano;LE
+C;Spormaggiore;TN
+C;Sporminore;TN
+C;Spotorno;SV
+C;Spresiano;TV
+C;Spriana;SO
+C;Squillace;CZ
+C;Squinzano;LE
+C;Staffolo;AN
+C;Stagno Lombardo;CR
+C;Staiti;RC
+C;Stalettì;CZ
+C;Stanghella;PD
+C;Staranzano;GO
+C;Statte;TA
+C;Stazzano;AL
+C;Stazzema;LU
+C;Stazzona;CO
+C;Stefanaconi;VV
+C;Stella;SV
+C;Stella Cilento;SA
+C;Stellanello;SV
+C;Stelvio;BZ
+C;Stenico;TN
+C;Sternatia;LE
+C;Stezzano;BG
+C;Stienta;RO
+C;Stigliano;MT
+C;Stignano;RC
+C;Stilo;RC
+C;Stimigliano;RI
+C;Stintino;SS
+C;Stio;SA
+C;Stornara;FG
+C;Stornarella;FG
+C;Storo;TN
+C;Stra;VE
+C;Stradella;PV
+C;Strambinello;TO
+C;Strambino;TO
+C;Strangolagalli;FR
+C;Stregna;UD
+C;Strembo;TN
+C;Stresa;VB
+C;Strevi;AL
+C;Striano;NA
+C;Strona;BI
+C;Stroncone;TR
+C;Strongoli;KR
+C;Stroppiana;VC
+C;Stroppo;CN
+C;Strozza;BG
+C;Sturno;AV
+C;Suardi;PV
+C;Subbiano;AR
+C;Subiaco;RM
+C;Succivo;CE
+C;Sueglio;LC
+C;Suelli;SU
+C;Suello;LC
+C;Suisio;BG
+C;Sulbiate;MB
+C;Sulmona;AQ
+C;Sulzano;BS
+C;Sumirago;VA
+C;Summonte;AV
+C;Suni;OR
+C;Suno;NO
+C;Supersano;LE
+C;Supino;FR
+C;Surano;LE
+C;Surbo;LE
+C;Susa;TO
+C;Susegana;TV
+C;Sustinente;MN
+C;Sutera;CL
+C;Sutri;VT
+C;Sutrio;UD
+C;Suvereto;LI
+C;Suzzara;MN
+C;Taceno;LC
+C;Tadasuni;OR
+C;Taggia;IM
+C;Tagliacozzo;AQ
+C;Taglio di Po;RO
+C;Tagliolo Monferrato;AL
+C;Taibon Agordino;BL
+C;Taino;VA
+C;Taipana;UD
+C;Talamello;RN
+C;Talamona;SO
+C;Talana;NU
+C;Taleggio;BG
+C;Talla;AR
+C;Talmassons;UD
+C;Tambre;BL
+C;Taormina;ME
+C;Tarano;RI
+C;Taranta Peligna;CH
+C;Tarantasca;CN
+C;Taranto;TA
+C;Tarcento;UD
+C;Tarquinia;VT
+C;Tarsia;CS
+C;Tartano;SO
+C;Tarvisio;UD
+C;Tarzo;TV
+C;Tassarolo;AL
+C;Taurano;AV
+C;Taurasi;AV
+C;Taurianova;RC
+C;Taurisano;LE
+C;Tavagnacco;UD
+C;Tavagnasco;TO
+C;Tavazzano con Villavesco;LO
+C;Tavenna;CB
+C;Taverna;CZ
+C;Tavernerio;CO
+C;Tavernola Bergamasca;BG
+C;Tavernole sul Mella;BS
+C;Taviano;LE
+C;Tavigliano;BI
+C;Tavoleto;PU
+C;Tavullia;PU
+C;Teana;PZ
+C;Teano;CE
+C;Teggiano;SA
+C;Teglio;SO
+C;Teglio Veneto;VE
+C;Telese Terme;BN
+C;Telgate;BG
+C;Telti;SS
+C;Telve;TN
+C;Telve di Sopra;TN
+C;Tempio Pausania;SS
+C;Temù;BS
+C;Tenna;TN
+C;Tenno;TN
+C;Teolo;PD
+C;Teora;AV
+C;Teramo;TE
+C;Terdobbiate;NO
+C;Terelle;FR
+C;Terento;BZ
+C;Terenzo;PR
+C;Tergu;SS
+C;Terlano;BZ
+C;Terlizzi;BA
+C;Terme Vigliatore;ME
+C;Termeno sulla strada del vino;BZ
+C;Termini Imerese;PA
+C;Termoli;CB
+C;Ternate;VA
+C;Ternengo;BI
+C;Terni;TR
+C;Terno d'Isola;BG
+C;Terracina;LT
+C;Terragnolo;TN
+C;Terralba;OR
+C;Terranova da Sibari;CS
+C;Terranova dei Passerini;LO
+C;Terranova di Pollino;PZ
+C;Terranova Sappo Minulio;RC
+C;Terranuova Bracciolini;AR
+C;Terrasini;PA
+C;Terrassa Padovana;PD
+C;Terravecchia;CS
+C;Terrazzo;VR
+C;Terre d'Adige;TN
+C;Terre del Reno;FE
+C;Terre Roveresche;PU
+C;Terricciola;PI
+C;Terruggia;AL
+C;Tertenia;NU
+C;Terzigno;NA
+C;Terzo;AL
+C;Terzo d'Aquileia;UD
+C;Terzolas;TN
+C;Terzorio;IM
+C;Tesero;TN
+C;Tesimo;BZ
+C;Tessennano;VT
+C;Testico;SV
+C;Teti;NU
+C;Teulada;SU
+C;Teverola;CE
+C;Tezze sul Brenta;VI
+C;Thiene;VI
+C;Thiesi;SS
+C;Tiana;NU
+C;Ticengo;CR
+C;Ticineto;AL
+C;Tiggiano;LE
+C;Tiglieto;GE
+C;Tigliole;AT
+C;Tignale;BS
+C;Tinnura;OR
+C;Tione degli Abruzzi;AQ
+C;Tione di Trento;TN
+C;Tirano;SO
+C;Tires;BZ
+C;Tiriolo;CZ
+C;Tirolo;BZ
+C;Tissi;SS
+C;Tito;PZ
+C;Tivoli;RM
+C;Tizzano Val Parma;PR
+C;Toano;RE
+C;Tocco Caudio;BN
+C;Tocco da Casauria;PE
+C;Toceno;VB
+C;Todi;PG
+C;Toffia;RI
+C;Toirano;SV
+C;Tolentino;MC
+C;Tolfa;RM
+C;Tollegno;BI
+C;Tollo;CH
+C;Tolmezzo;UD
+C;Tolve;PZ
+C;Tombolo;PD
+C;Ton;TN
+C;Tonara;NU
+C;Tonco;AT
+C;Tonezza del Cimone;VI
+C;Tora e Piccilli;CE
+C;Torano Castello;CS
+C;Torano Nuovo;TE
+C;Torbole Casaglia;BS
+C;Torcegno;TN
+C;Torchiara;SA
+C;Torchiarolo;BR
+C;Torella dei Lombardi;AV
+C;Torella del Sannio;CB
+C;Torgiano;PG
+C;Torgnon;AO
+C;Torino;TO
+C;Torino di Sangro;CH
+C;Toritto;BA
+C;Torlino Vimercati;CR
+C;Tornaco;NO
+C;Tornareccio;CH
+C;Tornata;CR
+C;Tornimparte;AQ
+C;Torno;CO
+C;Tornolo;PR
+C;Toro;CB
+C;Torpè;NU
+C;Torraca;SA
+C;Torralba;SS
+C;Torrazza Coste;PV
+C;Torrazza Piemonte;TO
+C;Torrazzo;BI
+C;Torre Annunziata;NA
+C;Torre Beretti e Castellaro;PV
+C;Torre Boldone;BG
+C;Torre Bormida;CN
+C;Torre Cajetani;FR
+C;Torre Canavese;TO
+C;Torre d'Arese;PV
+C;Torre d'Isola;PV
+C;Torre de' Busi;BG
+C;Torre de' Negri;PV
+C;Torre de' Passeri;PE
+C;Torre de' Picenardi;CR
+C;Torre de' Roveri;BG
+C;Torre del Greco;NA
+C;Torre di Mosto;VE
+C;Torre di Ruggiero;CZ
+C;Torre di Santa Maria;SO
+C;Torre Le Nocelle;AV
+C;Torre Mondovì;CN
+C;Torre Orsaia;SA
+C;Torre Pallavicina;BG
+C;Torre Pellice;TO
+C;Torre San Giorgio;CN
+C;Torre San Patrizio;FM
+C;Torre Santa Susanna;BR
+C;Torreano;UD
+C;Torrebelvicino;VI
+C;Torrebruna;CH
+C;Torrecuso;BN
+C;Torreglia;PD
+C;Torregrotta;ME
+C;Torremaggiore;FG
+C;Torrenova;ME
+C;Torresina;CN
+C;Torretta;PA
+C;Torrevecchia Pia;PV
+C;Torrevecchia Teatina;CH
+C;Torri del Benaco;VR
+C;Torri di Quartesolo;VI
+C;Torri in Sabina;RI
+C;Torrice;FR
+C;Torricella;TA
+C;Torricella del Pizzo;CR
+C;Torricella in Sabina;RI
+C;Torricella Peligna;CH
+C;Torricella Sicura;TE
+C;Torricella Verzate;PV
+C;Torriglia;GE
+C;Torrile;PR
+C;Torrioni;AV
+C;Torrita di Siena;SI
+C;Torrita Tiberina;RM
+C;Tortolì;NU
+C;Tortona;AL
+C;Tortora;CS
+C;Tortorella;SA
+C;Tortoreto;TE
+C;Tortorici;ME
+C;Torviscosa;UD
+C;Toscolano-Maderno;BS
+C;Tossicia;TE
+C;Tovo di Sant'Agata;SO
+C;Tovo San Giacomo;SV
+C;Trabia;PA
+C;Tradate;VA
+C;Tramatza;OR
+C;Trambileno;TN
+C;Tramonti;SA
+C;Tramonti di Sopra;PN
+C;Tramonti di Sotto;PN
+C;Tramutola;PZ
+C;Trana;TO
+C;Trani;BT
+C;Traona;SO
+C;Trapani;TP
+C;Trappeto;PA
+C;Trarego Viggiona;VB
+C;Trasacco;AQ
+C;Trasaghis;UD
+C;Trasquera;VB
+C;Tratalias;SU
+C;Travacò Siccomario;PV
+C;Travagliato;BS
+C;Travedona-Monate;VA
+C;Traversella;TO
+C;Traversetolo;PR
+C;Traves;TO
+C;Travesio;PN
+C;Travo;PC
+C;Tre Ville;TN
+C;Trebaseleghe;PD
+C;Trebisacce;CS
+C;Trecase;NA
+C;Trecastagni;CT
+C;Trecastelli;AN
+C;Trecate;NO
+C;Trecchina;PZ
+C;Trecenta;RO
+C;Tredozio;FC
+C;Treglio;CH
+C;Tregnago;VR
+C;Treia;MC
+C;Treiso;CN
+C;Tremestieri Etneo;CT
+C;Tremezzina;CO
+C;Tremosine sul Garda;BS
+C;Trentinara;SA
+C;Trento;TN
+C;Trentola Ducenta;CE
+C;Trenzano;BS
+C;Treppo Grande;UD
+C;Treppo Ligosullo;UD
+C;Trepuzzi;LE
+C;Trequanda;SI
+C;Tresana;MS
+C;Trescore Balneario;BG
+C;Trescore Cremasco;CR
+C;Tresignana;FE
+C;Tresivio;SO
+C;Tresnuraghes;OR
+C;Trevenzuolo;VR
+C;Trevi;PG
+C;Trevi nel Lazio;FR
+C;Trevico;AV
+C;Treviglio;BG
+C;Trevignano;TV
+C;Trevignano Romano;RM
+C;Treville;AL
+C;Treviolo;BG
+C;Treviso;TV
+C;Treviso Bresciano;BS
+C;Trezzano Rosa;MI
+C;Trezzano sul Naviglio;MI
+C;Trezzo sull'Adda;MI
+C;Trezzo Tinella;CN
+C;Trezzone;CO
+C;Tribano;PD
+C;Tribiano;MI
+C;Tribogna;GE
+C;Tricarico;MT
+C;Tricase;LE
+C;Tricerro;VC
+C;Tricesimo;UD
+C;Triei;NU
+C;Trieste;TS
+C;Triggiano;BA
+C;Trigolo;CR
+C;Trinitapoli;BT
+C;Trinità;CN
+C;Trinità d'Agultu e Vignola;SS
+C;Trino;VC
+C;Triora;IM
+C;Tripi;ME
+C;Trisobbio;AL
+C;Trissino;VI
+C;Triuggio;MB
+C;Trivento;CB
+C;Trivigliano;FR
+C;Trivignano Udinese;UD
+C;Trivigno;PZ
+C;Trivolzio;PV
+C;Trodena nel parco naturale;BZ
+C;Trofarello;TO
+C;Troia;FG
+C;Troina;EN
+C;Tromello;PV
+C;Trontano;VB
+C;Tronzano Lago Maggiore;VA
+C;Tronzano Vercellese;VC
+C;Tropea;VV
+C;Trovo;PV
+C;Truccazzano;MI
+C;Tubre;BZ
+C;Tufara;CB
+C;Tufillo;CH
+C;Tufino;NA
+C;Tufo;AV
+C;Tuglie;LE
+C;Tuili;SU
+C;Tula;SS
+C;Tuoro sul Trasimeno;PG
+C;Turania;RI
+C;Turano Lodigiano;LO
+C;Turate;CO
+C;Turbigo;MI
+C;Turi;BA
+C;Turri;SU
+C;Turriaco;GO
+C;Turrivalignani;PE
+C;Tursi;MT
+C;Tusa;ME
+C;Tuscania;VT
+C;Ubiale Clanezzo;BG
+C;Uboldo;VA
+C;Ucria;ME
+C;Udine;UD
+C;Ugento;LE
+C;Uggiano la Chiesa;LE
+C;Uggiate con Ronago;CO
+C;Ulassai;NU
+C;Ultimo;BZ
+C;Ulà Tirso;OR
+C;Umbertide;PG
+C;Umbriatico;KR
+C;Urago d'Oglio;BS
+C;Uras;OR
+C;Urbana;PD
+C;Urbania;PU
+C;Urbe;SV
+C;Urbino;PU
+C;Urbisaglia;MC
+C;Urgnano;BG
+C;Uri;SS
+C;Ururi;CB
+C;Urzulei;NU
+C;Uscio;GE
+C;Usellus;OR
+C;Usini;SS
+C;Usmate Velate;MB
+C;Ussana;SU
+C;Ussaramanna;SU
+C;Ussassai;NU
+C;Usseaux;TO
+C;Usseglio;TO
+C;Ussita;MC
+C;Ustica;PA
+C;Uta;CA
+C;Uzzano;PT
+C;Vaccarizzo Albanese;CS
+C;Vacone;RI
+C;Vacri;CH
+C;Vadena;BZ
+C;Vado Ligure;SV
+C;Vagli Sotto;LU
+C;Vaglia;FI
+C;Vaglio Basilicata;PZ
+C;Vaglio Serra;AT
+C;Vaiano;PO
+C;Vaiano Cremasco;CR
+C;Vaie;TO
+C;Vailate;CR
+C;Vairano Patenora;CE
+C;Vajont;PN
+C;Val Brembilla;BG
+C;Val della Torre;TO
+C;Val di Chy;TO
+C;Val di Nizza;PV
+C;Val di Vizze;BZ
+C;Val di Zoldo;BL
+C;Val Liona;VI
+C;Val Masino;SO
+C;Val Rezzo;CO
+C;Valbondione;BG
+C;Valbrembo;BG
+C;Valbrenta;VI
+C;Valbrevenna;GE
+C;Valbrona;CO
+C;Valchiusa;TO
+C;Valdagno;VI
+C;Valdaone;TN
+C;Valdaora;BZ
+C;Valdastico;VI
+C;Valdengo;BI
+C;Valderice;TP
+C;Valdidentro;SO
+C;Valdieri;CN
+C;Valdilana;BI
+C;Valdina;ME
+C;Valdisotto;SO
+C;Valdobbiadene;TV
+C;Valduggia;VC
+C;Valeggio;PV
+C;Valeggio sul Mincio;VR
+C;Valentano;VT
+C;Valenza;AL
+C;Valenzano;BA
+C;Valera Fratta;LO
+C;Valfabbrica;PG
+C;Valfenera;AT
+C;Valfloriana;TN
+C;Valfornace;MC
+C;Valfurva;SO
+C;Valganna;VA
+C;Valgioie;TO
+C;Valgoglio;BG
+C;Valgrana;CN
+C;Valgreghentino;LC
+C;Valgrisenche;AO
+C;Valguarnera Caropepe;EN
+C;Vallada Agordina;BL
+C;Vallanzengo;BI
+C;Vallarsa;TN
+C;Vallata;AV
+C;Valle Agricola;CE
+C;Valle Aurina;BZ
+C;Valle Cannobina;VB
+C;Valle Castellana;TE
+C;Valle dell'Angelo;SA
+C;Valle di Cadore;BL
+C;Valle di Casies;BZ
+C;Valle di Maddaloni;CE
+C;Valle Lomellina;PV
+C;Valle Salimbene;PV
+C;Valle San Nicolao;BI
+C;Vallebona;IM
+C;Vallecorsa;FR
+C;Vallecrosia;IM
+C;Valledolmo;PA
+C;Valledoria;SS
+C;Vallefiorita;CZ
+C;Vallefoglia;PU
+C;Vallelaghi;TN
+C;Vallelonga;VV
+C;Vallelunga Pratameno;CL
+C;Vallemaio;FR
+C;Vallepietra;RM
+C;Vallerano;VT
+C;Vallermosa;SU
+C;Vallerotonda;FR
+C;Vallesaccarda;AV
+C;Valleve;BG
+C;Valli del Pasubio;VI
+C;Vallinfreda;RM
+C;Vallio Terme;BS
+C;Vallo della Lucania;SA
+C;Vallo di Nera;PG
+C;Vallo Torinese;TO
+C;Valloriate;CN
+C;Valmacca;AL
+C;Valmadrera;LC
+C;Valmontone;RM
+C;Valmorea;CO
+C;Valmozzola;PR
+C;Valnegra;BG
+C;Valpelline;AO
+C;Valperga;TO
+C;Valprato Soana;TO
+C;Valsamoggia;BO
+C;Valsavarenche;AO
+C;Valsinni;MT
+C;Valsolda;CO
+C;Valstrona;VB
+C;Valtopina;PG
+C;Valtorta;BG
+C;Valtournenche;AO
+C;Valva;SA
+C;Valvarrone;LC
+C;Valvasone Arzene;PN
+C;Valverde;CT
+C;Valvestino;BS
+C;Vandoies;BZ
+C;Vanzaghello;MI
+C;Vanzago;MI
+C;Vanzone con San Carlo;VB
+C;Vaprio d'Adda;MI
+C;Vaprio d'Agogna;NO
+C;Varallo;VC
+C;Varallo Pombia;NO
+C;Varano Borghi;VA
+C;Varano de' Melegari;PR
+C;Varapodio;RC
+C;Varazze;SV
+C;Varco Sabino;RI
+C;Varedo;MB
+C;Varenna;LC
+C;Varese;VA
+C;Varese Ligure;SP
+C;Varisella;TO
+C;Varmo;UD
+C;Varna;BZ
+C;Varsi;PR
+C;Varzi;PV
+C;Varzo;VB
+C;Vasanello;VT
+C;Vasia;IM
+C;Vasto;CH
+C;Vastogirardi;IS
+C;Vauda Canavese;TO
+C;Vazzano;VV
+C;Vazzola;TV
+C;Vecchiano;PI
+C;Vedano al Lambro;MB
+C;Vedano Olona;VA
+C;Vedelago;TV
+C;Vedeseta;BG
+C;Veduggio con Colzano;MB
+C;Veggiano;PD
+C;Veglie;LE
+C;Veglio;BI
+C;Vejano;VT
+C;Veleso;CO
+C;Velezzo Lomellina;PV
+C;Velletri;RM
+C;Vellezzo Bellini;PV
+C;Velo d'Astico;VI
+C;Velo Veronese;VR
+C;Velturno;BZ
+C;Venafro;IS
+C;Venaria Reale;TO
+C;Venarotta;AP
+C;Venasca;CN
+C;Venaus;TO
+C;Vendone;SV
+C;Venegono Inferiore;VA
+C;Venegono Superiore;VA
+C;Venetico;ME
+C;Venezia;VE
+C;Veniano;CO
+C;Venosa;PZ
+C;Ventasso;RE
+C;Venticano;AV
+C;Ventimiglia;IM
+C;Ventimiglia di Sicilia;PA
+C;Ventotene;LT
+C;Venzone;UD
+C;Verano;BZ
+C;Verano Brianza;MB
+C;Verbania;VB
+C;Verbicaro;CS
+C;Vercana;CO
+C;Verceia;SO
+C;Vercelli;VC
+C;Vercurago;LC
+C;Verdellino;BG
+C;Verdello;BG
+C;Verderio;LC
+C;Verduno;CN
+C;Vergato;BO
+C;Verghereto;FC
+C;Vergiate;VA
+C;Vermezzo con Zelo;MI
+C;Vermiglio;TN
+C;Vernante;CN
+C;Vernasca;PC
+C;Vernate;MI
+C;Vernazza;SP
+C;Vernio;PO
+C;Vernole;LE
+C;Verolanuova;BS
+C;Verolavecchia;BS
+C;Verolengo;TO
+C;Veroli;FR
+C;Verona;VR
+C;Veronella;VR
+C;Verrayes;AO
+C;Verretto;PV
+C;Verrone;BI
+C;Verrua Po;PV
+C;Verrua Savoia;TO
+C;Verrès;AO
+C;Vertemate con Minoprio;CO
+C;Vertova;BG
+C;Verucchio;RN
+C;Vervio;SO
+C;Verzegnis;UD
+C;Verzino;KR
+C;Verzuolo;CN
+C;Vescovana;PD
+C;Vescovato;CR
+C;Vesime;AT
+C;Vespolate;NO
+C;Vessalico;IM
+C;Vestenanova;VR
+C;Vestignè;TO
+C;Vestone;BS
+C;Vetralla;VT
+C;Vetto;RE
+C;Vezza d'Alba;CN
+C;Vezza d'Oglio;BS
+C;Vezzano Ligure;SP
+C;Vezzano sul Crostolo;RE
+C;Vezzi Portio;SV
+C;Viadana;MN
+C;Viadanica;BG
+C;Viagrande;CT
+C;Viale;AT
+C;Vialfrè;TO
+C;Viano;RE
+C;Viareggio;LU
+C;Viarigi;AT
+C;Vibo Valentia;VV
+C;Vibonati;SA
+C;Vicalvi;FR
+C;Vicari;PA
+C;Vicchio;FI
+C;Vicenza;VI
+C;Vico del Gargano;FG
+C;Vico Equense;NA
+C;Vico nel Lazio;FR
+C;Vicoforte;CN
+C;Vicoli;PE
+C;Vicolungo;NO
+C;Vicopisano;PI
+C;Vicovaro;RM
+C;Viddalba;SS
+C;Vidigulfo;PV
+C;Vidor;TV
+C;Vidracco;TO
+C;Vieste;FG
+C;Vietri di Potenza;PZ
+C;Vietri sul Mare;SA
+C;Vigano San Martino;BG
+C;Viganò;LC
+C;Vigarano Mainarda;FE
+C;Vigasio;VR
+C;Vigevano;PV
+C;Viggianello;PZ
+C;Viggiano;PZ
+C;Viggiù;VA
+C;Vigliano Biellese;BI
+C;Vigliano d'Asti;AT
+C;Vignale Monferrato;AL
+C;Vignanello;VT
+C;Vignate;MI
+C;Vignola;MO
+C;Vignola-Falesina;TN
+C;Vignole Borbera;AL
+C;Vignolo;CN
+C;Vignone;VB
+C;Vigo di Cadore;BL
+C;Vigodarzere;PD
+C;Vigolo;BG
+C;Vigolzone;PC
+C;Vigone;TO
+C;Vigonovo;VE
+C;Vigonza;PD
+C;Viguzzolo;AL
+C;Villa Bartolomea;VR
+C;Villa Basilica;LU
+C;Villa Biscossi;PV
+C;Villa Carcina;BS
+C;Villa Castelli;BR
+C;Villa Celiera;PE
+C;Villa Collemandina;LU
+C;Villa Cortese;MI
+C;Villa d'Adda;BG
+C;Villa d'Almè;BG
+C;Villa d'Ogna;BG
+C;Villa del Bosco;BI
+C;Villa del Conte;PD
+C;Villa di Briano;CE
+C;Villa di Chiavenna;SO
+C;Villa di Serio;BG
+C;Villa di Tirano;SO
+C;Villa Estense;PD
+C;Villa Faraldi;IM
+C;Villa Guardia;CO
+C;Villa Lagarina;TN
+C;Villa Latina;FR
+C;Villa Literno;CE
+C;Villa Minozzo;RE
+C;Villa San Giovanni;RC
+C;Villa San Giovanni in Tuscia;VT
+C;Villa San Pietro;CA
+C;Villa San Secondo;AT
+C;Villa Sant'Angelo;AQ
+C;Villa Sant'Antonio;OR
+C;Villa Santa Lucia;FR
+C;Villa Santa Lucia degli Abruzzi;AQ
+C;Villa Santa Maria;CH
+C;Villa Santina;UD
+C;Villa Santo Stefano;FR
+C;Villa Verde;OR
+C;Villabassa;BZ
+C;Villabate;PA
+C;Villachiara;BS
+C;Villacidro;SU
+C;Villadeati;AL
+C;Villadose;RO
+C;Villadossola;VB
+C;Villafalletto;CN
+C;Villafranca d'Asti;AT
+C;Villafranca di Verona;VR
+C;Villafranca in Lunigiana;MS
+C;Villafranca Padovana;PD
+C;Villafranca Piemonte;TO
+C;Villafranca Sicula;AG
+C;Villafranca Tirrena;ME
+C;Villafrati;PA
+C;Villaga;VI
+C;Villagrande Strisaili;NU
+C;Villalago;AQ
+C;Villalba;CL
+C;Villalfonsina;CH
+C;Villalvernia;AL
+C;Villamagna;CH
+C;Villamaina;AV
+C;Villamar;SU
+C;Villamarzana;RO
+C;Villamassargia;SU
+C;Villamiroglio;AL
+C;Villandro;BZ
+C;Villanova Biellese;BI
+C;Villanova Canavese;TO
+C;Villanova d'Albenga;SV
+C;Villanova d'Ardenghi;PV
+C;Villanova d'Asti;AT
+C;Villanova del Battista;AV
+C;Villanova del Ghebbo;RO
+C;Villanova del Sillaro;LO
+C;Villanova di Camposampiero;PD
+C;Villanova Marchesana;RO
+C;Villanova Mondovì;CN
+C;Villanova Monferrato;AL
+C;Villanova Monteleone;SS
+C;Villanova Solaro;CN
+C;Villanova sull'Arda;PC
+C;Villanova Truschedu;OR
+C;Villanova Tulo;SU
+C;Villanovaforru;SU
+C;Villanovafranca;SU
+C;Villanterio;PV
+C;Villanuova sul Clisi;BS
+C;Villaperuccio;SU
+C;Villapiana;CS
+C;Villaputzu;SU
+C;Villar Dora;TO
+C;Villar Focchiardo;TO
+C;Villar Pellice;TO
+C;Villar Perosa;TO
+C;Villar San Costanzo;CN
+C;Villarbasse;TO
+C;Villarboit;VC
+C;Villareggia;TO
+C;Villaricca;NA
+C;Villaromagnano;AL
+C;Villarosa;EN
+C;Villasalto;SU
+C;Villasanta;MB
+C;Villasimius;SU
+C;Villasor;SU
+C;Villaspeciosa;SU
+C;Villastellone;TO
+C;Villata;VC
+C;Villaurbana;OR
+C;Villavallelonga;AQ
+C;Villaverla;VI
+C;Ville d'Anaunia;TN
+C;Ville di Fiemme;TN
+C;Villeneuve;AO
+C;Villesse;GO
+C;Villetta Barrea;AQ
+C;Villette;VB
+C;Villimpenta;MN
+C;Villongo;BG
+C;Villorba;TV
+C;Vilminore di Scalve;BG
+C;Vimercate;MB
+C;Vimodrone;MI
+C;Vinadio;CN
+C;Vinchiaturo;CB
+C;Vinchio;AT
+C;Vinci;FI
+C;Vinovo;TO
+C;Vinzaglio;NO
+C;Viola;CN
+C;Vione;BS
+C;Vipiteno;BZ
+C;Virle Piemonte;TO
+C;Visano;BS
+C;Vische;TO
+C;Visciano;NA
+C;Visco;UD
+C;Visone;AL
+C;Visso;MC
+C;Vistarino;PV
+C;Vistrorio;TO
+C;Vita;TP
+C;Viterbo;VT
+C;Viticuso;FR
+C;Vito d'Asio;PN
+C;Vitorchiano;VT
+C;Vittoria;RG
+C;Vittorio Veneto;TV
+C;Vittorito;AQ
+C;Vittuone;MI
+C;Vitulano;BN
+C;Vitulazio;CE
+C;Vivaro;PN
+C;Vivaro Romano;RM
+C;Viverone;BI
+C;Vizzini;CT
+C;Vizzola Ticino;VA
+C;Vizzolo Predabissi;MI
+C;Viù;TO
+C;Vo';PD
+C;Vobarno;BS
+C;Vobbia;GE
+C;Vocca;VC
+C;Vodo Cadore;BL
+C;Voghera;PV
+C;Voghiera;FE
+C;Vogogna;VB
+C;Volano;TN
+C;Volla;NA
+C;Volongo;CR
+C;Volpago del Montello;TV
+C;Volpara;PV
+C;Volpedo;AL
+C;Volpeglino;AL
+C;Volpiano;TO
+C;Volta Mantovana;MN
+C;Voltaggio;AL
+C;Voltago Agordino;BL
+C;Volterra;PI
+C;Voltido;CR
+C;Volturara Appula;FG
+C;Volturara Irpina;AV
+C;Volturino;FG
+C;Volvera;TO
+C;Vottignasco;CN
+C;Zaccanopoli;VV
+C;Zafferana Etnea;CT
+C;Zagarise;CZ
+C;Zagarolo;RM
+C;Zambrone;VV
+C;Zandobbio;BG
+C;Zanica;BG
+C;Zanè;VI
+C;Zapponeta;FG
+C;Zavattarello;PV
+C;Zeccone;PV
+C;Zeddiani;OR
+C;Zelbio;CO
+C;Zelo Buon Persico;LO
+C;Zeme;PV
+C;Zenevredo;PV
+C;Zenson di Piave;TV
+C;Zerba;PC
+C;Zerbo;PV
+C;Zerbolò;PV
+C;Zerfaliu;OR
+C;Zeri;MS
+C;Zermeghedo;VI
+C;Zero Branco;TV
+C;Zevio;VR
+C;Ziano di Fiemme;TN
+C;Ziano Piacentino;PC
+C;Zibido San Giacomo;MI
+C;Zignago;SP
+C;Zimella;VR
+C;Zimone;BI
+C;Zinasco;PV
+C;Zoagli;GE
+C;Zocca;MO
+C;Zogno;BG
+C;Zola Predosa;BO
+C;Zollino;LE
+C;Zone;BS
+C;Zoppola;PN
+C;Zoppè di Cadore;BL
+C;Zovencedo;VI
+C;Zubiena;BI
+C;Zuccarello;SV
+C;Zugliano;VI
+C;Zuglio;UD
+C;Zumaglia;BI
+C;Zumpano;CS
+C;Zungoli;AV
+C;Zungri;VV

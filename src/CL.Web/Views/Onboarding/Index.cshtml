@@ -4,7 +4,7 @@
     ViewData["Title"] = Model.Profilo.Completato || Model.PerContoAzienda ? "Profilo azienda" : "Benvenuto in Consulens HR";
     var p = Model.Profilo;
     var aziendaId = Model.PerContoAzienda ? Model.AziendaId : (Guid?)null;
-    if (aziendaId is not null) ViewData["AziendaIdOnboarding"] = aziendaId; // i form dello studio indicano l'azienda
+    if (aziendaId is not null) ViewData["AziendaIdOnboarding"] = aziendaId; // i form del consulente indicano l'azienda
     ViewData["AziendaLogoUrl"] = Url.Action("Logo", "Aziende", new { id = Model.AziendaId });
 }
 <div class="breadcrumb-titolo mb-3">
@@ -16,7 +16,7 @@
         <h1 class="titolo-pagina mb-0">@(Model.PerContoAzienda ? "Profilo di " + Model.Azienda.RagioneSociale : ViewData["Title"])</h1>
         @if (!p.Completato && !Model.PerContoAzienda)
         {
-            <p class="text-body-secondary mb-0">Prima di iniziare servono alcune informazioni sull'azienda: lo studio le usa per gestire assunzioni, paghe e adempimenti. Ci vogliono circa 10 minuti e puoi interrompere quando vuoi: i dati di ogni passo restano salvati.</p>
+            <p class="text-body-secondary mb-0">Prima di iniziare servono alcune informazioni sull'azienda: il consulente le usa per gestire assunzioni, paghe e adempimenti. Ci vogliono circa 10 minuti e puoi interrompere quando vuoi: i dati di ogni passo restano salvati.</p>
         }
     </div>
 </div>

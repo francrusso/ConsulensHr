@@ -851,3 +851,203 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261120144046_ContrattoDocumento') THEN
+    ALTER TABLE hr."Contratti" ADD "DocumentoCaricatoIl" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261120144046_ContrattoDocumento') THEN
+    ALTER TABLE hr."Contratti" ADD "DocumentoChiave" character varying(500);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261120144046_ContrattoDocumento') THEN
+    ALTER TABLE hr."Contratti" ADD "DocumentoNome" character varying(200);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261120144046_ContrattoDocumento') THEN
+    INSERT INTO hr."__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261120144046_ContrattoDocumento', '10.0.15');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261120144440_ContrattoCessazione') THEN
+    ALTER TABLE hr."Contratti" ADD "DataCessazione" date;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261120144440_ContrattoCessazione') THEN
+    INSERT INTO hr."__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261120144440_ContrattoCessazione', '10.0.15');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261120145052_ResidenzaDipendente') THEN
+    ALTER TABLE hr."Dipendenti" ADD "Cap" character varying(5);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261120145052_ResidenzaDipendente') THEN
+    ALTER TABLE hr."Dipendenti" ADD "Comune" character varying(100);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261120145052_ResidenzaDipendente') THEN
+    ALTER TABLE hr."Dipendenti" ADD "Provincia" character varying(2);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261120145052_ResidenzaDipendente') THEN
+    INSERT INTO hr."__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261120145052_ResidenzaDipendente', '10.0.15');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261120152604_CertificazioniUniche') THEN
+    CREATE TABLE hr."CertificazioniUniche" (
+        "Id" uuid NOT NULL,
+        "AziendaId" uuid NOT NULL,
+        "DipendenteId" uuid NOT NULL,
+        "AnnoImposta" integer NOT NULL,
+        "NomeFile" character varying(255) NOT NULL,
+        "ChiaveArchivio" character varying(500) NOT NULL,
+        "DimensioneByte" bigint NOT NULL,
+        "CaricataIl" timestamp with time zone NOT NULL,
+        "CaricataDa" character varying(256) NOT NULL,
+        "VisualizzataIl" timestamp with time zone,
+        CONSTRAINT "PK_CertificazioniUniche" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_CertificazioniUniche_Aziende_AziendaId" FOREIGN KEY ("AziendaId") REFERENCES hr."Aziende" ("Id") ON DELETE RESTRICT,
+        CONSTRAINT "FK_CertificazioniUniche_Dipendenti_DipendenteId" FOREIGN KEY ("DipendenteId") REFERENCES hr."Dipendenti" ("Id") ON DELETE RESTRICT
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261120152604_CertificazioniUniche') THEN
+    CREATE INDEX "IX_CertificazioniUniche_AziendaId" ON hr."CertificazioniUniche" ("AziendaId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261120152604_CertificazioniUniche') THEN
+    CREATE UNIQUE INDEX "IX_CertificazioniUniche_DipendenteId_AnnoImposta" ON hr."CertificazioniUniche" ("DipendenteId", "AnnoImposta");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261120152604_CertificazioniUniche') THEN
+    INSERT INTO hr."__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261120152604_CertificazioniUniche', '10.0.15');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261120154346_ModalitaESede') THEN
+    ALTER TABLE hr."Dipendenti" ADD "Sede" character varying(32);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261120154346_ModalitaESede') THEN
+    ALTER TABLE hr."Contratti" ADD "GiorniInUfficio" integer;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261120154346_ModalitaESede') THEN
+    ALTER TABLE hr."Contratti" ADD "Modalita" character varying(32) NOT NULL DEFAULT 'InPresenza';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261120154346_ModalitaESede') THEN
+    INSERT INTO hr."__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261120154346_ModalitaESede', '10.0.15');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261120161011_RimozioneExFestivita') THEN
+    UPDATE hr."RighePresenze" SET "OreRol" = "OreRol" + "OreExFestivita" WHERE "OreExFestivita" <> 0;
+    UPDATE hr."RichiesteAssenza" SET "Tipo" = 'Rol' WHERE "Tipo" = 'ExFestivita';
+    UPDATE hr."SaldiIniziali" r SET "Ore" = r."Ore" + e."Ore"
+        FROM hr."SaldiIniziali" e
+        WHERE r."Tipo" = 'Rol' AND e."Tipo" = 'ExFestivita' AND e."DipendenteId" = r."DipendenteId" AND e."Anno" = r."Anno";
+    UPDATE hr."SaldiIniziali" e SET "Tipo" = 'Rol'
+        WHERE e."Tipo" = 'ExFestivita' AND NOT EXISTS (SELECT 1 FROM hr."SaldiIniziali" r
+            WHERE r."Tipo" = 'Rol' AND r."DipendenteId" = e."DipendenteId" AND r."Anno" = e."Anno");
+    DELETE FROM hr."SaldiIniziali" WHERE "Tipo" = 'ExFestivita';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261120161011_RimozioneExFestivita') THEN
+    ALTER TABLE hr."RighePresenze" DROP COLUMN "OreExFestivita";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261120161011_RimozioneExFestivita') THEN
+    ALTER TABLE hr."Contratti" DROP COLUMN "OreExFestivitaAnnue";
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261120161011_RimozioneExFestivita') THEN
+    INSERT INTO hr."__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261120161011_RimozioneExFestivita', '10.0.15');
+    END IF;
+END $EF$;
+COMMIT;
+

@@ -28,7 +28,7 @@ public sealed record AltriDati(TitoloStudio TitoloStudio, string TipoDocumento, 
 
 /// <summary>
 /// Dati che il dipendente fornisce per le paghe, raccolti col percorso guidato al primo accesso.
-/// Dopo il completamento il dipendente può aggiornarli: ogni modifica è datata e lo studio viene avvisato.
+/// Dopo il completamento il dipendente può aggiornarli: ogni modifica è datata e il consulente viene avvisato.
 /// </summary>
 public sealed class ProfiloDipendente : Entity
 {

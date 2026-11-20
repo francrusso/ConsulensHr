@@ -64,17 +64,17 @@ public sealed class PanoramicaWebTests : IDisposable
     public async Task Studio_vede_tutte_le_aziende_o_ne_filtra_una()
     {
         var (acme, altra) = await Dati();
-        await _app.CreaUtente("studio@test.it", Ruoli.Consulente);
-        var studio = _app.CreateClient();
-        await studio.Accedi("studio@test.it");
+        await _app.CreaUtente("consulente@test.it", Ruoli.Consulente);
+        var consulente = _app.CreateClient();
+        await consulente.Accedi("consulente@test.it");
 
-        var html = WebUtility.HtmlDecode(await studio.GetStringAsync("/"));
+        var html = WebUtility.HtmlDecode(await consulente.GetStringAsync("/"));
         Assert.Contains("Rossi Mario", html);
         Assert.Contains("Verdi Luigi", html);
         Assert.Contains("Aziende attive", html);
         Assert.Contains("0 su 2", html); // presenze del mese: nessuna azienda ha inviato
 
-        html = WebUtility.HtmlDecode(await studio.GetStringAsync($"/?aziendaId={altra}"));
+        html = WebUtility.HtmlDecode(await consulente.GetStringAsync($"/?aziendaId={altra}"));
         Assert.Contains("Verdi Luigi", html);
         Assert.DoesNotContain("Rossi Mario", html);
         Assert.Contains("Nessuna assenza approvata negli ultimi 12 mesi", html);

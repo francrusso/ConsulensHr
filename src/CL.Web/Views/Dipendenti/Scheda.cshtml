@@ -1,0 +1,551 @@
+@model CL.Web.Controllers.DipendenteForm
+@inject UtenteCorrente Utente
+@{
+    // Una sola scheda per vedere e modificare: con "in-modifica" i valori lasciano il posto ai campi.
+    var nuovo = Model.Id is null;
+    var persona = Utente.IsAzienda;
+    var modifica = (bool)ViewBag.Modifica;
+    var sezione = (string)ViewBag.Sezione;
+    var d = ViewBag.Dipendente as Dipendente;
+    var oggi = (DateOnly)ViewBag.Oggi;
+    var contratti = (List<Contratto>)ViewBag.Contratti;
+    var corrente = contratti.FirstOrDefault(c => c.AttivoIl(oggi)) ?? contratti.FirstOrDefault();
+    var aziende = ViewBag.Aziende as List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>;
+    var nomeAzienda = ViewBag.NomeAzienda as string;
+    var nomeCompleto = nuovo && string.IsNullOrWhiteSpace(Model.Cognome) ? (persona ? "Nuova persona" : "Nuovo dipendente") : $"{Model.Cognome} {Model.Nome}".Trim();
+    var segnaposto = Dipendente.SegnapostoPer(Model.Genere, Model.Pronomi);
+    ViewData["Title"] = nuovo ? (persona ? "Aggiungi persona" : "Nuovo dipendente") : nomeCompleto;
+    // Campo vuoto: "Non inserito" in grigio, al posto del trattino.
+    Microsoft.AspNetCore.Html.IHtmlContent V(string? v) => string.IsNullOrWhiteSpace(v)
+        ? new Microsoft.AspNetCore.Html.HtmlString("<span class=\"non-inserito\">Non inserito</span>")
+        : new Microsoft.AspNetCore.Html.HtmlString(System.Text.Encodings.Web.HtmlEncoder.Default.Encode(v));
+    var schede = new[] { ("anagrafica", "Anagrafica", "ri-user-line"), ("contratto", "Contratto", "ri-file-text-line"),
+                         ("ferie", "Ferie e permessi", "ri-calendar-event-line"), ("buste", "Buste paga", "ri-file-list-3-line") };
+}
+
+<div class="breadcrumb-titolo d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+    <div>
+        <h1 class="titolo-pagina mb-0">@(nuovo ? ViewData["Title"] : persona ? "Scheda persona" : "Scheda dipendente")</h1>
+    </div>
+</div>
+
+<div class="scheda-profilo @(modifica ? "in-modifica" : "")" id="scheda">
+    <div class="card radius-15 p-3 p-md-4 mb-3">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+            <div class="d-flex align-items-center gap-3">
+                <img src="@(Model.HaFoto && Model.Id is { } idFoto ? Url.Action("Foto", new { id = idFoto }) : Url.Content($"~/assets/images/avatar/{segnaposto}.png"))"
+                     class="foto-profilo" id="anteprimaFoto" alt="Foto di @nomeCompleto" />
+                <div>
+                    <h2 class="fs-5 mb-0 text-breadcrumb nome-profilo d-flex align-items-center gap-2 flex-wrap">
+                        @nomeCompleto.ToUpperInvariant()
+                        @if (d is not null)
+                        {
+                            var stato = d.ContrattoAttivo(oggi) is not null ? StatoPersonale.Attivo : contratti.Any(c => c.DataInizio > oggi) ? StatoPersonale.Firmato
+                                : contratti.Count == 0 ? StatoPersonale.SenzaContratto : contratti[0].DataCessazione is not null ? StatoPersonale.Cessato : StatoPersonale.Scaduto;
+                            <span class="badge badge-stato" style="--colore-stato:@stato.Colore()"><span class="pallino-stato" aria-hidden="true"></span>@stato.Descrizione()</span>
+                        }
+                    </h2>
+                    @if (!nuovo && nomeAzienda is not null) { <div class="azienda-profilo">@nomeAzienda</div> }
+                    @if (corrente?.Mansione is { } mansione) { <div class="mansione-profilo">@mansione</div> }
+                </div>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                @if (!nuovo)
+                {
+                    <a href="?modifica=true" class="btn btn-outline-primary btn-sm solo-lettura" id="apriModifica">Modifica dati <i class="ri-pencil-line" aria-hidden="true"></i></a>
+                    @* Foto salvata subito: funziona da qualunque scheda, senza passare da "Salva". *@
+                    <label for="fotoSubito" class="btn btn-outline-primary btn-sm mb-0 solo-modifica">Modifica immagine <i class="ri-pencil-line" aria-hidden="true"></i></label>
+                    <input type="file" id="fotoSubito" name="immagine" form="formFotoSubito" class="d-none" accept="@CL.Web.Infrastruttura.Immagini.FormatiAccettati" onchange="this.form.requestSubmit()" />
+                    @if (Model.HaFoto)
+                    {
+                        <button type="submit" form="formTogliFoto" class="btn btn-outline-danger btn-sm solo-modifica" onclick="return confirm('Rimuovere la foto?');">Rimuovi <i class="ri-delete-bin-line" aria-hidden="true"></i></button>
+                    }
+                }
+                else
+                {
+                    <button type="button" class="btn btn-outline-primary btn-sm" id="scegliFoto">Modifica immagine <i class="ri-pencil-line" aria-hidden="true"></i></button>
+                    <input asp-for="Foto" type="file" form="formAnagrafica" class="d-none" accept="@CL.Web.Infrastruttura.Immagini.FormatiAccettati" />
+                }
+            </div>
+        </div>
+        <span asp-validation-for="Foto" class="text-danger d-block"></span>
+        <div class="form-text mt-2 mb-0 d-none" id="notaFoto"></div>
+    </div>
+
+    @if (!nuovo)
+    {
+        <nav class="invoice-filter-categories mb-3" aria-label="Sezioni della scheda" role="tablist">
+            @foreach (var (chiave, titolo, icona) in schede)
+            {
+                <a class="badge-filtro-categoria @(sezione == chiave ? "active" : "")" href="?sezione=@chiave" data-scheda="@chiave" role="tab"
+                   aria-selected="@(sezione == chiave ? "true" : "false")" aria-controls="scheda-@chiave"><i class="@icona" aria-hidden="true"></i> @titolo</a>
+            }
+        </nav>
+    }
+
+    @* Anagrafica *@
+    <div id="scheda-anagrafica" role="tabpanel" class="pannello-scheda" hidden="@(sezione != "anagrafica")">
+    <form asp-action="Salva" method="post" enctype="multipart/form-data" novalidate id="formAnagrafica">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger radius-15" role="alert"></div>
+        <input type="hidden" asp-for="Id" />
+        <input type="hidden" name="salvaPaghe" id="salvaPaghe" value="@((ViewBag.DatiPagheForm is not null).ToString().ToLowerInvariant())" />
+
+        <section class="card radius-15 p-3 p-md-4 mb-3 sezione-profilo" aria-labelledby="titoloAnagrafica">
+            <h2 class="titolo-sezione-profilo" id="titoloAnagrafica">Anagrafica e contatti</h2>
+            <div class="campi-profilo">
+                <div>
+                    <label asp-for="AziendaId" class="form-label"></label>
+                    <div class="valore-campo">@V(nomeAzienda)</div>
+                    @if (aziende is not null && nuovo)
+                    {
+                        <select asp-for="AziendaId" asp-items="aziende" class="form-select campo-modifica" aria-required="true"><option value="">Seleziona…</option></select>
+                    }
+                    else
+                    {
+                        <input type="hidden" asp-for="AziendaId" />
+                        <input class="form-control campo-modifica" value="@nomeAzienda" readonly aria-label="Azienda" />
+                    }
+                    <span asp-validation-for="AziendaId" class="text-danger"></span>
+                </div>
+                <div>
+                    <label asp-for="Nome" class="form-label"></label>
+                    <div class="valore-campo">@V(Model.Nome)</div>
+                    <input asp-for="Nome" class="form-control campo-modifica" aria-required="true" autocomplete="off" />
+                    <span asp-validation-for="Nome" class="text-danger"></span>
+                </div>
+                <div>
+                    <label asp-for="Cognome" class="form-label"></label>
+                    <div class="valore-campo">@V(Model.Cognome)</div>
+                    <input asp-for="Cognome" class="form-control campo-modifica" aria-required="true" autocomplete="off" />
+                    <span asp-validation-for="Cognome" class="text-danger"></span>
+                </div>
+                <div>
+                    <label asp-for="Matricola" class="form-label"></label>
+                    <div class="valore-campo">@V(Model.Matricola)</div>
+                    <input asp-for="Matricola" class="form-control campo-modifica" />
+                </div>
+                <div>
+                    <label asp-for="CodiceFiscale" class="form-label"></label>
+                    <div class="valore-campo">@V(Model.CodiceFiscale)</div>
+                    <input asp-for="CodiceFiscale" class="form-control text-uppercase campo-modifica" maxlength="16" aria-required="true" autocomplete="off" />
+                    <span asp-validation-for="CodiceFiscale" class="text-danger"></span>
+                </div>
+                <div>
+                    <label asp-for="DataNascita" class="form-label"></label>
+                    <div class="valore-campo">@V(Model.DataNascita?.ToString("dd/MM/yyyy"))</div>
+                    <input asp-for="DataNascita" class="form-control campo-modifica" type="date" aria-required="true" />
+                    <span asp-validation-for="DataNascita" class="text-danger"></span>
+                </div>
+                <div>
+                    <label asp-for="Genere" class="form-label"></label>
+                    <div class="valore-campo">@V(Model.Genere?.Descrizione())</div>
+                    <select asp-for="Genere" class="form-select campo-modifica" asp-items="CL.Web.Controllers.DatiPersonaliController.Generi"><option value="">—</option></select>
+                </div>
+                <div>
+                    <label asp-for="Pronomi" class="form-label"></label>
+                    <div class="valore-campo">@V(Model.Pronomi?.Descrizione())</div>
+                    <select asp-for="Pronomi" class="form-select campo-modifica" asp-items="CL.Web.Controllers.DatiPersonaliController.ElencoPronomi"><option value="">—</option></select>
+                </div>
+                <div>
+                    <label asp-for="Email" class="form-label"></label>
+                    <div class="valore-campo">@V(Model.Email)</div>
+                    <input asp-for="Email" class="form-control campo-modifica" type="email" />
+                    <span asp-validation-for="Email" class="text-danger"></span>
+                </div>
+                <div>
+                    <label asp-for="Telefono" class="form-label"></label>
+                    <div class="valore-campo">@V(Model.Telefono)</div>
+                    <input asp-for="Telefono" class="form-control campo-modifica" type="tel" />
+                </div>
+                <div class="campo-largo">
+                    <label asp-for="Iban" class="form-label"></label>
+                    <div class="valore-campo">@V(Model.Iban)</div>
+                    <input asp-for="Iban" class="form-control text-uppercase campo-modifica" placeholder="IT60 X054 2811 1010 0000 0123 456" autocomplete="off" />
+                    <span asp-validation-for="Iban" class="text-danger"></span>
+                </div>
+                @* Residenza: scrivendo la via compaiono i suggerimenti (OpenStreetMap); scegliendone uno si compilano CAP, comune e provincia. *@
+                <div class="campo-largo">
+                    <label asp-for="Indirizzo" class="form-label">Indirizzo di residenza</label>
+                    <div class="valore-campo">@V(Model.Indirizzo)</div>
+                    <div class="campo-modifica">
+                        <input asp-for="Indirizzo" class="form-control" data-indirizzo="residenza" />
+                    </div>
+                    <span asp-validation-for="Indirizzo" class="text-danger"></span>
+                </div>
+                <div>
+                    <label asp-for="Comune" class="form-label"></label>
+                    <div class="valore-campo">@V(Model.Comune)</div>
+                    <div class="campo-modifica"><select asp-for="Comune" asp-items="Elenchi.Comune(Model.Comune, Model.Provincia)" class="form-select" data-comune="residenza"><option value=""></option></select></div>
+                    <span asp-validation-for="Comune" class="text-danger"></span>
+                </div>
+                <div class="campo-doppio">
+                    <div>
+                        <label asp-for="Cap" class="form-label"></label>
+                        <div class="valore-campo">@V(Model.Cap)</div>
+                        <input asp-for="Cap" class="form-control campo-modifica" inputmode="numeric" maxlength="5" autocomplete="postal-code" data-cap="residenza" />
+                        <span asp-validation-for="Cap" class="text-danger"></span>
+                    </div>
+                    <div>
+                        <label asp-for="Provincia" class="form-label"></label>
+                        <div class="valore-campo">@V(Model.Provincia)</div>
+                        <div class="campo-modifica"><select asp-for="Provincia" asp-items="Elenchi.Province(Model.Provincia)" class="form-select" data-provincia="residenza"><option value=""></option></select></div>
+                        <span asp-validation-for="Provincia" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+
+        @if (d is not null)
+        {
+            var datiPaghe = ViewBag.ProfiloPersonale as CL.Domain.Dipendenti.ProfiloDipendente;
+            var formPaghe = ViewBag.DatiPagheForm as CL.Web.Controllers.DatiPagheForm;
+            var apriPaghe = formPaghe is not null;
+            var paghe = formPaghe ?? CL.Web.Controllers.DatiPagheForm.Da(d, datiPaghe ?? new CL.Domain.Dipendenti.ProfiloDipendente(d.Id));
+            int passo = datiPaghe is null ? 0 : datiPaghe.CompletatoIl is null ? datiPaghe.Passo - 1 : 6;
+            <section class="card radius-15 p-3 p-md-4 mb-3 sezione-profilo scheda-paghe @(apriPaghe ? "in-modifica-paghe" : "")" id="cardPaghe" data-compilati="@((datiPaghe is not null).ToString().ToLowerInvariant())" aria-labelledby="titoloDatiPaghe">
+                <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+                    <div class="d-flex flex-wrap align-items-center gap-2">
+                        <h2 class="titolo-sezione-profilo mb-0" id="titoloDatiPaghe">Dati personali per le paghe</h2>
+                        @if (datiPaghe is null) { <span class="badge bg-secondary">Non iniziati</span> }
+                        else if (datiPaghe.CompletatoIl is null) { <span class="badge bg-warning text-dark">Al passo @datiPaghe.Passo di 6</span> }
+                        else { <span class="badge bg-success">Completi</span> }
+                    </div>
+                    <button type="button" class="btn btn-outline-primary btn-sm solo-lettura-paghe" id="apriPaghe">
+                        @(datiPaghe is null ? "Compila" : "Modifica") <i class="ri-pencil-line" aria-hidden="true"></i>
+                    </button>
+                </div>
+                <div class="d-flex flex-wrap align-items-center gap-3 mt-3">
+                    <div class="progress progresso-dati flex-grow-1" role="progressbar" aria-label="Avanzamento dei dati per le paghe" aria-valuemin="0" aria-valuemax="6" aria-valuenow="@passo">
+                        <div class="progress-bar" style="width: @(passo * 100 / 6)%"></div>
+                    </div>
+                    <span class="avanzamento-passi"><strong>@passo</strong> di 6 passi</span>
+                    @if (datiPaghe?.AggiornatoIl is { } agg)
+                    {
+                        <span class="avanzamento-data"><i class="ri-time-line" aria-hidden="true"></i> Aggiornati il @agg.ToLocalTime().ToString("dd/MM/yyyy")</span>
+                    }
+                </div>
+                @if (datiPaghe is not null)
+                {
+                    var p = datiPaghe;
+                    string Ind(CL.Domain.Aziende.Indirizzo? i) => i is null ? "" : $"{i.Via}, {i.Cap} {i.Comune} ({i.Provincia})";
+                    var familiari = p.Familiari.Count == 0 ? "" : string.Join("; ", p.Familiari.OrderBy(f => f.Relazione)
+                        .Select(f => $"{f.Descrizione} {f.Nome} {f.Cognome} ({f.DataNascita:dd/MM/yyyy}, {f.PercentualeCarico}%{(f.Disabile ? ", disabile" : "")})"));
+                    var nascita = p.ComuneNascita is null ? "" : $"{p.ComuneNascita} ({p.ProvinciaNascita})";
+                    <dl class="campi-profilo valori-profilo mt-4 mb-0 solo-lettura-paghe">
+                        <div><dt>Luogo di nascita</dt><dd>@V(nascita)</dd></div>
+                        <div><dt>Cittadinanza</dt><dd>@V(p.Cittadinanza)</dd></div>
+                        <div><dt>Cellulare</dt><dd>@V(p.Telefono)</dd></div>
+                        <div><dt>Email personale</dt><dd>@V(p.EmailPersonale)</dd></div>
+                        <div class="campo-largo"><dt>Residenza</dt><dd>@V(Ind(p.Residenza))</dd></div>
+                        <div class="campo-largo"><dt>Domicilio</dt><dd>@(p.Residenza is null ? V(null) : p.Domicilio is null ? "Come la residenza" : Ind(p.Domicilio))</dd></div>
+                        <div class="campo-largo"><dt>IBAN</dt><dd>@V(p.Iban?.Valore)</dd></div>
+                        <div><dt>Intestatario del conto</dt><dd>@(p.Iban is null ? V(null) : V(string.IsNullOrWhiteSpace(p.IntestatarioConto) ? "La persona stessa" : p.IntestatarioConto))</dd></div>
+                        <div><dt>TFR</dt><dd>@(p.Tfr is null ? V(null) : p.Tfr == CL.Domain.Dipendenti.DestinazioneTfr.FondoPensione ? $"Fondo pensione {p.FondoPensione}" : "In azienda")</dd></div>
+                        <div><dt>Detrazioni lavoro dipendente</dt><dd>@(p.RichiedeDetrazioni is null ? V(null) : p.RichiedeDetrazioni.Value ? "Richieste" : "Non richieste")</dd></div>
+                        <div class="campo-largo"><dt>Familiari a carico</dt><dd>@(p.Passo > 4 || p.Completato ? (familiari.Length == 0 ? "Nessuno" : familiari) : V(null))</dd></div>
+                        <div><dt>Titolo di studio</dt><dd>@V(p.TitoloStudio?.Descrizione())</dd></div>
+                        <div><dt>Documento</dt><dd>@V(p.NumeroDocumento is null ? null : $"{p.TipoDocumento} n. {p.NumeroDocumento}, scade il {p.ScadenzaDocumento:dd/MM/yyyy}")</dd></div>
+                        <div class="campo-largo"><dt>Permesso di soggiorno</dt><dd>@V(p.ScadenzaPermessoSoggiorno is { } ps ? $"Scade il {ps:dd/MM/yyyy}" : null)</dd></div>
+                    </dl>
+                }
+                <partial name="_ModuloPaghe" model="(d.Id, paghe)" />
+            </section>
+        }
+
+        @{
+            var teamAzienda = (List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>)ViewBag.TeamAzienda;
+            var colleghi = (List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>)ViewBag.Colleghi;
+            dynamic? orgLettura = ViewBag.Organizzazione;
+            var sedi = (Dictionary<CL.Domain.Dipendenti.SedeLavoro, string>)ViewBag.Sedi;
+        }
+        <section class="card radius-15 p-3 p-md-4 mb-3 sezione-profilo" aria-labelledby="titoloOrganizzazione">
+            <div class="d-flex align-items-center justify-content-between gap-2 mb-3">
+                <h2 class="titolo-sezione-profilo mb-0" id="titoloOrganizzazione">Organizzazione</h2>
+                <a asp-controller="Team" asp-action="Organigramma" asp-route-aziendaId="@(Utente.IsConsulente ? Model.AziendaId : (Guid?)null)" class="small"><i class="ri-organization-chart" aria-hidden="true"></i> Organigramma</a>
+            </div>
+            <div class="campi-profilo">
+                <div>
+                    <label asp-for="TeamId" class="form-label"></label>
+                    <div class="valore-campo">@V(teamAzienda.FirstOrDefault(t => t.Value == Model.TeamId?.ToString())?.Text)</div>
+                    <div class="campo-modifica"><select asp-for="TeamId" asp-items="teamAzienda" class="form-select"><option value="">Nessun team</option></select></div>
+                </div>
+                <div>
+                    <label asp-for="Posizione" class="form-label"></label>
+                    <div class="valore-campo">@V(Model.Posizione)</div>
+                    <input asp-for="Posizione" class="form-control campo-modifica" placeholder="es. Commerciale" />
+                </div>
+                <div class="campo-largo">
+                    <label asp-for="Sede" class="form-label"></label>
+                    <div class="valore-campo">@V(Model.Sede is { } sl && sedi.TryGetValue(sl, out var testoSede) ? testoSede : null)</div>
+                    <div class="campo-modifica">
+                        <select asp-for="Sede" class="form-select">
+                            <option value="">Non indicata</option>
+                            @foreach (var (k, v) in sedi) { <option value="@k" selected="@(Model.Sede == k)">@v</option> }
+                        </select>
+                    </div>
+                    <span asp-validation-for="Sede" class="text-danger"></span>
+                </div>
+                <div class="campo-largo">
+                    <label asp-for="ResponsabileId" class="form-label"></label>
+                    <div class="valore-campo">@V(colleghi.FirstOrDefault(c => c.Value == Model.ResponsabileId?.ToString())?.Text)</div>
+                    <div class="campo-modifica"><select asp-for="ResponsabileId" asp-items="colleghi" class="form-select"><option value="">Quello del team</option></select></div>
+                    <span asp-validation-for="ResponsabileId" class="text-danger"></span>
+                </div>
+                <div class="campo-largo">
+                    <label class="form-label">Approva ferie e permessi</label>
+                    @* Calcolato dall'organigramma: si vede anche a campi aperti, non si modifica qui. *@
+                    <div class="valore-campo valore-fisso">@(nuovo ? "Referente dell'azienda" : (string?)orgLettura?.Approvatore ?? "Referente dell'azienda")</div>
+                    <div class="form-text solo-modifica">Dipende da team e responsabile diretto.</div>
+                </div>
+            </div>
+        </section>
+
+    </form>
+
+
+    @if (d is not null)
+    {
+        var accesso = ViewBag.Accesso as CL.Web.Infrastruttura.UtenteRiga;
+        var ritorno = Context.Request.Path.ToString();
+        dynamic org = ViewBag.Organizzazione;
+        dynamic? dati = ViewBag.ProfiloPersonale;
+        <div class="row g-3 mb-3">
+            <div class="col-12">
+                <section class="card radius-15 p-3 p-md-4 h-100 sezione-profilo" aria-labelledby="titoloAccesso">
+                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+                        <div class="d-flex align-items-center gap-2">
+                            <h2 class="titolo-sezione-profilo mb-0" id="titoloAccesso">Accesso al portale</h2>
+                            @if (accesso is not null) { <partial name="~/Views/Utenti/_StatoAccesso.cshtml" model="accesso.Stato" /> }
+                        </div>
+                        @if (accesso is not null) { <div class="solo-lettura"><partial name="~/Views/Utenti/_AzioniAccesso.cshtml" model="(accesso, ritorno)" /></div> }
+                    </div>
+                @if (accesso is null)
+                {
+                    <p class="small text-body-secondary mb-2">Con l'accesso il dipendente vede i propri saldi e chiede ferie e permessi.</p>
+                    @if (string.IsNullOrWhiteSpace(d.Email))
+                    {
+                        <p class="small mb-0">Per invitarlo serve la sua email: <a asp-action="Modifica" asp-route-id="@d.Id">aggiungila all'anagrafica</a>.</p>
+                    }
+                    else
+                    {
+                        <form asp-controller="Utenti" asp-action="InvitaDipendente" method="post" class="m-0">
+                            <input type="hidden" name="dipendenteId" value="@d.Id" />
+                            <button type="submit" class="btn btn-sm btn-primary"><i class="ri-mail-send-line" aria-hidden="true"></i> Invita a @d.Email</button>
+                        </form>
+                    }
+                }
+                else
+                {
+                    <div class="campi-profilo solo-lettura">
+                        <div class="campo-largo">
+                            <label class="form-label">Email di accesso</label>
+                            <div class="valore-campo">@accesso.Email</div>
+                        </div>
+                    </div>
+                    @* Con i campi aperti: email di accesso modificabile e invio del link per la password. *@
+                    <div class="solo-modifica accesso-modifica">
+                        <div class="d-flex flex-wrap align-items-end gap-2">
+                            <form asp-controller="Utenti" asp-action="CambiaEmail" asp-route-id="@accesso.Id" method="post" class="d-flex flex-wrap align-items-end gap-2 m-0 flex-grow-1">
+                                <input type="hidden" name="ritorno" value="@(ritorno + "?modifica=true")" />
+                                <div class="flex-grow-1" style="min-width: 240px;">
+                                    <label for="emailAccesso" class="form-label">Email di accesso</label>
+                                    <input id="emailAccesso" name="email" type="email" value="@accesso.Email" class="form-control" required />
+                                </div>
+                                <button type="submit" class="btn btn-outline-primary">Salva email</button>
+                            </form>
+                            @if (accesso.Stato != CL.Web.Infrastruttura.StatoAccesso.Disattivato)
+                            {
+                                <form asp-controller="Utenti" asp-action="Reinvia" asp-route-id="@accesso.Id" method="post" class="m-0">
+                                    <input type="hidden" name="ritorno" value="@(ritorno + "?modifica=true")" />
+                                    <button type="submit" class="btn btn-primary"><i class="ri-mail-send-line" aria-hidden="true"></i>
+                                        @(accesso.Stato == CL.Web.Infrastruttura.StatoAccesso.InvitoInAttesa ? "Invia di nuovo l'invito" : "Invia email di reset password")</button>
+                                </form>
+                            }
+                        </div>
+                    </div>
+                }
+                </section>
+            </div>
+        </div>
+    }
+    @* Salva e Annulla in fondo, dopo l'accesso al portale (che ha i suoi moduli): il pulsante invia il modulo dell'anagrafica. *@
+    <div class="d-flex justify-content-end gap-2 mb-3 solo-modifica">
+            <a asp-action="@(nuovo ? "Index" : "Dettaglio")" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Annulla</a>
+            <button type="submit" form="formAnagrafica" class="btn btn-primary">@(nuovo ? "Salva e registra l'assunzione" : "Salva")</button>
+    </div>
+    </div>
+
+    @if (d is not null)
+    {
+        @* Contratto *@
+        <div id="scheda-contratto" role="tabpanel" class="pannello-scheda" hidden="@(sezione != "contratto")">
+            <partial name="_SchedaContratto" model="(d.Id, contratti, oggi)" />
+        </div>
+    }
+</div>
+
+@if (d is not null)
+{
+    var saldi = (IReadOnlyList<SaldoAssenza>)ViewBag.Saldi;
+    var richieste = (List<CL.Web.Controllers.RichiestaRiga>)ViewBag.Richieste;
+    var buste = (List<BustaRiga>)ViewBag.Buste;
+    var mesePrecedente = oggi.AddMonths(-1);
+    var ritornoFerie = Context.Request.Path + "?sezione=ferie";
+    var ritornoBuste = Context.Request.Path + "?sezione=buste";
+    <div id="scheda-ferie" role="tabpanel" class="pannello-scheda" hidden="@(sezione != "ferie")">
+    <section aria-labelledby="titoloAssenze">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+        <h2 class="h5 mb-0" id="titoloAssenze">Ferie e permessi @oggi.Year</h2>
+    </div>
+
+    <partial name="~/Views/Assenze/_Saldi.cshtml" model="saldi" />
+
+    <div class="mt-3">
+        <partial name="~/Views/Assenze/_TabellaRichieste.cshtml" model="(richieste, Utente.IsAzienda, false, false, oggi, ritornoFerie)" />
+    </div>
+</section>
+    </div>
+    <div id="scheda-buste" role="tabpanel" class="pannello-scheda" hidden="@(sezione != "buste")">
+    <section aria-labelledby="titoloBuste">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+        <h2 class="h5 mb-0" id="titoloBuste">Buste paga</h2>
+        @if (Utente.IsConsulente)
+        {
+            <button type="button" class="btn btn-primary" data-bs-toggle="collapse" data-bs-target="#nuovaBusta" aria-expanded="false" aria-controls="nuovaBusta">
+                <i class="ri-upload-2-line" aria-hidden="true"></i> Carica cedolino
+            </button>
+        }
+    </div>
+    @if (Utente.IsConsulente)
+    {
+        <div class="collapse mb-3" id="nuovaBusta">
+            <form asp-controller="BustePaga" asp-action="CaricaPerDipendente" method="post" enctype="multipart/form-data" class="card radius-15 p-3">
+                <input type="hidden" name="dipendenteId" value="@d.Id" />
+                <div class="row g-2 align-items-end">
+                    <div class="col-sm-2">
+                        <label class="form-label small" for="busta-mese">Mese</label>
+                        <select class="form-select" id="busta-mese" name="mese">
+                            @for (var m = 1; m <= 12; m++) { <option value="@m" selected="@(m == mesePrecedente.Month)">@ServizioBustePaga.NomeMese(m)</option> }
+                        </select>
+                    </div>
+                    <div class="col-sm-2">
+                        <label class="form-label small" for="busta-anno">Anno</label>
+                        <input class="form-control" id="busta-anno" name="anno" type="number" min="2000" max="2100" value="@mesePrecedente.Year" />
+                    </div>
+                    <div class="col-sm-2">
+                        <label class="form-label small" for="busta-tipo">Tipo</label>
+                        <select class="form-select" id="busta-tipo" name="tipo" asp-items="CL.Web.Controllers.CaricaBusteForm.Tipi"></select>
+                    </div>
+                    <div class="col-sm-2">
+                        <label class="form-label small" for="busta-netto">Netto (€, facoltativo)</label>
+                        <input class="form-control" id="busta-netto" name="netto" type="text" inputmode="decimal" />
+                    </div>
+                    <div class="col-sm-4">
+                        <label class="form-label small" for="busta-file">PDF</label>
+                        <input class="form-control" id="busta-file" name="file" type="file" accept="application/pdf,.pdf" required />
+                    </div>
+                    <div class="col-sm-8">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="busta-pubblica" name="pubblica" value="true" checked />
+                            <label class="form-check-label" for="busta-pubblica">Pubblica subito e avvisa il dipendente</label>
+                        </div>
+                    </div>
+                    <div class="col-sm-4"><button type="submit" class="btn btn-primary w-100">Carica</button></div>
+                </div>
+            </form>
+        </div>
+    }
+    <partial name="~/Views/BustePaga/_TabellaBuste.cshtml" model="(buste, true, Utente.IsConsulente, false, false, ritornoBuste)" />
+</section>
+    </div>
+
+    <form asp-action="CaricaFoto" asp-route-id="@d.Id" method="post" enctype="multipart/form-data" id="formFotoSubito" class="d-none">
+        <input type="hidden" name="sezione" value="@sezione" />
+    </form>
+    <form asp-action="TogliFoto" asp-route-id="@d.Id" method="post" id="formTogliFoto" class="d-none">
+        <input type="hidden" name="sezione" value="@sezione" />
+    </form>
+}
+
+@section Scripts {
+    <script>
+        // Schede senza ricaricare; "Modifica dati" apre i campi. L'indirizzo ricorda scheda e modalità.
+        (function () {
+            const scheda = document.getElementById('scheda');
+            const link = document.querySelectorAll('[data-scheda]');
+            const aggiornaIndirizzo = () => {
+                const attiva = document.querySelector('[data-scheda].active')?.dataset.scheda ?? 'anagrafica';
+                const p = new URLSearchParams();
+                if (attiva !== 'anagrafica') p.set('sezione', attiva);
+                if (scheda.classList.contains('in-modifica')) p.set('modifica', 'true');
+                history.replaceState(null, '', location.pathname + (p.size ? '?' + p : ''));
+                document.querySelectorAll('#formFotoSubito [name=sezione], #formTogliFoto [name=sezione]').forEach(i => i.value = attiva);
+            };
+            const mostra = k => {
+                link.forEach(x => { const on = x.dataset.scheda === k; x.classList.toggle('active', on); x.setAttribute('aria-selected', String(on)); });
+                document.querySelectorAll('.pannello-scheda').forEach(p => p.hidden = p.id !== 'scheda-' + k);
+                aggiornaIndirizzo();
+            };
+            link.forEach(a => a.addEventListener('click', e => { e.preventDefault(); mostra(a.dataset.scheda); }));
+            document.getElementById('apriModifica')?.addEventListener('click', e => {
+                e.preventDefault();
+                scheda.classList.add('in-modifica');
+                const attiva = document.querySelector('[data-scheda].active')?.dataset.scheda;
+                if (attiva !== 'contratto') mostra('anagrafica'); else aggiornaIndirizzo();
+                document.getElementById(attiva === 'contratto' ? 'scheda-contratto' : 'Nome')?.focus();
+            });
+        })();
+
+        // Dati per le paghe: "Modifica" apre i campi nella card, "Annulla" li richiude.
+        (function () {
+            const card = document.getElementById('cardPaghe');
+            if (!card) return;
+            const segna = () => { document.getElementById('salvaPaghe').value = 'true'; };
+            // Con "Modifica dati" la card si apre insieme agli altri campi: si salva solo se è stata toccata (o se i dati ci sono già).
+            card.querySelector('.modulo-paghe')?.addEventListener('input', segna);
+            card.querySelector('.modulo-paghe')?.addEventListener('change', segna);
+            if (card.dataset.compilati === 'true') document.getElementById('apriModifica')?.addEventListener('click', segna);
+            if (document.getElementById('scheda').classList.contains('in-modifica') && card.dataset.compilati === 'true') segna();
+            document.getElementById('apriPaghe')?.addEventListener('click', () => {
+                segna();
+                card.classList.add('in-modifica-paghe');
+                card.querySelector('.modulo-paghe input:not([type=hidden])')?.focus();
+            });
+            card.querySelector('.annulla-paghe')?.addEventListener('click', () => location.reload());
+            const fam = card.querySelector('.aggiungi-familiare');
+            fam?.addEventListener('click', () => {
+                const nascosta = card.querySelector('.riga-familiare[hidden]');
+                if (nascosta) { nascosta.hidden = false; nascosta.querySelector('input')?.focus(); }
+                if (!card.querySelector('.riga-familiare[hidden]')) fam.hidden = true;
+            });
+            card.querySelectorAll('.togli-familiare').forEach(b => b.addEventListener('click', () => {
+                const riga = b.closest('.riga-familiare');
+                riga.querySelectorAll('input:not([type=checkbox])').forEach(i => i.value = '');
+                riga.querySelectorAll('input[type=checkbox]').forEach(i => i.checked = false);
+                riga.hidden = true;
+                if (fam) fam.hidden = false;
+            }));
+            card.querySelectorAll('[data-mostra]').forEach(c => {
+                const bersaglio = document.getElementById(c.dataset.mostra);
+                const aggiorna = () => bersaglio.hidden = c.type === 'checkbox' ? !c.checked : c.value !== c.dataset.valore;
+                c.addEventListener('change', aggiorna); aggiorna();
+            });
+        })();
+
+        // Nuova persona: "Modifica immagine" sceglie la foto e ne mostra l'anteprima; si salva con "Salva".
+        (function () {
+            const img = document.getElementById('anteprimaFoto'), file = document.getElementById('Foto'), nota = document.getElementById('notaFoto');
+            if (!file) return;
+            document.getElementById('scegliFoto').addEventListener('click', () => file.click());
+            file.addEventListener('change', () => {
+                const f = file.files[0];
+                if (!f) return;
+                img.src = URL.createObjectURL(f);
+                nota.textContent = 'Nuova immagine: ' + f.name + ' (verrà salvata con "Salva").';
+                nota.classList.remove('d-none');
+            });
+        })();
+    </script>
+}

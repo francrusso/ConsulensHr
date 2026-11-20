@@ -15,7 +15,13 @@ public sealed record Indirizzo(string Via, string Cap, string Comune, string Pro
         if (cap.Length != 5 || !cap.All(char.IsAsciiDigit)) throw new DomainException($"CAP {quale} non valido.");
         var prov = Guard.NotEmpty(Provincia, $"Provincia {quale}").ToUpperInvariant();
         if (!Province.IsValida(prov)) throw new DomainException($"Provincia {quale}: \"{prov}\" non esiste, usa la sigla (es. MI).");
-        return new Indirizzo(Guard.NotEmpty(Via, $"Indirizzo {quale}"), cap, Guard.NotEmpty(Comune, $"Comune {quale}"), prov);
+        // Comune dall'elenco ISTAT, coerente con la provincia; si salva con il nome ufficiale.
+        var nome = Guard.NotEmpty(Comune, $"Comune {quale}");
+        var comune = Comuni.Trova(nome, prov)
+                     ?? throw new DomainException(Comuni.Trova(nome) is { } altrove
+                         ? $"Comune {quale}: {altrove.Nome} è in provincia di {altrove.Provincia}, non {prov}."
+                         : $"Comune {quale}: \"{nome}\" non risulta tra i comuni italiani.");
+        return new Indirizzo(Guard.NotEmpty(Via, $"Indirizzo {quale}"), cap, comune.Nome, prov);
     }
 }
 
@@ -28,7 +34,7 @@ public sealed record DatiPaghe(Iban? IbanAddebito, int? GiornoPagamento, string 
     string? ReferenteTelefono, string? NoteStudio);
 
 /// <summary>
-/// Le informazioni che l'azienda fornisce allo studio per la gestione delle pratiche di lavoro,
+/// Le informazioni che l'azienda fornisce al consulente per la gestione delle pratiche di lavoro,
 /// raccolte con il percorso guidato al primo accesso. Ogni passo si salva da solo; il profilo è
 /// completo quando tutti i dati obbligatori ci sono e l'azienda ha preso visione dell'informativa privacy.
 /// </summary>

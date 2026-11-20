@@ -1,0 +1,39 @@
+@inject UtenteCorrente Utente
+@{
+    // Percorso sopra il titolo, come in ConsulensNew: sezione del menù › pagina.
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    var action = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
+    var titolo = ViewData["Title"]?.ToString();
+    var personale = Utente.IsAzienda ? "Personale" : "Dipendenti";
+    (string Nome, string? Link) sezione = controller switch
+    {
+        "Home" => ("Panoramica", Url.Action("Index", "Home")),
+        "Aziende" => ("Aziende", Url.Action("Index", "Aziende")),
+        "Dipendenti" or "Team" => (personale, Url.Action("Index", "Dipendenti")),
+        "Assenze" => (Utente.IsDipendente ? "Le mie ferie e permessi" : "Ferie e permessi", Url.Action("Index", "Assenze")),
+        "Presenze" => ("Presenze", Url.Action("Index", "Presenze")),
+        "BustePaga" or "Documenti" => ("Documenti", null),
+        "Utenti" => (Utente.IsAzienda ? "Referenti" : "Utenti", null),
+        "Onboarding" => ("Profilo azienda", null),
+        "DatiPersonali" => ("I miei dati", null),
+        "Account" => ("Profilo", null),
+        _ => (controller, null),
+    };
+    var mostra = !string.IsNullOrWhiteSpace(titolo) && controller is not "" && ViewData["AuthPanel"] is not true;
+    var conGenitore = mostra && !string.Equals(sezione.Nome, titolo, StringComparison.OrdinalIgnoreCase);
+}
+@if (mostra)
+{
+    <nav class="page-breadcrumbs" aria-label="Percorso di navigazione">
+        <ol>
+            @if (conGenitore)
+            {
+                <li>
+                    @if (sezione.Link is not null) { <a href="@sezione.Link">@sezione.Nome</a> } else { <span>@sezione.Nome</span> }
+                    <i class="ri-arrow-right-s-line" aria-hidden="true"></i>
+                </li>
+            }
+            <li aria-current="page">@titolo</li>
+        </ol>
+    </nav>
+}

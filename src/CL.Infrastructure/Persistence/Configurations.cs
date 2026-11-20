@@ -167,6 +167,10 @@ internal sealed class DipendenteConfig : IEntityTypeConfiguration<Dipendente>
         b.Property(x => x.Email).HasMaxLength(256);
         b.Property(x => x.Telefono).HasMaxLength(30);
         b.Property(x => x.Indirizzo).HasMaxLength(300);
+        b.Property(x => x.Cap).HasMaxLength(5);
+        b.Property(x => x.Comune).HasMaxLength(100);
+        b.Property(x => x.Provincia).HasMaxLength(2);
+        b.Ignore(x => x.IndirizzoCompleto);
         b.Property(x => x.Matricola).HasMaxLength(30);
         b.Property(x => x.UserId).HasMaxLength(450);
         b.Ignore(x => x.NomeCompleto);
@@ -195,11 +199,12 @@ internal sealed class ContrattoConfig : IEntityTypeConfiguration<Contratto>
         b.Property(x => x.Ccnl).HasMaxLength(100);
         b.Property(x => x.Livello).HasMaxLength(20);
         b.Property(x => x.Mansione).HasMaxLength(150);
+        b.Property(x => x.DocumentoChiave).HasMaxLength(500);
+        b.Property(x => x.DocumentoNome).HasMaxLength(200);
         b.Property(x => x.OreSettimanaliFullTime).HasPrecision(5, 2);
         b.Property(x => x.PercentualePartTime).HasPrecision(5, 2);
         b.Property(x => x.OreFerieAnnue).HasPrecision(7, 2);
         b.Property(x => x.OreRolAnnue).HasPrecision(7, 2);
-        b.Property(x => x.OreExFestivitaAnnue).HasPrecision(7, 2);
         b.Ignore(x => x.OreSettimanali);
         b.Ignore(x => x.OreGiornaliere);
         b.Ignore(x => x.RetribuzioneMensileLorda);
@@ -234,6 +239,22 @@ internal sealed class SaldoInizialeConfig : IEntityTypeConfiguration<SaldoInizia
         b.Property(x => x.Ore).HasPrecision(7, 2);
         b.HasOne<Dipendente>().WithMany().HasForeignKey(x => x.DipendenteId).OnDelete(DeleteBehavior.Cascade);
         b.HasIndex(x => new { x.DipendenteId, x.Anno, x.Tipo }).IsUnique();
+    }
+}
+
+internal sealed class CertificazioneUnicaConfig : IEntityTypeConfiguration<CL.Domain.Documenti.CertificazioneUnica>
+{
+    public void Configure(EntityTypeBuilder<CL.Domain.Documenti.CertificazioneUnica> b)
+    {
+        b.ToTable("CertificazioniUniche");
+        b.Property(x => x.Id).ValueGeneratedNever();
+        b.Property(x => x.NomeFile).HasMaxLength(255);
+        b.Property(x => x.ChiaveArchivio).HasMaxLength(500);
+        b.Property(x => x.CaricataDa).HasMaxLength(256);
+        // Come i cedolini: cancellare un dipendente non deve far sparire le CU.
+        b.HasOne<Dipendente>().WithMany().HasForeignKey(x => x.DipendenteId).OnDelete(DeleteBehavior.Restrict);
+        b.HasOne<Azienda>().WithMany().HasForeignKey(x => x.AziendaId).OnDelete(DeleteBehavior.Restrict);
+        b.HasIndex(x => new { x.DipendenteId, x.AnnoImposta }).IsUnique();
     }
 }
 

@@ -64,25 +64,30 @@
                 <option value="6">6 (lun–sab)</option>
             </select>
         </div>
+        <div class="col-md-3">
+            <label asp-for="Modalita" class="form-label"></label>
+            <select asp-for="Modalita" asp-items="CL.Web.Controllers.ContrattoForm.ElencoModalita" class="form-select" data-mostra="giorniUfficioAssunzione" data-valore="Ibrido"></select>
+        </div>
+        <div class="col-md-3" id="giorniUfficioAssunzione">
+            <label asp-for="GiorniInUfficio" class="form-label"></label>
+            <input asp-for="GiorniInUfficio" type="number" min="1" max="5" class="form-control" />
+            <span asp-validation-for="GiorniInUfficio" class="text-danger"></span>
+        </div>
 
         <h2 class="h6 col-12 mt-4 mb-0 solo-dipendente">Spettanze annue da CCNL</h2>
         <p class="col-12 text-body-secondary small mb-0 solo-dipendente">Valori riferiti al full-time: per i part-time vengono riproporzionati automaticamente.</p>
-        <div class="col-md-4 solo-dipendente">
+        <div class="col-md-6 solo-dipendente">
             <label asp-for="OreFerieAnnue" class="form-label"></label>
             <input asp-for="OreFerieAnnue" type="text" inputmode="decimal" class="form-control" />
         </div>
-        <div class="col-md-4 solo-dipendente">
+        <div class="col-md-6 solo-dipendente">
             <label asp-for="OreRolAnnue" class="form-label"></label>
             <input asp-for="OreRolAnnue" type="text" inputmode="decimal" class="form-control" />
         </div>
-        <div class="col-md-4 solo-dipendente">
-            <label asp-for="OreExFestivitaAnnue" class="form-label"></label>
-            <input asp-for="OreExFestivitaAnnue" type="text" inputmode="decimal" class="form-control" />
-        </div>
 
-        <div class="col-12 d-flex gap-2 mt-4">
-            <button type="submit" class="btn btn-primary">Registra contratto</button>
+        <div class="col-12 d-flex justify-content-end gap-2 mt-4">
             <a asp-action="Dettaglio" asp-route-id="@Model.DipendenteId" class="btn btn-outline-secondary">Annulla</a>
+            <button type="submit" class="btn btn-primary">Registra contratto</button>
         </div>
     </form>
 </div>

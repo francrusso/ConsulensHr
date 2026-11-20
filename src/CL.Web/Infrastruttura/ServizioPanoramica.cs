@@ -23,7 +23,7 @@ public sealed class DatiPanoramica
     public int RichiesteInAttesa { get; init; }
     public decimal FerieGoduteAnno { get; init; }
     public decimal FerieDisponibili { get; init; }
-    /// <summary>Presenze del mese ricevute dallo studio su aziende attive (solo per lo studio).</summary>
+    /// <summary>Presenze del mese ricevute dal consulente su aziende attive (solo per il consulente).</summary>
     public (int Ricevute, int Totale, int Anno, int Mese)? Presenze { get; init; }
     /// <summary>Cedolini pubblicati negli ultimi 3 mesi e quanti già aperti dai dipendenti.</summary>
     public (int Consegnati, int Pubblicati) Cedolini { get; init; }
@@ -35,7 +35,7 @@ public sealed class DatiPanoramica
 }
 
 /// <summary>
-/// Dati della panoramica nel perimetro dell'utente (studio: tutte le aziende o una; referente: la propria).
+/// Dati della panoramica nel perimetro dell'utente (consulente: tutte le aziende o una; referente: la propria).
 /// Poche query aggregate; i saldi si calcolano in memoria con le regole di dominio.
 /// </summary>
 public sealed class ServizioPanoramica(AppDbContext db, UtenteCorrente utente, TimeProvider clock)
@@ -82,7 +82,7 @@ public sealed class ServizioPanoramica(AppDbContext db, UtenteCorrente utente, T
                 var a = aziende[d.AziendaId];
                 var x = ComunicazioneMensile.AssenzeDi(proprie, m.Year, m.Month, d.ContrattoAttivo(fineMese) ?? d.ContrattoAttivo(m),
                     a.SantoPatronoMese, a.SantoPatronoGiorno);
-                totale = new AssenzeDelMese(totale.Ferie + x.Ferie, totale.Rol + x.Rol, totale.ExFestivita + x.ExFestivita,
+                totale = new AssenzeDelMese(totale.Ferie + x.Ferie, totale.Rol + x.Rol,
                     totale.Malattia + x.Malattia, totale.Altre + x.Altre);
             }
             mesi.Add(new MeseAssenze(m.Year, m.Month, totale));

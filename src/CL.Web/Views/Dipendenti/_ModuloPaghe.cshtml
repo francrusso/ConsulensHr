@@ -1,0 +1,102 @@
+@model (Guid DipendenteId, CL.Web.Controllers.DatiPagheForm Paghe)
+@using CL.Domain.Dipendenti
+@{
+    var (idDip, paghe) = Model;
+    var righe = paghe.Famiglia.Familiari.ToList();
+    var visibili = righe.Count;
+    while (righe.Count < ProfiloDipendente.MaxFamiliari) righe.Add(new CL.Web.Controllers.FamiliareForm());
+}
+@* Campi dei dati per le paghe, aperti dentro la card della scheda (stesse regole del percorso guidato). *@
+<div class="modulo-paghe mt-4">
+
+    <h3 class="sottotitolo-paghe">Nascita e contatti</h3>
+    <div class="campi-profilo">
+        <div><label asp-for="@paghe.Anagrafica.ComuneNascita" class="form-label">Comune di nascita</label><input asp-for="@paghe.Anagrafica.ComuneNascita" class="form-control" placeholder="o Stato estero" /><span asp-validation-for="@paghe.Anagrafica.ComuneNascita" class="text-danger"></span></div>
+        <div><label asp-for="@paghe.Anagrafica.ProvinciaNascita" class="form-label">Provincia di nascita</label><input asp-for="@paghe.Anagrafica.ProvinciaNascita" class="form-control text-uppercase" maxlength="2" placeholder="EE se all'estero" /><span asp-validation-for="@paghe.Anagrafica.ProvinciaNascita" class="text-danger"></span></div>
+        <div><label asp-for="@paghe.Anagrafica.Cittadinanza" class="form-label"></label><input asp-for="@paghe.Anagrafica.Cittadinanza" class="form-control" /><span asp-validation-for="@paghe.Anagrafica.Cittadinanza" class="text-danger"></span></div>
+        <div><label asp-for="@paghe.Anagrafica.EmailPersonale" class="form-label">Email personale</label><input asp-for="@paghe.Anagrafica.EmailPersonale" class="form-control" type="email" /><span asp-validation-for="@paghe.Anagrafica.EmailPersonale" class="text-danger"></span></div>
+    </div>
+
+    <h3 class="sottotitolo-paghe">Domicilio</h3>
+    <div class="form-check form-switch mt-3">
+        <input asp-for="@paghe.Residenza.DomicilioDiverso" class="form-check-input" data-mostra="domicilioPaghe" />
+        <label asp-for="@paghe.Residenza.DomicilioDiverso" class="form-check-label"></label>
+    </div>
+    <div class="campi-profilo mt-2" id="domicilioPaghe">
+        <div class="campo-largo"><label asp-for="@paghe.Residenza.DomicilioVia" class="form-label">Indirizzo di domicilio</label><input asp-for="@paghe.Residenza.DomicilioVia" class="form-control" data-indirizzo="paghe-domicilio" /><span asp-validation-for="@paghe.Residenza.DomicilioVia" class="text-danger"></span></div>
+        <div><label asp-for="@paghe.Residenza.DomicilioComune" class="form-label"></label><select asp-for="@paghe.Residenza.DomicilioComune" asp-items="Elenchi.Comune(paghe.Residenza.DomicilioComune, paghe.Residenza.DomicilioProvincia)" class="form-select" data-comune="paghe-domicilio"><option value=""></option></select><span asp-validation-for="@paghe.Residenza.DomicilioComune" class="text-danger"></span></div>
+        <div class="campo-doppio">
+            <div><label asp-for="@paghe.Residenza.DomicilioCap" class="form-label"></label><input asp-for="@paghe.Residenza.DomicilioCap" class="form-control" inputmode="numeric" maxlength="5" data-cap="paghe-domicilio" /><span asp-validation-for="@paghe.Residenza.DomicilioCap" class="text-danger"></span></div>
+            <div><label asp-for="@paghe.Residenza.DomicilioProvincia" class="form-label"></label><select asp-for="@paghe.Residenza.DomicilioProvincia" asp-items="Elenchi.Province(paghe.Residenza.DomicilioProvincia)" class="form-select" data-provincia="paghe-domicilio"><option value=""></option></select><span asp-validation-for="@paghe.Residenza.DomicilioProvincia" class="text-danger"></span></div>
+        </div>
+    </div>
+
+    <h3 class="sottotitolo-paghe">Stipendio e TFR</h3>
+    <div class="campi-profilo">
+        <div class="campo-largo"><label asp-for="@paghe.Pagamento.IntestatarioConto" class="form-label">Intestatario del conto (se diverso)</label><input asp-for="@paghe.Pagamento.IntestatarioConto" class="form-control" /></div>
+        <div class="campo-largo">
+            <label asp-for="@paghe.Pagamento.Tfr" class="form-label">TFR</label>
+            <select asp-for="@paghe.Pagamento.Tfr" class="form-select" data-mostra="fondoPaghe" data-valore="FondoPensione">
+                <option value="Azienda">In azienda</option>
+                <option value="FondoPensione">A un fondo pensione</option>
+            </select>
+        </div>
+        <div class="campo-largo" id="fondoPaghe"><label asp-for="@paghe.Pagamento.FondoPensione" class="form-label"></label><input asp-for="@paghe.Pagamento.FondoPensione" class="form-control" placeholder="es. Fon.Te., Cometa…" /><span asp-validation-for="@paghe.Pagamento.FondoPensione" class="text-danger"></span></div>
+    </div>
+
+    <h3 class="sottotitolo-paghe">Detrazioni e familiari a carico</h3>
+    <div class="form-check form-switch">
+        <input asp-for="@paghe.Famiglia.RichiedeDetrazioni" class="form-check-input" />
+        <label asp-for="@paghe.Famiglia.RichiedeDetrazioni" class="form-check-label">Detrazioni per lavoro dipendente richieste</label>
+    </div>
+    <span asp-validation-for="@paghe.Famiglia.RichiedeDetrazioni" class="text-danger"></span>
+    @for (var i = 0; i < righe.Count; i++)
+    {
+        var f = righe[i];
+        var n = $"paghe.Famiglia.Familiari[{i}]";
+        var idr = $"paghe_fam_{i}";
+        <fieldset class="riga-familiare mt-3" hidden="@(i >= visibili)">
+            <legend class="visually-hidden">Familiare @(i + 1)</legend>
+            <div class="campi-familiare">
+                <div>
+                    <label class="form-label" for="@(idr)_rel">Relazione</label>
+                    <select class="form-select" id="@(idr)_rel" name="@(n).Relazione">
+                        <option value="Coniuge" selected="@(f.Relazione == RelazioneFamiliare.Coniuge)">Coniuge</option>
+                        <option value="Figlio" selected="@(f.Relazione == RelazioneFamiliare.Figlio)">Figlio/a</option>
+                        <option value="AltroFamiliare" selected="@(f.Relazione == RelazioneFamiliare.AltroFamiliare)">Altro familiare</option>
+                    </select>
+                </div>
+                <div><label class="form-label" for="@(idr)_nome">Nome</label><input class="form-control" id="@(idr)_nome" name="@(n).Nome" value="@f.Nome" maxlength="100" /><span class="text-danger" data-valmsg-for="@(n).Nome">@ViewData.ModelState[$"{n}.Nome"]?.Errors.FirstOrDefault()?.ErrorMessage</span></div>
+                <div><label class="form-label" for="@(idr)_cognome">Cognome</label><input class="form-control" id="@(idr)_cognome" name="@(n).Cognome" value="@f.Cognome" maxlength="100" /></div>
+                <div><label class="form-label" for="@(idr)_cf">Codice fiscale</label><input class="form-control text-uppercase" id="@(idr)_cf" name="@(n).CodiceFiscale" value="@f.CodiceFiscale" maxlength="16" /><span class="text-danger">@ViewData.ModelState[$"{n}.CodiceFiscale"]?.Errors.FirstOrDefault()?.ErrorMessage</span></div>
+                <div><label class="form-label" for="@(idr)_nascita">Nato/a il</label><input class="form-control" type="date" id="@(idr)_nascita" name="@(n).DataNascita" value="@f.DataNascita?.ToString("yyyy-MM-dd")" /><span class="text-danger">@ViewData.ModelState[$"{n}.DataNascita"]?.Errors.FirstOrDefault()?.ErrorMessage</span></div>
+                <div>
+                    <label class="form-label" for="@(idr)_carico">Carico</label>
+                    <select class="form-select" id="@(idr)_carico" name="@(n).PercentualeCarico">
+                        <option value="100" selected="@(f.PercentualeCarico == 100)">100%</option>
+                        <option value="50" selected="@(f.PercentualeCarico == 50)">50%</option>
+                    </select>
+                </div>
+                <div class="azioni-familiare">
+                    <div class="form-check mb-0"><input class="form-check-input" type="checkbox" id="@(idr)_dis" name="@(n).Disabile" value="true" checked="@f.Disabile" /><label class="form-check-label" for="@(idr)_dis">Disabile</label></div>
+                    <button type="button" class="btn-togli-familiare togli-familiare" aria-label="Togli questo familiare" title="Togli"><i class="ri-delete-bin-line" aria-hidden="true"></i></button>
+                </div>
+            </div>
+        </fieldset>
+    }
+    <button type="button" class="btn btn-outline-secondary btn-sm mt-3 aggiungi-familiare" hidden="@(visibili >= ProfiloDipendente.MaxFamiliari)"><i class="ri-user-add-line" aria-hidden="true"></i> Aggiungi un familiare</button>
+
+    <h3 class="sottotitolo-paghe">Altri dati</h3>
+    <div class="campi-profilo">
+        <div><label asp-for="@paghe.Altri.TitoloStudio" class="form-label"></label><select asp-for="@paghe.Altri.TitoloStudio" class="form-select" asp-items="CL.Web.Controllers.DatiPersonaliController.Titoli"></select></div>
+        <div><label asp-for="@paghe.Altri.TipoDocumento" class="form-label">Documento d'identità</label><select asp-for="@paghe.Altri.TipoDocumento" class="form-select" asp-items="CL.Web.Controllers.AltriDatiForm.Documenti.Select(x => new SelectListItem(x, x))"></select><span asp-validation-for="@paghe.Altri.TipoDocumento" class="text-danger"></span></div>
+        <div><label asp-for="@paghe.Altri.NumeroDocumento" class="form-label">Numero del documento</label><input asp-for="@paghe.Altri.NumeroDocumento" class="form-control text-uppercase" /><span asp-validation-for="@paghe.Altri.NumeroDocumento" class="text-danger"></span></div>
+        <div><label asp-for="@paghe.Altri.ScadenzaDocumento" class="form-label">Scadenza del documento</label><input asp-for="@paghe.Altri.ScadenzaDocumento" type="date" class="form-control" /><span asp-validation-for="@paghe.Altri.ScadenzaDocumento" class="text-danger"></span></div>
+        <div class="campo-largo"><label asp-for="@paghe.Altri.ScadenzaPermessoSoggiorno" class="form-label">Scadenza del permesso di soggiorno (se previsto)</label><input asp-for="@paghe.Altri.ScadenzaPermessoSoggiorno" type="date" class="form-control" /></div>
+    </div>
+
+    <div class="d-flex justify-content-end gap-2 mt-4 azioni-paghe">
+        <button type="button" class="btn btn-outline-secondary annulla-paghe">Annulla</button>
+        <button type="submit" class="btn btn-primary">Salva</button>
+    </div>
+</div>

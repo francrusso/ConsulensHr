@@ -69,8 +69,8 @@ public sealed class PresenzeWebTests : IDisposable
         Assert.Contains("value=\"5,5\"", await hr.GetStringAsync(Foglio));
 
         html = await Testo(await hr.InviaForm(Foglio, "/Presenze/Salva", new(campi) { ["invia"] = "true" }));
-        Assert.Contains("inviate allo studio", html);
-        Assert.Contains("chiedi allo studio di riaprirla", html);
+        Assert.Contains("inviate al consulente", html);
+        Assert.Contains("chiedi al consulente di riaprirla", html);
         var c = await _app.ConDb(db => db.ComunicazioniPresenze.SingleAsync());
         Assert.Equal(StatoComunicazione.Inviata, c.Stato);
         Assert.Equal(8m, c.Righe.Single().OreFerie);
@@ -79,20 +79,20 @@ public sealed class PresenzeWebTests : IDisposable
         html = await Testo(await hr.InviaForm(Foglio, "/Presenze/Salva", new(campi) { ["righe[0].OreStraordinario"] = "99" }));
         Assert.Contains("già stata inviata", html);
 
-        // Lo studio la vede nel cruscotto, scarica il CSV, la elabora e la riapre.
-        var studio = await Accedi("studio@test.it", Ruoli.Consulente);
-        Assert.Contains("Ricevute da 1 aziende su 1", WebUtility.HtmlDecode(await studio.GetStringAsync($"/Presenze?anno={_anno}&mese={_mese}")));
+        // Il consulente la vede nel cruscotto, scarica il CSV, la elabora e la riapre.
+        var consulente = await Accedi("consulente@test.it", Ruoli.Consulente);
+        Assert.Contains("Ricevute da 1 aziende su 1", WebUtility.HtmlDecode(await consulente.GetStringAsync($"/Presenze?anno={_anno}&mese={_mese}")));
 
-        var csv = await studio.GetAsync($"/Presenze/Esporta?aziendaId={_aziendaId}&anno={_anno}&mese={_mese}");
+        var csv = await consulente.GetAsync($"/Presenze/Esporta?aziendaId={_aziendaId}&anno={_anno}&mese={_mese}");
         Assert.Equal("text/csv", csv.Content.Headers.ContentType!.MediaType);
         var testoCsv = Encoding.UTF8.GetString(await csv.Content.ReadAsByteArrayAsync());
         Assert.StartsWith("﻿Matricola;", testoCsv);
-        Assert.Contains("\"42\";\"Rossi Mario\";RSSMRA85T10A562S;8;0;0;0;0;0;5,5;0;18;150;0;0;\"Trasferta a Roma\"", testoCsv);
+        Assert.Contains("\"42\";\"Rossi Mario\";RSSMRA85T10A562S;8;0;0;0;0;5,5;0;18;150;0;0;\"Trasferta a Roma\"", testoCsv);
 
         var foglioStudio = $"/Presenze/Foglio?aziendaId={_aziendaId}&anno={_anno}&mese={_mese}";
         var dati = new Dictionary<string, string> { ["aziendaId"] = _aziendaId.ToString(), ["anno"] = _anno.ToString(), ["mese"] = _mese.ToString() };
-        Assert.Contains("Mese segnato come elaborato", await Testo(await studio.InviaForm(foglioStudio, "/Presenze/Elabora", new(dati))));
-        Assert.Contains("Comunicazione riaperta", await Testo(await studio.InviaForm(foglioStudio, "/Presenze/Riapri", new(dati) { ["motivo"] = "Mancano le ore di sabato" })));
+        Assert.Contains("Mese segnato come elaborato", await Testo(await consulente.InviaForm(foglioStudio, "/Presenze/Elabora", new(dati))));
+        Assert.Contains("Comunicazione riaperta", await Testo(await consulente.InviaForm(foglioStudio, "/Presenze/Riapri", new(dati) { ["motivo"] = "Mancano le ore di sabato" })));
 
         Assert.Contains("Bozza salvata", await Testo(await hr.InviaForm(Foglio, "/Presenze/Salva", new(campi) { ["righe[0].OreStraordinario"] = "7" })));
         Assert.Equal(7m, (await _app.ConDb(db => db.ComunicazioniPresenze.SingleAsync())).Righe.Single().OreStraordinario);

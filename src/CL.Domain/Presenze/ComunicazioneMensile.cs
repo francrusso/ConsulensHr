@@ -8,9 +8,9 @@ public enum StatoComunicazione
 {
     /// <summary>L'azienda la sta compilando.</summary>
     Bozza,
-    /// <summary>Inviata allo studio: non più modificabile dall'azienda.</summary>
+    /// <summary>Inviata al consulente: non più modificabile dall'azienda.</summary>
     Inviata,
-    /// <summary>Lo studio ha elaborato le paghe del mese.</summary>
+    /// <summary>Il consulente ha elaborato le paghe del mese.</summary>
     Elaborata,
 }
 
@@ -23,15 +23,15 @@ public sealed record VociMensili(
 }
 
 /// <summary>Ore di assenza del mese ricavate da ferie e permessi registrati nel portale.</summary>
-public sealed record AssenzeDelMese(decimal Ferie, decimal Rol, decimal ExFestivita, decimal Malattia, decimal Altre)
+public sealed record AssenzeDelMese(decimal Ferie, decimal Rol, decimal Malattia, decimal Altre)
 {
-    public static readonly AssenzeDelMese Nessuna = new(0, 0, 0, 0, 0);
-    public decimal Totale => Ferie + Rol + ExFestivita + Malattia + Altre;
+    public static readonly AssenzeDelMese Nessuna = new(0, 0, 0, 0);
+    public decimal Totale => Ferie + Rol + Malattia + Altre;
 }
 
 /// <summary>
-/// Comunicazione mensile delle presenze e delle variazioni che l'azienda invia allo studio per le paghe.
-/// Le assenze arrivano dal portale; all'invio vengono fotografate, così lo studio elabora esattamente ciò che ha ricevuto.
+/// Comunicazione mensile delle presenze e delle variazioni che l'azienda invia al consulente per le paghe.
+/// Le assenze arrivano dal portale; all'invio vengono fotografate, così il consulente elabora esattamente ciò che ha ricevuto.
 /// </summary>
 public sealed class ComunicazioneMensile : Entity
 {
@@ -80,7 +80,7 @@ public sealed class ComunicazioneMensile : Entity
     }
 
     /// <summary>
-    /// Invia allo studio: crea le righe mancanti per i dipendenti in forza e fotografa le loro assenze del mese.
+    /// Invia al consulente: crea le righe mancanti per i dipendenti in forza e fotografa le loro assenze del mese.
     /// </summary>
     public void Invia(IReadOnlyDictionary<Guid, AssenzeDelMese> assenze, string da, DateTime adesso)
     {
@@ -105,7 +105,7 @@ public sealed class ComunicazioneMensile : Entity
         ElaborataDa = da;
     }
 
-    /// <summary>Lo studio la rimanda all'azienda per correzioni.</summary>
+    /// <summary>Il consulente la rimanda all'azienda per correzioni.</summary>
     public void Riapri()
     {
         if (Stato == StatoComunicazione.Bozza) throw new DomainException("La comunicazione è già modificabile.");
@@ -117,7 +117,7 @@ public sealed class ComunicazioneMensile : Entity
     private void RichiediBozza()
     {
         if (Stato != StatoComunicazione.Bozza)
-            throw new DomainException("La comunicazione è già stata inviata allo studio: per modificarla chiedi allo studio di riaprirla.");
+            throw new DomainException("La comunicazione è già stata inviata al consulente: per modificarla chiedi al consulente di riaprirla.");
     }
 
     /// <summary>
@@ -130,7 +130,7 @@ public sealed class ComunicazioneMensile : Entity
         var inizio = new DateOnly(anno, mese, 1);
         var fine = inizio.AddMonths(1).AddDays(-1);
         var giorniSettimana = contratto?.GiorniLavorativiSettimana ?? 5;
-        decimal ferie = 0, rol = 0, exf = 0, mal = 0, altre = 0;
+        decimal ferie = 0, rol = 0, mal = 0, altre = 0;
 
         foreach (var r in richieste.Where(r => r.Stato == StatoRichiesta.Approvata && r.SovrapponeA(inizio, fine)))
         {
@@ -148,12 +148,11 @@ public sealed class ComunicazioneMensile : Entity
             {
                 case TipoAssenza.Ferie: ferie += ore; break;
                 case TipoAssenza.Rol: rol += ore; break;
-                case TipoAssenza.ExFestivita: exf += ore; break;
                 case TipoAssenza.Malattia: mal += ore; break;
                 default: altre += ore; break;
             }
         }
-        return new AssenzeDelMese(ferie, rol, exf, mal, altre);
+        return new AssenzeDelMese(ferie, rol, mal, altre);
     }
 }
 
@@ -175,7 +174,6 @@ public sealed class RigaPresenze : Entity
     // Dal portale, fotografate all'invio
     public decimal OreFerie { get; private set; }
     public decimal OreRol { get; private set; }
-    public decimal OreExFestivita { get; private set; }
     public decimal OreMalattia { get; private set; }
     public decimal OreAltreAssenze { get; private set; }
 
@@ -188,7 +186,7 @@ public sealed class RigaPresenze : Entity
     }
 
     public VociMensili Voci => new(OreStraordinario, OreStraordinarioFestivo, OreNonRetribuite, BuoniPasto, Premi, Rimborsi, Anticipi, Note);
-    public AssenzeDelMese Assenze => new(OreFerie, OreRol, OreExFestivita, OreMalattia, OreAltreAssenze);
+    public AssenzeDelMese Assenze => new(OreFerie, OreRol, OreMalattia, OreAltreAssenze);
 
     internal void Imposta(VociMensili v)
     {
@@ -208,7 +206,6 @@ public sealed class RigaPresenze : Entity
     {
         OreFerie = a.Ferie;
         OreRol = a.Rol;
-        OreExFestivita = a.ExFestivita;
         OreMalattia = a.Malattia;
         OreAltreAssenze = a.Altre;
     }

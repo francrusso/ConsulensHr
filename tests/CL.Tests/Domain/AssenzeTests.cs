@@ -103,7 +103,7 @@ public class PianificatoreAssenzeTests
         var d = Fixture.Assunto(_azienda, new DateOnly(2026, 1, 1));
         var giorno = new DateOnly(2026, 9, 7);
         var mattina = Crea(d, TipoAssenza.Rol, giorno, giorno, ore: 4);
-        var pomeriggio = Crea(d, TipoAssenza.ExFestivita, giorno, giorno, [mattina], ore: 4);
+        var pomeriggio = Crea(d, TipoAssenza.Rol, giorno, giorno, [mattina], ore: 4);
 
         Assert.Equal(4m, pomeriggio.Ore);
         Assert.Throws<DomainException>(() => Crea(d, TipoAssenza.Rol, giorno, giorno, [mattina, pomeriggio], ore: 1));
@@ -131,7 +131,7 @@ public class PianificatoreAssenzeTests
         var d = Fixture.Assunto(_azienda, new DateOnly(2026, 1, 1));
         var r = Crea(d, TipoAssenza.Ferie, new DateOnly(2026, 8, 10), new DateOnly(2026, 8, 14));
 
-        r.Approva("consulente@studio.it", Fixture.Adesso);
+        r.Approva("consulente@consulente.it", Fixture.Adesso);
         Assert.Equal(StatoRichiesta.Approvata, r.Stato);
         Assert.Throws<DomainException>(() => r.Rifiuta("x", "motivo", Fixture.Adesso));
         Assert.Throws<DomainException>(() => r.Annulla(new DateOnly(2026, 8, 11))); // già iniziata

@@ -8,6 +8,10 @@
 
 <div class="breadcrumb-titolo d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
     <h1 class="titolo-pagina mb-0">@ViewData["Title"]</h1>
+    @if (gestore)
+    {
+        <a asp-action="Residui" class="btn btn-outline-secondary"><i class="ri-history-line" aria-hidden="true"></i> Inserisci residui anno precedente</a>
+    }
 </div>
 
 @if (Model.Saldi is not null)

@@ -130,25 +130,25 @@ public sealed class OrganigrammaWebTests : IDisposable
     public async Task Lo_studio_gestisce_l_organigramma_e_un_team_con_componenti_non_si_elimina()
     {
         await Dati();
-        await _app.CreaUtente("studio@test.it", Ruoli.Consulente);
-        var studio = _app.CreateClient();
-        await studio.Accedi("studio@test.it");
+        await _app.CreaUtente("consulente@test.it", Ruoli.Consulente);
+        var consulente = _app.CreateClient();
+        await consulente.Accedi("consulente@test.it");
         var pagina = $"/Team?aziendaId={_azienda}";
 
-        await studio.InviaForm(pagina, "/Team/Salva", new() { ["aziendaId"] = _azienda.ToString(), ["nome"] = "Magazzino", ["responsabileId"] = _verdi.ToString() });
+        await consulente.InviaForm(pagina, "/Team/Salva", new() { ["aziendaId"] = _azienda.ToString(), ["nome"] = "Magazzino", ["responsabileId"] = _verdi.ToString() });
         var team = await _app.ConDb(db => db.Team.SingleAsync());
-        await studio.InviaForm(pagina, "/Team/Assegna", new() { ["dipendenteId"] = _rossi.ToString(), ["teamId"] = team.Id.ToString(), ["ritorno"] = pagina });
+        await consulente.InviaForm(pagina, "/Team/Assegna", new() { ["dipendenteId"] = _rossi.ToString(), ["teamId"] = team.Id.ToString(), ["ritorno"] = pagina });
 
-        var html = WebUtility.HtmlDecode(await studio.GetStringAsync(pagina));
+        var html = WebUtility.HtmlDecode(await consulente.GetStringAsync(pagina));
         Assert.Contains("Magazzino", html);
         Assert.Contains("Verdi Anna", html);
-        Assert.Contains("Esiste già un team", await Testo(await studio.InviaForm(pagina, "/Team/Salva", new() { ["aziendaId"] = _azienda.ToString(), ["nome"] = "magazzino" })));
+        Assert.Contains("Esiste già un team", await Testo(await consulente.InviaForm(pagina, "/Team/Salva", new() { ["aziendaId"] = _azienda.ToString(), ["nome"] = "magazzino" })));
 
-        html = await Testo(await studio.InviaForm(pagina, "/Team/Elimina", new() { ["aziendaId"] = _azienda.ToString(), ["id"] = team.Id.ToString() }));
+        html = await Testo(await consulente.InviaForm(pagina, "/Team/Elimina", new() { ["aziendaId"] = _azienda.ToString(), ["id"] = team.Id.ToString() }));
         Assert.Contains("ha dei componenti", html);
 
         // Nella scheda del dipendente si vede chi approva.
-        var scheda = WebUtility.HtmlDecode(await studio.GetStringAsync($"/Dipendenti/Dettaglio/{_rossi}"));
+        var scheda = WebUtility.HtmlDecode(await consulente.GetStringAsync($"/Dipendenti/Dettaglio/{_rossi}"));
         Assert.Contains("Approva ferie e permessi", scheda);
         Assert.Contains("Verdi Anna", scheda);
     }

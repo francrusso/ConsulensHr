@@ -1,7 +1,7 @@
 @model (List<CL.Web.Controllers.RichiestaRiga> Righe, bool PuoApprovare, bool MostraDipendente, bool MostraAzienda, DateOnly Oggi, string Ritorno)
 @inject UtenteCorrente Utente
 @{
-    @* Approva/rifiuta: solo il referente dell'azienda. Lo studio annulla solo assenze che non richiedono approvazione. *@
+    @* Approva/rifiuta: solo il referente dell'azienda. Il consulente annulla solo assenze che non richiedono approvazione. *@
     var (righe, gestore, mostraDipendente, mostraAzienda, oggi, ritorno) = Model;
     var colonne = 5 + (mostraDipendente ? 1 : 0) + (mostraAzienda ? 1 : 0);
 }

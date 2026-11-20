@@ -69,7 +69,7 @@ public sealed class ServizioPresenze(AppDbContext db, CodaEmail coda, ServizioAc
         return new FoglioPresenze(azienda, anno, mese, comunicazione, righe);
     }
 
-    /// <summary>Stato del mese per ogni azienda attiva, per il cruscotto dello studio.</summary>
+    /// <summary>Stato del mese per ogni azienda attiva, per il cruscotto del consulente.</summary>
     public async Task<List<StatoAziendaMese>> StatoMeseAsync(int anno, int mese)
     {
         var inizio = new DateOnly(anno, mese, 1);
@@ -91,12 +91,12 @@ public sealed class ServizioPresenze(AppDbContext db, CodaEmail coda, ServizioAc
         static string T(string? s) => s is null ? "" : "\"" + s.Replace("\"", "\"\"").Replace('\n', ' ').Replace('\r', ' ') + "\"";
 
         var sb = new StringBuilder();
-        sb.AppendLine("Matricola;Dipendente;Codice fiscale;Ferie (ore);ROL (ore);Ex-festività (ore);Malattia (ore);Altre assenze (ore);" +
+        sb.AppendLine("Matricola;Dipendente;Codice fiscale;Ferie (ore);ROL e permessi (ore);Malattia (ore);Altre assenze (ore);" +
                       "Non retribuite (ore);Straordinario (ore);Straordinario festivo (ore);Buoni pasto;Premi (€);Rimborsi (€);Anticipi (€);Note");
         foreach (var r in f.Righe)
         {
             var (a, v) = (r.Assenze, r.Voci);
-            sb.AppendLine(string.Join(';', T(r.Matricola), T(r.Nome), r.CodiceFiscale, N(a.Ferie), N(a.Rol), N(a.ExFestivita), N(a.Malattia), N(a.Altre),
+            sb.AppendLine(string.Join(';', T(r.Matricola), T(r.Nome), r.CodiceFiscale, N(a.Ferie), N(a.Rol), N(a.Malattia), N(a.Altre),
                 N(v.OreNonRetribuite), N(v.OreStraordinario), N(v.OreStraordinarioFestivo), v.BuoniPasto, N(v.Premi), N(v.Rimborsi), N(v.Anticipi), T(v.Note)));
         }
         if (f.Comunicazione?.Note is { } note) sb.AppendLine().AppendLine("Note dell'azienda;" + T(note));
@@ -126,9 +126,9 @@ public sealed class ServizioPresenze(AppDbContext db, CodaEmail coda, ServizioAc
                 riaperta ? $"Presenze di {periodo} da correggere" : $"Promemoria: presenze di {periodo}",
                 $"""
                 <p>{(riaperta
-                    ? $"Lo studio ha riaperto la comunicazione delle presenze di {periodo} per una correzione."
-                    : $"Lo studio attende presenze e variazioni di {periodo} per elaborare le buste paga.")}</p>
-                {(string.IsNullOrWhiteSpace(motivo) ? "" : $"<p>Messaggio dello studio: {WebUtility.HtmlEncode(motivo)}</p>")}
+                    ? $"Il consulente ha riaperto la comunicazione delle presenze di {periodo} per una correzione."
+                    : $"Il consulente attende presenze e variazioni di {periodo} per elaborare le buste paga.")}</p>
+                {(string.IsNullOrWhiteSpace(motivo) ? "" : $"<p>Messaggio del consulente: {WebUtility.HtmlEncode(motivo)}</p>")}
                 <p>Puoi compilarla e inviarla dal portale: <a href="{link}">{link}</a></p><p>Consulens HR</p>
                 """));
         return destinatari.Count;

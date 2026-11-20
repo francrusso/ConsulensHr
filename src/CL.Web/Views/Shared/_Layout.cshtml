@@ -40,6 +40,7 @@
     <link rel="stylesheet" href="~/assets/plugins/perfect-scrollbar/css/perfect-scrollbar.css" />
     <link rel="stylesheet" href="~/assets/plugins/metismenu/css/metisMenu.min.css" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" />
+    <link rel="stylesheet" href="~/assets/plugins/select2/css/select2.min.css" />
     <link rel="stylesheet" href="~/assets/css/icons.css" />
     <link rel="stylesheet" href="~/assets/css/custom.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/assets/css/authentication.css" asp-append-version="true" />
@@ -137,10 +138,15 @@
                             </li>
                         }
                         <li>
-                            <a asp-controller="BustePaga" asp-action="Index">
-                                <div class="parent-icon icon-color-1"><i class="ri-file-list-3-line ri-xs"></i></div>
-                                <div class="menu-title">Buste paga</div>
+                            <a href="javascript:;" class="has-arrow">
+                                <div class="parent-icon icon-color-1"><i class="ri-folder-3-line ri-xs"></i></div>
+                                <div class="menu-title">Documenti</div>
                             </a>
+                            <ul>
+                                <li><a asp-controller="BustePaga" asp-action="Index">Buste paga</a></li>
+                                <li><a asp-controller="Documenti" asp-action="Cu">CU</a></li>
+                                <li><a asp-controller="Documenti" asp-action="Contratti">Contratti</a></li>
+                            </ul>
                         </li>
                         @if (Utente.IsConsulente)
                         {
@@ -261,6 +267,7 @@
             <div class="page-wrapper">
                 <main role="main" id="body-pd" class="page-content-wrapper">
                     <div class="page-content">
+                        <partial name="_PageBreadcrumbs" />
                         <partial name="_Messaggi" />
                         @RenderBody()
                     </div>
@@ -284,6 +291,9 @@
     <script src="~/assets/plugins/simplebar/js/simplebar.min.js"></script>
     <script src="~/assets/plugins/metismenu/js/metisMenu.min.js"></script>
     <script src="~/assets/plugins/perfect-scrollbar/js/perfect-scrollbar.js"></script>
+    <script src="~/assets/plugins/select2/js/select2.min.js"></script>
+    <script src="~/js/indirizzi.js" asp-append-version="true"></script>
+    <script src="~/js/moduli.js" asp-append-version="true"></script>
     <script src="~/assets/js/app.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>

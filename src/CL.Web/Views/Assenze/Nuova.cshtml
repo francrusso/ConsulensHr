@@ -6,7 +6,6 @@
     var saldi = ViewBag.Saldi as IReadOnlyList<SaldoAssenza>;
 }
 
-<a asp-action="Index" class="small text-body-secondary"><i class="ri-arrow-left-s-line" aria-hidden="true"></i> Ferie e permessi</a>
 <h1 class="titolo-pagina mb-3">@ViewData["Title"]</h1>
 
 @if (saldi is not null)
@@ -80,13 +79,13 @@
         else if (gestore)
         {
             <div class="col-12">
-                <p class="form-text mb-0"><i class="ri-information-line" aria-hidden="true"></i> Ferie, ROL e permessi registrati dallo studio restano <strong>in attesa dell'approvazione dell'azienda</strong>; malattia e altre assenze documentate sono registrate subito.</p>
+                <p class="form-text mb-0"><i class="ri-information-line" aria-hidden="true"></i> Ferie, ROL e permessi registrati dal consulente restano <strong>in attesa dell'approvazione dell'azienda</strong>; malattia e altre assenze documentate sono registrate subito.</p>
             </div>
         }
 
-        <div class="col-12 d-flex gap-2 mt-3">
-            <button type="submit" class="btn btn-primary">@(gestore ? "Registra" : "Invia richiesta")</button>
+        <div class="col-12 d-flex justify-content-end gap-2 mt-3">
             <a asp-action="Index" class="btn btn-outline-secondary">Annulla</a>
+            <button type="submit" class="btn btn-primary">@(gestore ? "Registra" : "Invia richiesta")</button>
         </div>
     </form>
 </div>

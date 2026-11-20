@@ -35,14 +35,14 @@ public class PresenzeTests
         var c = new ComunicazioneMensile(Guid.NewGuid(), 2026, 10);
         var dip = Guid.NewGuid();
         c.ImpostaVoci(dip, VociMensili.Nessuna with { OreStraordinario = 5 });
-        c.Invia(new Dictionary<Guid, AssenzeDelMese> { [dip] = new(8, 0, 0, 0, 0), [Guid.NewGuid()] = AssenzeDelMese.Nessuna }, "hr", Fixture.Adesso);
+        c.Invia(new Dictionary<Guid, AssenzeDelMese> { [dip] = new(8, 0, 0, 0), [Guid.NewGuid()] = AssenzeDelMese.Nessuna }, "hr", Fixture.Adesso);
 
         Assert.Equal(StatoComunicazione.Inviata, c.Stato);
         Assert.Equal(2, c.Righe.Count); // creata anche la riga del dipendente senza variazioni
         Assert.Equal(8m, c.RigaDi(dip)!.OreFerie);
         Assert.Throws<DomainException>(() => c.ImpostaVoci(dip, VociMensili.Nessuna));
 
-        c.SegnaElaborata("studio", Fixture.Adesso);
+        c.SegnaElaborata("consulente", Fixture.Adesso);
         c.Riapri();
         c.ImpostaVoci(dip, VociMensili.Nessuna with { OreStraordinario = 6 });
         Assert.Equal(6m, c.RigaDi(dip)!.OreStraordinario);

@@ -23,9 +23,9 @@ public sealed class AziendeWebTests : IDisposable
 
     private async Task<HttpClient> Studio()
     {
-        await _app.CreaUtente("studio@test.it", Ruoli.Consulente);
+        await _app.CreaUtente("consulente@test.it", Ruoli.Consulente);
         var c = _app.CreateClient();
-        await c.Accedi("studio@test.it");
+        await c.Accedi("consulente@test.it");
         return c;
     }
 
@@ -45,9 +45,9 @@ public sealed class AziendeWebTests : IDisposable
     [Fact]
     public async Task Ricerca_per_partita_iva_compila_i_dati_del_registro()
     {
-        var studio = await Studio();
+        var consulente = await Studio();
         async Task<JsonElement> Cerca(string piva) =>
-            JsonDocument.Parse(await studio.GetStringAsync($"/Aziende/CercaPartitaIva?partitaIva={piva}")).RootElement;
+            JsonDocument.Parse(await consulente.GetStringAsync($"/Aziende/CercaPartitaIva?partitaIva={piva}")).RootElement;
 
         var trovata = await Cerca("IT 01234567897");
         Assert.Equal("trovata", trovata.GetProperty("esito").GetString());
@@ -58,30 +58,30 @@ public sealed class AziendeWebTests : IDisposable
         Assert.Equal("non-valida", (await Cerca("01234567890")).GetProperty("esito").GetString()); // cifra di controllo errata
         Assert.Equal("non-disponibile", (await Cerca("12345678903")).GetProperty("esito").GetString());
 
-        await Salva(studio, new() { ["RagioneSociale"] = "Acme S.r.l.", ["PartitaIva"] = "01234567897" });
+        await Salva(consulente, new() { ["RagioneSociale"] = "Acme S.r.l.", ["PartitaIva"] = "01234567897" });
         Assert.Equal("esistente", (await Cerca("01234567897")).GetProperty("esito").GetString());
     }
 
     [Fact]
     public async Task Controlli_formali_sui_campi_dell_azienda()
     {
-        var studio = await Studio();
+        var consulente = await Studio();
         var validi = new Dictionary<string, string>
         {
             ["RagioneSociale"] = "Acme S.r.l.", ["PartitaIva"] = "01234567897", ["Indirizzo"] = "Via Roma 1", ["Cap"] = "20121",
             ["Comune"] = "Milano", ["Provincia"] = "MI", ["Email"] = "info@acme.it",
         };
 
-        Assert.Contains("CAP di 5 cifre", await Testo(await Salva(studio, new(validi) { ["Cap"] = "2012" })));
-        Assert.Contains("La provincia \"XX\" non esiste", await Testo(await Salva(studio, new(validi) { ["Provincia"] = "XX" })));
-        Assert.Contains("Email non valida", await Testo(await Salva(studio, new(validi) { ["Email"] = "info@acme" })));
-        Assert.Contains("cifra di controllo errata", await Testo(await Salva(studio, new(validi) { ["CodiceFiscale"] = "01234567890" })));
-        Assert.Contains("controllo", await Testo(await Salva(studio, new(validi) { ["CodiceFiscale"] = "RSSMRA85T10A562X" })));
-        Assert.Contains("partita IVA", await Testo(await Salva(studio, new(validi) { ["PartitaIva"] = "01234567890" })));
+        Assert.Contains("CAP di 5 cifre", await Testo(await Salva(consulente, new(validi) { ["Cap"] = "2012" })));
+        Assert.Contains("La provincia \"XX\" non esiste", await Testo(await Salva(consulente, new(validi) { ["Provincia"] = "XX" })));
+        Assert.Contains("Email non valida", await Testo(await Salva(consulente, new(validi) { ["Email"] = "info@acme" })));
+        Assert.Contains("cifra di controllo errata", await Testo(await Salva(consulente, new(validi) { ["CodiceFiscale"] = "01234567890" })));
+        Assert.Contains("controllo", await Testo(await Salva(consulente, new(validi) { ["CodiceFiscale"] = "RSSMRA85T10A562X" })));
+        Assert.Contains("partita IVA", await Testo(await Salva(consulente, new(validi) { ["PartitaIva"] = "01234567890" })));
         Assert.Equal(0, await _app.ConDb(db => db.Aziende.CountAsync()));
 
         // Ditta individuale: codice fiscale personale di 16 caratteri accettato.
-        var html = await Testo(await Salva(studio, new(validi) { ["CodiceFiscale"] = "rssmra85t10a562s" }));
+        var html = await Testo(await Salva(consulente, new(validi) { ["CodiceFiscale"] = "rssmra85t10a562s" }));
         Assert.Contains("Azienda Acme S.r.l. creata", html);
         Assert.Contains("Via Roma 1, 20121 Milano (MI)", html);
         Assert.Equal("RSSMRA85T10A562S", (await _app.ConDb(db => db.Aziende.SingleAsync())).CodiceFiscale);
@@ -90,17 +90,17 @@ public sealed class AziendeWebTests : IDisposable
     [Fact]
     public async Task Logo_caricato_visibile_allo_studio_e_alla_propria_azienda()
     {
-        var studio = await Studio();
+        var consulente = await Studio();
         Assert.Contains("deve essere un'immagine",
-            await Testo(await Salva(studio, new() { ["RagioneSociale"] = "Acme S.r.l.", ["PartitaIva"] = "01234567897" }, ("logo.png", "<svg/>"u8.ToArray()))));
+            await Testo(await Salva(consulente, new() { ["RagioneSociale"] = "Acme S.r.l.", ["PartitaIva"] = "01234567897" }, ("logo.png", "<svg/>"u8.ToArray()))));
 
-        var html = await Testo(await Salva(studio, new() { ["RagioneSociale"] = "Acme S.r.l.", ["PartitaIva"] = "01234567897" }, ("logo.png", Png)));
+        var html = await Testo(await Salva(consulente, new() { ["RagioneSociale"] = "Acme S.r.l.", ["PartitaIva"] = "01234567897" }, ("logo.png", Png)));
         Assert.Contains("Azienda Acme S.r.l. creata", html);
         var acme = await _app.ConDb(db => db.Aziende.SingleAsync());
         Assert.Matches(@"^loghi/[0-9a-f-]+-[0-9a-f]{32}\.png$", acme.LogoChiave);
         Assert.Contains($"/Aziende/Logo/{acme.Id}", html);
 
-        var logo = await studio.GetAsync($"/Aziende/Logo/{acme.Id}");
+        var logo = await consulente.GetAsync($"/Aziende/Logo/{acme.Id}");
         Assert.Equal("image/png", logo.Content.Headers.ContentType!.MediaType);
         Assert.Equal(Png, await logo.Content.ReadAsByteArrayAsync());
 

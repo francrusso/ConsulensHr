@@ -6,6 +6,9 @@ namespace CL.Domain.Dipendenti;
 /// <summary>Genere dichiarato dalla persona (facoltativo).</summary>
 public enum Genere { Donna, Uomo, NonBinario, NonIndicato }
 
+/// <summary>Sede di lavoro abituale: una delle sedi censite dall'azienda oppure smart working.</summary>
+public enum SedeLavoro { SedeLegale, SedeOperativa, SmartWorking }
+
 /// <summary>Pronomi dichiarati dalla persona (facoltativi).</summary>
 public enum Pronomi { Femminili, Maschili, Neutri, Tutti, NonIndicati }
 
@@ -41,7 +44,12 @@ public sealed class Dipendente : Entity
     public DateOnly DataNascita { get; private set; }
     public string? Email { get; private set; }
     public string? Telefono { get; private set; }
+    /// <summary>Via e numero civico della residenza.</summary>
     public string? Indirizzo { get; private set; }
+    public string? Cap { get; private set; }
+    public string? Comune { get; private set; }
+    /// <summary>Sigla della provincia (es. MI).</summary>
+    public string? Provincia { get; private set; }
     public Iban? Iban { get; private set; }
     public string? Matricola { get; private set; }
     /// <summary>Utente Identity collegato (portale dipendente), se abilitato.</summary>
@@ -57,6 +65,7 @@ public sealed class Dipendente : Entity
     public string? FotoChiave { get; private set; }
     /// <summary>Genere e pronomi dichiarati dalla persona: mai dedotti dal codice fiscale.</summary>
     public Genere? Genere { get; private set; }
+    public SedeLavoro? Sede { get; private set; }
     public Pronomi? Pronomi { get; private set; }
 
     /// <summary>
@@ -105,14 +114,25 @@ public sealed class Dipendente : Entity
         DataNascita = dataNascita;
     }
 
-    public void AggiornaRecapiti(string? email, string? telefono, string? indirizzo)
+    public void AggiornaRecapiti(string? email, string? telefono)
     {
         Email = email?.Trim();
         Telefono = telefono?.Trim();
-        Indirizzo = indirizzo?.Trim();
     }
 
+    /// <summary>Residenza: via e civico, CAP, comune e sigla di provincia, tutti insieme (o nessuno).</summary>
+    public void ImpostaResidenza(Aziende.Indirizzo? residenza)
+    {
+        var r = residenza?.Validato("di residenza");
+        (Indirizzo, Cap, Comune, Provincia) = (r?.Via, r?.Cap, r?.Comune, r?.Provincia);
+    }
+
+    /// <summary>"Via Roma 10, 20121 Milano (MI)"; per i dati inseriti prima della scomposizione, solo la via.</summary>
+    public string? IndirizzoCompleto => Indirizzo is null ? null
+        : Comune is null ? Indirizzo : $"{Indirizzo}, {Cap} {Comune} ({Provincia})";
+
     public void ImpostaIban(Iban? iban) => Iban = iban;
+    public void ImpostaSede(SedeLavoro? sede) => Sede = sede;
     public void ImpostaMatricola(string? matricola) => Matricola = matricola?.Trim();
     public void CollegaUtente(string? userId) => UserId = userId;
     public void ImpostaFoto(string chiave) => FotoChiave = Guard.NotEmpty(chiave, "Foto");
@@ -135,7 +155,8 @@ public sealed class Dipendente : Entity
     public Contratto Assumi(TipoContratto tipo, string ccnl, string livello, DateOnly dataInizio, DateOnly? dataFine,
         decimal retribuzioneLordaAnnua, int mensilitaAnnue = 13, decimal oreSettimanaliFullTime = 40,
         decimal percentualePartTime = 100, int giorniLavorativiSettimana = 5,
-        decimal oreFerieAnnue = 160, decimal oreRolAnnue = 72, decimal oreExFestivitaAnnue = 32, string? mansione = null)
+        decimal oreFerieAnnue = 160, decimal oreRolAnnue = 72, string? mansione = null,
+        ModalitaLavoro modalita = ModalitaLavoro.InPresenza, int? giorniInUfficio = null)
     {
         if (dataInizio < DataNascita.AddYears(16))
             throw new DomainException("Il lavoratore deve avere almeno 16 anni alla data di assunzione.");
@@ -146,12 +167,28 @@ public sealed class Dipendente : Entity
 
         var contratto = new Contratto(Id, tipo, ccnl, livello, dataInizio, dataFine, oreSettimanaliFullTime,
             percentualePartTime, giorniLavorativiSettimana, retribuzioneLordaAnnua, mensilitaAnnue,
-            oreFerieAnnue, oreRolAnnue, oreExFestivitaAnnue, mansione);
+            oreFerieAnnue, oreRolAnnue, mansione, modalita, giorniInUfficio);
         _contratti.Add(contratto);
         return contratto;
     }
 
-    public void Cessa(DateOnly dataCessazione)
+/// <summary>Correzione delle condizioni di un contratto già registrato (stessi controlli dell'assunzione).</summary>
+    public void ModificaContratto(Guid contrattoId, TipoContratto tipo, string ccnl, string livello, DateOnly dataInizio, DateOnly? dataFine,
+        decimal retribuzioneLordaAnnua, int mensilitaAnnue, decimal oreSettimanaliFullTime, decimal percentualePartTime,
+        int giorniLavorativiSettimana, decimal oreFerieAnnue, decimal oreRolAnnue, string? mansione,
+        ModalitaLavoro modalita = ModalitaLavoro.InPresenza, int? giorniInUfficio = null)
+    {
+        var contratto = _contratti.FirstOrDefault(c => c.Id == contrattoId) ?? throw new DomainException("Contratto non trovato.");
+        if (dataInizio < DataNascita.AddYears(16))
+            throw new DomainException("Il lavoratore deve avere almeno 16 anni alla data di assunzione.");
+        var nuovaFine = dataFine ?? DateOnly.MaxValue;
+        if (_contratti.Any(c => c.Id != contrattoId && c.DataInizio <= nuovaFine && dataInizio <= (c.DataFine ?? DateOnly.MaxValue)))
+            throw new DomainException("Il periodo si sovrappone a un altro contratto della persona.");
+        contratto.Imposta(tipo, ccnl, livello, dataInizio, dataFine, oreSettimanaliFullTime, percentualePartTime, giorniLavorativiSettimana,
+            retribuzioneLordaAnnua, mensilitaAnnue, oreFerieAnnue, oreRolAnnue, mansione, modalita, giorniInUfficio);
+    }
+
+        public void Cessa(DateOnly dataCessazione)
     {
         var attivo = ContrattoAttivo(dataCessazione)
             ?? throw new DomainException("Nessun contratto attivo alla data di cessazione.");
