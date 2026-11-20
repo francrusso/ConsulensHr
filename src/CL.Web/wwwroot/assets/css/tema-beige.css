@@ -4,15 +4,15 @@
  * questo file, caricato per ultimo, sostituisce solo la palette blu.
  * Distribuzione dei colori come ConsulensNew: cornice (sidebar, topbar, sfondo) beige, contenuto della pagina bianco.
  *
- * Palette: #FFFAF4 cornice · #FFFDFA superfici tenui · #FFFFFF contenuto
+ * Palette: #FFFDFB cornice (sfondo e sidebar) · #FFFAF4 / #FFFDFA superfici tenui · #FFFFFF contenuto
  *          #512D38 prugna (al posto del blu scuro Consulens) · #98494E accento bordeaux
- * Contrasti (WCAG AA): #512D38 su #FFFAF4 ≈ 12:1; #98494E su bianco ≈ 6.6:1; testo bianco su #98494E ≈ 6.6:1.
+ * Contrasti (WCAG AA): #512D38 su #FFFDFB ≈ 12:1; #98494E su bianco ≈ 6.6:1; testo bianco su #98494E ≈ 6.6:1.
  */
 
 :root,
 [data-bs-theme=light] {
   /* Superfici: cornice beige, contenuto bianco */
-  --consulens-canvas: #fffaf4;
+  --consulens-canvas: #fffdfb;
   --consulens-surface: #fff;
   --consulens-surface-subtle: #fff6eb;
   --consulens-section-bg: #fffdfa;
@@ -130,7 +130,10 @@
 .topbar-profile-chevron { color: #512d38; }
 
 /* Colori scritti direttamente in authentication.css */
-.auth-panel { background: radial-gradient(circle closest-side, #ffffff, #fff3e6); }
+.auth-panel {
+  background: url("../images/auth-background.png") center / cover no-repeat,
+              radial-gradient(circle closest-side, #ffffff, #fff3e6);
+}
 
 /* Colori scritti direttamente in app.css (componenti usati qui) */
 .table > :not(caption) > * > * { border-bottom-color: var(--consulens-divider); }

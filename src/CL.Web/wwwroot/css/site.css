@@ -1,14 +1,32 @@
 /* Piccoli adattamenti di Consulens HR sopra il tema di ConsulensNew. */
 
-/* Il logout è un POST (form + button): stesso aspetto del link originale. */
-.sidebar-footer button.sidebar-logout {
+/* Il logout è un POST (form + button): gli stili di ConsulensNew valgono per i link (.sidebar-footer a),
+   quindi qui il button li riprende uguali, compreso lo stato con la sidebar ridotta. */
+.sidebar-wrapper .sidebar-footer form { width: 100%; }
+.sidebar-wrapper .sidebar-footer button.sidebar-logout {
   display: flex;
   align-items: center;
+  gap: 10px;
   width: 100%;
-  border: 0;
+  min-height: 32px;
+  margin-top: 11px;
+  padding: 7px 12px;
+  border: 1px solid var(--sidebar-line);
+  border-radius: 8px;
   background: transparent;
+  font-family: 'Quasimoda', 'Poppins', sans-serif;
+  font-size: 12px;
+  line-height: 18px;
+  letter-spacing: .8px;
+  text-transform: uppercase;
   text-align: left;
-  font: inherit;
+  cursor: pointer;
+  transition: all .3s ease-out;
+}
+.sidebar-wrapper .sidebar-footer button.sidebar-logout:hover { background: var(--consulens-hover); color: var(--consulens-nav-text); }
+
+@media (min-width: 1025px) {
+  .wrapper.toggled .sidebar-wrapper .sidebar-footer button.sidebar-logout { justify-content: center; padding: 8px; }
 }
 
 /* Numeri grandi nelle card della panoramica */

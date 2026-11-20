@@ -112,22 +112,15 @@
 
                     <div class="right-topbar ms-auto">
                         <ul class="navbar-nav">
-                            <li class="nav-item dropdown dropdown-user-profile topbar-profile">
-                                <a class="nav-link dropdown-toggle dropdown-toggle-nocaret" href="javascript:;" data-bs-toggle="dropdown"
-                                   aria-label="Apri menù profilo" aria-expanded="false">
+                            <li class="nav-item topbar-profile">
+                                <div class="nav-link">
                                     <div class="d-flex user-box align-items-center">
                                         <img src="~/assets/images/avatars/avatar-1.jpg" class="user-img" alt="" />
                                         <div class="user-info">
                                             <p class="user-name mb-0">@Utente.Nome</p>
                                             <p class="designattion mb-0">@ruolo</p>
                                         </div>
-                                        <i class="ri-arrow-down-s-line topbar-profile-chevron" aria-hidden="true"></i>
                                     </div>
-                                </a>
-                                <div class="dropdown-menu dropdown-menu-end">
-                                    <form asp-controller="Account" asp-action="Logout" method="post" class="m-0">
-                                        <button type="submit" class="dropdown-item"><i class="ri-logout-circle-line"></i><span>Esci</span></button>
-                                    </form>
                                 </div>
                             </li>
                         </ul>
