@@ -1,5 +1,5 @@
 @model CL.Web.Controllers.AnagraficaForm
-<form asp-action="Anagrafica" method="post" novalidate>
+<form asp-action="Anagrafica" method="post" enctype="multipart/form-data" novalidate>
     <partial name="_IdDipendente" />
     <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
     <div class="row g-3 mt-1">
@@ -8,6 +8,23 @@
         <div class="col-md-5"><label asp-for="Cittadinanza" class="form-label"></label><input asp-for="Cittadinanza" class="form-control" /><span asp-validation-for="Cittadinanza" class="text-danger"></span></div>
         <div class="col-md-5"><label asp-for="Telefono" class="form-label"></label><input asp-for="Telefono" type="tel" class="form-control" /></div>
         <div class="col-md-7"><label asp-for="EmailPersonale" class="form-label"></label><input asp-for="EmailPersonale" type="email" class="form-control" /><span asp-validation-for="EmailPersonale" class="text-danger"></span></div>
+        <div class="col-md-6">
+            <label asp-for="Genere" class="form-label"></label>
+            <select asp-for="Genere" class="form-select" asp-items="CL.Web.Controllers.DatiPersonaliController.Generi"><option value="">—</option></select>
+        </div>
+        <div class="col-md-6">
+            <label asp-for="Pronomi" class="form-label"></label>
+            <select asp-for="Pronomi" class="form-select" asp-items="CL.Web.Controllers.DatiPersonaliController.ElencoPronomi"><option value="">—</option></select>
+            <div class="form-text">Servono solo a come ti presentiamo nel portale (per esempio l'immagine al posto della foto).</div>
+        </div>
+        <div class="col-md-8">
+            <label asp-for="Foto" class="form-label"></label>
+            <div class="d-flex align-items-center gap-3">
+                @if (Model.HaFoto && ViewData["FotoUrl"] is string url) { <img src="@url" alt="Foto attuale" class="foto-dipendente" /> }
+                <input asp-for="Foto" type="file" class="form-control" accept="@CL.Web.Infrastruttura.Immagini.FormatiAccettati" />
+            </div>
+            <span asp-validation-for="Foto" class="text-danger"></span>
+        </div>
     </div>
     <partial name="_Pulsanti" model="1" />
 </form>

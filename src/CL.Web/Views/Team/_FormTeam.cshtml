@@ -2,8 +2,10 @@
 @{
     var (vm, team) = Model;
     var chiave = team?.Id.ToString("N") ?? "nuovo";
+    var coloreAttuale = team?.Colore;
+    var emojiSuggerite = new[] { "🏢", "💼", "🛒", "📦", "🧾", "💻", "🎨", "📣", "🔧", "🚚", "🧪", "🍽️", "🏭", "🤝", "📊", "⭐" };
 }
-<form asp-action="Salva" method="post" class="row g-2 align-items-end">
+<form asp-action="Salva" method="post" class="row g-2 align-items-end form-team">
     <input type="hidden" name="aziendaId" value="@vm.AziendaId" />
     @if (team is not null) { <input type="hidden" name="id" value="@team.Id" /> }
     <div class="col-md-4">
@@ -28,4 +30,33 @@
         </select>
     </div>
     <div class="col-md-2"><button type="submit" class="btn btn-primary w-100">@(team is null ? "Crea" : "Salva")</button></div>
+
+    <fieldset class="col-md-7">
+        <legend class="form-label small mb-1">Colore</legend>
+        <div class="d-flex flex-wrap align-items-center gap-2">
+            @foreach (var (nome, hex) in CL.Domain.Organizzazione.Team.Palette)
+            {
+                var scelto = string.Equals(hex, coloreAttuale, StringComparison.OrdinalIgnoreCase);
+                <label class="campione-colore" style="--colore-team:@hex" title="@nome">
+                    <input type="radio" name="colore" value="@hex" checked="@scelto" class="visually-hidden" />
+                    <span aria-hidden="true"></span><span class="visually-hidden">@nome</span>
+                </label>
+            }
+            <label class="small d-inline-flex align-items-center gap-1 ms-1" title="Colore personalizzato">
+                <input type="color" class="form-control form-control-color colore-libero" value="@(coloreAttuale ?? CL.Domain.Organizzazione.Team.ColorePredefinito)" aria-label="Colore personalizzato" />
+                altro
+            </label>
+        </div>
+        @if (team is null) { <div class="form-text">Se non scegli, ne viene assegnato uno non ancora usato.</div> }
+    </fieldset>
+    <div class="col-md-5">
+        <label class="form-label small" for="emoji-@chiave">Emoji (facoltativa)</label>
+        <div class="input-group">
+            <input class="form-control campo-emoji" id="emoji-@chiave" name="emoji" value="@team?.Emoji" maxlength="16" placeholder="—" autocomplete="off" />
+            <button type="button" class="btn btn-outline-secondary togli-emoji" aria-label="Togli l'emoji"><i class="ri-close-line" aria-hidden="true"></i></button>
+        </div>
+        <div class="d-flex flex-wrap gap-1 mt-1" role="group" aria-label="Emoji suggerite">
+            @foreach (var e in emojiSuggerite) { <button type="button" class="btn btn-sm btn-light emoji-suggerita" aria-label="Usa @e">@e</button> }
+        </div>
+    </div>
 </form>

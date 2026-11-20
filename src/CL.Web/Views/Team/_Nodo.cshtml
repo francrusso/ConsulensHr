@@ -1,0 +1,55 @@
+@model CL.Web.Controllers.NodoGrafico
+@inject UtenteCorrente Utente
+@* Un nodo dell'organigramma e, ricorsivamente, i suoi figli. Le linee sono disegnate dal CSS di .organigramma. *@
+@{
+    var testo = CL.Domain.Organizzazione.Team.TestoSu(Model.Colore);
+    var linkScheda = Model.DipendenteId is { } id && !Utente.IsDipendente ? Url.Action("Dettaglio", "Dipendenti", new { id }) : null;
+}
+<li>
+    @switch (Model.Tipo)
+    {
+        case "azienda":
+            <div class="org-azienda">
+                @if (ViewData["LogoAzienda"] is string logo) { <img src="@logo" alt="" class="logo-azienda" /> }
+                else { <span class="org-avatar" style="--colore-team:#512D38" aria-hidden="true">@Model.Iniziali</span> }
+                <div>
+                    <div class="org-nome">@Model.Titolo</div>
+                    <div class="org-ruolo">@Model.Sottotitolo</div>
+                </div>
+            </div>
+            break;
+        case "team":
+            <div class="org-team @(testo == "#ffffff" ? "org-team-chiaro" : "")" style="--colore-team:@Model.Colore; color:@testo">
+                @if (Model.Emoji is not null) { <span class="org-emoji" aria-hidden="true">@Model.Emoji</span> }
+                <span>@Model.Titolo</span>
+                <span class="org-conteggio" title="Componenti del team" aria-label="@Model.Conteggio componenti">@Model.Conteggio</span>
+            </div>
+            break;
+        default:
+            <a class="org-persona @(Model.Riferimento ? "org-riferimento" : "")" style="--colore-team:@Model.Colore"
+               href="@(linkScheda ?? "#")" tabindex="@(linkScheda is null ? "-1" : "0")"
+               title="@(Model.Riferimento ? "Responsabile del team (fa parte di un altro team)" : null)">
+                @if (Model.Conteggio is { } n)
+                {
+                    <span class="org-numero" title="Persone di cui approva ferie e permessi" aria-label="Approva le richieste di @n persone">@n</span>
+                }
+                @if (Model.HaFoto)
+                {
+                    <img class="org-avatar org-foto" src="@Url.Action("Foto", "Dipendenti", new { id = Model.DipendenteId })" alt="" loading="lazy" />
+                }
+                else
+                {
+                    <img class="org-avatar org-foto" src="~/assets/images/avatar/@(Model.Segnaposto).png" alt="" />
+                }
+                <span class="org-nome">@Model.Titolo</span>
+                <span class="org-ruolo">@(Model.Sottotitolo ?? "—")</span>
+            </a>
+            break;
+    }
+    @if (Model.Figli.Count > 0)
+    {
+        <ul>
+            @foreach (var f in Model.Figli) { <partial name="_Nodo" model="f" /> }
+        </ul>
+    }
+</li>

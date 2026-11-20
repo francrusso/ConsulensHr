@@ -42,7 +42,9 @@ builder.Services.AddScoped<ServizioBustePaga>();
 builder.Services.AddScoped<NotificheAssenze>();
 builder.Services.AddScoped<ServizioPresenze>();
 builder.Services.AddScoped<ServizioPanoramica>();
+builder.Services.AddScoped<Immagini>();
 builder.Services.AddScoped<LoghiAziende>();
+builder.Services.AddScoped<FotoDipendenti>();
 builder.Services.AddScoped<ServizioOrganigramma>();
 
 builder.Services.AddControllersWithViews(o =>

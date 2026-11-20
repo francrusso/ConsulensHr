@@ -16,7 +16,8 @@
 <div class="breadcrumb-titolo d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
     <div>
         <a asp-action="Index" class="small text-body-secondary"><i class="ri-arrow-left-s-line" aria-hidden="true"></i> Dipendenti</a>
-        <h1 class="titolo-pagina mb-0">
+        <h1 class="titolo-pagina mb-0 d-flex align-items-center gap-2 flex-wrap">
+            <img src="@(Model.FotoChiave is not null ? Url.Action("Foto", new { id = Model.Id }) : Url.Content($"~/assets/images/avatar/{Model.Segnaposto}.png"))" alt="" class="foto-dipendente" />
             @Model.NomeCompleto
             @if (attivo is not null) { <span class="badge bg-success align-middle fs-6">In forza</span> }
             else { <span class="badge bg-secondary align-middle fs-6">Non in forza</span> }

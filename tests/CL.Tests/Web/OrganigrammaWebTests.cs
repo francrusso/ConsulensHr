@@ -152,4 +152,74 @@ public sealed class OrganigrammaWebTests : IDisposable
         Assert.Contains("Approva ferie e permessi", scheda);
         Assert.Contains("Verdi Anna", scheda);
     }
+
+    [Fact]
+    public async Task Team_con_colore_ed_emoji_nel_grafico()
+    {
+        await Dati();
+        await _app.CreaUtente("hr@acme.test", Ruoli.Azienda, _azienda);
+        var hr = _app.CreateClient();
+        await hr.Accedi("hr@acme.test");
+        var campi = new Dictionary<string, string>
+        {
+            ["aziendaId"] = _azienda.ToString(), ["nome"] = "Vendite", ["responsabileId"] = _rossi.ToString(), ["colore"] = "#8cc98a", ["emoji"] = "🛒",
+        };
+        Assert.Contains("Scegli una sola emoji", await Testo(await hr.InviaForm("/Team", "/Team/Salva", new(campi) { ["emoji"] = "abc" })));
+        Assert.Contains("Colore non valido", await Testo(await hr.InviaForm("/Team", "/Team/Salva", new(campi) { ["colore"] = "rosso" })));
+        await hr.InviaForm("/Team", "/Team/Salva", new(campi));
+        var team = await _app.ConDb(db => db.Team.SingleAsync());
+        Assert.Equal("#8CC98A", team.Colore);
+        Assert.Equal("🛒", team.Emoji);
+        await hr.InviaForm("/Team", "/Team/Assegna", new() { ["dipendenteId"] = _bianchi.ToString(), ["teamId"] = team.Id.ToString(), ["posizione"] = "Commerciale" });
+
+        // Un secondo team senza colore scelto prende il primo colore libero della tavolozza.
+        await hr.InviaForm("/Team", "/Team/Salva", new() { ["aziendaId"] = _azienda.ToString(), ["nome"] = "Magazzino" });
+        Assert.Equal(Team.Palette[0].Hex, (await _app.ConDb(db => db.Team.SingleAsync(t => t.Nome == "Magazzino"))).Colore);
+
+        var html = WebUtility.HtmlDecode(await hr.GetStringAsync("/Team"));
+        Assert.Contains("class=\"organigramma\"", html);
+        Assert.Contains("--colore-team:#8CC98A", html);
+        Assert.Contains("🛒", html);
+        Assert.Contains("Commerciale", html);
+        Assert.Contains("Senza team", html); // Verdi non è in nessun team
+        Assert.Contains("/assets/images/avatar/neutro.png", html); // nessuno ha indicato genere o pronomi
+
+        await hr.InviaForm($"/Dipendenti/Modifica/{_bianchi}", "/Dipendenti/Salva", new()
+        {
+            ["Id"] = _bianchi.ToString(), ["AziendaId"] = _azienda.ToString(), ["Nome"] = "Laura", ["Cognome"] = "Bianchi",
+            ["CodiceFiscale"] = "RSSLRA15A41F839L", ["DataNascita"] = "1985-01-01", ["Pronomi"] = "Femminili",
+        });
+        Assert.Contains("/assets/images/avatar/donna.png", WebUtility.HtmlDecode(await hr.GetStringAsync("/Team")));
+    }
+
+    [Fact]
+    public async Task Foto_del_dipendente_nell_organigramma_visibile_solo_a_chi_e_autorizzato()
+    {
+        await Dati();
+        byte[] png = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 1, 2, 3, 4];
+        await _app.CreaUtente("hr@acme.test", Ruoli.Azienda, _azienda);
+        var hr = _app.CreateClient();
+        await hr.Accedi("hr@acme.test");
+
+        using (var form = new MultipartFormDataContent
+               {
+                   { new StringContent(await hr.TokenDa($"/Dipendenti/Modifica/{_rossi}")), "__RequestVerificationToken" },
+                   { new StringContent(_rossi.ToString()), "Id" }, { new StringContent(_azienda.ToString()), "AziendaId" },
+                   { new StringContent("Mario"), "Nome" }, { new StringContent("Rossi"), "Cognome" },
+                   { new StringContent("RSSMRA85T10A562S"), "CodiceFiscale" }, { new StringContent("1985-01-01"), "DataNascita" },
+               })
+        {
+            form.Add(new ByteArrayContent(png), "Foto", "mario.png");
+            Assert.Contains("Modifiche salvate", await Testo(await hr.PostAsync("/Dipendenti/Salva", form)));
+        }
+        Assert.NotNull((await _app.ConDb(db => db.Dipendenti.SingleAsync(d => d.Id == _rossi))).FotoChiave);
+
+        Assert.Equal(png, await hr.GetByteArrayAsync($"/Dipendenti/Foto/{_rossi}"));
+        Assert.Contains($"/Dipendenti/Foto/{_rossi}", await hr.GetStringAsync("/Team")); // card con la foto
+
+        var mario = await Dipendente("mario@acme.test", _rossi);
+        Assert.Equal(HttpStatusCode.OK, (await mario.GetAsync($"/Dipendenti/Foto/{_rossi}")).StatusCode); // la propria
+        var anna = await Dipendente("anna@acme.test", _verdi);
+        Assert.Equal(HttpStatusCode.NotFound, (await anna.GetAsync($"/Dipendenti/Foto/{_rossi}")).StatusCode); // non quella dei colleghi
+    }
 }

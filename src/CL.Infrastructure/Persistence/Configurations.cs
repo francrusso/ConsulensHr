@@ -147,6 +147,8 @@ internal sealed class TeamConfig : IEntityTypeConfiguration<Team>
         b.ToTable("Team");
         b.Property(x => x.Id).ValueGeneratedNever();
         b.Property(x => x.Nome).HasMaxLength(100);
+        b.Property(x => x.Colore).HasMaxLength(7).HasDefaultValue(Team.ColorePredefinito);
+        b.Property(x => x.Emoji).HasMaxLength(16);
         b.HasOne<Azienda>().WithMany().HasForeignKey(x => x.AziendaId).OnDelete(DeleteBehavior.Cascade);
         b.HasOne<Team>().WithMany().HasForeignKey(x => x.PadreId).OnDelete(DeleteBehavior.Restrict);
         b.HasOne<Dipendente>().WithMany().HasForeignKey(x => x.ResponsabileId).OnDelete(DeleteBehavior.SetNull);
@@ -173,6 +175,8 @@ internal sealed class DipendenteConfig : IEntityTypeConfiguration<Dipendente>
         b.HasOne<ApplicationUser>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.SetNull);
         b.HasIndex(x => new { x.AziendaId, x.CodiceFiscale }).IsUnique();
         b.Property(x => x.Posizione).HasMaxLength(100);
+        b.Property(x => x.FotoChiave).HasMaxLength(500);
+        b.Ignore(x => x.Segnaposto);
         b.HasOne<Team>().WithMany().HasForeignKey(x => x.TeamId).OnDelete(DeleteBehavior.SetNull);
         b.HasOne<Dipendente>().WithMany().HasForeignKey(x => x.ResponsabileId).OnDelete(DeleteBehavior.SetNull);
         b.HasIndex(x => new { x.AziendaId, x.Cognome, x.Nome });

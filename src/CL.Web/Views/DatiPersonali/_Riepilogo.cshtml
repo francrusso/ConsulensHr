@@ -10,7 +10,8 @@
     var sezioni = new (int Passo, string Titolo, (string, string)[] Righe)[]
     {
         (1, "Dati anagrafici", [("Nome", d.NomeCompleto), ("Codice fiscale", d.CodiceFiscale.Valore), ("Nato/a", $"{d.DataNascita:dd/MM/yyyy} a {V(p.ComuneNascita)} ({V(p.ProvinciaNascita)})"),
-            ("Cittadinanza", V(p.Cittadinanza)), ("Cellulare", V(p.Telefono)), ("Email personale", V(p.EmailPersonale))]),
+            ("Cittadinanza", V(p.Cittadinanza)), ("Cellulare", V(p.Telefono)), ("Email personale", V(p.EmailPersonale)),
+            ("Genere", d.Genere?.Descrizione() ?? "—"), ("Pronomi", d.Pronomi?.Descrizione() ?? "—")]),
         (2, "Residenza", [("Residenza", Ind(p.Residenza)), ("Domicilio", p.Domicilio is null ? "come la residenza" : Ind(p.Domicilio))]),
         (3, "Stipendio e TFR", [("IBAN", V(p.Iban?.Valore)), ("Intestatario", V(p.IntestatarioConto) == "—" ? "il dipendente" : p.IntestatarioConto!),
             ("TFR", p.Tfr == DestinazioneTfr.FondoPensione ? $"fondo pensione {p.FondoPensione}" : p.Tfr is null ? "—" : "in azienda")]),

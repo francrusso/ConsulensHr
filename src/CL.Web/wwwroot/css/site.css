@@ -103,3 +103,76 @@
 h1 .logo-azienda { max-height: 36px; }
 .topbar-logo-azienda { max-height: 34px; max-width: 110px; object-fit: contain; margin-right: 12px; }
 .campo-compilato { background-color: #fffaf4; }
+
+/* Organigramma: albero dall'alto in basso con linee arrotondate (CSS puro). */
+.organigramma-contenitore { overflow: auto; padding: 24px 12px 32px; background: linear-gradient(#fff, #fffdfb); }
+.organigramma { min-width: max-content; margin: 0 auto; --linea: #e5d9cd; }
+.organigramma ul { display: flex; justify-content: center; padding: 26px 0 0; margin: 0; position: relative; }
+.organigramma > ul { padding-top: 0; }
+.organigramma li { list-style: none; position: relative; padding: 26px 10px 0; display: flex; flex-direction: column; align-items: center; }
+.organigramma > ul > li { padding-top: 0; }
+.organigramma li::before, .organigramma li::after {
+  content: ""; position: absolute; top: 0; width: 50%; height: 26px; border-top: 2px solid var(--linea);
+}
+.organigramma li::before { right: 50%; }
+.organigramma li::after { left: 50%; border-left: 2px solid var(--linea); }
+.organigramma li:only-child::before { display: none; }
+.organigramma li:only-child::after { width: 0; border-top: 0; }
+.organigramma li:first-child::before, .organigramma li:last-child::after { border-top: 0; }
+.organigramma li:first-child::after { border-radius: 6px 0 0 0; }
+.organigramma li:last-child::before { border-right: 2px solid var(--linea); border-radius: 0 6px 0 0; }
+.organigramma > ul > li::before, .organigramma > ul > li::after { display: none; }
+.organigramma ul ul::before { content: ""; position: absolute; top: 0; left: 50%; height: 26px; border-left: 2px solid var(--linea); }
+
+.org-azienda { display: flex; align-items: center; gap: 12px; padding: 12px 18px; background: #fff; border-radius: 8px;
+  box-shadow: 0 6px 20px rgba(81, 45, 56, .08); border-top: 4px solid #512D38; }
+.org-team { display: inline-flex; align-items: center; gap: 8px; padding: 7px 8px 7px 14px; border-radius: 8px;
+  background: var(--colore-team); font-weight: 600; font-size: .95rem; white-space: nowrap; box-shadow: 0 4px 14px rgba(0,0,0,.06); }
+.org-emoji { font-size: 1.05rem; }
+.org-conteggio { display: inline-flex; min-width: 26px; height: 26px; padding: 0 7px; align-items: center; justify-content: center;
+  border-radius: 5px; background: rgba(255,255,255,.35); font-size: .8rem; }
+.org-persona { position: relative; display: flex; flex-direction: column; align-items: center; width: 190px; padding: 34px 14px 14px;
+  margin-top: 26px; background: #fff; border-radius: 8px; border-top: 3px solid var(--colore-team);
+  box-shadow: 0 6px 20px rgba(81, 45, 56, .07); text-decoration: none; text-align: center; }
+.organigramma li > .org-persona { margin-top: 26px; }
+.org-persona:hover, .org-persona:focus-visible { box-shadow: 0 8px 26px rgba(81, 45, 56, .14); }
+.org-persona:focus-visible { outline: 2px solid var(--consulens-accent); outline-offset: 2px; }
+.org-riferimento { border-style: dashed; border-top-style: solid; border-width: 1px; border-top-width: 3px; border-color: var(--consulens-border); border-top-color: var(--colore-team); }
+.org-avatar { position: absolute; top: -26px; display: inline-flex; width: 52px; height: 52px; align-items: center; justify-content: center;
+  border-radius: 50%; border: 3px solid #fff; background: var(--colore-team); color: #fff; font-weight: 600; font-size: .95rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,.08); text-shadow: 0 1px 2px rgba(0,0,0,.25); }
+.org-azienda .org-avatar { position: static; }
+.org-nome { font-weight: 600; color: var(--consulens-page-title); line-height: 1.25; }
+.org-ruolo { font-size: .8rem; color: var(--consulens-muted); }
+.org-numero { position: absolute; top: 10px; left: 10px; min-width: 24px; height: 22px; padding: 0 6px; border-radius: 4px;
+  background: #f4efe9; color: var(--consulens-muted); font-size: .72rem; display: inline-flex; align-items: center; justify-content: center; }
+.org-pallino { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--colore-team); vertical-align: middle; }
+
+/* Scelta del colore del team */
+.campione-colore { cursor: pointer; }
+.campione-colore span[aria-hidden] { display: inline-block; width: 26px; height: 26px; border-radius: 50%; background: var(--colore-team);
+  border: 2px solid #fff; box-shadow: 0 0 0 1px var(--consulens-border); }
+.campione-colore input:checked + span { box-shadow: 0 0 0 2px var(--consulens-page-title); }
+.campione-colore input:focus-visible + span { outline: 2px solid var(--consulens-accent); outline-offset: 2px; }
+.colore-libero { width: 34px; height: 30px; padding: 2px; }
+.emoji-suggerita { min-width: 34px; padding: 2px 6px; font-size: 1rem; line-height: 1.4; background: #fbf6f0; border-color: var(--consulens-border); }
+
+.org-team-chiaro { text-shadow: 0 1px 2px rgba(0, 0, 0, .22); }
+.org-team-chiaro .org-conteggio { background: rgba(255, 255, 255, .28); }
+
+/* Organigramma: rifinitura (angoli contenuti, foto al centro, ombre leggere) */
+.organigramma { --linea: #ebe1d6; }
+.org-azienda { border: 1px solid #f1e8de; border-top: 3px solid #512D38; box-shadow: 0 1px 2px rgba(81,45,56,.04), 0 8px 24px rgba(81,45,56,.06); }
+.org-team { box-shadow: 0 1px 2px rgba(0,0,0,.05), 0 4px 12px rgba(0,0,0,.06); letter-spacing: .1px; }
+.org-persona { width: 200px; padding: 42px 14px 14px; margin-top: 32px; border: 1px solid #f1e8de; border-top: 3px solid var(--colore-team);
+  box-shadow: 0 1px 2px rgba(81,45,56,.04), 0 8px 24px rgba(81,45,56,.06); transition: box-shadow .15s, transform .15s; }
+.organigramma li > .org-persona { margin-top: 32px; }
+.org-persona:hover, .org-persona:focus-visible { transform: translateY(-2px); box-shadow: 0 2px 4px rgba(81,45,56,.06), 0 12px 28px rgba(81,45,56,.12); }
+.org-avatar { top: -32px; left: 50%; transform: translateX(-50%); width: 64px; height: 64px; border: 3px solid #fff; font-size: 1.05rem;
+  box-shadow: 0 2px 10px rgba(81,45,56,.15); }
+.org-foto { object-fit: cover; background: #f4efe9; }
+.org-azienda .org-avatar { transform: none; width: 44px; height: 44px; }
+.org-nome { font-size: .95rem; margin-top: 2px; }
+.org-ruolo { margin-top: 2px; }
+.foto-dipendente { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(81,45,56,.18); }
+h1 .foto-dipendente { width: 40px; height: 40px; }

@@ -30,6 +30,15 @@ public sealed class AnagraficaForm
     public string? Telefono { get; set; }
     [EmailAddress(ErrorMessage = "Email non valida."), StringLength(256), Display(Name = "Email personale (facoltativa)")]
     public string? EmailPersonale { get; set; }
+
+    [Display(Name = "Genere (facoltativo)")]
+    public Genere? Genere { get; set; }
+    [Display(Name = "Pronomi (facoltativi)")]
+    public Pronomi? Pronomi { get; set; }
+
+    [Display(Name = "La tua foto (facoltativa: PNG, JPEG o WebP, massimo 2 MB)")]
+    public IFormFile? Foto { get; set; }
+    public bool HaFoto { get; set; }
 }
 
 public sealed class ResidenzaForm
@@ -124,7 +133,7 @@ public sealed class DatiPersonaliViewModel
 [Authorize]
 public sealed class DatiPersonaliController(
     AppDbContext db, UtenteCorrente utente, SignInManager<ApplicationUser> signIn, CodaEmail coda,
-    ServizioAccessi accessi, TimeProvider clock) : AppController
+    ServizioAccessi accessi, FotoDipendenti foto, TimeProvider clock) : AppController
 {
     private DateTime Adesso => clock.GetUtcNow().UtcDateTime;
 
@@ -136,7 +145,7 @@ public sealed class DatiPersonaliController(
         return Mostra(dip, profilo, p, FormDi(p, dip, profilo));
     }
 
-    [HttpPost, ValidateAntiForgeryToken]
+    [HttpPost, ValidateAntiForgeryToken, RequestSizeLimit(Immagini.DimensioneMassima + 256 * 1024)]
     public async Task<IActionResult> Anagrafica(Guid? dipendenteId, AnagraficaForm form)
     {
         var (dip, profilo) = await Carica(dipendenteId);
@@ -146,6 +155,12 @@ public sealed class DatiPersonaliController(
                 form.Telefono, form.EmailPersonale), utente.Email, Adesso)))
             return Mostra(dip, profilo, 1, form);
         dip.AggiornaRecapiti(dip.Email, form.Telefono ?? dip.Telefono, dip.Indirizzo);
+        dip.ImpostaIdentita(form.Genere, form.Pronomi);
+        if (form.Foto is { Length: > 0 } file && await foto.SalvaAsync(dip, file) is { } errore)
+        {
+            ModelState.AddModelError(nameof(form.Foto), errore);
+            return Mostra(dip, profilo, 1, form);
+        }
         return await SalvaEAvanza(dip, profilo, 1);
     }
 
@@ -280,7 +295,8 @@ public sealed class DatiPersonaliController(
         1 => new AnagraficaForm
         {
             ComuneNascita = p.ComuneNascita, ProvinciaNascita = p.ProvinciaNascita, Cittadinanza = p.Cittadinanza ?? "Italiana",
-            Telefono = p.Telefono ?? d.Telefono, EmailPersonale = p.EmailPersonale,
+            Telefono = p.Telefono ?? d.Telefono, EmailPersonale = p.EmailPersonale, HaFoto = d.FotoChiave is not null,
+            Genere = d.Genere, Pronomi = d.Pronomi,
         },
         2 => new ResidenzaForm
         {
@@ -324,6 +340,11 @@ public sealed class DatiPersonaliController(
             coda.Accoda(new MessaggioEmail(email, $"{dip.NomeCompleto} {cosa}",
                 $"""<p>{chi} {WebUtility.HtmlEncode(cosa)}.</p><p><a href="{link}">{link}</a></p><p>Consulens HR</p>"""));
     }
+
+    public static IEnumerable<SelectListItem> Generi =>
+        Enum.GetValues<Genere>().Select(g => new SelectListItem(g.Descrizione(), g.ToString()));
+    public static IEnumerable<SelectListItem> ElencoPronomi =>
+        Enum.GetValues<Pronomi>().Select(p => new SelectListItem(p.Descrizione(), p.ToString()));
 
     public static IEnumerable<SelectListItem> Titoli =>
         Enum.GetValues<TitoloStudio>().Select(t => new SelectListItem(t.Descrizione(), t.ToString()));

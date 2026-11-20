@@ -504,6 +504,14 @@ namespace CL.Infrastructure.Persistence.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
+                    b.Property<string>("FotoChiave")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Genere")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
                     b.Property<string>("Iban")
                         .HasMaxLength(34)
                         .HasColumnType("character varying(34)");
@@ -524,6 +532,10 @@ namespace CL.Infrastructure.Persistence.Migrations
                     b.Property<string>("Posizione")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Pronomi")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
 
                     b.Property<Guid?>("ResponsabileId")
                         .HasColumnType("uuid");
@@ -724,6 +736,17 @@ namespace CL.Infrastructure.Persistence.Migrations
 
                     b.Property<Guid>("AziendaId")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("Colore")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(7)
+                        .HasColumnType("character varying(7)")
+                        .HasDefaultValue("#A47FE6");
+
+                    b.Property<string>("Emoji")
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
 
                     b.Property<string>("Nome")
                         .IsRequired()

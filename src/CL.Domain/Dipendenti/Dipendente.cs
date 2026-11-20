@@ -3,6 +3,32 @@ using CL.Domain.ValueObjects;
 
 namespace CL.Domain.Dipendenti;
 
+/// <summary>Genere dichiarato dalla persona (facoltativo).</summary>
+public enum Genere { Donna, Uomo, NonBinario, NonIndicato }
+
+/// <summary>Pronomi dichiarati dalla persona (facoltativi).</summary>
+public enum Pronomi { Femminili, Maschili, Neutri, Tutti, NonIndicati }
+
+public static class IdentitaExtensions
+{
+    public static string Descrizione(this Genere g) => g switch
+    {
+        Genere.Donna => "Donna",
+        Genere.Uomo => "Uomo",
+        Genere.NonBinario => "Non binario",
+        _ => "Preferisco non indicarlo",
+    };
+
+    public static string Descrizione(this Pronomi p) => p switch
+    {
+        Pronomi.Femminili => "Femminili (lei)",
+        Pronomi.Maschili => "Maschili (lui)",
+        Pronomi.Neutri => "Neutri",
+        Pronomi.Tutti => "Vanno bene tutti",
+        _ => "Preferisco non indicarli",
+    };
+}
+
 /// <summary>Anagrafica del lavoratore e storico dei contratti.</summary>
 public sealed class Dipendente : Entity
 {
@@ -27,6 +53,30 @@ public sealed class Dipendente : Entity
     public string? Posizione { get; private set; }
     /// <summary>Responsabile diretto: se indicato, approva lui ferie e permessi (prevale sul responsabile del team).</summary>
     public Guid? ResponsabileId { get; private set; }
+    /// <summary>Foto nell'archivio privato (chiave generata dall'applicazione), se caricata.</summary>
+    public string? FotoChiave { get; private set; }
+    /// <summary>Genere e pronomi dichiarati dalla persona: mai dedotti dal codice fiscale.</summary>
+    public Genere? Genere { get; private set; }
+    public Pronomi? Pronomi { get; private set; }
+
+    /// <summary>
+    /// Segnaposto da mostrare senza foto: "donna", "uomo" o "neutro". Contano prima i pronomi
+    /// (femminili / maschili; neutri o "tutti" → neutro), poi, se non indicati, il genere; senza dati il neutro.
+    /// </summary>
+    public string Segnaposto => SegnapostoPer(Genere, Pronomi);
+
+    public static string SegnapostoPer(Genere? genere, Pronomi? pronomi) => pronomi switch
+    {
+        Dipendenti.Pronomi.Femminili => "donna",
+        Dipendenti.Pronomi.Maschili => "uomo",
+        Dipendenti.Pronomi.Neutri or Dipendenti.Pronomi.Tutti => "neutro",
+        _ => genere switch
+        {
+            Dipendenti.Genere.Donna => "donna",
+            Dipendenti.Genere.Uomo => "uomo",
+            _ => "neutro",
+        },
+    };
 
     public IReadOnlyCollection<Contratto> Contratti => _contratti.AsReadOnly();
 
@@ -65,6 +115,9 @@ public sealed class Dipendente : Entity
     public void ImpostaIban(Iban? iban) => Iban = iban;
     public void ImpostaMatricola(string? matricola) => Matricola = matricola?.Trim();
     public void CollegaUtente(string? userId) => UserId = userId;
+    public void ImpostaFoto(string chiave) => FotoChiave = Guard.NotEmpty(chiave, "Foto");
+    public void RimuoviFoto() => FotoChiave = null;
+    public void ImpostaIdentita(Genere? genere, Pronomi? pronomi) => (Genere, Pronomi) = (genere, pronomi);
 
     public void ImpostaOrganizzazione(Organizzazione.Team? team, string? posizione, Dipendente? responsabile)
     {

@@ -1,6 +1,7 @@
 @model CL.Web.Controllers.OrganigrammaViewModel
 @{
     ViewData["Title"] = "Organigramma";
+    if (Model.HaLogo) ViewData["LogoAzienda"] = Url.Action("Logo", "Aziende", new { id = Model.AziendaId });
     var senzaTeam = Model.Dipendenti.Where(d => d.TeamId is null).ToList();
 }
 <div class="breadcrumb-titolo d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
@@ -11,14 +12,45 @@
         }
         <h1 class="titolo-pagina mb-0">Organigramma</h1>
         <p class="text-body-secondary mb-0 small">
-            Ferie e permessi li approva il <strong>responsabile diretto</strong> del dipendente, se indicato; altrimenti il <strong>responsabile del suo team</strong>
-            (o dei team superiori). Se non c'è nessuno decide il referente dell'azienda, che può comunque approvare tutte le richieste.
+            Ferie e permessi li approva il <strong>responsabile diretto</strong> del dipendente, se indicato; altrimenti il <strong>responsabile del suo team</strong>.
+            Se il team non ha un responsabile decide il <strong>referente dell'azienda</strong>, che può comunque approvare tutte le richieste.
+            Le richieste di un responsabile vanno al responsabile del team superiore.
         </p>
     </div>
-    <button type="button" class="btn btn-primary" data-bs-toggle="collapse" data-bs-target="#nuovoTeam" aria-expanded="false" aria-controls="nuovoTeam">
-        <i class="ri-add-line" aria-hidden="true"></i> Nuovo team
-    </button>
 </div>
+
+<ul class="nav nav-tabs mb-3" role="tablist">
+    <li class="nav-item" role="presentation"><button class="nav-link active" id="tab-grafico" data-bs-toggle="tab" data-bs-target="#grafico" type="button" role="tab" aria-controls="grafico" aria-selected="true"><i class="ri-organization-chart" aria-hidden="true"></i> Grafico</button></li>
+    <li class="nav-item" role="presentation"><button class="nav-link" id="tab-gestione" data-bs-toggle="tab" data-bs-target="#gestione" type="button" role="tab" aria-controls="gestione" aria-selected="false"><i class="ri-settings-3-line" aria-hidden="true"></i> Gestione</button></li>
+</ul>
+
+<div class="tab-content">
+<div class="tab-pane fade show active" id="grafico" role="tabpanel" aria-labelledby="tab-grafico">
+    @if (Model.Team.Count == 0 && Model.Dipendenti.Count == 0)
+    {
+        <div class="alert alert-info radius-15">Nessun dipendente in forza: l'organigramma si popola con le persone e i team dell'azienda.</div>
+    }
+    else
+    {
+        <div class="org-strumenti d-flex gap-2 mb-2" aria-label="Zoom del grafico">
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-zoom="-1" aria-label="Riduci"><i class="ri-zoom-out-line" aria-hidden="true"></i></button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-zoom="0" aria-label="Dimensione normale">100%</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-zoom="1" aria-label="Ingrandisci"><i class="ri-zoom-in-line" aria-hidden="true"></i></button>
+        </div>
+        <div class="card radius-15 organigramma-contenitore">
+            <div class="organigramma" id="organigramma">
+                <ul><partial name="_Nodo" model="Model.Grafico()" view-data="ViewData" /></ul>
+            </div>
+        </div>
+    }
+</div>
+
+<div class="tab-pane fade" id="gestione" role="tabpanel" aria-labelledby="tab-gestione">
+    <div class="mb-3">
+        <button type="button" class="btn btn-primary" data-bs-toggle="collapse" data-bs-target="#nuovoTeam" aria-expanded="false" aria-controls="nuovoTeam">
+            <i class="ri-add-line" aria-hidden="true"></i> Nuovo team
+        </button>
+    </div>
 
 <div class="collapse mb-3" id="nuovoTeam">
     <section class="card radius-15 p-3"><partial name="_FormTeam" model="(Model, (CL.Domain.Organizzazione.Team?)null)" /></section>
@@ -38,6 +70,8 @@
             <div>
                 <h2 class="h6 mb-0" id="titolo-@idModifica">
                     @if (livello > 0) { <i class="ri-corner-down-right-line text-body-secondary" aria-hidden="true"></i> }
+                    <span class="org-pallino" style="--colore-team:@t.Colore" aria-hidden="true"></span>
+                    @if (t.Emoji is not null) { <span aria-hidden="true">@t.Emoji</span> }
                     @t.Nome <span class="small text-body-secondary fw-normal">· @membri.Count @(membri.Count == 1 ? "persona" : "persone")</span>
                 </h2>
                 <div class="small text-body-secondary">Responsabile: @(t.ResponsabileId is null ? "nessuno" : Model.NomeDi(t.ResponsabileId))</div>
@@ -62,3 +96,42 @@
     </div>
     <partial name="_Membri" model="(Model, senzaTeam, (Guid?)null)" />
 </section>
+</div>
+</div>
+
+@section Scripts {
+    <script>
+        // Scheda aperta dall'indirizzo (#gestione dopo un salvataggio).
+        if (location.hash === '#gestione') bootstrap.Tab.getOrCreateInstance(document.getElementById('tab-gestione')).show();
+        document.querySelectorAll('#tab-grafico, #tab-gestione').forEach(b => b.addEventListener('shown.bs.tab', e =>
+            history.replaceState(null, '', e.target.id === 'tab-gestione' ? '#gestione' : location.pathname + location.search)));
+
+        // Zoom del grafico.
+        (function () {
+            const org = document.getElementById('organigramma');
+            if (!org) return;
+            let scala = 1;
+            document.querySelectorAll('[data-zoom]').forEach(b => b.addEventListener('click', () => {
+                const d = Number(b.dataset.zoom);
+                scala = d === 0 ? 1 : Math.min(1.5, Math.max(0.4, scala + d * 0.15));
+                org.style.zoom = scala;
+            }));
+        })();
+
+        // Colore: preset o colore libero; emoji: suggerimenti e pulsante per toglierla.
+        document.querySelectorAll('.form-team').forEach(form => {
+            const libero = form.querySelector('.colore-libero');
+            libero?.addEventListener('input', () => {
+                form.querySelectorAll('input[name=colore]').forEach(r => r.checked = false);
+                let nascosto = form.querySelector('input[name=colore][type=hidden]');
+                if (!nascosto) { nascosto = document.createElement('input'); nascosto.type = 'hidden'; nascosto.name = 'colore'; form.append(nascosto); }
+                nascosto.value = libero.value;
+            });
+            form.querySelectorAll('input[name=colore][type=radio]').forEach(r => r.addEventListener('change', () =>
+                form.querySelector('input[name=colore][type=hidden]')?.remove()));
+            const emoji = form.querySelector('.campo-emoji');
+            form.querySelectorAll('.emoji-suggerita').forEach(b => b.addEventListener('click', () => { emoji.value = b.textContent.trim(); }));
+            form.querySelector('.togli-emoji')?.addEventListener('click', () => { emoji.value = ''; });
+        });
+    </script>
+}

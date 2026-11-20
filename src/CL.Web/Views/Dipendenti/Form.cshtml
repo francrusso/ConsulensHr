@@ -8,7 +8,7 @@
 <h1 class="titolo-pagina mb-3">@ViewData["Title"]</h1>
 
 <div class="card radius-15 p-4">
-    <form asp-action="Salva" method="post" class="row g-3" novalidate>
+    <form asp-action="Salva" method="post" class="row g-3" enctype="multipart/form-data" novalidate>
         <div asp-validation-summary="ModelOnly" class="alert alert-danger radius-15" role="alert"></div>
         <input type="hidden" asp-for="Id" />
 
@@ -71,6 +71,28 @@
             <label asp-for="Iban" class="form-label"></label>
             <input asp-for="Iban" class="form-control text-uppercase" placeholder="IT60 X054 2811 1010 0000 0123 456" autocomplete="off" />
             <span asp-validation-for="Iban" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-4">
+            <label asp-for="Genere" class="form-label"></label>
+            <select asp-for="Genere" class="form-select" asp-items="CL.Web.Controllers.DatiPersonaliController.Generi"><option value="">—</option></select>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="Pronomi" class="form-label"></label>
+            <select asp-for="Pronomi" class="form-select" asp-items="CL.Web.Controllers.DatiPersonaliController.ElencoPronomi"><option value="">—</option></select>
+            <div class="form-text">Come li indica la persona; il dipendente può aggiornarli da "I miei dati".</div>
+        </div>
+        <div class="col-md-8">
+            <label asp-for="Foto" class="form-label"></label>
+            <div class="d-flex align-items-center gap-3">
+                @if (Model.HaFoto && Model.Id is { } idFoto) { <img src="@Url.Action("Foto", new { id = idFoto })" alt="Foto attuale" class="foto-dipendente" /> }
+                <input asp-for="Foto" type="file" class="form-control" accept="@CL.Web.Infrastruttura.Immagini.FormatiAccettati" />
+            </div>
+            <span asp-validation-for="Foto" class="text-danger"></span>
+            @if (Model.HaFoto)
+            {
+                <div class="form-check mt-2"><input asp-for="RimuoviFoto" class="form-check-input" /><label asp-for="RimuoviFoto" class="form-check-label"></label></div>
+            }
         </div>
 
         <div class="col-12 d-flex gap-2 mt-4">

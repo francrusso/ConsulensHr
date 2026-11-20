@@ -1,7 +1,7 @@
 @model (CL.Web.Controllers.OrganigrammaViewModel Vm, List<CL.Web.Controllers.MembroTeam> Membri, Guid? ResponsabileTeam)
 @{
     var (vm, membri, responsabileTeam) = Model;
-    var ritorno = Context.Request.Path + Context.Request.QueryString;
+    var ritorno = Context.Request.Path + Context.Request.QueryString + "#gestione";
 }
 @if (membri.Count == 0)
 {

@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using CL.Domain.Dipendenti;
 using CL.Domain.ValueObjects;
+using CL.Infrastructure.Archivio;
 using CL.Infrastructure.Persistence;
 using CL.Web.Infrastruttura;
 using Microsoft.AspNetCore.Authorization;
@@ -44,6 +45,17 @@ public sealed class DipendenteForm
     [StringLength(30), Display(Name = "Matricola")]
     public string? Matricola { get; set; }
 
+    [Display(Name = "Genere")]
+    public Genere? Genere { get; set; }
+    [Display(Name = "Pronomi")]
+    public Pronomi? Pronomi { get; set; }
+
+    [Display(Name = "Foto (PNG, JPEG o WebP, massimo 2 MB)")]
+    public IFormFile? Foto { get; set; }
+    [Display(Name = "Togli la foto attuale")]
+    public bool RimuoviFoto { get; set; }
+    public bool HaFoto { get; set; }
+
     public static DipendenteForm Da(Dipendente d) => new()
     {
         Id = d.Id,
@@ -57,6 +69,9 @@ public sealed class DipendenteForm
         Indirizzo = d.Indirizzo,
         Iban = d.Iban?.Valore,
         Matricola = d.Matricola,
+        HaFoto = d.FotoChiave is not null,
+        Genere = d.Genere,
+        Pronomi = d.Pronomi,
     };
 }
 
@@ -115,7 +130,7 @@ public sealed record DipendenteRiga(Guid Id, string NomeCompleto, string CodiceF
 
 [Authorize(Policy = Policy.GestionePersonale)]
 public sealed class DipendentiController(AppDbContext db, UtenteCorrente utente, ServizioSaldi saldi, ServizioAccessi accessi,
-    ServizioOrganigramma organigramma, TimeProvider clock) : AppController
+    ServizioOrganigramma organigramma, FotoDipendenti foto, IArchivioDocumenti archivio, TimeProvider clock) : AppController
 {
     private DateOnly Oggi => DateOnly.FromDateTime(clock.GetLocalNow().DateTime);
 
@@ -166,7 +181,7 @@ public sealed class DipendentiController(AppDbContext db, UtenteCorrente utente,
         return d is null ? NotFound() : await MostraForm(DipendenteForm.Da(d));
     }
 
-    [HttpPost, ValidateAntiForgeryToken]
+    [HttpPost, ValidateAntiForgeryToken, RequestSizeLimit(Immagini.DimensioneMassima + 256 * 1024)]
     public async Task<IActionResult> Salva(DipendenteForm form)
     {
         if (utente.IsAzienda) form.AziendaId = utente.AziendaId; // il referente non può scegliere un'altra azienda
@@ -202,6 +217,13 @@ public sealed class DipendentiController(AppDbContext db, UtenteCorrente utente,
         dip.AggiornaRecapiti(form.Email, form.Telefono, form.Indirizzo);
         dip.ImpostaIban(iban);
         dip.ImpostaMatricola(form.Matricola);
+        dip.ImpostaIdentita(form.Genere, form.Pronomi);
+        if (form.Foto is { Length: > 0 } file && await foto.SalvaAsync(dip, file) is { } erroreFoto)
+        {
+            ModelState.AddModelError(nameof(form.Foto), erroreFoto);
+            return await MostraForm(form);
+        }
+        if (form.RimuoviFoto && form.Foto is null) await foto.RimuoviAsync(dip);
         await db.SaveChangesAsync();
 
         if (form.Id is null)
@@ -296,6 +318,23 @@ public sealed class DipendentiController(AppDbContext db, UtenteCorrente utente,
         }
         else Errore(string.Join(" ", ModelState[""]!.Errors.Select(e => e.ErrorMessage)));
         return RedirectToAction(nameof(Dettaglio), new { id });
+    }
+
+    /// <summary>
+    /// Foto del dipendente: la vedono lo studio, i referenti della sua azienda e il dipendente stesso.
+    /// (Supera il "gestione personale" del controller: il login e il perimetro sono verificati qui.)
+    /// </summary>
+    [AllowAnonymous]
+    public async Task<IActionResult> Foto(Guid id)
+    {
+        if (User.Identity?.IsAuthenticated != true) return Challenge();
+        var d = await db.Dipendenti.AsNoTracking().IgnoreAutoIncludes().Where(x => x.Id == id)
+            .Select(x => new { x.AziendaId, x.FotoChiave }).FirstOrDefaultAsync();
+        var ammesso = d is not null && (utente.IsConsulente || (utente.IsAzienda && utente.AziendaId == d.AziendaId) || utente.DipendenteId == id);
+        if (!ammesso || d!.FotoChiave is null || await archivio.ApriAsync(d.FotoChiave) is not { } file) return NotFound();
+        Response.Headers.CacheControl = "private, max-age=300";
+        Response.Headers.XContentTypeOptions = "nosniff";
+        return File(file, Immagini.TipoMime(d.FotoChiave));
     }
 
     private Task<Dipendente?> Trova(Guid id) => utente.Filtra(db.Dipendenti).FirstOrDefaultAsync(d => d.Id == id);

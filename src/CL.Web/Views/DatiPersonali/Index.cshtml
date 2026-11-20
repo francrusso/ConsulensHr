@@ -5,6 +5,7 @@
     ViewData["Title"] = Model.PerConto ? "Dati personali" : p.Completato ? "I miei dati" : "Benvenuto in Consulens HR";
     Guid? dipendenteId = Model.PerConto ? Model.Dipendente.Id : null;
     if (dipendenteId is not null) ViewData["DipendenteIdDati"] = dipendenteId;
+    ViewData["FotoUrl"] = Url.Action("Foto", "Dipendenti", new { id = Model.Dipendente.Id });
 }
 <div class="breadcrumb-titolo mb-3">
     <div>
