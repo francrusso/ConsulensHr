@@ -47,7 +47,7 @@
             <div class="border-top pt-3 mt-3">
                 <div class="d-flex align-items-center justify-content-between">
                     <h2 class="h6 mb-2">Organizzazione</h2>
-                    <a asp-controller="Team" asp-action="Index" asp-route-aziendaId="@(Utente.IsConsulente ? Model.AziendaId : (Guid?)null)" class="small"><i class="ri-organization-chart" aria-hidden="true"></i> Organigramma</a>
+                    <a asp-controller="Team" asp-action="Organigramma" asp-route-aziendaId="@(Utente.IsConsulente ? Model.AziendaId : (Guid?)null)" class="small"><i class="ri-organization-chart" aria-hidden="true"></i> Organigramma</a>
                 </div>
                 <dl class="scheda mb-0">
                     <dt>Team</dt><dd>@(org.Team ?? "—")</dd>
@@ -153,7 +153,7 @@
                     <tbody>
                         @if (contratti.Count == 0)
                         {
-                            <tr><td colspan="4" class="text-center text-muted p-4">Nessun contratto registrato. <a asp-action="Assumi" asp-route-id="@Model.Id">Registra l'assunzione</a></td></tr>
+                            <tr><td colspan="4" class="elenco-vuoto"><span class="elenco-vuoto-icona" aria-hidden="true"><i class="ri-file-text-line"></i></span><div>Nessun contratto registrato. <a asp-action="Assumi" asp-route-id="@Model.Id">Registra l'assunzione</a></div></td></tr>
                         }
                         @foreach (var c in contratti)
                         {

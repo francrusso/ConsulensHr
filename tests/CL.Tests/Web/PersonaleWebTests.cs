@@ -50,10 +50,15 @@ public sealed class PersonaleWebTests : IDisposable
         Assert.Contains("Personale dipendente", html);
         Assert.Contains("Rossi Mario", html);
         Assert.DoesNotContain("Bianchi Laura", html);
+        Assert.Contains("Scadenza contratto", html);
+        Assert.Contains("28.000", html); // RAL del contratto in corso
+        Assert.Contains("Mensile lordo", html);
+        Assert.Contains("Indeterminato", html);
 
         html = WebUtility.HtmlDecode(await hr.GetStringAsync("/Dipendenti?esterni=true"));
         Assert.Contains("Bianchi Laura", html);
         Assert.Contains("Partita IVA / lavoro autonomo", html);
+        Assert.Contains("Compenso annuo", html);
         Assert.DoesNotContain("Rossi Mario", html);
         Assert.Contains("Aggiungi professionista", html);
 

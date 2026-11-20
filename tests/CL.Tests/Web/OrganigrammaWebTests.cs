@@ -176,12 +176,18 @@ public sealed class OrganigrammaWebTests : IDisposable
         await hr.InviaForm("/Team", "/Team/Salva", new() { ["aziendaId"] = _azienda.ToString(), ["nome"] = "Magazzino" });
         Assert.Equal(Team.Palette[0].Hex, (await _app.ConDb(db => db.Team.SingleAsync(t => t.Nome == "Magazzino"))).Colore);
 
-        var html = WebUtility.HtmlDecode(await hr.GetStringAsync("/Team"));
+        // Pagina "Team": gestione; pagina "Organigramma": l'albero. Entrambe nel sottomenù "Personale".
+        var gestione = WebUtility.HtmlDecode(await hr.GetStringAsync("/Team"));
+        Assert.Contains("<title>Team |", gestione);
+        Assert.Contains("Senza team", gestione); // Verdi non è in nessun team
+        Assert.Contains("href=\"#nuovoTeam\"", gestione); // "Nuovo team" nella barra in alto
+        Assert.DoesNotContain("class=\"organigramma\"", gestione);
+        Assert.Contains("href=\"/Team/Organigramma\"", gestione);
+        var html = WebUtility.HtmlDecode(await hr.GetStringAsync("/Team/Organigramma"));
         Assert.Contains("class=\"organigramma\"", html);
         Assert.Contains("--colore-team:#8CC98A", html);
         Assert.Contains("🛒", html);
         Assert.Contains("Commerciale", html);
-        Assert.Contains("Senza team", html); // Verdi non è in nessun team
         Assert.Contains("/assets/images/avatar/neutro.png", html); // nessuno ha indicato genere o pronomi
 
         await hr.InviaForm($"/Dipendenti/Modifica/{_bianchi}", "/Dipendenti/Salva", new()
@@ -189,7 +195,7 @@ public sealed class OrganigrammaWebTests : IDisposable
             ["Id"] = _bianchi.ToString(), ["AziendaId"] = _azienda.ToString(), ["Nome"] = "Laura", ["Cognome"] = "Bianchi",
             ["CodiceFiscale"] = "RSSLRA15A41F839L", ["DataNascita"] = "1985-01-01", ["Pronomi"] = "Femminili",
         });
-        Assert.Contains("/assets/images/avatar/donna.png", WebUtility.HtmlDecode(await hr.GetStringAsync("/Team")));
+        Assert.Contains("/assets/images/avatar/donna.png", WebUtility.HtmlDecode(await hr.GetStringAsync("/Team/Organigramma")));
     }
 
     [Fact]
@@ -215,7 +221,7 @@ public sealed class OrganigrammaWebTests : IDisposable
         Assert.NotNull((await _app.ConDb(db => db.Dipendenti.SingleAsync(d => d.Id == _rossi))).FotoChiave);
 
         Assert.Equal(png, await hr.GetByteArrayAsync($"/Dipendenti/Foto/{_rossi}"));
-        Assert.Contains($"/Dipendenti/Foto/{_rossi}", await hr.GetStringAsync("/Team")); // card con la foto
+        Assert.Contains($"/Dipendenti/Foto/{_rossi}", await hr.GetStringAsync("/Team/Organigramma")); // card con la foto
 
         var mario = await Dipendente("mario@acme.test", _rossi);
         Assert.Equal(HttpStatusCode.OK, (await mario.GetAsync($"/Dipendenti/Foto/{_rossi}")).StatusCode); // la propria

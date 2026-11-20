@@ -5,7 +5,6 @@
 
 <div class="breadcrumb-titolo d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
     <h1 class="titolo-pagina mb-0">@ViewData["Title"]</h1>
-    <a asp-action="Nuova" class="btn btn-primary"><i class="ri-add-line" aria-hidden="true"></i> Nuova azienda</a>
 </div>
 
 <section class="customer-directory">
@@ -20,6 +19,7 @@
             <div class="invoice-filter-actions"><button class="btn invoice-filter-submit" type="submit">Cerca <i class="ri-search-line" aria-hidden="true"></i></button></div>
         </div>
     </form>
+    <partial name="_ChipRicerca" />
 
     <div class="card radius-15 table-responsive table-actions-responsive p-1 customer-results">
         <table class="table mb-0">
@@ -35,7 +35,7 @@
             <tbody>
                 @if (Model.Count == 0)
                 {
-                    <tr><td colspan="5" class="text-center text-muted p-4">Nessuna azienda trovata</td></tr>
+                    <tr><td colspan="5" class="elenco-vuoto"><span class="elenco-vuoto-icona" aria-hidden="true"><i class="ri-building-line"></i></span><div>Nessuna azienda trovata</div></td></tr>
                 }
                 @foreach (var a in Model)
                 {

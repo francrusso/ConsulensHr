@@ -135,8 +135,55 @@ public sealed class ContrattoForm
     }
 }
 
+/// <summary>Stato del rapporto ricavato dai contratti.</summary>
+public enum StatoPersonale { Attivo, InArrivo, SenzaContratto, Cessato }
+
+public static class StatoPersonaleExtensions
+{
+    public static string Descrizione(this StatoPersonale s, bool plurale = false) => s switch
+    {
+        StatoPersonale.Attivo => plurale ? "Attivi" : "Attivo",
+        StatoPersonale.InArrivo => "In arrivo",
+        StatoPersonale.SenzaContratto => "Senza contratto",
+        _ => plurale ? "Cessati" : "Cessato",
+    };
+
+    /// <summary>Colore del pallino (stato: verde attivo, blu in arrivo, giallo senza contratto, grigio cessato).</summary>
+    public static string Colore(this StatoPersonale s) => s switch
+    {
+        StatoPersonale.Attivo => "#2FBA6C",
+        StatoPersonale.InArrivo => "#6096FF",
+        StatoPersonale.SenzaContratto => "#F2B544",
+        _ => "#9AA3AE",
+    };
+
+    public static string Chiave(this StatoPersonale s) => s switch
+    {
+        StatoPersonale.Attivo => "attivi",
+        StatoPersonale.InArrivo => "in-arrivo",
+        StatoPersonale.SenzaContratto => "senza-contratto",
+        _ => "cessati",
+    };
+}
+
 /// <summary>Riga dell'elenco: <paramref name="Inquadramento"/> è il livello per i dipendenti, il tipo di rapporto per gli esterni.</summary>
-public sealed record DipendenteRiga(Guid Id, string NomeCompleto, string CodiceFiscale, string Azienda, string? Inquadramento, bool InForza);
+public sealed record DipendenteRiga(Guid Id, string NomeCompleto, string CodiceFiscale, string Azienda, string? Inquadramento, StatoPersonale Stato,
+    bool HaFoto = false, string Segnaposto = "neutro")
+{
+    /// <summary>Posizione nell'organigramma o, in mancanza, mansione del contratto.</summary>
+    public string? Profilo { get; init; }
+    public TeamRiga? Team { get; init; }
+    /// <summary>Retribuzione lorda annua (o compenso) del contratto in corso, altrimenti dell'ultimo.</summary>
+    public decimal? Ral { get; init; }
+    /// <summary>Mensilità annue del contratto di riferimento (12, 13, 14…).</summary>
+    public int? Mensilita { get; init; }
+    /// <summary>Lordo mensile: RAL divisa per tutte le mensilità.</summary>
+    public decimal? MensileLordo => Ral is > 0 && Mensilita is > 0 ? Math.Round(Ral.Value / Mensilita.Value, 2) : null;
+    /// <summary>Fine del contratto di riferimento (null = senza scadenza).</summary>
+    public DateOnly? Scadenza { get; init; }
+}
+
+public sealed record TeamRiga(string Nome, string Colore, string? Emoji);
 
 [Authorize(Policy = Policy.GestionePersonale)]
 public sealed class DipendentiController(AppDbContext db, UtenteCorrente utente, ServizioSaldi saldi, ServizioAccessi accessi,
@@ -144,7 +191,7 @@ public sealed class DipendentiController(AppDbContext db, UtenteCorrente utente,
 {
     private DateOnly Oggi => DateOnly.FromDateTime(clock.GetLocalNow().DateTime);
 
-    public async Task<IActionResult> Index(string? q, Guid? aziendaId, bool tutti = false, bool esterni = false)
+    public async Task<IActionResult> Index(string? q, Guid? aziendaId, bool esterni = false, string? stato = null)
     {
         var oggi = Oggi;
         var query = utente.Filtra(db.Dipendenti.AsNoTracking());
@@ -156,8 +203,6 @@ public sealed class DipendentiController(AppDbContext db, UtenteCorrente utente,
                                      || ((string)(object)d.CodiceFiscale).ToLower().Contains(t));
         }
         var attivo = Filtri.ContrattoAttivoIl(oggi);
-        if (!tutti)
-            query = query.Where(d => d.Contratti.AsQueryable().Any(attivo) || !d.Contratti.Any());
 
         // Personale dipendente / professionisti esterni, in base al contratto più recente (senza contratto: tra i dipendenti).
         var tipiEsterni = TipoContrattoExtensions.Esterni.ToList();
@@ -168,8 +213,24 @@ public sealed class DipendentiController(AppDbContext db, UtenteCorrente utente,
         query = esterni ? query.Where(esterno) : query.Where(System.Linq.Expressions.Expression.Lambda<Func<Dipendente, bool>>(
             System.Linq.Expressions.Expression.Not(esterno.Body), esterno.Parameters));
 
-        // Solo le colonne mostrate, con azienda e livello calcolati nel database (niente contratti né elenco aziende in memoria).
-        var righe = (await query.OrderBy(d => d.Cognome).ThenBy(d => d.Nome)
+        // Stati del rapporto, con i conteggi per la barra sotto i filtri.
+        var condizioni = new Dictionary<StatoPersonale, System.Linq.Expressions.Expression<Func<Dipendente, bool>>>
+        {
+            [StatoPersonale.Attivo] = d => d.Contratti.AsQueryable().Any(attivo),
+            [StatoPersonale.InArrivo] = d => !d.Contratti.AsQueryable().Any(attivo) && d.Contratti.Any(c => c.DataInizio > oggi),
+            [StatoPersonale.SenzaContratto] = d => !d.Contratti.Any(),
+            [StatoPersonale.Cessato] = d => d.Contratti.Any() && !d.Contratti.AsQueryable().Any(attivo) && !d.Contratti.Any(c => c.DataInizio > oggi),
+        };
+        var conteggi = new Dictionary<StatoPersonale, int>();
+        foreach (var (st, cond) in condizioni) conteggi[st] = await query.CountAsync(cond);
+        ViewBag.Conteggi = conteggi;
+        ViewBag.Totale = conteggi.Values.Sum();
+        StatoPersonale? filtroStato = Enum.GetValues<StatoPersonale>().Cast<StatoPersonale?>().FirstOrDefault(x => x!.Value.Chiave() == stato);
+        if (filtroStato is { } fs) query = query.Where(condizioni[fs]);
+        ViewBag.Stato = filtroStato;
+
+        // Solo le colonne mostrate, con azienda, livello e contratto di riferimento calcolati nel database (niente contratti né elenco aziende in memoria).
+        var righeDb = (await query.OrderBy(d => d.Cognome).ThenBy(d => d.Nome)
                 .Select(d => new
                 {
                     d.Id, d.Cognome, d.Nome, d.CodiceFiscale,
@@ -177,14 +238,39 @@ public sealed class DipendentiController(AppDbContext db, UtenteCorrente utente,
                     Livello = d.Contratti.AsQueryable().Where(attivo).Select(c => c.Livello).FirstOrDefault(),
                     Tipo = d.Contratti.OrderByDescending(c => c.DataInizio).Select(c => (TipoContratto?)c.Tipo).FirstOrDefault(),
                     InForza = d.Contratti.AsQueryable().Any(attivo),
+                    InArrivo = d.Contratti.Any(c => c.DataInizio > oggi),
+                    HaContratti = d.Contratti.Any(),
+                    HaFoto = d.FotoChiave != null, d.Genere, d.Pronomi, d.Posizione, d.TeamId,
+                    // Contratto di riferimento: quello in corso, altrimenti il più recente.
+                    MansioneA = d.Contratti.AsQueryable().Where(attivo).OrderByDescending(c => c.DataInizio).Select(c => c.Mansione).FirstOrDefault(),
+                    RalA = d.Contratti.AsQueryable().Where(attivo).OrderByDescending(c => c.DataInizio).Select(c => (decimal?)c.RetribuzioneLordaAnnua).FirstOrDefault(),
+                    MensA = d.Contratti.AsQueryable().Where(attivo).OrderByDescending(c => c.DataInizio).Select(c => (int?)c.MensilitaAnnue).FirstOrDefault(),
+                    MensU = d.Contratti.OrderByDescending(c => c.DataInizio).Select(c => (int?)c.MensilitaAnnue).FirstOrDefault(),
+                    FineA = d.Contratti.AsQueryable().Where(attivo).OrderByDescending(c => c.DataInizio).Select(c => c.DataFine).FirstOrDefault(),
+                    MansioneU = d.Contratti.OrderByDescending(c => c.DataInizio).Select(c => c.Mansione).FirstOrDefault(),
+                    RalU = d.Contratti.OrderByDescending(c => c.DataInizio).Select(c => (decimal?)c.RetribuzioneLordaAnnua).FirstOrDefault(),
+                    FineU = d.Contratti.OrderByDescending(c => c.DataInizio).Select(c => c.DataFine).FirstOrDefault(),
                 })
-                .ToListAsync())
+                .ToListAsync());
+        var idTeam = righeDb.Where(d => d.TeamId != null).Select(d => d.TeamId!.Value).Distinct().ToList();
+        var team = idTeam.Count == 0 ? [] : await db.Team.AsNoTracking().Where(t => idTeam.Contains(t.Id))
+            .ToDictionaryAsync(t => t.Id, t => new TeamRiga(t.Nome, t.Colore, t.Emoji));
+        var righe = righeDb
             .Select(d => new DipendenteRiga(d.Id, $"{d.Cognome} {d.Nome}", d.CodiceFiscale.Valore, d.Azienda ?? "—",
-                d.Tipo is { } tipo && !tipo.IsSubordinato() ? tipo.Descrizione() : string.IsNullOrEmpty(d.Livello) ? null : d.Livello, d.InForza))
+                d.Tipo is { } tipo && !tipo.IsSubordinato() ? tipo.Descrizione() : string.IsNullOrEmpty(d.Livello) ? null : d.Livello,
+                d.InForza ? StatoPersonale.Attivo : d.InArrivo ? StatoPersonale.InArrivo : !d.HaContratti ? StatoPersonale.SenzaContratto : StatoPersonale.Cessato,
+                d.HaFoto, Dipendente.SegnapostoPer(d.Genere, d.Pronomi))
+            {
+                Profilo = !string.IsNullOrWhiteSpace(d.Posizione) ? d.Posizione : d.InForza ? d.MansioneA : d.MansioneU,
+                Team = d.TeamId is { } t ? team.GetValueOrDefault(t) : null,
+                Ral = d.InForza ? d.RalA : d.RalU,
+                Mensilita = d.InForza ? d.MensA : d.MensU,
+                Scadenza = d.InForza ? d.FineA : d.FineU,
+            })
             .ToList();
 
+        ViewBag.Oggi = oggi;
         ViewBag.Ricerca = q;
-        ViewBag.Tutti = tutti;
         ViewBag.Esterni = esterni;
         ViewBag.AziendaId = aziendaId;
         ViewBag.Aziende = utente.IsConsulente ? await ElencoAziende(aziendaId) : null;

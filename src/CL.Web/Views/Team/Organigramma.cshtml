@@ -1,0 +1,49 @@
+@model CL.Web.Controllers.OrganigrammaViewModel
+@{
+    ViewData["Title"] = "Organigramma";
+    if (Model.HaLogo) ViewData["LogoAzienda"] = Url.Action("Logo", "Aziende", new { id = Model.AziendaId });
+}
+<div class="breadcrumb-titolo d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+    <div>
+        @if (Model.PerConto)
+        {
+            <a asp-controller="Aziende" asp-action="Dettaglio" asp-route-id="@Model.AziendaId" class="small text-body-secondary"><i class="ri-arrow-left-s-line" aria-hidden="true"></i> @Model.Azienda</a>
+        }
+        <h1 class="titolo-pagina mb-0">Organigramma</h1>
+    </div>
+</div>
+
+@if (Model.Team.Count == 0 && Model.Dipendenti.Count == 0)
+{
+    <div class="alert alert-info radius-15">Nessun dipendente in forza: l'organigramma si popola con le persone e i team dell'azienda.</div>
+}
+else
+{
+    <div class="org-strumenti d-flex gap-2 mb-2" aria-label="Zoom del grafico">
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-zoom="-1" aria-label="Riduci"><i class="ri-zoom-out-line" aria-hidden="true"></i></button>
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-zoom="0" aria-label="Dimensione normale">100%</button>
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-zoom="1" aria-label="Ingrandisci"><i class="ri-zoom-in-line" aria-hidden="true"></i></button>
+    </div>
+    <div class="card radius-15 organigramma-contenitore">
+        <div class="organigramma" id="organigramma">
+            <ul><partial name="_Nodo" model="Model.Grafico()" view-data="ViewData" /></ul>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        // Zoom del grafico.
+        (function () {
+            const org = document.getElementById('organigramma');
+            if (!org) return;
+            let scala = 1;
+            document.querySelectorAll('[data-zoom]').forEach(b => b.addEventListener('click', () => {
+                const d = Number(b.dataset.zoom);
+                scala = d === 0 ? 1 : Math.min(1.5, Math.max(0.4, scala + d * 0.15));
+                org.style.zoom = scala;
+            }));
+        })();
+
+    </script>
+}

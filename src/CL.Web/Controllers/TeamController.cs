@@ -95,7 +95,13 @@ public sealed class OrganigrammaViewModel
 [Authorize(Policy = Policy.GestionePersonale)]
 public sealed class TeamController(AppDbContext db, UtenteCorrente utente, ServizioOrganigramma organigramma, TimeProvider clock) : AppController
 {
-    public async Task<IActionResult> Index(Guid? aziendaId)
+    /// <summary>Gestione dei team: creazione, modifica, componenti.</summary>
+    public Task<IActionResult> Index(Guid? aziendaId) => Pagina(aziendaId, "Index");
+
+    /// <summary>Albero grafico dell'azienda.</summary>
+    public Task<IActionResult> Organigramma(Guid? aziendaId) => Pagina(aziendaId, "Organigramma");
+
+    private async Task<IActionResult> Pagina(Guid? aziendaId, string vista)
     {
         var id = Azienda(aziendaId);
         if (id is null) return RedirectToAction("Index", "Aziende");
@@ -111,7 +117,7 @@ public sealed class TeamController(AppDbContext db, UtenteCorrente utente, Servi
                 d.FotoChiave is not null, d.Segnaposto))
             .ToList();
 
-        return View(new OrganigrammaViewModel
+        return View(vista, new OrganigrammaViewModel
         {
             AziendaId = id.Value, Azienda = azienda.RagioneSociale, HaLogo = azienda.LogoChiave is not null, Team = team, Dipendenti = dipendenti,
             PerConto = utente.IsConsulente,
@@ -194,7 +200,7 @@ public sealed class TeamController(AppDbContext db, UtenteCorrente utente, Servi
 
     private Guid? Azienda(Guid? richiesta) => utente.IsAzienda ? utente.AziendaId : richiesta;
 
-    /// <summary>Dopo una modifica si torna alla scheda "Gestione" della pagina.</summary>
+    /// <summary>Dopo una modifica si torna alla pagina dei team.</summary>
     private IActionResult Torna(Guid aziendaId) =>
-        Redirect(Url.Action(nameof(Index), new { aziendaId = utente.IsConsulente ? aziendaId : (Guid?)null }) + "#gestione");
+        RedirectToAction(nameof(Index), new { aziendaId = utente.IsConsulente ? aziendaId : (Guid?)null });
 }

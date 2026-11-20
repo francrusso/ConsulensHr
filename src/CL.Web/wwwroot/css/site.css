@@ -177,16 +177,175 @@ h1 .logo-azienda { max-height: 36px; }
 .foto-dipendente { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(81,45,56,.18); }
 h1 .foto-dipendente { width: 40px; height: 40px; }
 
-/* Switch Personale dipendente / Professionisti esterni */
-.switch-personale { display: inline-flex; gap: 4px; padding: 4px; background: #f6efe7; border: 1px solid var(--consulens-border); border-radius: 10px; }
-.switch-personale a { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 7px; font-size: .9rem;
-  color: var(--consulens-nav-text); text-decoration: none; white-space: nowrap; }
-.switch-personale a:hover { color: var(--consulens-page-title); background: rgba(255,255,255,.6); }
-.switch-personale a.attivo { background: #fff; color: var(--consulens-page-title); font-weight: 600; box-shadow: 0 1px 3px rgba(81,45,56,.12); }
-.switch-personale .conteggio { min-width: 22px; padding: 0 6px; border-radius: 5px; background: rgba(81,45,56,.08); font-size: .75rem; text-align: center; }
-.switch-personale a.attivo .conteggio { background: var(--consulens-accent); color: #fff; }
-
 /* Modulo contratto: campi del lavoro dipendente / dei professionisti esterni */
 .solo-esterno { display: none; }
 body.rapporto-esterno .solo-esterno { display: revert; }
 body.rapporto-esterno .solo-dipendente { display: none; }
+
+/* Barre di categorie (stile ConsulensNew): testo un po' più grande */
+.invoice-filter-categories .badge-filtro-categoria { font-size: 13px; padding: 9px 12px; gap: 6px; }
+.invoice-filter-categories .badge-filtro-categoria i { font-size: 15px; }
+
+/* Stati del personale: come le categorie, ma voci tonde con pallino colorato */
+.filtro-stati { border-radius: 999px; flex-wrap: wrap; }
+.filtro-stati .badge-filtro-categoria { border-radius: 999px; flex: 0 1 auto; padding-inline: 16px; }
+.pallino-stato { display: inline-block; width: 9px; height: 9px; flex: 0 0 9px; border-radius: 50%; background: var(--colore-stato); box-shadow: 0 0 0 2px rgba(255,255,255,.7); }
+
+
+/* Pulsante contestuale e notifiche nella barra in alto (da navigation.css di ConsulensNew) */
+.dropdown-lg .msg-footer {
+    padding: .72rem 1.2rem;
+    color: var(--bs-primary);
+    border-top: 1px solid var(--bs-border-color);
+    font-size: 14px;
+    font-weight: 500;
+    border-bottom-left-radius: .25rem;
+    border-bottom-right-radius: .25rem;
+}
+.header-notifications-list {
+    position: relative;
+    height: 370px;
+}
+.topbar-create .btn,
+.btn.btn-create {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    height: 35px;
+    padding: 0 13px;
+}
+/* «Crea fattura cartacea» accanto a «Crea nuova fattura» */
+.topbar-create + .topbar-create {
+    margin-left: 8px;
+}
+.top-header .topbar-notifications > .nav-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 38px;
+    padding: 0;
+    border-radius: 8px;
+    background: #f6e8e4;
+    color: var(--consulens-muted);
+    font-size: 18px;
+}
+.top-header .topbar-notifications > .nav-link > i {
+    font-size: 18px;
+    line-height: 1;
+}
+.topbar-notifications .msg-count {
+    left: auto;
+    right: -5px;
+    top: -5px;
+}
+.topbar-notifications .notifications-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 12px 16px;
+    border-bottom: 1px solid var(--consulens-divider);
+}
+.notifications-heading h6 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--consulens-text);
+}
+.notifications-heading > span {
+    border-radius: 6px;
+    padding: 4px 8px;
+    background: var(--consulens-surface-subtle);
+    color: #6a3f4c;
+    font-size: 11px;
+}
+.topbar-notifications .header-notifications-list {
+    height: auto;
+    max-height: min(360px, 55vh);
+    overflow-y: auto;
+    padding-block: 4px;
+}
+.top-header .topbar-notifications .dropdown-menu .notification-entry {
+    padding: 12px;
+    white-space: normal;
+    border-bottom: 1px solid var(--consulens-divider);
+    border-radius: 7px;
+}
+.topbar-notifications .notification-entry:last-child {
+    border-bottom: 0 !important;
+}
+.topbar-notifications .notification-entry .msg-name {
+    font-family: 'Poppins', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.6;
+    color: var(--consulens-text);
+}
+.topbar-notifications .notification-entry .msg-time {
+    font-size: 11px;
+    line-height: 1.5;
+    color: #84707a;
+}
+.topbar-notifications .notification-unread {
+    background: #fff6eb;
+}
+.topbar-notifications .notification-entry:hover {
+    background: var(--consulens-hover);
+}
+.topbar-notifications .msg-footer {
+    border-top: 1px solid var(--consulens-divider);
+    padding: 13px 8px 7px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--consulens-accent);
+}
+.topbar-notifications .notifications-empty {
+    padding: 28px 12px;
+    text-align: center;
+    color: #84707a;
+}
+.notifications-empty i {
+    font-size: 23px;
+}
+.notifications-empty p {
+    margin: 8px 0 0;
+    font-size: 12px;
+}
+
+/* Barra degli stati: testi più piccoli della barra delle categorie */
+.filtro-stati .badge-filtro-categoria { font-size: 11.5px; padding: 6px 13px; gap: 5px; }
+.filtro-stati .pallino-stato { width: 8px; height: 8px; flex-basis: 8px; }
+.filtro-stati { background: var(--consulens-canvas); border: 1px solid var(--consulens-border); }
+.filtro-stati .badge-filtro-categoria:hover { background: var(--consulens-hover); }
+.filtro-stati .badge-filtro-categoria.active { background: #fff; box-shadow: 0 1px 3px rgba(81, 45, 56, .12); }
+.filtro-stati .badge-filtro-categoria.active { box-shadow: 0 0 0 1px var(--consulens-border), 0 1px 3px rgba(81, 45, 56, .1); }
+
+/* Ricerca a tutta lunghezza negli elenchi e chip della ricerca attiva */
+.customer-filter-form .invoice-filter-client { flex: 1 1 320px; }
+.chip-filtri { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 2px; }
+.chip-filtro { display: inline-flex; align-items: center; gap: 6px; padding: 4px 6px 4px 12px; border-radius: 999px;
+  background: #f6e8e4; color: var(--consulens-page-title); font-size: .8rem; }
+.chip-filtro strong { font-weight: 600; }
+.chip-togli { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%;
+  color: var(--consulens-page-title); text-decoration: none; }
+.chip-togli:hover, .chip-togli:focus-visible { background: rgba(81, 45, 56, .12); color: var(--consulens-accent); }
+
+/* Stato del personale come badge, con il colore del pallino dei filtri */
+.badge-stato { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px 5px 8px; border-radius: 50rem; font-size: 12px; font-weight: 500;
+    color: var(--consulens-text); background: color-mix(in srgb, var(--colore-stato) 14%, #fff); border: 1px solid color-mix(in srgb, var(--colore-stato) 30%, #fff); }
+.badge-stato .pallino-stato { width: 7px; height: 7px; flex-basis: 7px; box-shadow: none; }
+
+/* Elenco vuoto: icona su sfondo tondo e messaggio */
+td.elenco-vuoto { text-align: center; padding: 2.5rem 1rem !important; color: var(--consulens-muted, #6c757d); }
+.elenco-vuoto-icona { display: inline-flex; align-items: center; justify-content: center; width: 56px; height: 56px; margin-bottom: 12px;
+    border-radius: 50%; background: var(--consulens-canvas); border: 1px solid var(--consulens-border); color: #98494E; font-size: 24px;
+    box-shadow: 0 0 0 6px color-mix(in srgb, var(--consulens-canvas) 60%, #fff); }
+
+/* Foto piccola nell'elenco del personale */
+.avatar-elenco { width: 30px; height: 30px; flex: 0 0 30px; border-radius: 50%; object-fit: cover; background: var(--consulens-canvas); border: 1px solid var(--consulens-border); }
+
+/* Team e scadenze nell'elenco del personale */
+.team-elenco { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.scadenza-vicina { color: #b5651d; font-weight: 600; }

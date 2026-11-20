@@ -26,7 +26,7 @@
         <tbody>
             @if (Model.Aziende.Count == 0)
             {
-                <tr><td colspan="5" class="text-center text-muted p-4">Nessuna azienda attiva</td></tr>
+                <tr><td colspan="5" class="elenco-vuoto"><span class="elenco-vuoto-icona" aria-hidden="true"><i class="ri-building-line"></i></span><div>Nessuna azienda attiva</div></td></tr>
             }
             @foreach (var a in Model.Aziende)
             {

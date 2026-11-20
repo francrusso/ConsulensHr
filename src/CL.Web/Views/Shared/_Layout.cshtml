@@ -7,6 +7,24 @@
     var autenticato = User.Identity?.IsAuthenticated == true && ViewData["AuthPanel"] is not true;
     var ruolo = Utente.IsConsulente ? "Consulente" : Utente.IsAzienda ? "Referente azienda" : Utente.IsDipendente ? "Dipendente" : "";
     var inOnboarding = User.HasClaim(c => c.Type == CL.Infrastructure.Identity.ClaimsPersonalizzati.OnboardingDaCompletare);
+
+    // Pulsante "aggiungi" nella barra in alto, in base alla sezione (come in ConsulensNew).
+    var controller = (ViewContext.RouteData.Values["controller"] as string ?? "").ToLowerInvariant();
+    var esterniAttivi = Context.Request.Query["esterni"] == "true";
+    var aziendaQuery = Context.Request.Query["aziendaId"].FirstOrDefault();
+    (string? Url, string Etichetta, string Icona) azione = inOnboarding ? (null, "", "") : controller switch
+    {
+        "dipendenti" when !Utente.IsDipendente => (Url.Action("Nuovo", "Dipendenti", new { aziendaId = aziendaQuery }),
+            esterniAttivi ? "Aggiungi professionista" : Utente.IsAzienda ? "Aggiungi persona" : "Nuovo dipendente", "ri-user-add-line"),
+        "aziende" when Utente.IsConsulente => (Url.Action("Nuova", "Aziende"), "Nuova azienda", "ri-add-line"),
+        "team" when (ViewContext.RouteData.Values["action"] as string) == "Index" => ("#nuovoTeam", "Nuovo team", "ri-add-line"),
+        "assenze" => (Url.Action("Nuova", "Assenze"), Utente.IsDipendente ? "Nuova richiesta" : "Registra assenza", "ri-calendar-event-line"),
+        "bustepaga" when Utente.IsConsulente => (Url.Action("Carica", "BustePaga"), "Carica cedolini", "ri-upload-2-line"),
+        "home" => Utente.IsConsulente ? (Url.Action("Nuova", "Aziende"), "Nuova azienda", "ri-add-line")
+            : Utente.IsAzienda ? (Url.Action("Nuovo", "Dipendenti"), "Aggiungi persona", "ri-user-add-line")
+            : (Url.Action("Nuova", "Assenze"), "Chiedi ferie o permessi", "ri-calendar-event-line"),
+        _ => (null, "", ""),
+    };
 }
 <!DOCTYPE html>
 <html lang="it" class="@(ViewData["AuthPanel"] is true ? "auth-panel-page" : "")">
@@ -80,12 +98,26 @@
                                 </a>
                             </li>
                         }
-                        @if (Utente.IsConsulente || Utente.IsAzienda)
+                        @if (Utente.IsAzienda)
+                        {
+                            <li>
+                                <a href="javascript:;" class="has-arrow">
+                                    <div class="parent-icon icon-color-1"><i class="ri-team-line ri-xs"></i></div>
+                                    <div class="menu-title">Personale</div>
+                                </a>
+                                <ul>
+                                    <li><a asp-controller="Dipendenti" asp-action="Index">Elenco personale</a></li>
+                                    <li><a asp-controller="Team" asp-action="Index">Team</a></li>
+                                    <li><a asp-controller="Team" asp-action="Organigramma">Organigramma</a></li>
+                                </ul>
+                            </li>
+                        }
+                        else if (Utente.IsConsulente)
                         {
                             <li>
                                 <a asp-controller="Dipendenti" asp-action="Index">
                                     <div class="parent-icon icon-color-1"><i class="ri-team-line ri-xs"></i></div>
-                                    <div class="menu-title">@(Utente.IsAzienda ? "Personale" : "Dipendenti")</div>
+                                    <div class="menu-title">Dipendenti</div>
                                 </a>
                             </li>
                         }
@@ -121,12 +153,6 @@
                         }
                         else if (Utente.IsAzienda)
                         {
-                            <li>
-                                <a asp-controller="Team" asp-action="Index">
-                                    <div class="parent-icon icon-color-1"><i class="ri-organization-chart ri-xs"></i></div>
-                                    <div class="menu-title">Organigramma</div>
-                                </a>
-                            </li>
                             <li>
                                 <a asp-controller="Utenti" asp-action="Azienda">
                                     <div class="parent-icon icon-color-1"><i class="ri-shield-user-line ri-xs"></i></div>
@@ -189,6 +215,33 @@
                             <img src="@Url.Action("Logo", "Aziende", new { id = aziendaLogo })" alt="" class="topbar-logo-azienda d-none d-md-block" onerror="this.remove()" />
                         }
                         <ul class="navbar-nav">
+                            @if (azione.Url is not null)
+                            {
+                                <li class="nav-item topbar-create">
+                                    <a class="btn btn-primary" href="@azione.Url" title="@azione.Etichetta" data-bs-toggle="@(azione.Url!.StartsWith('#') ? "collapse" : null)">
+                                        <i class="@azione.Icona" aria-hidden="true"></i><span>@azione.Etichetta</span>
+                                    </a>
+                                </li>
+                            }
+                            @* Notifiche: la sezione verrà sviluppata in seguito; per ora il menù è vuoto. *@
+                            <li class="nav-item dropdown dropdown-lg topbar-notifications">
+                                <a class="nav-link dropdown-toggle dropdown-toggle-nocaret position-relative" href="javascript:;" data-bs-toggle="dropdown"
+                                   aria-label="Notifiche" aria-expanded="false">
+                                    <i class="ri-notification-2-line vertical-align-middle" aria-hidden="true"></i>
+                                </a>
+                                <div class="dropdown-menu dropdown-menu-end">
+                                    <div class="notifications-heading">
+                                        <h6>Notifiche</h6>
+                                        <span>0 da leggere</span>
+                                    </div>
+                                    <div class="header-notifications-list">
+                                        <div class="notifications-empty">
+                                            <i class="ri-notification-2-line" aria-hidden="true"></i>
+                                            <p>Non ci sono notifiche</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </li>
                             <li class="nav-item topbar-profile">
                                 <a class="nav-link" asp-controller="Account" asp-action="Profilo" title="Il mio profilo">
                                     <div class="d-flex user-box align-items-center">

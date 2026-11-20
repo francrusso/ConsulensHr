@@ -19,7 +19,7 @@
         <tbody>
             @if (buste.Count == 0)
             {
-                <tr><td colspan="@colonne" class="text-center text-muted p-4">Nessuna busta paga</td></tr>
+                <tr><td colspan="@colonne" class="elenco-vuoto"><span class="elenco-vuoto-icona" aria-hidden="true"><i class="ri-file-list-3-line"></i></span><div>Nessuna busta paga</div></td></tr>
             }
             @foreach (var b in buste)
             {

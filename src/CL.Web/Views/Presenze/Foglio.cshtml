@@ -98,7 +98,7 @@ else if (modificabile)
             <tbody>
                 @if (Model.Righe.Count == 0)
                 {
-                    <tr><td colspan="14" class="text-center text-muted p-4">Nessun dipendente in forza nel mese</td></tr>
+                    <tr><td colspan="14" class="elenco-vuoto"><span class="elenco-vuoto-icona" aria-hidden="true"><i class="ri-calendar-check-line"></i></span><div>Nessun dipendente in forza nel mese</div></td></tr>
                 }
                 @for (var i = 0; i < Model.Righe.Count; i++)
                 {

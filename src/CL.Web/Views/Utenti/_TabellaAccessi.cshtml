@@ -14,7 +14,7 @@
         <tbody>
             @if (utenti.Count == 0)
             {
-                <tr><td colspan="@(esteso ? 6 : 4)" class="text-center text-muted p-4">Nessun accesso</td></tr>
+                <tr><td colspan="@(esteso ? 6 : 4)" class="elenco-vuoto"><span class="elenco-vuoto-icona" aria-hidden="true"><i class="ri-shield-user-line"></i></span><div>Nessun accesso</div></td></tr>
             }
             @foreach (var u in utenti)
             {
