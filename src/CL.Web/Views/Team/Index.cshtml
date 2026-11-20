@@ -1,0 +1,64 @@
+@model CL.Web.Controllers.OrganigrammaViewModel
+@{
+    ViewData["Title"] = "Organigramma";
+    var senzaTeam = Model.Dipendenti.Where(d => d.TeamId is null).ToList();
+}
+<div class="breadcrumb-titolo d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+    <div>
+        @if (Model.PerConto)
+        {
+            <a asp-controller="Aziende" asp-action="Dettaglio" asp-route-id="@Model.AziendaId" class="small text-body-secondary"><i class="ri-arrow-left-s-line" aria-hidden="true"></i> @Model.Azienda</a>
+        }
+        <h1 class="titolo-pagina mb-0">Organigramma</h1>
+        <p class="text-body-secondary mb-0 small">
+            Ferie e permessi li approva il <strong>responsabile diretto</strong> del dipendente, se indicato; altrimenti il <strong>responsabile del suo team</strong>
+            (o dei team superiori). Se non c'è nessuno decide il referente dell'azienda, che può comunque approvare tutte le richieste.
+        </p>
+    </div>
+    <button type="button" class="btn btn-primary" data-bs-toggle="collapse" data-bs-target="#nuovoTeam" aria-expanded="false" aria-controls="nuovoTeam">
+        <i class="ri-add-line" aria-hidden="true"></i> Nuovo team
+    </button>
+</div>
+
+<div class="collapse mb-3" id="nuovoTeam">
+    <section class="card radius-15 p-3"><partial name="_FormTeam" model="(Model, (CL.Domain.Organizzazione.Team?)null)" /></section>
+</div>
+
+@if (Model.Team.Count == 0)
+{
+    <div class="alert alert-info radius-15">Nessun team ancora: crea il primo (es. "Direzione", "Vendite", "Magazzino") e assegna i dipendenti.</div>
+}
+
+@foreach (var (t, livello) in Model.Albero())
+{
+    var membri = Model.Dipendenti.Where(d => d.TeamId == t.Id).ToList();
+    var idModifica = "team-" + t.Id.ToString("N");
+    <section class="card radius-15 mb-3 team-card" style="margin-left:@(Math.Min(livello, 4) * 28)px" aria-labelledby="titolo-@idModifica">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 px-3 pt-3 pb-2">
+            <div>
+                <h2 class="h6 mb-0" id="titolo-@idModifica">
+                    @if (livello > 0) { <i class="ri-corner-down-right-line text-body-secondary" aria-hidden="true"></i> }
+                    @t.Nome <span class="small text-body-secondary fw-normal">· @membri.Count @(membri.Count == 1 ? "persona" : "persone")</span>
+                </h2>
+                <div class="small text-body-secondary">Responsabile: @(t.ResponsabileId is null ? "nessuno" : Model.NomeDi(t.ResponsabileId))</div>
+            </div>
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="collapse" data-bs-target="#@idModifica" aria-expanded="false" aria-controls="@idModifica"><i class="ri-pencil-line" aria-hidden="true"></i> Modifica</button>
+                <form asp-action="Elimina" method="post" class="m-0" onsubmit="return confirm('Eliminare il team @t.Nome?');">
+                    <input type="hidden" name="aziendaId" value="@Model.AziendaId" /><input type="hidden" name="id" value="@t.Id" />
+                    <button type="submit" class="btn btn-sm btn-outline-danger" aria-label="Elimina il team @t.Nome"><i class="ri-delete-bin-line" aria-hidden="true"></i></button>
+                </form>
+            </div>
+        </div>
+        <div class="collapse px-3 pb-2" id="@idModifica"><partial name="_FormTeam" model="(Model, (CL.Domain.Organizzazione.Team?)t)" /></div>
+        <partial name="_Membri" model="(Model, membri, t.ResponsabileId)" />
+    </section>
+}
+
+<section class="card radius-15 mb-3" aria-labelledby="titoloSenzaTeam">
+    <div class="px-3 pt-3 pb-2">
+        <h2 class="h6 mb-0" id="titoloSenzaTeam">Senza team <span class="small text-body-secondary fw-normal">· @senzaTeam.Count</span></h2>
+        <div class="small text-body-secondary">Assegnali a un team con il pulsante di modifica, oppure indica un responsabile diretto.</div>
+    </div>
+    <partial name="_Membri" model="(Model, senzaTeam, (Guid?)null)" />
+</section>

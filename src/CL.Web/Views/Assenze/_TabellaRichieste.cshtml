@@ -30,7 +30,14 @@
                 <tr class="customer-result-row">
                     @if (mostraDipendente)
                     {
-                        <td data-label="Dipendente"><a class="customer-name" asp-controller="Dipendenti" asp-action="Dettaglio" asp-route-id="@r.DipendenteId"><i class="ri-user-line" aria-hidden="true"></i><span>@r.Dipendente</span></a></td>
+                        @if (Utente.IsDipendente)
+                        {
+                            <td data-label="Dipendente"><span class="customer-name"><i class="ri-user-line" aria-hidden="true"></i><span>@r.Dipendente</span></span></td>
+                        }
+                        else
+                        {
+                            <td data-label="Dipendente"><a class="customer-name" asp-controller="Dipendenti" asp-action="Dettaglio" asp-route-id="@r.DipendenteId"><i class="ri-user-line" aria-hidden="true"></i><span>@r.Dipendente</span></a></td>
+                        }
                     }
                     @if (mostraAzienda) { <td data-label="Azienda">@r.Azienda</td> }
                     <td data-label="Tipo">

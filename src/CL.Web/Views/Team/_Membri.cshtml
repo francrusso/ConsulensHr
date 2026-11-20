@@ -1,0 +1,71 @@
+@model (CL.Web.Controllers.OrganigrammaViewModel Vm, List<CL.Web.Controllers.MembroTeam> Membri, Guid? ResponsabileTeam)
+@{
+    var (vm, membri, responsabileTeam) = Model;
+    var ritorno = Context.Request.Path + Context.Request.QueryString;
+}
+@if (membri.Count == 0)
+{
+    <p class="small text-body-secondary mb-0 px-3 pb-3">Nessun componente.</p>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table mb-0 align-middle">
+            <thead><tr><th scope="col">Dipendente</th><th scope="col">Posizione</th><th scope="col">Approva ferie e permessi</th><th scope="col" class="text-end">Azioni</th></tr></thead>
+            <tbody>
+                @foreach (var m in membri)
+                {
+                    var idForm = "membro-" + m.Id.ToString("N");
+                    <tr>
+                        <td>
+                            <a asp-controller="Dipendenti" asp-action="Dettaglio" asp-route-id="@m.Id">@m.Nome</a>
+                            @if (m.Id == responsabileTeam) { <span class="badge bg-info ms-1">Responsabile</span> }
+                            @if (!m.InForza) { <span class="badge bg-secondary ms-1">Non in forza</span> }
+                        </td>
+                        <td>@(m.Posizione ?? "—")</td>
+                        <td>
+                            @if (m.ApprovatoreId is { } a)
+                            {
+                                @vm.NomeDi(a)
+                                @if (m.ResponsabileDirettoId == a) { <span class="small text-body-secondary">(diretto)</span> }
+                            }
+                            else { <span class="text-body-secondary">Referente dell'azienda</span> }
+                        </td>
+                        <td>
+                            <div class="customer-actions">
+                                <button type="button" data-bs-toggle="collapse" data-bs-target="#@idForm" aria-expanded="false" aria-controls="@idForm" title="Modifica" aria-label="Modifica team e responsabile di @m.Nome"><i class="ri-pencil-line" aria-hidden="true"></i></button>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="collapse" id="@idForm">
+                        <td colspan="4">
+                            <form asp-action="Assegna" method="post" class="row g-2 align-items-end">
+                                <input type="hidden" name="dipendenteId" value="@m.Id" />
+                                <input type="hidden" name="ritorno" value="@ritorno" />
+                                <div class="col-md-3">
+                                    <label class="form-label small" for="team-@idForm">Team</label>
+                                    <select class="form-select form-select-sm" id="team-@idForm" name="teamId">
+                                        <option value="">Nessun team</option>
+                                        @foreach (var (t, livello) in vm.Albero()) { <option value="@t.Id" selected="@(t.Id == m.TeamId)">@(livello > 0 ? new string('—', livello) + " " : "")@t.Nome</option> }
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label small" for="pos-@idForm">Posizione</label>
+                                    <input class="form-control form-control-sm" id="pos-@idForm" name="posizione" value="@m.Posizione" maxlength="100" placeholder="es. Capo reparto" />
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small" for="resp-@idForm">Responsabile diretto (facoltativo)</label>
+                                    <select class="form-select form-select-sm" id="resp-@idForm" name="responsabileId">
+                                        <option value="">Quello del team</option>
+                                        @foreach (var d in vm.Dipendenti.Where(d => d.Id != m.Id && d.InForza)) { <option value="@d.Id" selected="@(d.Id == m.ResponsabileDirettoId)">@d.Nome</option> }
+                                    </select>
+                                </div>
+                                <div class="col-md-2"><button type="submit" class="btn btn-sm btn-primary w-100">Salva</button></div>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

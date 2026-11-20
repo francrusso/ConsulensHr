@@ -2,6 +2,7 @@ using CL.Domain.Assenze;
 using CL.Domain.Aziende;
 using CL.Domain.BustePaga;
 using CL.Domain.Dipendenti;
+using CL.Domain.Organizzazione;
 using CL.Domain.Presenze;
 using CL.Domain.ValueObjects;
 using CL.Infrastructure.Identity;
@@ -23,6 +24,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : Ident
     public DbSet<ProfiloAzienda> ProfiliAzienda => Set<ProfiloAzienda>();
     public DbSet<ComunicazioneMensile> ComunicazioniPresenze => Set<ComunicazioneMensile>();
     public DbSet<ProfiloDipendente> ProfiliDipendente => Set<ProfiloDipendente>();
+    public DbSet<Team> Team => Set<Team>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

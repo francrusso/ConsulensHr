@@ -2,6 +2,7 @@ using CL.Domain.Assenze;
 using CL.Domain.Aziende;
 using CL.Domain.BustePaga;
 using CL.Domain.Dipendenti;
+using CL.Domain.Organizzazione;
 using CL.Domain.Presenze;
 using CL.Infrastructure.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -139,6 +140,20 @@ internal sealed class FamiliareACaricoConfig : IEntityTypeConfiguration<Familiar
     }
 }
 
+internal sealed class TeamConfig : IEntityTypeConfiguration<Team>
+{
+    public void Configure(EntityTypeBuilder<Team> b)
+    {
+        b.ToTable("Team");
+        b.Property(x => x.Id).ValueGeneratedNever();
+        b.Property(x => x.Nome).HasMaxLength(100);
+        b.HasOne<Azienda>().WithMany().HasForeignKey(x => x.AziendaId).OnDelete(DeleteBehavior.Cascade);
+        b.HasOne<Team>().WithMany().HasForeignKey(x => x.PadreId).OnDelete(DeleteBehavior.Restrict);
+        b.HasOne<Dipendente>().WithMany().HasForeignKey(x => x.ResponsabileId).OnDelete(DeleteBehavior.SetNull);
+        b.HasIndex(x => new { x.AziendaId, x.Nome }).IsUnique();
+    }
+}
+
 internal sealed class DipendenteConfig : IEntityTypeConfiguration<Dipendente>
 {
     public void Configure(EntityTypeBuilder<Dipendente> b)
@@ -157,6 +172,9 @@ internal sealed class DipendenteConfig : IEntityTypeConfiguration<Dipendente>
         b.HasOne<Azienda>().WithMany().HasForeignKey(x => x.AziendaId).OnDelete(DeleteBehavior.Restrict);
         b.HasOne<ApplicationUser>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.SetNull);
         b.HasIndex(x => new { x.AziendaId, x.CodiceFiscale }).IsUnique();
+        b.Property(x => x.Posizione).HasMaxLength(100);
+        b.HasOne<Team>().WithMany().HasForeignKey(x => x.TeamId).OnDelete(DeleteBehavior.SetNull);
+        b.HasOne<Dipendente>().WithMany().HasForeignKey(x => x.ResponsabileId).OnDelete(DeleteBehavior.SetNull);
         b.HasIndex(x => new { x.AziendaId, x.Cognome, x.Nome });
 
         b.HasMany(x => x.Contratti).WithOne().HasForeignKey(c => c.DipendenteId).OnDelete(DeleteBehavior.Cascade);

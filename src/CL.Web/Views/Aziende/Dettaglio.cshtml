@@ -17,6 +17,7 @@
         </h1>
     </div>
     <div class="d-flex gap-2">
+        <a asp-controller="Team" asp-action="Index" asp-route-aziendaId="@Model.Id" class="btn btn-outline-secondary"><i class="ri-organization-chart" aria-hidden="true"></i> Organigramma</a>
         <a asp-action="Modifica" asp-route-id="@Model.Id" class="btn btn-outline-secondary"><i class="ri-pencil-line" aria-hidden="true"></i> Modifica</a>
         <form asp-action="CambiaStato" asp-route-id="@Model.Id" method="post" class="m-0">
             <button type="submit" class="btn btn-outline-secondary">@(Model.Attiva ? "Disattiva" : "Riattiva")</button>

@@ -21,6 +21,13 @@ public sealed class Dipendente : Entity
     /// <summary>Utente Identity collegato (portale dipendente), se abilitato.</summary>
     public string? UserId { get; private set; }
 
+    /// <summary>Team di appartenenza nell'organigramma dell'azienda.</summary>
+    public Guid? TeamId { get; private set; }
+    /// <summary>Posizione/ruolo nell'organizzazione (es. "Capo reparto"); distinto dalla mansione contrattuale.</summary>
+    public string? Posizione { get; private set; }
+    /// <summary>Responsabile diretto: se indicato, approva lui ferie e permessi (prevale sul responsabile del team).</summary>
+    public Guid? ResponsabileId { get; private set; }
+
     public IReadOnlyCollection<Contratto> Contratti => _contratti.AsReadOnly();
 
     public string NomeCompleto => $"{Cognome} {Nome}";
@@ -58,6 +65,19 @@ public sealed class Dipendente : Entity
     public void ImpostaIban(Iban? iban) => Iban = iban;
     public void ImpostaMatricola(string? matricola) => Matricola = matricola?.Trim();
     public void CollegaUtente(string? userId) => UserId = userId;
+
+    public void ImpostaOrganizzazione(Organizzazione.Team? team, string? posizione, Dipendente? responsabile)
+    {
+        if (team is not null && team.AziendaId != AziendaId) throw new DomainException("Il team deve essere della stessa azienda.");
+        if (responsabile is not null && responsabile.AziendaId != AziendaId)
+            throw new DomainException("Il responsabile deve essere un dipendente della stessa azienda.");
+        if (responsabile?.Id == Id) throw new DomainException("Un dipendente non può essere responsabile di sé stesso.");
+        var p = string.IsNullOrWhiteSpace(posizione) ? null : posizione.Trim();
+        if (p?.Length > 100) throw new DomainException("Posizione troppo lunga (massimo 100 caratteri).");
+        TeamId = team?.Id;
+        Posizione = p;
+        ResponsabileId = responsabile?.Id;
+    }
 
     public Contratto Assumi(TipoContratto tipo, string ccnl, string livello, DateOnly dataInizio, DateOnly? dataFine,
         decimal retribuzioneLordaAnnua, int mensilitaAnnue = 13, decimal oreSettimanaliFullTime = 40,

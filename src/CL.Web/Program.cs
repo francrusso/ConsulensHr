@@ -28,8 +28,7 @@ builder.Services.ConfigureApplicationCookie(o =>
 
 builder.Services.AddAuthorizationBuilder()
     .AddPolicy(Policy.SoloConsulente, p => p.RequireRole(Ruoli.Consulente))
-    .AddPolicy(Policy.GestionePersonale, p => p.RequireRole(Ruoli.Consulente, Ruoli.Azienda))
-    .AddPolicy(Policy.ApprovazioneAssenze, p => p.RequireRole(Ruoli.Azienda));
+    .AddPolicy(Policy.GestionePersonale, p => p.RequireRole(Ruoli.Consulente, Ruoli.Azienda));
 
 // Lettere accentate scritte così come sono nell'HTML (senza &#xE0; ecc.).
 builder.Services.Configure<Microsoft.Extensions.WebEncoders.WebEncoderOptions>(o =>
@@ -44,6 +43,7 @@ builder.Services.AddScoped<NotificheAssenze>();
 builder.Services.AddScoped<ServizioPresenze>();
 builder.Services.AddScoped<ServizioPanoramica>();
 builder.Services.AddScoped<LoghiAziende>();
+builder.Services.AddScoped<ServizioOrganigramma>();
 
 builder.Services.AddControllersWithViews(o =>
 {

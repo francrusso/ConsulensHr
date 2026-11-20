@@ -8,6 +8,10 @@
     <partial name="~/Views/Assenze/_Saldi.cshtml" model="Model.Saldi" />
 }
 <div class="row g-3 mt-1">
+    @if (Model.RichiesteTeam is { } team)
+    {
+        <partial name="_Indicatore" model='("Richieste del team", team.ToString(), "ri-team-line", Url.Action("Index", "Assenze"), "da approvare")' />
+    }
     <partial name="_Indicatore" model='("Mie richieste in attesa", Model.RichiesteInAttesa.ToString(), "ri-calendar-event-line", Url.Action("Index", "Assenze"), "in attesa di approvazione")' />
     <partial name="_Indicatore" model='("Ultima busta paga", Model.UltimaBusta?.Periodo ?? "—", "ri-file-list-3-line", Url.Action("Index", "BustePaga"), Model.UltimaBusta is null ? "nessuna ancora pubblicata" : Model.UltimaBusta.VisualizzataIl is null ? "da aprire" : "già aperta")' />
     <div class="col-sm-6 col-xl d-flex align-items-center">

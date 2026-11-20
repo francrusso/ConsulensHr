@@ -1,0 +1,31 @@
+@model (CL.Web.Controllers.OrganigrammaViewModel Vm, CL.Domain.Organizzazione.Team? Team)
+@{
+    var (vm, team) = Model;
+    var chiave = team?.Id.ToString("N") ?? "nuovo";
+}
+<form asp-action="Salva" method="post" class="row g-2 align-items-end">
+    <input type="hidden" name="aziendaId" value="@vm.AziendaId" />
+    @if (team is not null) { <input type="hidden" name="id" value="@team.Id" /> }
+    <div class="col-md-4">
+        <label class="form-label small" for="nome-@chiave">Nome del team</label>
+        <input class="form-control" id="nome-@chiave" name="nome" value="@team?.Nome" maxlength="100" required placeholder="es. Vendite" />
+    </div>
+    <div class="col-md-3">
+        <label class="form-label small" for="padre-@chiave">Dentro il team</label>
+        <select class="form-select" id="padre-@chiave" name="padreId">
+            <option value="">— (primo livello)</option>
+            @foreach (var (t, livello) in vm.Albero().Where(x => x.Team.Id != team?.Id))
+            {
+                <option value="@t.Id" selected="@(t.Id == team?.PadreId)">@(livello > 0 ? new string('—', livello) + " " : "")@t.Nome</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-3">
+        <label class="form-label small" for="resp-@chiave">Responsabile</label>
+        <select class="form-select" id="resp-@chiave" name="responsabileId">
+            <option value="">Nessuno</option>
+            @foreach (var d in vm.Dipendenti.Where(d => d.InForza)) { <option value="@d.Id" selected="@(d.Id == team?.ResponsabileId)">@d.Nome</option> }
+        </select>
+    </div>
+    <div class="col-md-2"><button type="submit" class="btn btn-primary w-100">@(team is null ? "Crea" : "Salva")</button></div>
+</form>

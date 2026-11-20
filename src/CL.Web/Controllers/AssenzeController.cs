@@ -56,11 +56,14 @@ public sealed class AssenzeViewModel
     public List<SelectListItem>? Aziende { get; init; }
     /// <summary>Solo per il dipendente: i propri saldi.</summary>
     public IReadOnlyList<SaldoAssenza>? Saldi { get; init; }
+    /// <summary>Solo per un dipendente responsabile: richieste dei collaboratori in attesa della sua decisione.</summary>
+    public List<RichiestaRiga>? DaApprovareTeam { get; init; }
     public DateOnly Oggi { get; init; }
 }
 
 [Authorize]
-public sealed class AssenzeController(AppDbContext db, UtenteCorrente utente, ServizioSaldi saldi, NotificheAssenze notifiche, TimeProvider clock) : AppController
+public sealed class AssenzeController(AppDbContext db, UtenteCorrente utente, ServizioSaldi saldi, NotificheAssenze notifiche,
+    ServizioOrganigramma organigramma, TimeProvider clock) : AppController
 {
     private DateOnly Oggi => DateOnly.FromDateTime(clock.GetLocalNow().DateTime);
     private DateTime AdessoUtc => clock.GetUtcNow().UtcDateTime;
@@ -93,6 +96,18 @@ public sealed class AssenzeController(AppDbContext db, UtenteCorrente utente, Se
                 x.r.Dal, x.r.Al, x.r.AOre, x.r.Ore, x.r.Stato, x.r.RichiestaIl, x.r.Note, x.r.DecisaDa, x.r.MotivoRifiuto))
             .ToList();
 
+        // Il dipendente responsabile di qualcuno vede anche le richieste del suo team da decidere.
+        List<RichiestaRiga>? daApprovare = null;
+        if (utente.IsDipendente && utente.DipendenteId is { } me && await organigramma.CollaboratoriAsync(me) is { Count: > 0 } collaboratori)
+            daApprovare = (await (from r in db.RichiesteAssenza.AsNoTracking()
+                                  join d in db.Dipendenti.AsNoTracking().IgnoreAutoIncludes() on r.DipendenteId equals d.Id
+                                  where collaboratori.Contains(r.DipendenteId) && r.Stato == StatoRichiesta.InAttesa
+                                  orderby r.Dal
+                                  select new { r, d.Cognome, d.Nome }).ToListAsync())
+                .Select(x => new RichiestaRiga(x.r.Id, x.r.DipendenteId, $"{x.Cognome} {x.Nome}", "", x.r.Tipo, x.r.Dal, x.r.Al, x.r.AOre, x.r.Ore,
+                    x.r.Stato, x.r.RichiestaIl, x.r.Note, x.r.DecisaDa, x.r.MotivoRifiuto))
+                .ToList();
+
         IReadOnlyList<SaldoAssenza>? mieiSaldi = null;
         if (utente.IsDipendente && await dipendenti.FirstOrDefaultAsync() is { } io)
         {
@@ -112,6 +127,7 @@ public sealed class AssenzeController(AppDbContext db, UtenteCorrente utente, Se
                     .Select(a => new SelectListItem(a.RagioneSociale, a.Id.ToString(), a.Id == aziendaId)).ToListAsync()
                 : null,
             Saldi = mieiSaldi,
+            DaApprovareTeam = daApprovare,
             Oggi = Oggi,
         });
     }
@@ -171,11 +187,11 @@ public sealed class AssenzeController(AppDbContext db, UtenteCorrente utente, Se
             : RedirectToAction("Dettaglio", "Dipendenti", new { id = dip.Id });
     }
 
-    [HttpPost, ValidateAntiForgeryToken, Authorize(Policy = Policy.ApprovazioneAssenze)]
+    [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Approva(Guid id, string? ritorno)
     {
-        var r = await Trova(id);
-        if (r is null) return NotFound();
+        var r = await DaDecidere(id);
+        if (r is null) return utente.IsAzienda ? NotFound() : Forbid();
         if (Prova(() => r.Approva(utente.Email, AdessoUtc)))
         {
             await db.SaveChangesAsync();
@@ -186,11 +202,11 @@ public sealed class AssenzeController(AppDbContext db, UtenteCorrente utente, Se
         return Torna(ritorno);
     }
 
-    [HttpPost, ValidateAntiForgeryToken, Authorize(Policy = Policy.ApprovazioneAssenze)]
+    [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Rifiuta(Guid id, string? motivo, string? ritorno)
     {
-        var r = await Trova(id);
-        if (r is null) return NotFound();
+        var r = await DaDecidere(id);
+        if (r is null) return utente.IsAzienda ? NotFound() : Forbid();
         if (Prova(() => r.Rifiuta(utente.Email, motivo ?? "", AdessoUtc)))
         {
             await db.SaveChangesAsync();
@@ -232,6 +248,19 @@ public sealed class AssenzeController(AppDbContext db, UtenteCorrente utente, Se
         await db.SaveChangesAsync();
         Conferma($"Residui di inizio {anno} salvati.");
         return RedirectToAction("Dettaglio", "Dipendenti", new { id = dipendenteId });
+    }
+
+    /// <summary>
+    /// Richiesta che l'utente può approvare o rifiutare: il referente per tutta la propria azienda, un dipendente
+    /// solo se l'organigramma lo indica come responsabile del richiedente. Lo studio non decide.
+    /// </summary>
+    private async Task<RichiestaAssenza?> DaDecidere(Guid id)
+    {
+        if (utente.IsAzienda) return await Trova(id);
+        if (!utente.IsDipendente || utente.DipendenteId is not { } io) return null;
+        var r = await db.RichiesteAssenza.FirstOrDefaultAsync(x => x.Id == id);
+        if (r is null || r.DipendenteId == io) return null;
+        return await organigramma.ApprovatoreAsync(r.DipendenteId) == io ? r : null;
     }
 
     private Task<RichiestaAssenza?> Trova(Guid id)

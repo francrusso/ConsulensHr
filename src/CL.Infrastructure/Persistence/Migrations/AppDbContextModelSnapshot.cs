@@ -521,6 +521,16 @@ namespace CL.Infrastructure.Persistence.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<string>("Posizione")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<Guid?>("ResponsabileId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("TeamId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Telefono")
                         .HasMaxLength(30)
                         .HasColumnType("character varying(30)");
@@ -530,6 +540,10 @@ namespace CL.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(450)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ResponsabileId");
+
+                    b.HasIndex("TeamId");
 
                     b.HasIndex("UserId");
 
@@ -701,6 +715,37 @@ namespace CL.Infrastructure.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("ProfiliDipendente", "hr");
+                });
+
+            modelBuilder.Entity("CL.Domain.Organizzazione.Team", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AziendaId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<Guid?>("PadreId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("ResponsabileId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PadreId");
+
+                    b.HasIndex("ResponsabileId");
+
+                    b.HasIndex("AziendaId", "Nome")
+                        .IsUnique();
+
+                    b.ToTable("Team", "hr");
                 });
 
             modelBuilder.Entity("CL.Domain.Presenze.ComunicazioneMensile", b =>
@@ -1101,6 +1146,16 @@ namespace CL.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("CL.Domain.Dipendenti.Dipendente", null)
+                        .WithMany()
+                        .HasForeignKey("ResponsabileId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("CL.Domain.Organizzazione.Team", null)
+                        .WithMany()
+                        .HasForeignKey("TeamId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("CL.Infrastructure.Identity.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
@@ -1123,6 +1178,25 @@ namespace CL.Infrastructure.Persistence.Migrations
                         .HasForeignKey("CL.Domain.Dipendenti.ProfiloDipendente", "DipendenteId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("CL.Domain.Organizzazione.Team", b =>
+                {
+                    b.HasOne("CL.Domain.Aziende.Azienda", null)
+                        .WithMany()
+                        .HasForeignKey("AziendaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("CL.Domain.Organizzazione.Team", null)
+                        .WithMany()
+                        .HasForeignKey("PadreId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("CL.Domain.Dipendenti.Dipendente", null)
+                        .WithMany()
+                        .HasForeignKey("ResponsabileId")
+                        .OnDelete(DeleteBehavior.SetNull);
                 });
 
             modelBuilder.Entity("CL.Domain.Presenze.ComunicazioneMensile", b =>

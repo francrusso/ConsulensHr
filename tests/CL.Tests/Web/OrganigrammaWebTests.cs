@@ -1,0 +1,155 @@
+using System.Net;
+using CL.Domain.Assenze;
+using CL.Domain.Aziende;
+using CL.Domain.Dipendenti;
+using CL.Domain.Organizzazione;
+using CL.Domain.ValueObjects;
+using CL.Infrastructure.Identity;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace CL.Tests.Web;
+
+public sealed class OrganigrammaWebTests : IDisposable
+{
+    private readonly AppFactory _app = new();
+    private Guid _azienda, _rossi, _bianchi, _verdi;
+
+    public void Dispose() => _app.Dispose();
+
+    private static async Task<string> Testo(HttpResponseMessage r) => WebUtility.HtmlDecode(await r.Content.ReadAsStringAsync());
+
+    /// <summary>Acme con tre dipendenti in forza: Rossi, Bianchi, Verdi.</summary>
+    private async Task Dati()
+    {
+        (_azienda, _rossi, _bianchi, _verdi) = await _app.ConDb(async db =>
+        {
+            var a = new Azienda("Acme S.r.l.", PartitaIva.Parse("01234567897"));
+            Dipendente Nuovo(string nome, string cognome, string cf)
+            {
+                var d = new Dipendente(a.Id, nome, cognome, CodiceFiscale.Parse(cf), new DateOnly(1985, 1, 1));
+                d.Assumi(TipoContratto.TempoIndeterminato, "Commercio", "4", new DateOnly(DateTime.Today.Year, 1, 1), null, 28_000m);
+                return d;
+            }
+            var rossi = Nuovo("Mario", "Rossi", "RSSMRA85T10A562S");
+            var bianchi = Nuovo("Laura", "Bianchi", "RSSLRA15A41F839L");
+            var verdi = Nuovo("Anna", "Verdi", "VRDNNA88C41F839V");
+            db.AddRange(a, rossi, bianchi, verdi);
+            await db.SaveChangesAsync();
+            return (a.Id, rossi.Id, bianchi.Id, verdi.Id);
+        });
+    }
+
+    private async Task<HttpClient> Dipendente(string email, Guid dipendenteId)
+    {
+        var u = await _app.CreaUtente(email, Ruoli.Dipendente);
+        using (var scope = _app.Services.CreateScope())
+        {
+            var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+            var x = (await users.FindByIdAsync(u.Id))!;
+            x.DipendenteId = dipendenteId;
+            x.AziendaId = _azienda;
+            await users.UpdateAsync(x);
+        }
+        await _app.CompletaDatiPersonali(dipendenteId);
+        var c = _app.CreateClient();
+        await c.Accedi(email);
+        return c;
+    }
+
+    private static DateOnly GiornoLavorativo(int traGiorni)
+    {
+        var g = DateOnly.FromDateTime(DateTime.Today).AddDays(traGiorni);
+        while (!CalendarioLavorativo.IsLavorativo(g, 5)) g = g.AddDays(1);
+        return g;
+    }
+
+    [Fact]
+    public async Task Il_responsabile_del_team_approva_le_ferie_dei_suoi_collaboratori()
+    {
+        await Dati();
+        var giorno = GiornoLavorativo(20);
+        if (giorno.Year != DateTime.Today.Year) return; // ultime settimane dell'anno: scenario non applicabile
+
+        // Il referente crea Vendite > Vendite Nord (responsabile Rossi) e vi assegna Bianchi.
+        await _app.CreaUtente("hr@acme.test", Ruoli.Azienda, _azienda);
+        var hr = _app.CreateClient();
+        await hr.Accedi("hr@acme.test");
+        Assert.Contains("Team \"Vendite\" creato", await Testo(await hr.InviaForm("/Team", "/Team/Salva", new() { ["aziendaId"] = _azienda.ToString(), ["nome"] = "Vendite" })));
+        var vendite = await _app.ConDb(db => db.Team.SingleAsync());
+        await hr.InviaForm("/Team", "/Team/Salva", new()
+        {
+            ["aziendaId"] = _azienda.ToString(), ["nome"] = "Vendite Nord", ["padreId"] = vendite.Id.ToString(), ["responsabileId"] = _rossi.ToString(),
+        });
+        var nord = await _app.ConDb(db => db.Team.SingleAsync(t => t.Nome == "Vendite Nord"));
+        var html = await Testo(await hr.InviaForm("/Team", "/Team/Assegna", new()
+        {
+            ["dipendenteId"] = _bianchi.ToString(), ["teamId"] = nord.Id.ToString(), ["posizione"] = "Commerciale",
+        }));
+        Assert.Contains("Organizzazione di Bianchi Laura aggiornata", html);
+        Assert.Contains("Vendite Nord", html);
+        Assert.Equal(_rossi, (await _app.ConDb(db => db.Team.SingleAsync(t => t.Id == nord.Id))).ResponsabileId);
+
+        // Un ciclo nella gerarchia viene rifiutato.
+        Assert.Contains("non può stare sotto", await Testo(await hr.InviaForm("/Team", "/Team/Salva", new()
+        {
+            ["aziendaId"] = _azienda.ToString(), ["id"] = vendite.Id.ToString(), ["nome"] = "Vendite", ["padreId"] = nord.Id.ToString(),
+        })));
+
+        // Bianchi chiede un giorno di ferie: lo vede Rossi, non Verdi.
+        var bianchi = await Dipendente("laura@acme.test", _bianchi);
+        await bianchi.InviaForm("/Assenze/Nuova", "/Assenze/Nuova", new() { ["Tipo"] = "Ferie", ["Dal"] = giorno.ToString("yyyy-MM-dd") });
+        var richiesta = await _app.ConDb(db => db.RichiesteAssenza.SingleAsync());
+
+        var verdi = await Dipendente("anna@acme.test", _verdi);
+        Assert.DoesNotContain("Da approvare per il tuo team", WebUtility.HtmlDecode(await verdi.GetStringAsync("/Assenze")));
+        var r = await verdi.InviaForm("/Assenze", $"/Assenze/Approva/{richiesta.Id}", new());
+        Assert.Contains("/Account/AccessoNegato", r.RequestMessage!.RequestUri!.AbsolutePath);
+
+        var rossi = await Dipendente("mario@acme.test", _rossi);
+        Assert.Contains("Richieste del team", WebUtility.HtmlDecode(await rossi.GetStringAsync("/")));
+        html = WebUtility.HtmlDecode(await rossi.GetStringAsync("/Assenze"));
+        Assert.Contains("Da approvare per il tuo team", html);
+        Assert.Contains("Bianchi Laura", html);
+        Assert.Contains("Richiesta approvata", await Testo(await rossi.InviaForm("/Assenze", $"/Assenze/Approva/{richiesta.Id}", new())));
+        var decisa = await _app.ConDb(db => db.RichiesteAssenza.SingleAsync());
+        Assert.Equal(StatoRichiesta.Approvata, decisa.Stato);
+        Assert.Equal("mario@acme.test", decisa.DecisaDa);
+
+        // Rossi non approva sé stesso: sopra di lui non c'è nessuno, decide il referente.
+        await rossi.InviaForm("/Assenze/Nuova", "/Assenze/Nuova", new() { ["Tipo"] = "Ferie", ["Dal"] = GiornoLavorativo(40).ToString("yyyy-MM-dd") });
+        var sua = await _app.ConDb(db => db.RichiesteAssenza.SingleAsync(x => x.DipendenteId == _rossi));
+        r = await rossi.InviaForm("/Assenze", $"/Assenze/Approva/{sua.Id}", new());
+        Assert.Contains("/Account/AccessoNegato", r.RequestMessage!.RequestUri!.AbsolutePath);
+        Assert.Contains("Richiesta approvata", await Testo(await hr.InviaForm("/Assenze", $"/Assenze/Approva/{sua.Id}", new())));
+        Assert.Empty(_app.ErroriServer);
+    }
+
+    [Fact]
+    public async Task Lo_studio_gestisce_l_organigramma_e_un_team_con_componenti_non_si_elimina()
+    {
+        await Dati();
+        await _app.CreaUtente("studio@test.it", Ruoli.Consulente);
+        var studio = _app.CreateClient();
+        await studio.Accedi("studio@test.it");
+        var pagina = $"/Team?aziendaId={_azienda}";
+
+        await studio.InviaForm(pagina, "/Team/Salva", new() { ["aziendaId"] = _azienda.ToString(), ["nome"] = "Magazzino", ["responsabileId"] = _verdi.ToString() });
+        var team = await _app.ConDb(db => db.Team.SingleAsync());
+        await studio.InviaForm(pagina, "/Team/Assegna", new() { ["dipendenteId"] = _rossi.ToString(), ["teamId"] = team.Id.ToString(), ["ritorno"] = pagina });
+
+        var html = WebUtility.HtmlDecode(await studio.GetStringAsync(pagina));
+        Assert.Contains("Magazzino", html);
+        Assert.Contains("Verdi Anna", html);
+        Assert.Contains("Esiste già un team", await Testo(await studio.InviaForm(pagina, "/Team/Salva", new() { ["aziendaId"] = _azienda.ToString(), ["nome"] = "magazzino" })));
+
+        html = await Testo(await studio.InviaForm(pagina, "/Team/Elimina", new() { ["aziendaId"] = _azienda.ToString(), ["id"] = team.Id.ToString() }));
+        Assert.Contains("ha dei componenti", html);
+
+        // Nella scheda del dipendente si vede chi approva.
+        var scheda = WebUtility.HtmlDecode(await studio.GetStringAsync($"/Dipendenti/Dettaglio/{_rossi}"));
+        Assert.Contains("Approva ferie e permessi", scheda);
+        Assert.Contains("Verdi Anna", scheda);
+    }
+}

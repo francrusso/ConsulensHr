@@ -685,3 +685,101 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261120104854_Organigramma') THEN
+    ALTER TABLE hr."Dipendenti" ADD "Posizione" character varying(100);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261120104854_Organigramma') THEN
+    ALTER TABLE hr."Dipendenti" ADD "ResponsabileId" uuid;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261120104854_Organigramma') THEN
+    ALTER TABLE hr."Dipendenti" ADD "TeamId" uuid;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261120104854_Organigramma') THEN
+    CREATE TABLE hr."Team" (
+        "Id" uuid NOT NULL,
+        "AziendaId" uuid NOT NULL,
+        "Nome" character varying(100) NOT NULL,
+        "PadreId" uuid,
+        "ResponsabileId" uuid,
+        CONSTRAINT "PK_Team" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_Team_Aziende_AziendaId" FOREIGN KEY ("AziendaId") REFERENCES hr."Aziende" ("Id") ON DELETE CASCADE,
+        CONSTRAINT "FK_Team_Dipendenti_ResponsabileId" FOREIGN KEY ("ResponsabileId") REFERENCES hr."Dipendenti" ("Id") ON DELETE SET NULL,
+        CONSTRAINT "FK_Team_Team_PadreId" FOREIGN KEY ("PadreId") REFERENCES hr."Team" ("Id") ON DELETE RESTRICT
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261120104854_Organigramma') THEN
+    CREATE INDEX "IX_Dipendenti_ResponsabileId" ON hr."Dipendenti" ("ResponsabileId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261120104854_Organigramma') THEN
+    CREATE INDEX "IX_Dipendenti_TeamId" ON hr."Dipendenti" ("TeamId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261120104854_Organigramma') THEN
+    CREATE UNIQUE INDEX "IX_Team_AziendaId_Nome" ON hr."Team" ("AziendaId", "Nome");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261120104854_Organigramma') THEN
+    CREATE INDEX "IX_Team_PadreId" ON hr."Team" ("PadreId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261120104854_Organigramma') THEN
+    CREATE INDEX "IX_Team_ResponsabileId" ON hr."Team" ("ResponsabileId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261120104854_Organigramma') THEN
+    ALTER TABLE hr."Dipendenti" ADD CONSTRAINT "FK_Dipendenti_Dipendenti_ResponsabileId" FOREIGN KEY ("ResponsabileId") REFERENCES hr."Dipendenti" ("Id") ON DELETE SET NULL;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261120104854_Organigramma') THEN
+    ALTER TABLE hr."Dipendenti" ADD CONSTRAINT "FK_Dipendenti_Team_TeamId" FOREIGN KEY ("TeamId") REFERENCES hr."Team" ("Id") ON DELETE SET NULL;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261120104854_Organigramma') THEN
+    INSERT INTO hr."__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261120104854_Organigramma', '10.0.15');
+    END IF;
+END $EF$;
+COMMIT;
+

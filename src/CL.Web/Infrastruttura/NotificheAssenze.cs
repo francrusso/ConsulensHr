@@ -8,10 +8,10 @@ using Microsoft.EntityFrameworkCore;
 namespace CL.Web.Infrastruttura;
 
 /// <summary>
-/// Avvisi email sulle richieste di assenza: ai referenti dell'azienda quando c'è da decidere,
+/// Avvisi email sulle richieste di assenza: a chi deve decidere (il responsabile dall'organigramma, altrimenti i referenti),
 /// al dipendente quando la richiesta è approvata o rifiutata. Partono in background.
 /// </summary>
-public sealed class NotificheAssenze(AppDbContext db, CodaEmail coda, ServizioAccessi accessi)
+public sealed class NotificheAssenze(AppDbContext db, CodaEmail coda, ServizioAccessi accessi, ServizioOrganigramma organigramma)
 {
     public async Task NuovaRichiestaAsync(RichiestaAssenza r)
     {
@@ -19,12 +19,18 @@ public sealed class NotificheAssenze(AppDbContext db, CodaEmail coda, ServizioAc
         var dip = await db.Dipendenti.AsNoTracking().IgnoreAutoIncludes()
             .Where(d => d.Id == r.DipendenteId).Select(d => new { d.Nome, d.Cognome, d.AziendaId }).FirstAsync();
 
-        var referenti = await (
-            from u in db.Users
-            join ur in db.UserRoles on u.Id equals ur.UserId
-            join ruolo in db.Roles on ur.RoleId equals ruolo.Id
-            where ruolo.Name == Ruoli.Azienda && u.AziendaId == dip.AziendaId && u.Attivo && u.EmailConfirmed
-            select new { u.Email, u.Nome }).ToListAsync();
+        // Chi decide: il responsabile dall'organigramma, se ha un accesso attivo; altrimenti i referenti dell'azienda.
+        var approvatore = await organigramma.ApprovatoreAsync(r.DipendenteId);
+        var referenti = approvatore is { } a
+            ? await db.Users.Where(u => u.DipendenteId == a && u.Attivo && u.EmailConfirmed).Select(u => new { u.Email, u.Nome }).ToListAsync()
+            : [];
+        if (referenti.Count == 0)
+            referenti = await (
+                from u in db.Users
+                join ur in db.UserRoles on u.Id equals ur.UserId
+                join ruolo in db.Roles on ur.RoleId equals ruolo.Id
+                where ruolo.Name == Ruoli.Azienda && u.AziendaId == dip.AziendaId && u.Attivo && u.EmailConfirmed
+                select new { u.Email, u.Nome }).ToListAsync();
 
         var link = WebUtility.HtmlEncode(accessi.ComponiUrl("/Assenze"));
         var chi = WebUtility.HtmlEncode($"{dip.Nome} {dip.Cognome}");

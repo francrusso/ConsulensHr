@@ -114,7 +114,8 @@ public sealed class ContrattoForm
 public sealed record DipendenteRiga(Guid Id, string NomeCompleto, string CodiceFiscale, string Azienda, string? Livello, bool InForza);
 
 [Authorize(Policy = Policy.GestionePersonale)]
-public sealed class DipendentiController(AppDbContext db, UtenteCorrente utente, ServizioSaldi saldi, ServizioAccessi accessi, TimeProvider clock) : AppController
+public sealed class DipendentiController(AppDbContext db, UtenteCorrente utente, ServizioSaldi saldi, ServizioAccessi accessi,
+    ServizioOrganigramma organigramma, TimeProvider clock) : AppController
 {
     private DateOnly Oggi => DateOnly.FromDateTime(clock.GetLocalNow().DateTime);
 
@@ -225,6 +226,14 @@ public sealed class DipendentiController(AppDbContext db, UtenteCorrente utente,
         var richieste = await saldi.RichiesteAnno(d.Id, oggi.Year);
         ViewBag.Azienda = trovato.Azienda;
         ViewBag.Accesso = await accessi.Elenco().FirstOrDefaultAsync(u => u.DipendenteId == d.Id);
+        var approvatore = await organigramma.ApprovatoreAsync(d.Id);
+        ViewBag.Organizzazione = new
+        {
+            Team = d.TeamId is { } tid ? await db.Team.Where(t => t.Id == tid).Select(t => t.Nome).FirstOrDefaultAsync() : null,
+            Approvatore = approvatore is { } aid
+                ? await db.Dipendenti.IgnoreAutoIncludes().Where(x => x.Id == aid).Select(x => x.Cognome + " " + x.Nome).FirstOrDefaultAsync()
+                : null,
+        };
         ViewBag.ProfiloPersonale = await db.ProfiliDipendente.AsNoTracking().IgnoreAutoIncludes()
             .Where(p => p.DipendenteId == d.Id).Select(p => new { p.Passo, p.CompletatoIl, p.AggiornatoIl }).FirstOrDefaultAsync();
         ViewBag.Buste = await db.BustePaga.AsNoTracking().Where(b => b.DipendenteId == d.Id)

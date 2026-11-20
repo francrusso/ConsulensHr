@@ -42,6 +42,18 @@
                 <dt>Indirizzo</dt><dd>@(Model.Indirizzo ?? "—")</dd>
                 <dt>IBAN</dt><dd>@(Model.Iban?.Valore ?? "—")</dd>
             </dl>
+            @{ dynamic org = ViewBag.Organizzazione; }
+            <div class="border-top pt-3 mt-3">
+                <div class="d-flex align-items-center justify-content-between">
+                    <h2 class="h6 mb-2">Organizzazione</h2>
+                    <a asp-controller="Team" asp-action="Index" asp-route-aziendaId="@(Utente.IsConsulente ? Model.AziendaId : (Guid?)null)" class="small"><i class="ri-organization-chart" aria-hidden="true"></i> Organigramma</a>
+                </div>
+                <dl class="scheda mb-0">
+                    <dt>Team</dt><dd>@(org.Team ?? "—")</dd>
+                    <dt>Posizione</dt><dd>@(Model.Posizione ?? "—")</dd>
+                    <dt>Approva ferie e permessi</dt><dd>@(org.Approvatore ?? "Referente dell'azienda")</dd>
+                </dl>
+            </div>
             @{ dynamic? dati = ViewBag.ProfiloPersonale; }
             <div class="border-top pt-3 mt-3">
                 <h2 class="h6 mb-2">Dati personali per le paghe</h2>

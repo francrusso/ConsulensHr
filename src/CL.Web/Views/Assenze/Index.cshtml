@@ -16,6 +16,15 @@
     <div class="mb-4"><partial name="_Saldi" model="Model.Saldi" /></div>
 }
 
+@if (Model.DaApprovareTeam is { } team)
+{
+    <section class="mb-4" aria-labelledby="titoloTeam">
+        <h2 class="h5" id="titoloTeam">Da approvare per il tuo team <span class="badge bg-warning text-dark align-middle">@team.Count</span></h2>
+        <partial name="_TabellaRichieste" model="(team, true, true, false, Model.Oggi, ritorno)" />
+    </section>
+    <h2 class="h5">Le mie richieste</h2>
+}
+
 <section class="customer-directory">
     <form asp-action="Index" method="get" class="invoice-filter-bar customer-filter-form">
         <div class="invoice-filter-toolbar">
