@@ -1,0 +1,27 @@
+@model (CL.Web.Infrastruttura.UtenteRiga Utente, string Ritorno)
+@* Reinvio del link (invito o nuova password) e attivazione/disattivazione. *@
+@{ var (u, ritorno) = Model; }
+<div class="customer-actions">
+    @if (u.Stato != CL.Web.Infrastruttura.StatoAccesso.Disattivato)
+    {
+        <form asp-controller="Utenti" asp-action="Reinvia" asp-route-id="@u.Id" method="post" class="d-inline">
+            <input type="hidden" name="ritorno" value="@ritorno" />
+            <button type="submit" title="@(u.Stato == CL.Web.Infrastruttura.StatoAccesso.InvitoInAttesa ? "Invia di nuovo l'invito" : "Invia un link per reimpostare la password")"
+                    aria-label="@(u.Stato == CL.Web.Infrastruttura.StatoAccesso.InvitoInAttesa ? "Invia di nuovo l'invito" : "Invia un link per reimpostare la password") a @u.Email">
+                <i class="ri-mail-send-line" aria-hidden="true"></i>
+            </button>
+        </form>
+    }
+    <form asp-controller="Utenti" asp-action="CambiaStato" asp-route-id="@u.Id" method="post" class="d-inline"
+          onsubmit="return confirm('@(u.Stato == CL.Web.Infrastruttura.StatoAccesso.Disattivato ? "Riattivare" : "Disattivare") l\'accesso di @u.Email?');">
+        <input type="hidden" name="ritorno" value="@ritorno" />
+        @if (u.Stato == CL.Web.Infrastruttura.StatoAccesso.Disattivato)
+        {
+            <button type="submit" title="Riattiva accesso" aria-label="Riattiva l'accesso di @u.Email"><i class="ri-user-follow-line" aria-hidden="true"></i></button>
+        }
+        else
+        {
+            <button type="submit" title="Disattiva accesso" aria-label="Disattiva l'accesso di @u.Email"><i class="ri-user-forbid-line" aria-hidden="true"></i></button>
+        }
+    </form>
+</div>

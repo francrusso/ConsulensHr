@@ -13,3 +13,22 @@
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Chiudi"></button>
     </div>
 }
+@if (TempData["LinkInvito"] is string linkInvito)
+{
+    @* Mostrato solo quando l'email non è partita (invio non configurato): chi invita lo comunica di persona. *@
+    <div class="alert alert-warning radius-15" role="status">
+        <h5><i class="ri-mail-send-line" aria-hidden="true"></i> Invia tu il link a @TempData["LinkInvitoEmail"]</h5>
+        <p class="mb-2">L'invio delle email non è ancora configurato. Copia questo link e mandalo alla persona: vale 3 giorni e serve a scegliere la password.</p>
+        <div class="input-group">
+            <input type="text" class="form-control" id="linkInvito" value="@linkInvito" readonly aria-label="Link di invito" />
+            <button type="button" class="btn btn-outline-secondary" id="copiaLinkInvito"><i class="ri-file-copy-line" aria-hidden="true"></i> Copia</button>
+        </div>
+    </div>
+    <script>
+        document.getElementById('copiaLinkInvito').addEventListener('click', async function () {
+            const campo = document.getElementById('linkInvito');
+            try { await navigator.clipboard.writeText(campo.value); } catch { campo.select(); document.execCommand('copy'); }
+            this.innerHTML = '<i class="ri-check-line" aria-hidden="true"></i> Copiato';
+        });
+    </script>
+}

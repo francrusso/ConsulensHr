@@ -1,3 +1,4 @@
+using CL.Infrastructure.Email;
 using CL.Infrastructure.Identity;
 using CL.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Identity;
@@ -36,6 +37,14 @@ public static class DependencyInjection
             .AddEntityFrameworkStores<AppDbContext>()
             .AddDefaultTokenProviders()
             .AddClaimsPrincipalFactory<ClaimsFactory>();
+
+        // Link di invito e di recupero password validi 3 giorni.
+        services.Configure<DataProtectionTokenProviderOptions>(o => o.TokenLifespan = TimeSpan.FromDays(3));
+        // Utente disattivato o password cambiata: le sessioni aperte decadono entro 5 minuti.
+        services.Configure<SecurityStampValidatorOptions>(o => o.ValidationInterval = TimeSpan.FromMinutes(5));
+
+        services.Configure<OpzioniEmail>(configuration.GetSection("Email"));
+        services.AddSingleton<IInvioEmail, InvioEmailSmtp>();
 
         services.AddSingleton(TimeProvider.System);
         return services;

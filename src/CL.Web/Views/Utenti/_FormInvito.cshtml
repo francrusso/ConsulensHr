@@ -1,0 +1,18 @@
+@model (string Azione, Guid? AziendaId, string Pulsante)
+@* Invito di una persona (consulente o referente azienda): nome, cognome, email. *@
+<form asp-controller="Utenti" asp-action="@Model.Azione" method="post" class="row g-2 align-items-end">
+    @if (Model.AziendaId is { } az) { <input type="hidden" name="aziendaId" value="@az" /> }
+    <div class="col-sm-3">
+        <label class="form-label small" for="invito-nome-@Model.Azione">Nome</label>
+        <input class="form-control" id="invito-nome-@Model.Azione" name="Nome" required maxlength="100" autocomplete="off" />
+    </div>
+    <div class="col-sm-3">
+        <label class="form-label small" for="invito-cognome-@Model.Azione">Cognome</label>
+        <input class="form-control" id="invito-cognome-@Model.Azione" name="Cognome" required maxlength="100" autocomplete="off" />
+    </div>
+    <div class="col-sm-4">
+        <label class="form-label small" for="invito-email-@Model.Azione">Email</label>
+        <input class="form-control" id="invito-email-@Model.Azione" name="Email" type="email" required maxlength="256" autocomplete="off" />
+    </div>
+    <div class="col-sm-2"><button type="submit" class="btn btn-primary w-100">@Model.Pulsante</button></div>
+</form>

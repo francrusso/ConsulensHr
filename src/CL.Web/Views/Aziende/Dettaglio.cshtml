@@ -2,6 +2,7 @@
 @{
     ViewData["Title"] = Model.RagioneSociale;
     var dipendenti = (List<Dipendente>)ViewBag.Dipendenti;
+    var referenti = (List<CL.Web.Infrastruttura.UtenteRiga>)ViewBag.Referenti;
     var oggi = DateOnly.FromDateTime(DateTime.Today);
 }
 
@@ -66,3 +67,21 @@
         </section>
     </div>
 </div>
+
+<section class="mt-4" aria-labelledby="titoloAccessi">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+        <div>
+            <h2 class="h5 mb-0" id="titoloAccessi">Referenti con accesso al portale</h2>
+            <p class="small text-body-secondary mb-0">Gestiscono anagrafiche, ferie e permessi dei dipendenti di @Model.RagioneSociale.</p>
+        </div>
+        <button type="button" class="btn btn-primary" data-bs-toggle="collapse" data-bs-target="#nuovoReferente" aria-expanded="false" aria-controls="nuovoReferente">
+            <i class="ri-user-add-line" aria-hidden="true"></i> Invita un referente
+        </button>
+    </div>
+    <div class="collapse mb-3" id="nuovoReferente">
+        <section class="card radius-15 p-3">
+            <partial name="~/Views/Utenti/_FormInvito.cshtml" model='("InvitaReferente", (Guid?)Model.Id, "Invita")' />
+        </section>
+    </div>
+    <partial name="~/Views/Utenti/_TabellaAccessi.cshtml" model='(referenti, Context.Request.Path.ToString(), false)' />
+</section>

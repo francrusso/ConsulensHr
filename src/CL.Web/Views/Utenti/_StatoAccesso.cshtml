@@ -1,0 +1,7 @@
+@model CL.Web.Infrastruttura.StatoAccesso
+@switch (Model)
+{
+    case CL.Web.Infrastruttura.StatoAccesso.Attivo: <span class="badge bg-success">Attivo</span> break;
+    case CL.Web.Infrastruttura.StatoAccesso.InvitoInAttesa: <span class="badge bg-warning text-dark">Invito in attesa</span> break;
+    default: <span class="badge bg-secondary">Disattivato</span> break;
+}

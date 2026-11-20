@@ -1,0 +1,43 @@
+@model (List<CL.Web.Infrastruttura.UtenteRiga> Utenti, string Ritorno, bool MostraRuoloAzienda)
+@{ var (utenti, ritorno, esteso) = Model; }
+<div class="card radius-15 table-responsive table-actions-responsive p-1 customer-results">
+    <table class="table mb-0 align-middle">
+        <thead>
+            <tr>
+                <th scope="col">Persona</th>
+                <th scope="col">Email</th>
+                @if (esteso) { <th scope="col">Ruolo</th><th scope="col">Azienda</th> }
+                <th scope="col">Stato</th>
+                <th scope="col" class="text-end">Azioni</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (utenti.Count == 0)
+            {
+                <tr><td colspan="@(esteso ? 6 : 4)" class="text-center text-muted p-4">Nessun accesso</td></tr>
+            }
+            @foreach (var u in utenti)
+            {
+                <tr class="customer-result-row">
+                    <td data-label="Persona">
+                        @if (u.DipendenteId is { } d)
+                        {
+                            <a class="customer-name" asp-controller="Dipendenti" asp-action="Dettaglio" asp-route-id="@d"><i class="ri-user-line" aria-hidden="true"></i><span>@u.Nome</span></a>
+                        }
+                        else { @u.Nome }
+                    </td>
+                    <td data-label="Email">@u.Email</td>
+                    @if (esteso)
+                    {
+                        <td data-label="Ruolo">@(u.Ruolo switch { "Azienda" => "Referente azienda", var r => r })</td>
+                        <td data-label="Azienda">
+                            @if (u.AziendaId is { } a) { <a asp-controller="Aziende" asp-action="Dettaglio" asp-route-id="@a">@u.Azienda</a> } else { <span>—</span> }
+                        </td>
+                    }
+                    <td data-label="Stato"><partial name="~/Views/Utenti/_StatoAccesso.cshtml" model="u.Stato" /></td>
+                    <td data-label="Azioni"><partial name="~/Views/Utenti/_AzioniAccesso.cshtml" model="(u, ritorno)" /></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

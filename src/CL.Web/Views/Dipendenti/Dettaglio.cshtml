@@ -7,6 +7,7 @@
     var saldi = (IReadOnlyList<SaldoAssenza>)ViewBag.Saldi;
     var richieste = (List<CL.Web.Controllers.RichiestaRiga>)ViewBag.Richieste;
     var ritorno = Context.Request.Path.ToString();
+    var accesso = ViewBag.Accesso as CL.Web.Infrastruttura.UtenteRiga;
 }
 
 <div class="breadcrumb-titolo d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
@@ -26,7 +27,7 @@
 
 <div class="row g-3">
     <div class="col-lg-4">
-        <section class="card radius-15 p-4 h-100">
+        <section class="card radius-15 p-4 h-100 d-flex flex-column">
             <h2 class="h6 mb-3">Anagrafica</h2>
             <dl class="scheda mb-0">
                 <dt>Azienda</dt><dd><a asp-controller="Aziende" asp-action="Dettaglio" asp-route-id="@Model.AziendaId">@ViewBag.Azienda</a></dd>
@@ -38,6 +39,31 @@
                 <dt>Indirizzo</dt><dd>@(Model.Indirizzo ?? "—")</dd>
                 <dt>IBAN</dt><dd>@(Model.Iban?.Valore ?? "—")</dd>
             </dl>
+            <div class="border-top pt-3 mt-auto">
+                <h2 class="h6 mb-2">Accesso al portale</h2>
+                @if (accesso is null)
+                {
+                    <p class="small text-body-secondary mb-2">Con l'accesso il dipendente vede i propri saldi e chiede ferie e permessi.</p>
+                    @if (string.IsNullOrWhiteSpace(Model.Email))
+                    {
+                        <p class="small mb-0">Per invitarlo serve la sua email: <a asp-action="Modifica" asp-route-id="@Model.Id">aggiungila all'anagrafica</a>.</p>
+                    }
+                    else
+                    {
+                        <form asp-controller="Utenti" asp-action="InvitaDipendente" method="post" class="m-0">
+                            <input type="hidden" name="dipendenteId" value="@Model.Id" />
+                            <button type="submit" class="btn btn-sm btn-primary"><i class="ri-mail-send-line" aria-hidden="true"></i> Invita a @Model.Email</button>
+                        </form>
+                    }
+                }
+                else
+                {
+                    <div class="d-flex align-items-center justify-content-between gap-2">
+                        <div class="small"><partial name="~/Views/Utenti/_StatoAccesso.cshtml" model="accesso.Stato" /> <span class="text-body-secondary">@accesso.Email</span></div>
+                        <partial name="~/Views/Utenti/_AzioniAccesso.cshtml" model="(accesso, ritorno)" />
+                    </div>
+                }
+            </div>
         </section>
     </div>
 

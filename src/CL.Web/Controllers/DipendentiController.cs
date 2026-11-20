@@ -114,7 +114,7 @@ public sealed class ContrattoForm
 public sealed record DipendenteRiga(Guid Id, string NomeCompleto, string CodiceFiscale, string Azienda, string? Livello, bool InForza);
 
 [Authorize(Policy = Policy.GestionePersonale)]
-public sealed class DipendentiController(AppDbContext db, UtenteCorrente utente, ServizioSaldi saldi, TimeProvider clock) : AppController
+public sealed class DipendentiController(AppDbContext db, UtenteCorrente utente, ServizioSaldi saldi, ServizioAccessi accessi, TimeProvider clock) : AppController
 {
     private DateOnly Oggi => DateOnly.FromDateTime(clock.GetLocalNow().DateTime);
 
@@ -224,6 +224,7 @@ public sealed class DipendentiController(AppDbContext db, UtenteCorrente utente,
         var oggi = Oggi;
         var richieste = await saldi.RichiesteAnno(d.Id, oggi.Year);
         ViewBag.Azienda = trovato.Azienda;
+        ViewBag.Accesso = await accessi.Elenco().FirstOrDefaultAsync(u => u.DipendenteId == d.Id);
         ViewBag.Oggi = oggi;
         ViewBag.Saldi = await saldi.Calcola(d, oggi.Year, oggi.Month, richieste);
         ViewBag.Richieste = richieste

@@ -33,6 +33,7 @@ builder.Services.Configure<Microsoft.Extensions.WebEncoders.WebEncoderOptions>(o
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<UtenteCorrente>();
 builder.Services.AddScoped<ServizioSaldi>();
+builder.Services.AddScoped<ServizioAccessi>();
 
 builder.Services.AddControllersWithViews(o =>
 {

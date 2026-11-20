@@ -32,21 +32,11 @@
                     <label asp-for="Ricordami" class="form-check-label">Ricorda accesso</label>
                     <input class="form-check-input" asp-for="Ricordami" />
                 </div>
+                <a asp-action="PasswordDimenticata" class="small">Password dimenticata?</a>
             </div>
             <button type="submit" class="btn btn-primary mt-2">Accedi</button>
         </form>
     </section>
 </div>
 
-@section Scripts {
-    <script>
-        document.querySelector('.toggle-password')?.addEventListener('click', function () {
-            const input = document.getElementById('Password');
-            const visibile = input.type === 'text';
-            input.type = visibile ? 'password' : 'text';
-            this.setAttribute('aria-pressed', String(!visibile));
-            this.setAttribute('aria-label', visibile ? 'Mostra password' : 'Nascondi password');
-            this.querySelector('i').className = visibile ? 'ri-eye-line' : 'ri-eye-off-line';
-        });
-    </script>
-}
+@section Scripts { <partial name="_ScriptPassword" /> }

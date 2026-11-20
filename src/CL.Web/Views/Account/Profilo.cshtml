@@ -1,0 +1,35 @@
+@model CL.Web.Controllers.ProfiloViewModel
+@{
+    ViewData["Title"] = "Il mio profilo";
+}
+<div class="breadcrumb-titolo mb-3">
+    <h1 class="titolo-pagina mb-0">@ViewData["Title"]</h1>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-4">
+        <section class="card radius-15 p-4 h-100">
+            <h2 class="h6 mb-3">Dati di accesso</h2>
+            <dl class="scheda mb-0">
+                <dt>Nome</dt><dd>@Model.Nome</dd>
+                <dt>Email</dt><dd>@Model.Email</dd>
+                <dt>Ruolo</dt><dd>@Model.Ruolo</dd>
+            </dl>
+            <p class="small text-body-secondary mb-0">Per correggere nome o email rivolgiti allo studio.</p>
+        </section>
+    </div>
+    <div class="col-lg-8">
+        <section class="card radius-15 p-4">
+            <h2 class="h6 mb-3">Cambia password</h2>
+            <form asp-action="Profilo" method="post" class="d-grid gap-3" style="max-width: 460px" novalidate>
+                <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+                <partial name="_CampoPassword" model='("PasswordAttuale", "PasswordAttuale", "Password attuale", "current-password")' />
+                <partial name="_CampoPassword" model='("NuovaPassword", "NuovaPassword", "Nuova password", "new-password")' />
+                <partial name="_CampoPassword" model='("Conferma", "Conferma", "Ripeti la nuova password", "new-password")' />
+                <p class="small text-body-secondary mb-0">Almeno 10 caratteri, con maiuscole, minuscole e numeri. Le altre sessioni aperte verranno chiuse.</p>
+                <div><button type="submit" class="btn btn-primary">Aggiorna password</button></div>
+            </form>
+        </section>
+    </div>
+</div>
+@section Scripts { <partial name="_ScriptPassword" /> }

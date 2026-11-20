@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using CL.Domain.Aziende;
 using CL.Domain.ValueObjects;
+using CL.Infrastructure.Identity;
 using CL.Infrastructure.Persistence;
 using CL.Web.Infrastruttura;
 using Microsoft.AspNetCore.Authorization;
@@ -56,7 +57,7 @@ public sealed class AziendaForm
 public sealed record AziendaRiga(Guid Id, string RagioneSociale, string PartitaIva, string? Comune, bool Attiva, int Dipendenti);
 
 [Authorize(Policy = Policy.SoloConsulente)]
-public sealed class AziendeController(AppDbContext db) : AppController
+public sealed class AziendeController(AppDbContext db, ServizioAccessi accessi) : AppController
 {
     public async Task<IActionResult> Index(string? q)
     {
@@ -136,6 +137,8 @@ public sealed class AziendeController(AppDbContext db) : AppController
             .Where(d => d.AziendaId == id)
             .OrderBy(d => d.Cognome).ThenBy(d => d.Nome)
             .ToListAsync();
+        ViewBag.Referenti = await accessi.Elenco().Where(u => u.AziendaId == id && u.Ruolo == Ruoli.Azienda)
+            .OrderBy(u => u.Nome).ToListAsync();
         return View(azienda);
     }
 
