@@ -1,0 +1,61 @@
+@model (List<FerieDipendente> Righe, int Anno, bool MostraAzienda)
+@*
+    Barre orizzontali: per ogni dipendente in forza le ore di ferie godute e quelle ancora disponibili nell'anno.
+    Ordinate per ore disponibili (chi ha più ferie da smaltire in alto); le prime 15, le altre nella tabella.
+*@
+@{
+    var (righe, anno, mostraAzienda) = Model;
+    var visibili = righe.Take(15).ToList();
+    var massimo = visibili.Count == 0 ? 0 : visibili.Max(r => r.Godute + r.Disponibili);
+    string H(decimal v) => v.ToString("0.#");
+    string P(decimal v) => massimo == 0 ? "0" : (v / massimo * 100).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+}
+<figure class="card radius-15 p-4 h-100 grafico mb-0">
+    <figcaption class="mb-3">
+        <h2 class="h6 mb-1">Ferie @anno per dipendente</h2>
+        <p class="small text-body-secondary mb-0">Ore godute e ore ancora disponibili (maturate a oggi, più il residuo dell'anno precedente). In alto chi ha più ferie da smaltire.</p>
+    </figcaption>
+    @if (visibili.Count == 0)
+    {
+        <p class="text-body-secondary small mb-0 py-4 text-center">Nessun dipendente in forza.</p>
+    }
+    else
+    {
+        <ul class="legenda" aria-label="Legenda">
+            <li><span class="campione s-ferie" aria-hidden="true"></span>Godute</li>
+            <li><span class="campione s-disponibili" aria-hidden="true"></span>Disponibili</li>
+        </ul>
+        <ul class="barre list-unstyled mb-0">
+            @foreach (var r in visibili)
+            {
+                <li class="riga-barra">
+                    <a asp-controller="Dipendenti" asp-action="Dettaglio" asp-route-id="@r.DipendenteId" class="nome-barra" title="@r.Nome">
+                        @r.Nome
+                        @if (mostraAzienda) { <span class="d-block small text-body-secondary text-truncate">@r.Azienda</span> }
+                    </a>
+                    <div class="traccia" tabindex="0" data-titolo="@r.Nome" data-righe="Godute: @H(r.Godute) h|Disponibili: @H(r.Disponibili) h@(r.InAttesa > 0 ? $"|In attesa di approvazione: {H(r.InAttesa)} h" : "")"
+                         aria-label="@r.Nome: @H(r.Godute) ore godute, @H(r.Disponibili) disponibili">
+                        @if (r.Godute > 0) { <span class="segmento s-ferie" style="width:@P(r.Godute)%"></span> }
+                        @if (r.Disponibili > 0) { <span class="segmento s-disponibili" style="width:@P(r.Disponibili)%"></span> }
+                    </div>
+                    <span class="valore-barra small">@H(r.Disponibili) h</span>
+                </li>
+            }
+        </ul>
+        @if (righe.Count > visibili.Count) { <p class="small text-body-secondary mt-2 mb-0">e altri @(righe.Count - visibili.Count) dipendenti, nella tabella.</p> }
+    }
+    <details class="mt-3 tabella-grafico">
+        <summary class="small">Mostra i dati in tabella</summary>
+        <div class="table-responsive mt-2">
+            <table class="table table-sm mb-0">
+                <thead><tr><th scope="col">Dipendente</th>@if (mostraAzienda) { <th scope="col">Azienda</th> }<th scope="col" class="text-end">Godute (h)</th><th scope="col" class="text-end">Disponibili (h)</th><th scope="col" class="text-end">In attesa (h)</th></tr></thead>
+                <tbody>
+                    @foreach (var r in righe)
+                    {
+                        <tr><th scope="row" class="fw-normal">@r.Nome</th>@if (mostraAzienda) { <td>@r.Azienda</td> }<td class="text-end">@H(r.Godute)</td><td class="text-end">@H(r.Disponibili)</td><td class="text-end">@H(r.InAttesa)</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </details>
+</figure>

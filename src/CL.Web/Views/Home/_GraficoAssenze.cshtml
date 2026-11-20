@@ -1,0 +1,78 @@
+@model List<MeseAssenze>
+@*
+    Colonne impilate: ore di assenza approvate per mese, per tipo. Grafico in HTML/CSS (nessuna libreria):
+    legenda sempre visibile, tooltip al passaggio o al focus, tabella con tutti i valori.
+*@
+@{
+    var serie = new (string Nome, string Classe, Func<AssenzeDelMese, decimal> Valore)[]
+    {
+        ("Ferie", "s-ferie", a => a.Ferie),
+        ("ROL e permessi", "s-rol", a => a.Rol + a.ExFestivita),
+        ("Malattia", "s-malattia", a => a.Malattia),
+        ("Altre assenze", "s-altre", a => a.Altre),
+    };
+    var massimo = Model.Max(m => m.Ore.Totale);
+    // Scala "pulita": 4 intervalli da 1, 2, 2,5 o 5 × 10^n.
+    decimal passo = 1;
+    if (massimo > 0)
+    {
+        var grezzo = (double)massimo / 4;
+        var potenza = Math.Pow(10, Math.Floor(Math.Log10(grezzo)));
+        passo = (decimal)(new[] { 1, 2, 2.5, 5, 10 }.Select(f => f * potenza).First(v => v >= grezzo));
+    }
+    var scala = passo * 4;
+    string H(decimal v) => v.ToString("0.#");
+}
+<figure class="card radius-15 p-4 h-100 grafico mb-0">
+    <figcaption class="mb-3">
+        <h2 class="h6 mb-1">Assenze negli ultimi 12 mesi</h2>
+        <p class="small text-body-secondary mb-0">Ore di assenza approvate per mese; le assenze a cavallo di due mesi sono ripartite sui giorni lavorativi.</p>
+    </figcaption>
+    @if (massimo == 0)
+    {
+        <p class="text-body-secondary small mb-0 py-4 text-center">Nessuna assenza approvata negli ultimi 12 mesi.</p>
+    }
+    else
+    {
+        <ul class="legenda" aria-label="Legenda">
+            @foreach (var s in serie) { <li><span class="campione @s.Classe" aria-hidden="true"></span>@s.Nome</li> }
+        </ul>
+        <div class="colonne" role="group" aria-label="Ore di assenza per mese">
+            <div class="asse-y" aria-hidden="true">
+                @for (var i = 4; i >= 0; i--) { <span style="bottom:@(i * 25)%">@H(passo * i)</span> }
+            </div>
+            <div class="area">
+                @for (var i = 0; i <= 4; i++) { <div class="griglia" style="bottom:@(i * 25)%" aria-hidden="true"></div> }
+                @foreach (var m in Model)
+                {
+                    var righe = string.Join("|", serie.Select(s => $"{s.Nome}: {H(s.Valore(m.Ore))} h"));
+                    <div class="colonna" tabindex="0" data-titolo="@m.Periodo" data-righe="@righe" data-totale="Totale: @H(m.Ore.Totale) h"
+                         aria-label="@m.Periodo: @H(m.Ore.Totale) ore, di cui @string.Join(", ", serie.Select(s => $"{s.Nome.ToLower()} {H(s.Valore(m.Ore))}"))">
+                        <div class="pila" style="height:@((m.Ore.Totale / scala * 100).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture))%">
+                            @foreach (var s in serie)
+                            {
+                                var v = s.Valore(m.Ore);
+                                if (v > 0) { <div class="segmento @s.Classe" style="flex-grow:@v.ToString(System.Globalization.CultureInfo.InvariantCulture)"></div> }
+                            }
+                        </div>
+                        <span class="etichetta-x">@m.Etichetta</span>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+    <details class="mt-3 tabella-grafico">
+        <summary class="small">Mostra i dati in tabella</summary>
+        <div class="table-responsive mt-2">
+            <table class="table table-sm mb-0">
+                <thead><tr><th scope="col">Mese</th>@foreach (var s in serie) { <th scope="col" class="text-end">@s.Nome (h)</th> }<th scope="col" class="text-end">Totale (h)</th></tr></thead>
+                <tbody>
+                    @foreach (var m in Model)
+                    {
+                        <tr><th scope="row" class="fw-normal">@m.Periodo</th>@foreach (var s in serie) { <td class="text-end">@H(s.Valore(m.Ore))</td> }<td class="text-end">@H(m.Ore.Totale)</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </details>
+</figure>

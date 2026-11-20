@@ -1,5 +1,5 @@
 using System.Diagnostics;
-using CL.Domain.Assenze;
+using CL.Domain.BustePaga;
 using CL.Infrastructure.Persistence;
 using CL.Web.Infrastruttura;
 using CL.Web.Models;
@@ -9,27 +9,37 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CL.Web.Controllers;
 
-public sealed record PanoramicaViewModel(int Aziende, int DipendentiInForza, int RichiesteInAttesa);
-
-public sealed class HomeController(AppDbContext db, UtenteCorrente utente, TimeProvider clock) : Controller
+public sealed class PanoramicaDipendente
 {
-    public async Task<IActionResult> Index()
+    public required IReadOnlyList<CL.Domain.Assenze.SaldoAssenza> Saldi { get; init; }
+    public int RichiesteInAttesa { get; init; }
+    public BustaRiga? UltimaBusta { get; init; }
+}
+
+public sealed class HomeController(AppDbContext db, UtenteCorrente utente, ServizioPanoramica panoramica, ServizioSaldi saldi, TimeProvider clock) : Controller
+{
+    public async Task<IActionResult> Index(Guid? aziendaId)
     {
+        if (!utente.IsDipendente) return View(await panoramica.CalcolaAsync(aziendaId));
+
+        // Dipendente: i propri saldi, le richieste in attesa e l'ultima busta paga.
         var oggi = DateOnly.FromDateTime(clock.GetLocalNow().DateTime);
-        var dipendenti = utente.Filtra(db.Dipendenti);
-        var ids = dipendenti.Select(d => d.Id);
-        var inForza = Filtri.InForzaIl(oggi);
-
-        // Un solo round-trip: i tre conteggi come sottoquery di un'unica SELECT.
-        // Senza aziende non possono esistere dipendenti né richieste, quindi "nessuna riga" equivale a tutti zero.
-        var c = await db.Aziende.OrderBy(a => a.Id).Select(_ => new
+        var io = utente.DipendenteId is { } id ? await db.Dipendenti.AsNoTracking().FirstOrDefaultAsync(d => d.Id == id) : null;
+        if (io is null) return View("IndexDipendente", new PanoramicaDipendente { Saldi = [] });
+        return View("IndexDipendente", new PanoramicaDipendente
         {
-            Aziende = db.Aziende.Count(a => a.Attiva),
-            InForza = dipendenti.Count(inForza),
-            InAttesa = db.RichiesteAssenza.Count(r => ids.Contains(r.DipendenteId) && r.Stato == StatoRichiesta.InAttesa),
-        }).FirstOrDefaultAsync();
-
-        return View(new PanoramicaViewModel(utente.IsConsulente ? c?.Aziende ?? 0 : 0, c?.InForza ?? 0, c?.InAttesa ?? 0));
+            Saldi = await saldi.Calcola(io, oggi.Year, oggi.Month),
+            RichiesteInAttesa = await db.RichiesteAssenza.CountAsync(r => r.DipendenteId == io.Id && r.Stato == CL.Domain.Assenze.StatoRichiesta.InAttesa),
+            UltimaBusta = await db.BustePaga.AsNoTracking()
+                .Where(b => b.DipendenteId == io.Id && b.Stato == StatoBustaPaga.Pubblicata)
+                .OrderByDescending(b => b.Anno).ThenByDescending(b => b.Mese)
+                .Select(b => new BustaRiga
+                {
+                    Id = b.Id, DipendenteId = b.DipendenteId, Dipendente = "", Azienda = "", Anno = b.Anno, Mese = b.Mese,
+                    Tipo = b.Tipo, Netto = b.Netto, Stato = b.Stato, PubblicataIl = b.PubblicataIl, VisualizzataIl = b.VisualizzataIl,
+                })
+                .FirstOrDefaultAsync(),
+        });
     }
 
     [AllowAnonymous, ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]

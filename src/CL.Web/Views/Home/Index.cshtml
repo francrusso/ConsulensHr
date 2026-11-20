@@ -1,58 +1,75 @@
-﻿@model CL.Web.Controllers.PanoramicaViewModel
-@inject CL.Web.Infrastruttura.UtenteCorrente Utente
+@model DatiPanoramica
+@inject UtenteCorrente Utente
 @{
     ViewData["Title"] = "Panoramica";
+    string H(decimal v) => v.ToString("#,0");
+    var (consegnati, pubblicati) = Model.Cedolini;
 }
-
-<div class="breadcrumb-titolo">
-    <h1 class="titolo-pagina mb-3">Ciao, @Utente.Nome</h1>
+<div class="breadcrumb-titolo d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+    <h1 class="titolo-pagina mb-0">Ciao, @Utente.Nome</h1>
+    @if (Model.Aziende is not null)
+    {
+        <form asp-action="Index" method="get" class="m-0">
+            <label for="filtroAzienda" class="visually-hidden">Azienda</label>
+            <select id="filtroAzienda" name="aziendaId" class="form-select" onchange="this.form.submit()">
+                <option value="">Tutte le aziende</option>
+                @foreach (var a in Model.Aziende) { <option value="@a.Value" selected="@a.Selected">@a.Text</option> }
+            </select>
+            <noscript><button type="submit" class="btn btn-outline-secondary">Filtra</button></noscript>
+        </form>
+    }
 </div>
 
-@if (Utente.IsConsulente || Utente.IsAzienda)
-{
-    <div class="row g-3">
-        @if (Utente.IsConsulente)
-        {
-            <div class="col-sm-6 col-xl-4">
-                <a asp-controller="Aziende" asp-action="Index" class="card radius-15 h-100 text-decoration-none">
-                    <div class="card-body d-flex align-items-center gap-3">
-                        <i class="ri-building-line ri-2x icona-card" aria-hidden="true"></i>
-                        <div>
-                            <div class="etichetta mb-1">Aziende attive</div>
-                            <div class="card-numero">@Model.Aziende</div>
-                        </div>
-                    </div>
-                </a>
-            </div>
-        }
-        <div class="col-sm-6 col-xl-4">
-            <a asp-controller="Dipendenti" asp-action="Index" class="card radius-15 h-100 text-decoration-none">
-                <div class="card-body d-flex align-items-center gap-3">
-                    <i class="ri-team-line ri-2x icona-card" aria-hidden="true"></i>
-                    <div>
-                        <div class="etichetta mb-1">Dipendenti in forza</div>
-                        <div class="card-numero">@Model.DipendentiInForza</div>
-                    </div>
-                </div>
-            </a>
-        </div>
-        <div class="col-sm-6 col-xl-4">
-            <a asp-controller="Assenze" asp-action="Index" class="card radius-15 h-100 text-decoration-none">
-                <div class="card-body d-flex align-items-center gap-3">
-                    <i class="ri-calendar-check-line ri-2x icona-card" aria-hidden="true"></i>
-                    <div>
-                        <div class="etichetta mb-1">@(Utente.IsConsulente ? "Richieste in attesa delle aziende" : "Richieste di assenza da approvare")</div>
-                        <div class="card-numero">@Model.RichiesteInAttesa</div>
-                    </div>
-                </div>
-            </a>
-        </div>
-    </div>
-}
-else
-{
-    <div class="card radius-15 p-4">
-        <p class="mb-3">Da qui puoi richiedere ferie e permessi e controllare i tuoi saldi. A breve troverai anche le buste paga.</p>
-        <div><a asp-controller="Assenze" asp-action="Index" class="btn btn-primary"><i class="ri-calendar-event-line" aria-hidden="true"></i> Le mie ferie e permessi</a></div>
-    </div>
+<div class="row g-3 mb-3">
+    @if (Utente.IsConsulente && Model.AziendaId is null)
+    {
+        <partial name="_Indicatore" model='("Aziende attive", Model.AziendeAttive.ToString(), "ri-building-line", Url.Action("Index", "Aziende"), (string?)null)' />
+    }
+    <partial name="_Indicatore" model='("Dipendenti in forza", Model.DipendentiInForza.ToString(), "ri-team-line", Url.Action("Index", "Dipendenti"), (string?)null)' />
+    <partial name="_Indicatore" model='(Utente.IsConsulente ? "Richieste in attesa delle aziende" : "Richieste da approvare", Model.RichiesteInAttesa.ToString(), "ri-calendar-check-line", Url.Action("Index", "Assenze"), (string?)null)' />
+    @if (Model.Presenze is { } p)
+    {
+        <partial name="_Indicatore" model='("Presenze di " + ServizioBustePaga.NomeMese(p.Item4).ToLower(), $"{p.Item1} su {p.Item2}", "ri-time-line", Url.Action("Index", "Presenze", new { anno = p.Item3, mese = p.Item4 }), "aziende hanno inviato")' />
+    }
+    else
+    {
+        <partial name="_Indicatore" model='("Ferie disponibili " + Model.Anno, H(Model.FerieDisponibili) + " h", "ri-sun-line", (string?)null, $"{H(Model.FerieGoduteAnno)} h già godute")' />
+    }
+    <partial name="_Indicatore" model='("Cedolini consegnati", pubblicati == 0 ? "—" : $"{consegnati * 100 / pubblicati}%", "ri-file-list-3-line", Url.Action("Index", "BustePaga"), pubblicati == 0 ? "nessuno negli ultimi 3 mesi" : $"{consegnati} di {pubblicati} aperti, ultimi 3 mesi")' />
+</div>
+
+<div class="row g-3">
+    <div class="col-xl-7"><partial name="_GraficoAssenze" model="Model.AssenzePerMese" /></div>
+    <div class="col-xl-5"><partial name="_GraficoFerie" model="(Model.FeriePerDipendente, Model.Anno, Utente.IsConsulente && Model.AziendaId is null)" /></div>
+</div>
+
+<div class="tooltip-grafico" id="tooltipGrafico" role="status" hidden></div>
+
+@section Scripts {
+    <script>
+        // Tooltip dei grafici: al passaggio del mouse o al focus da tastiera su colonne e barre.
+        (function () {
+            const tip = document.getElementById('tooltipGrafico');
+            function mostra(el) {
+                tip.replaceChildren();
+                const t = document.createElement('strong'); t.textContent = el.dataset.titolo; tip.append(t);
+                (el.dataset.righe || '').split('|').concat(el.dataset.totale ? [el.dataset.totale] : [])
+                    .forEach(r => { const d = document.createElement('div'); d.textContent = r; tip.append(d); });
+                tip.hidden = false;
+                const b = el.getBoundingClientRect(), w = tip.offsetWidth, h = tip.offsetHeight;
+                let x = b.left + b.width / 2 - w / 2 + window.scrollX, y = b.top + window.scrollY - h - 8;
+                x = Math.max(window.scrollX + 8, Math.min(x, window.scrollX + document.documentElement.clientWidth - w - 8));
+                if (y < window.scrollY + 8) y = b.bottom + window.scrollY + 8;
+                tip.style.left = x + 'px'; tip.style.top = y + 'px';
+            }
+            const nascondi = () => tip.hidden = true;
+            document.querySelectorAll('.colonna, .traccia').forEach(el => {
+                el.addEventListener('mouseenter', () => mostra(el));
+                el.addEventListener('focus', () => mostra(el));
+                el.addEventListener('mouseleave', nascondi);
+                el.addEventListener('blur', nascondi);
+            });
+            document.addEventListener('keydown', e => { if (e.key === 'Escape') nascondi(); });
+        })();
+    </script>
 }

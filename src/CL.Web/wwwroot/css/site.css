@@ -91,3 +91,56 @@
 .foglio-presenze td input.form-control-sm { min-width: 76px; }
 .foglio-presenze td input.nota { min-width: 160px; }
 .foglio-presenze th[scope="row"] { white-space: nowrap; }
+
+/* Grafici della panoramica (HTML/CSS, nessuna libreria). Palette validata per daltonismo (adiacenti ΔE ≥ 18),
+   l'ambra ha contrasto < 3:1 sul bianco: per questo ogni grafico ha legenda, etichette e tabella. */
+:root {
+  --grafico-ferie: #8e3b46;
+  --grafico-rol: #e39a3b;
+  --grafico-malattia: #2f6fb3;
+  --grafico-altre: #3f9a6b;
+  --grafico-disponibili: #e9d3d6;
+  --grafico-griglia: #f1ebe4;
+}
+.s-ferie { background: var(--grafico-ferie); }
+.s-rol { background: var(--grafico-rol); }
+.s-malattia { background: var(--grafico-malattia); }
+.s-altre { background: var(--grafico-altre); }
+.s-disponibili { background: var(--grafico-disponibili); }
+.indicatore .card-numero { font-variant-numeric: tabular-nums; }
+
+.grafico .legenda { display: flex; flex-wrap: wrap; gap: 6px 16px; list-style: none; padding: 0; margin: 0 0 12px; font-size: .8rem; color: var(--consulens-text); }
+.grafico .legenda li { display: inline-flex; align-items: center; gap: 6px; }
+.grafico .campione { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+
+/* Colonne impilate */
+.grafico .colonne { display: flex; gap: 8px; height: 240px; padding-bottom: 22px; }
+.grafico .asse-y { position: relative; width: 34px; flex: 0 0 34px; font-size: .7rem; color: var(--consulens-muted); font-variant-numeric: tabular-nums; }
+.grafico .asse-y span { position: absolute; right: 4px; transform: translateY(50%); }
+.grafico .area { position: relative; flex: 1; display: flex; align-items: flex-end; justify-content: space-around; gap: 2px; border-bottom: 1px solid var(--consulens-stat-divider); }
+.grafico .griglia { position: absolute; left: 0; right: 0; border-top: 1px solid var(--grafico-griglia); pointer-events: none; }
+.grafico .colonna { position: relative; flex: 1; height: 100%; display: flex; align-items: flex-end; justify-content: center; cursor: default; outline: none; }
+.grafico .colonna:hover, .grafico .colonna:focus-visible { background: rgba(142, 59, 70, .05); border-radius: 6px 6px 0 0; }
+.grafico .colonna:focus-visible { box-shadow: 0 0 0 2px var(--consulens-accent); }
+.grafico .pila { width: min(24px, 70%); display: flex; flex-direction: column-reverse; gap: 2px; min-height: 2px; }
+.grafico .pila .segmento { min-height: 2px; flex-basis: 0; }
+.grafico .pila .segmento:last-child { border-radius: 4px 4px 0 0; }
+.grafico .etichetta-x { position: absolute; bottom: -20px; font-size: .7rem; color: var(--consulens-muted); white-space: nowrap; }
+
+/* Barre orizzontali */
+.grafico .riga-barra { display: grid; grid-template-columns: minmax(90px, 32%) 1fr 56px; align-items: center; gap: 10px; padding: 5px 0; }
+.grafico .nome-barra { font-size: .85rem; color: var(--consulens-page-title); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.grafico .traccia { display: flex; gap: 2px; height: 14px; outline: none; }
+.grafico .traccia:focus-visible { box-shadow: 0 0 0 2px var(--consulens-accent); border-radius: 4px; }
+.grafico .traccia .segmento { height: 100%; min-width: 2px; }
+.grafico .traccia .segmento:first-child { border-radius: 0; }
+.grafico .traccia .segmento:last-child { border-radius: 0 4px 4px 0; }
+.grafico .valore-barra { text-align: right; color: var(--consulens-text); font-variant-numeric: tabular-nums; }
+.grafico .tabella-grafico summary { color: var(--consulens-nav-text); cursor: pointer; }
+
+.tooltip-grafico {
+  position: absolute; z-index: 1080; min-width: 150px; padding: 8px 10px; border-radius: 8px;
+  background: #fff; border: 1px solid var(--consulens-border); box-shadow: var(--consulens-shadow);
+  font-size: .8rem; color: var(--consulens-text); pointer-events: none;
+}
+.tooltip-grafico strong { display: block; color: var(--consulens-page-title); margin-bottom: 2px; }
