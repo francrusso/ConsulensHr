@@ -1,17 +1,28 @@
 @model (List<FerieDipendente> Righe, int Anno, bool MostraAzienda)
 @*
-    Barre orizzontali: per ogni dipendente in forza le ore di ferie godute e quelle ancora disponibili nell'anno.
-    Ordinate per ore disponibili (chi ha più ferie da smaltire in alto); le prime 15, le altre nella tabella.
+    Barre orizzontali impilate (ApexCharts): ore di ferie godute e disponibili per dipendente in forza,
+    ordinate per ore disponibili. Le prime 15 nel grafico, tutte nella tabella. Clic su una barra = scheda del dipendente.
 *@
 @{
     var (righe, anno, mostraAzienda) = Model;
     var visibili = righe.Take(15).ToList();
-    var massimo = visibili.Count == 0 ? 0 : visibili.Max(r => r.Godute + r.Disponibili);
+    var dati = new
+    {
+        nomi = visibili.Select(r => r.Nome).ToArray(),
+        aziende = visibili.Select(r => r.Azienda).ToArray(),
+        link = visibili.Select(r => Url.Action("Dettaglio", "Dipendenti", new { id = r.DipendenteId })).ToArray(),
+        inAttesa = visibili.Select(r => (double)Math.Round(r.InAttesa, 1)).ToArray(),
+        mostraAzienda,
+        serie = new[]
+        {
+            new { name = "Godute", data = visibili.Select(r => (double)Math.Round(r.Godute, 1)).ToArray() },
+            new { name = "Disponibili", data = visibili.Select(r => (double)Math.Round(r.Disponibili, 1)).ToArray() },
+        },
+    };
     string H(decimal v) => v.ToString("0.#");
-    string P(decimal v) => massimo == 0 ? "0" : (v / massimo * 100).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
 }
 <figure class="card radius-15 p-4 h-100 grafico mb-0">
-    <figcaption class="mb-3">
+    <figcaption class="mb-2">
         <h2 class="h6 mb-1">Ferie @anno per dipendente</h2>
         <p class="small text-body-secondary mb-0">Ore godute e ore ancora disponibili (maturate a oggi, più il residuo dell'anno precedente). In alto chi ha più ferie da smaltire.</p>
     </figcaption>
@@ -21,30 +32,11 @@
     }
     else
     {
-        <ul class="legenda" aria-label="Legenda">
-            <li><span class="campione s-ferie" aria-hidden="true"></span>Godute</li>
-            <li><span class="campione s-disponibili" aria-hidden="true"></span>Disponibili</li>
-        </ul>
-        <ul class="barre list-unstyled mb-0">
-            @foreach (var r in visibili)
-            {
-                <li class="riga-barra">
-                    <a asp-controller="Dipendenti" asp-action="Dettaglio" asp-route-id="@r.DipendenteId" class="nome-barra" title="@r.Nome">
-                        @r.Nome
-                        @if (mostraAzienda) { <span class="d-block small text-body-secondary text-truncate">@r.Azienda</span> }
-                    </a>
-                    <div class="traccia" tabindex="0" data-titolo="@r.Nome" data-righe="Godute: @H(r.Godute) h|Disponibili: @H(r.Disponibili) h@(r.InAttesa > 0 ? $"|In attesa di approvazione: {H(r.InAttesa)} h" : "")"
-                         aria-label="@r.Nome: @H(r.Godute) ore godute, @H(r.Disponibili) disponibili">
-                        @if (r.Godute > 0) { <span class="segmento s-ferie" style="width:@P(r.Godute)%"></span> }
-                        @if (r.Disponibili > 0) { <span class="segmento s-disponibili" style="width:@P(r.Disponibili)%"></span> }
-                    </div>
-                    <span class="valore-barra small">@H(r.Disponibili) h</span>
-                </li>
-            }
-        </ul>
-        @if (righe.Count > visibili.Count) { <p class="small text-body-secondary mt-2 mb-0">e altri @(righe.Count - visibili.Count) dipendenti, nella tabella.</p> }
+        <div id="graficoFerie" role="img" aria-label="Grafico a barre delle ferie godute e disponibili per dipendente; i valori sono nella tabella sotto"></div>
+        <script type="application/json" id="datiGraficoFerie">@Json.Serialize(dati)</script>
+        @if (righe.Count > visibili.Count) { <p class="small text-body-secondary mb-0">e altri @(righe.Count - visibili.Count) dipendenti, nella tabella.</p> }
     }
-    <details class="mt-3 tabella-grafico">
+    <details class="mt-2 tabella-grafico">
         <summary class="small">Mostra i dati in tabella</summary>
         <div class="table-responsive mt-2">
             <table class="table table-sm mb-0">
@@ -52,7 +44,7 @@
                 <tbody>
                     @foreach (var r in righe)
                     {
-                        <tr><th scope="row" class="fw-normal">@r.Nome</th>@if (mostraAzienda) { <td>@r.Azienda</td> }<td class="text-end">@H(r.Godute)</td><td class="text-end">@H(r.Disponibili)</td><td class="text-end">@H(r.InAttesa)</td></tr>
+                        <tr><th scope="row" class="fw-normal"><a asp-controller="Dipendenti" asp-action="Dettaglio" asp-route-id="@r.DipendenteId">@r.Nome</a></th>@if (mostraAzienda) { <td>@r.Azienda</td> }<td class="text-end">@H(r.Godute)</td><td class="text-end">@H(r.Disponibili)</td><td class="text-end">@H(r.InAttesa)</td></tr>
                     }
                 </tbody>
             </table>

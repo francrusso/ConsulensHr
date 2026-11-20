@@ -101,11 +101,9 @@ public sealed class ServizioPanoramica(AppDbContext db, UtenteCorrente utente, T
         var idsInPerimetro = perimetro.Select(d => d.Id);
         var inAttesa = await db.RichiesteAssenza.CountAsync(r => idsInPerimetro.Contains(r.DipendenteId) && r.Stato == StatoRichiesta.InAttesa);
         var tre = new DateOnly(oggi.Year, oggi.Month, 1).AddMonths(-2);
-        var cedolini = await db.BustePaga.AsNoTracking()
-            .Where(b => idsInPerimetro.Contains(b.DipendenteId) && b.Stato == StatoBustaPaga.Pubblicata
-                        && (b.Anno > tre.Year || (b.Anno == tre.Year && b.Mese >= tre.Month)))
-            .GroupBy(_ => 1).Select(g => new { Pubblicati = g.Count(), Consegnati = g.Count(b => b.VisualizzataIl != null) })
-            .FirstOrDefaultAsync();
+        var recenti = db.BustePaga.Where(b => idsInPerimetro.Contains(b.DipendenteId) && b.Stato == StatoBustaPaga.Pubblicata
+                                              && (b.Anno > tre.Year || (b.Anno == tre.Year && b.Mese >= tre.Month)));
+        var cedolini = new { Pubblicati = await recenti.CountAsync(), Consegnati = await recenti.CountAsync(b => b.VisualizzataIl != null) };
 
         (int, int, int, int)? presenze = null;
         int aziendeAttive = 0;
@@ -127,7 +125,7 @@ public sealed class ServizioPanoramica(AppDbContext db, UtenteCorrente utente, T
             FerieGoduteAnno = ferie.Sum(f => f.Godute),
             FerieDisponibili = ferie.Sum(f => f.Disponibili),
             Presenze = presenze,
-            Cedolini = (cedolini?.Consegnati ?? 0, cedolini?.Pubblicati ?? 0),
+            Cedolini = (cedolini.Consegnati, cedolini.Pubblicati),
             AssenzePerMese = mesi,
             FeriePerDipendente = ferie,
             AziendaId = aziendaId,

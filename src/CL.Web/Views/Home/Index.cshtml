@@ -43,33 +43,7 @@
     <div class="col-xl-5"><partial name="_GraficoFerie" model="(Model.FeriePerDipendente, Model.Anno, Utente.IsConsulente && Model.AziendaId is null)" /></div>
 </div>
 
-<div class="tooltip-grafico" id="tooltipGrafico" role="status" hidden></div>
-
 @section Scripts {
-    <script>
-        // Tooltip dei grafici: al passaggio del mouse o al focus da tastiera su colonne e barre.
-        (function () {
-            const tip = document.getElementById('tooltipGrafico');
-            function mostra(el) {
-                tip.replaceChildren();
-                const t = document.createElement('strong'); t.textContent = el.dataset.titolo; tip.append(t);
-                (el.dataset.righe || '').split('|').concat(el.dataset.totale ? [el.dataset.totale] : [])
-                    .forEach(r => { const d = document.createElement('div'); d.textContent = r; tip.append(d); });
-                tip.hidden = false;
-                const b = el.getBoundingClientRect(), w = tip.offsetWidth, h = tip.offsetHeight;
-                let x = b.left + b.width / 2 - w / 2 + window.scrollX, y = b.top + window.scrollY - h - 8;
-                x = Math.max(window.scrollX + 8, Math.min(x, window.scrollX + document.documentElement.clientWidth - w - 8));
-                if (y < window.scrollY + 8) y = b.bottom + window.scrollY + 8;
-                tip.style.left = x + 'px'; tip.style.top = y + 'px';
-            }
-            const nascondi = () => tip.hidden = true;
-            document.querySelectorAll('.colonna, .traccia').forEach(el => {
-                el.addEventListener('mouseenter', () => mostra(el));
-                el.addEventListener('focus', () => mostra(el));
-                el.addEventListener('mouseleave', nascondi);
-                el.addEventListener('blur', nascondi);
-            });
-            document.addEventListener('keydown', e => { if (e.key === 'Escape') nascondi(); });
-        })();
-    </script>
+    <script src="~/lib/apexcharts/apexcharts.min.js"></script>
+    <script src="~/js/grafici-panoramica.js" asp-append-version="true"></script>
 }

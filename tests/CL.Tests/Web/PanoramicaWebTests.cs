@@ -46,8 +46,10 @@ public sealed class PanoramicaWebTests : IDisposable
         Assert.Contains("Ferie " + DateTime.Today.Year + " per dipendente", html);
         Assert.Contains("Rossi Mario", html);
         Assert.DoesNotContain("Verdi Luigi", html);
-        Assert.Contains("Ferie: 16 h", html); // tooltip del mese corrente: 2 giorni da 8 ore
-        Assert.Contains("Godute: 16 h", html);
+        // Dati dei grafici: nel mese corrente 2 giorni di ferie da 8 ore.
+        Assert.Matches("\"name\":\"Ferie\",\"data\":\\[(0,){11}16\\]", html);
+        Assert.Contains("\"name\":\"Godute\",\"data\":[16]", html);
+        Assert.Contains("apexcharts.min.js", html);
         Assert.Empty(_app.ErroriServer);
     }
 
