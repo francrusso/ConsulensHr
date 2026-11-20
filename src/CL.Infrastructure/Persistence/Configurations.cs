@@ -211,6 +211,18 @@ internal sealed class ContrattoConfig : IEntityTypeConfiguration<Contratto>
     }
 }
 
+internal sealed class GiornoInUfficioConfig : IEntityTypeConfiguration<CL.Domain.Presenze.GiornoInUfficio>
+{
+    public void Configure(EntityTypeBuilder<CL.Domain.Presenze.GiornoInUfficio> b)
+    {
+        b.ToTable("GiorniInUfficio");
+        b.Property(x => x.Id).ValueGeneratedNever();
+        b.HasOne<Dipendente>().WithMany().HasForeignKey(x => x.DipendenteId).OnDelete(DeleteBehavior.Cascade);
+        b.HasIndex(x => new { x.DipendenteId, x.Giorno }).IsUnique();
+        b.HasIndex(x => x.Giorno);
+    }
+}
+
 internal sealed class ChiusuraAziendaleConfig : IEntityTypeConfiguration<ChiusuraAziendale>
 {
     public void Configure(EntityTypeBuilder<ChiusuraAziendale> b)

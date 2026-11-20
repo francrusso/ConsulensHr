@@ -22,6 +22,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : Ident
     public DbSet<SaldoIniziale> SaldiIniziali => Set<SaldoIniziale>();
     public DbSet<BustaPaga> BustePaga => Set<BustaPaga>();
     public DbSet<ChiusuraAziendale> ChiusureAziendali => Set<ChiusuraAziendale>();
+    public DbSet<CL.Domain.Presenze.GiornoInUfficio> GiorniInUfficio => Set<CL.Domain.Presenze.GiornoInUfficio>();
     public DbSet<CL.Domain.Documenti.CertificazioneUnica> CertificazioniUniche => Set<CL.Domain.Documenti.CertificazioneUnica>();
     public DbSet<ProfiloAzienda> ProfiliAzienda => Set<ProfiloAzienda>();
     public DbSet<ComunicazioneMensile> ComunicazioniPresenze => Set<ComunicazioneMensile>();

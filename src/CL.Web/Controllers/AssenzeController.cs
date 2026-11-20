@@ -54,6 +54,8 @@ public sealed record GiornoCalendario(DateOnly Data, bool DelMese, bool Lavorati
 {
     /// <summary>Chiusure aziendali che comprendono il giorno.</summary>
     public List<string> Chiusure { get; init; } = [];
+    /// <summary>Chi lavora a distanza e ha segnato di essere in ufficio.</summary>
+    public List<PersonaCalendario> InUfficio { get; init; } = [];
 }
 
 public sealed record TeamFiltro(Guid Id, string Nome, string Colore, string? Emoji);
@@ -336,6 +338,10 @@ public sealed class AssenzeController(AppDbContext db, UtenteCorrente utente, Se
                               select new ChiusuraRiga(c.Id, a.RagioneSociale, c.Dal, c.Al, c.Descrizione)).ToListAsync();
         var piuAziende = chiusure.Select(c => c.Azienda).Distinct().Count() > 1 || (utente.IsConsulente && aziendaId is null);
 
+        var inUfficio = (await db.GiorniInUfficio.AsNoTracking().Where(u => ids.Contains(u.DipendenteId) && u.Giorno >= primo && u.Giorno <= ultimo)
+                .Select(u => new { u.DipendenteId, u.Giorno }).ToListAsync())
+            .ToLookup(u => u.Giorno, u => u.DipendenteId);
+
         var giorni = new List<GiornoCalendario>();
         for (var g = inizio; g <= fine; g = g.AddDays(1))
         {
@@ -352,7 +358,11 @@ public sealed class AssenzeController(AppDbContext db, UtenteCorrente utente, Se
                 .Select(r => new AssenzaCalendario(P(persone[r.DipendenteId]), r.Tipo, r.Stato, r.AOre, r.Ore)).ToList();
             // Chi è assente tutto il giorno (approvato) non è tra i presenti; le assenze a ore e quelle in attesa sì.
             var fuori = assenti.Where(a => !a.AOre && a.Stato == StatoRichiesta.Approvata).Select(a => a.Persona.Id).ToHashSet();
-            giorni.Add(new GiornoCalendario(g, true, true, inForza.Where(d => !fuori.Contains(d.Id)).Select(P).ToList(), assenti) { Chiusure = chiuso });
+            giorni.Add(new GiornoCalendario(g, true, true, inForza.Where(d => !fuori.Contains(d.Id)).Select(P).ToList(), assenti)
+            {
+                Chiusure = chiuso,
+                InUfficio = inUfficio[giorno].Where(x => persone.ContainsKey(x) && !fuori.Contains(x)).Select(x => P(persone[x])).OrderBy(p => p.Nome).ToList(),
+            });
         }
         return View("Calendario", new CalendarioAssenzeViewModel
         {

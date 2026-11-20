@@ -1126,3 +1126,42 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261120170431_GiorniInUfficio') THEN
+    CREATE TABLE hr."GiorniInUfficio" (
+        "Id" uuid NOT NULL,
+        "DipendenteId" uuid NOT NULL,
+        "Giorno" date NOT NULL,
+        "SegnatoIl" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_GiorniInUfficio" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_GiorniInUfficio_Dipendenti_DipendenteId" FOREIGN KEY ("DipendenteId") REFERENCES hr."Dipendenti" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261120170431_GiorniInUfficio') THEN
+    CREATE UNIQUE INDEX "IX_GiorniInUfficio_DipendenteId_Giorno" ON hr."GiorniInUfficio" ("DipendenteId", "Giorno");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261120170431_GiorniInUfficio') THEN
+    CREATE INDEX "IX_GiorniInUfficio_Giorno" ON hr."GiorniInUfficio" ("Giorno");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261120170431_GiorniInUfficio') THEN
+    INSERT INTO hr."__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261120170431_GiorniInUfficio', '10.0.15');
+    END IF;
+END $EF$;
+COMMIT;
+

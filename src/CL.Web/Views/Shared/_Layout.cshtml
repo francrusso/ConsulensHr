@@ -1,4 +1,5 @@
 ﻿@inject CL.Web.Infrastruttura.UtenteCorrente Utente
+@inject CL.Web.Infrastruttura.ServizioUfficio Ufficio
 @*
     Struttura ripresa da ConsulensNew (sidebar + topbar + page-content) per avere la stessa estetica;
     i colori beige vengono da assets/css/tema-beige.css.
@@ -131,6 +132,15 @@
                                     <div class="menu-title">Ferie e permessi</div>
                                 </a>
                             </li>
+                            @if (await Ufficio.PuoSegnareAsync())
+                            {
+                                <li>
+                                    <a asp-controller="Ufficio" asp-action="Index">
+                                        <div class="parent-icon icon-color-1"><i class="ri-building-line ri-xs"></i></div>
+                                        <div class="menu-title">Giorni in ufficio</div>
+                                    </a>
+                                </li>
+                            }
                         }
                         else
                         {

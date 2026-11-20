@@ -937,6 +937,30 @@ namespace CL.Infrastructure.Persistence.Migrations
                     b.ToTable("ComunicazioniPresenze", "hr");
                 });
 
+            modelBuilder.Entity("CL.Domain.Presenze.GiornoInUfficio", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("DipendenteId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly>("Giorno")
+                        .HasColumnType("date");
+
+                    b.Property<DateTime>("SegnatoIl")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Giorno");
+
+                    b.HasIndex("DipendenteId", "Giorno")
+                        .IsUnique();
+
+                    b.ToTable("GiorniInUfficio", "hr");
+                });
+
             modelBuilder.Entity("CL.Domain.Presenze.RigaPresenze", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1367,6 +1391,15 @@ namespace CL.Infrastructure.Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("AziendaId")
                         .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("CL.Domain.Presenze.GiornoInUfficio", b =>
+                {
+                    b.HasOne("CL.Domain.Dipendenti.Dipendente", null)
+                        .WithMany()
+                        .HasForeignKey("DipendenteId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 

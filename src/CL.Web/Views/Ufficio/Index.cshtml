@@ -1,0 +1,55 @@
+@model CL.Web.Controllers.UfficioViewModel
+@{
+    ViewData["Title"] = "Giorni in ufficio";
+    var primo = new DateOnly(Model.Anno, Model.Mese, 1);
+    var prec = primo.AddMonths(-1);
+    var succ = primo.AddMonths(1);
+    var nelMese = Model.Giorni.Count(g => g.DelMese && g.Segnato);
+}
+<div class="breadcrumb-titolo d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+    <h1 class="titolo-pagina mb-0">@ViewData["Title"]</h1>
+    <div class="d-flex flex-wrap gap-2">
+        @if (Model.GiorniPrevisti is { } previsti)
+        {
+            <span class="avanzamento-data"><i class="ri-building-line" aria-hidden="true"></i> Previsti dal contratto: @previsti @(previsti == 1 ? "giorno" : "giorni") a settimana</span>
+        }
+        <span class="avanzamento-data"><i class="ri-calendar-check-line" aria-hidden="true"></i> Questo mese: @nelMese @(nelMese == 1 ? "giorno" : "giorni") in ufficio</span>
+    </div>
+</div>
+
+<div class="barra-mese mb-3">
+    <a asp-action="Index" asp-route-anno="@prec.Year" asp-route-mese="@prec.Month" class="btn btn-outline-primary btn-sm" aria-label="Mese precedente"><i class="ri-arrow-left-s-line" aria-hidden="true"></i></a>
+    <h2 class="titolo-mese mb-0">@ServizioBustePaga.NomeMese(Model.Mese) @Model.Anno</h2>
+    <a asp-action="Index" asp-route-anno="@succ.Year" asp-route-mese="@succ.Month" class="btn btn-outline-primary btn-sm" aria-label="Mese successivo"><i class="ri-arrow-right-s-line" aria-hidden="true"></i></a>
+</div>
+
+@* Un clic su un giorno lavorativo lo segna come "in ufficio"; un altro clic lo toglie. *@
+<div class="calendario-assenze-scorri">
+    <div class="calendario-assenze calendario-ufficio" role="grid" aria-label="Giorni in ufficio">
+        @foreach (var nome in new[] { "Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom" }) { <div class="cal-intestazione" role="columnheader">@nome</div> }
+        @foreach (var g in Model.Giorni)
+        {
+            var classi = $"cal-giorno {(g.DelMese ? "" : "fuori-mese")} {(g.Lavorativo ? "" : "non-lavorativo")} {(g.Data == Model.Oggi ? "oggi" : "")} {(g.Segnato ? "in-ufficio" : "")}";
+            if (g.Modificabile)
+            {
+                <form asp-action="Segna" method="post" class="m-0">
+                    <input type="hidden" name="giorno" value="@g.Data.ToString("yyyy-MM-dd")" />
+                    <button type="submit" class="@classi giorno-cliccabile w-100" aria-pressed="@(g.Segnato ? "true" : "false")"
+                            aria-label="@g.Data.ToString("dddd d MMMM"): @(g.Segnato ? "in ufficio, clic per togliere" : "clic per segnare in ufficio")">
+                        <span class="cal-numero">@g.Data.Day</span>
+                        @if (g.Segnato) { <span class="segno-ufficio"><i class="ri-building-line" aria-hidden="true"></i> In ufficio</span> }
+                        else { <span class="segno-ufficio vuoto"><i class="ri-add-line" aria-hidden="true"></i> Segna</span> }
+                    </button>
+                </form>
+            }
+            else
+            {
+                <div class="@classi" role="gridcell">
+                    <span class="cal-numero">@g.Data.Day</span>
+                    @if (g.DelMese && g.Assenza is { } assenza) { <span class="segno-assenza">@assenza</span> }
+                    else if (g.DelMese && g.Segnato) { <span class="segno-ufficio"><i class="ri-building-line" aria-hidden="true"></i> In ufficio</span> }
+                </div>
+            }
+        }
+    </div>
+</div>

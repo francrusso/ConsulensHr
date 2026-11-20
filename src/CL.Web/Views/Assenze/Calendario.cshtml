@@ -54,6 +54,7 @@
         <button type="button" class="badge-filtro-categoria active" data-filtro="presenti" aria-pressed="true"><span class="pallino-legenda presente" aria-hidden="true"></span> Presenti</button>
         <button type="button" class="badge-filtro-categoria active" data-filtro="assenze" aria-pressed="true"><span class="pallino-legenda assente" aria-hidden="true"></span> Assenze</button>
         <button type="button" class="badge-filtro-categoria active" data-filtro="chiusure" aria-pressed="true"><span class="pallino-legenda chiusura" aria-hidden="true"></span> Chiusure aziendali</button>
+        <button type="button" class="badge-filtro-categoria active" data-filtro="ufficio" aria-pressed="true"><span class="pallino-legenda ufficio" aria-hidden="true"></span> In ufficio</button>
         <button type="button" class="badge-filtro-categoria active" data-filtro="attesa" aria-pressed="true"><span class="pallino-legenda in-attesa" aria-hidden="true"></span> In attesa di approvazione</button>
     </div>
     @* Filtri per azienda (solo consulente) e per team, applicati appena cambiano. *@
@@ -101,6 +102,12 @@
                 @foreach (var ch in g.Chiusure) { <div class="cal-chiusura" title="Chiusura aziendale: @ch"><i class="ri-door-closed-line" aria-hidden="true"></i> @ch</div> }
                 @if (g.DelMese && g.Lavorativo)
                 {
+                    @if (g.InUfficio.Count > 0)
+                    {
+                        <div class="cal-ufficio" title="In ufficio: @string.Join(", ", g.InUfficio.Select(p => p.Nome))">
+                            <i class="ri-building-line" aria-hidden="true"></i> @g.InUfficio.Count in ufficio
+                        </div>
+                    }
                     @if (g.Presenti.Count > 0)
                     {
                         <div class="avatar-sovrapposti cal-presenti" title="Presenti: @string.Join(", ", g.Presenti.Select(p => p.Nome))">
@@ -172,10 +179,11 @@
         // Nella card degli assenti si vedono al massimo 3 persone tra quelle filtrate, poi "e altri N".
         (function () {
             const cal = document.getElementById('calendarioAssenze');
-            const attivi = { presenti: true, assenze: true, chiusure: true, attesa: true };
+            const attivi = { presenti: true, assenze: true, chiusure: true, ufficio: true, attesa: true };
             function aggiorna() {
                 cal.querySelectorAll('.cal-presenti').forEach(p => p.hidden = !attivi.presenti);
                 cal.querySelectorAll('.cal-chiusura').forEach(c => c.hidden = !attivi.chiusure);
+                cal.querySelectorAll('.cal-ufficio').forEach(c => c.hidden = !attivi.ufficio);
                 cal.querySelectorAll('.cal-assenti').forEach(card => {
                     const tipo = attivi.assenze;
                     const righe = [...card.querySelectorAll('.cal-assente')]

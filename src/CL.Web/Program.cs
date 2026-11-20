@@ -38,6 +38,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddMemoryCache(o => o.SizeLimit = 5000);
 builder.Services.AddScoped<UtenteCorrente>();
 builder.Services.AddScoped<ServizioSaldi>();
+builder.Services.AddScoped<ServizioUfficio>();
 builder.Services.AddScoped<ServizioAccessi>();
 builder.Services.AddScoped<ServizioBustePaga>();
 builder.Services.AddScoped<NotificheAssenze>();
