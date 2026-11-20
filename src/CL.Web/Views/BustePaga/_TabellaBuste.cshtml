@@ -1,0 +1,69 @@
+@model (List<BustaRiga> Buste, bool Gestore, bool Consulente, bool MostraDipendente, bool MostraAzienda, string Ritorno)
+@{
+    var (buste, gestore, consulente, mostraDipendente, mostraAzienda, ritorno) = Model;
+    var colonne = 5 + (mostraDipendente ? 1 : 0) + (mostraAzienda ? 1 : 0);
+}
+<div class="card radius-15 table-responsive table-actions-responsive p-1 customer-results">
+    <table class="table mb-0 align-middle">
+        <thead>
+            <tr>
+                @if (mostraDipendente) { <th scope="col">Dipendente</th> }
+                @if (mostraAzienda) { <th scope="col">Azienda</th> }
+                <th scope="col">Periodo</th>
+                <th scope="col">Tipo</th>
+                <th scope="col" class="text-end">Netto</th>
+                <th scope="col">Stato</th>
+                <th scope="col" class="text-end">Azioni</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (buste.Count == 0)
+            {
+                <tr><td colspan="@colonne" class="text-center text-muted p-4">Nessuna busta paga</td></tr>
+            }
+            @foreach (var b in buste)
+            {
+                <tr class="customer-result-row">
+                    @if (mostraDipendente)
+                    {
+                        <td data-label="Dipendente"><a class="customer-name" asp-controller="Dipendenti" asp-action="Dettaglio" asp-route-id="@b.DipendenteId"><i class="ri-user-line" aria-hidden="true"></i><span>@b.Dipendente</span></a></td>
+                    }
+                    @if (mostraAzienda) { <td data-label="Azienda">@b.Azienda</td> }
+                    <td data-label="Periodo">@b.Periodo</td>
+                    <td data-label="Tipo">@b.Tipo.Descrizione()</td>
+                    <td data-label="Netto" class="text-end">@(b.Netto > 0 ? b.Netto.ToString("C") : "—")</td>
+                    <td data-label="Stato"><partial name="~/Views/BustePaga/_StatoBusta.cshtml" model="(b.Stato, b.VisualizzataIl, gestore)" /></td>
+                    <td data-label="Azioni">
+                        <div class="customer-actions">
+                            @if (b.Stato != StatoBustaPaga.Ritirata || gestore)
+                            {
+                                <a asp-controller="BustePaga" asp-action="Apri" asp-route-id="@b.Id" target="_blank" rel="noopener"
+                                   title="Apri il PDF" aria-label="Apri la busta paga di @b.Periodo"><i class="ri-file-pdf-2-line" aria-hidden="true"></i></a>
+                            }
+                            @if (consulente && b.Stato == StatoBustaPaga.Bozza)
+                            {
+                                <form asp-controller="BustePaga" asp-action="Pubblica" method="post">
+                                    <input type="hidden" name="ids" value="@b.Id" />
+                                    <input type="hidden" name="ritorno" value="@ritorno" />
+                                    <button type="submit" title="Pubblica" aria-label="Pubblica la busta paga di @b.Periodo"><i class="ri-send-plane-line" aria-hidden="true"></i></button>
+                                </form>
+                                <form asp-controller="BustePaga" asp-action="Elimina" asp-route-id="@b.Id" method="post" onsubmit="return confirm('Eliminare questa bozza?');">
+                                    <input type="hidden" name="ritorno" value="@ritorno" />
+                                    <button type="submit" title="Elimina bozza" aria-label="Elimina la bozza di @b.Periodo"><i class="ri-delete-bin-line" aria-hidden="true"></i></button>
+                                </form>
+                            }
+                            @if (consulente && b.Stato == StatoBustaPaga.Pubblicata)
+                            {
+                                <form asp-controller="BustePaga" asp-action="Ritira" asp-route-id="@b.Id" method="post"
+                                      onsubmit="return confirm('Ritirare questo cedolino? Il dipendente non lo vedrà più.');">
+                                    <input type="hidden" name="ritorno" value="@ritorno" />
+                                    <button type="submit" title="Ritira" aria-label="Ritira la busta paga di @b.Periodo"><i class="ri-arrow-go-back-line" aria-hidden="true"></i></button>
+                                </form>
+                            }
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

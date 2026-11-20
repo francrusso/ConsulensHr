@@ -1,0 +1,77 @@
+@model CL.Web.Controllers.CaricaBusteForm
+@{
+    ViewData["Title"] = "Carica cedolini";
+    var esito = ViewBag.Esito as EsitoCaricamento;
+    var aziende = (List<SelectListItem>)ViewBag.Aziende;
+}
+<div class="breadcrumb-titolo mb-3">
+    <div>
+        <a asp-action="Index" class="small text-body-secondary"><i class="ri-arrow-left-s-line" aria-hidden="true"></i> Buste paga</a>
+        <h1 class="titolo-pagina mb-0">@ViewData["Title"]</h1>
+    </div>
+</div>
+
+@if (esito is not null)
+{
+    <section class="card radius-15 p-4 mb-3" aria-labelledby="titoloEsito">
+        <h2 class="h6" id="titoloEsito">Esito del caricamento</h2>
+        @if (esito.Caricati.Count > 0)
+        {
+            <div class="alert alert-success radius-15">
+                <strong>@esito.Caricati.Count cedolini caricati</strong>@(esito.Pubblicati ? " e pubblicati: i dipendenti con accesso al portale ricevono un avviso via email." : " come bozze: pubblicali dall'elenco quando sei pronta.")
+            </div>
+            <ul class="small mb-3">
+                @foreach (var (file, dip) in esito.Caricati) { <li>@file → <strong>@dip</strong></li> }
+            </ul>
+        }
+        @if (esito.Scartati.Count > 0)
+        {
+            <div class="alert alert-danger radius-15 mb-2"><strong>@esito.Scartati.Count file non caricati</strong></div>
+            <ul class="small mb-0">
+                @foreach (var (file, motivo) in esito.Scartati) { <li>@file: @motivo</li> }
+            </ul>
+        }
+        <div class="mt-3"><a asp-action="Index" asp-route-aziendaId="@Model.AziendaId" asp-route-anno="@Model.Anno" asp-route-mese="@Model.Mese" class="btn btn-outline-secondary">Vai all'elenco del mese</a></div>
+    </section>
+}
+
+<form asp-action="Carica" method="post" enctype="multipart/form-data" class="card radius-15 p-4">
+    <div asp-validation-summary="All" class="text-danger" role="alert"></div>
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label asp-for="AziendaId" class="form-label">Azienda</label>
+            <select asp-for="AziendaId" asp-items="aziende" class="form-select" required>
+                <option value="">Seleziona…</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label asp-for="Mese" class="form-label">Mese</label>
+            <select asp-for="Mese" asp-items="CL.Web.Controllers.CaricaBusteForm.Mesi" class="form-select"></select>
+        </div>
+        <div class="col-md-2">
+            <label asp-for="Anno" class="form-label">Anno</label>
+            <input asp-for="Anno" type="number" min="2000" max="2100" class="form-control" />
+        </div>
+        <div class="col-md-2">
+            <label asp-for="Tipo" class="form-label">Tipo</label>
+            <select asp-for="Tipo" asp-items="CL.Web.Controllers.CaricaBusteForm.Tipi" class="form-select"></select>
+        </div>
+        <div class="col-12">
+            <label for="files" class="form-label">PDF dei cedolini</label>
+            <input type="file" id="files" name="files" class="form-control" accept="application/pdf,.pdf" multiple required />
+            <p class="small text-body-secondary mt-2 mb-0">
+                Puoi selezionare tutti i cedolini del mese insieme (massimo 10 MB ciascuno). Ogni file viene assegnato al dipendente
+                il cui <strong>codice fiscale</strong> o la cui <strong>matricola</strong> compare nel nome del file,
+                ad esempio <code>RSSMRA85T10A562S.pdf</code> o <code>0042_ottobre.pdf</code>. I file senza corrispondenza vengono segnalati e non caricati.
+            </p>
+        </div>
+        <div class="col-12">
+            <div class="form-check form-switch">
+                <input class="form-check-input" asp-for="Pubblica" />
+                <label class="form-check-label" asp-for="Pubblica">Pubblica subito e avvisa i dipendenti via email</label>
+            </div>
+            <p class="small text-body-secondary mb-0">Se lo togli, i cedolini restano in bozza: li vedi tu e il referente dell'azienda, non i dipendenti.</p>
+        </div>
+    </div>
+    <div class="mt-4"><button type="submit" class="btn btn-primary"><i class="ri-upload-2-line" aria-hidden="true"></i> Carica</button></div>
+</form>

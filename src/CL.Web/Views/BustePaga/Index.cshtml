@@ -1,0 +1,71 @@
+@model CL.Web.Controllers.BustePagaViewModel
+@inject UtenteCorrente Utente
+@{
+    ViewData["Title"] = Utente.IsDipendente ? "Le mie buste paga" : "Buste paga";
+    var gestore = !Utente.IsDipendente;
+    var ritorno = Context.Request.Path + Context.Request.QueryString;
+    var bozze = Model.Buste.Where(b => b.Stato == StatoBustaPaga.Bozza).Select(b => b.Id).ToList();
+}
+<div class="breadcrumb-titolo d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+    <h1 class="titolo-pagina mb-0">@ViewData["Title"]</h1>
+    @if (Utente.IsConsulente)
+    {
+        <div class="d-flex gap-2">
+            @if (bozze.Count > 0)
+            {
+                <form asp-action="Pubblica" method="post" class="m-0" onsubmit="return confirm('Pubblicare le @bozze.Count bozze elencate e avvisare i dipendenti?');">
+                    @foreach (var id in bozze) { <input type="hidden" name="ids" value="@id" /> }
+                    <input type="hidden" name="ritorno" value="@ritorno" />
+                    <button type="submit" class="btn btn-outline-secondary"><i class="ri-send-plane-line" aria-hidden="true"></i> Pubblica @bozze.Count bozze</button>
+                </form>
+            }
+            <a asp-action="Carica" asp-route-aziendaId="@Model.AziendaId" class="btn btn-primary"><i class="ri-upload-2-line" aria-hidden="true"></i> Carica cedolini</a>
+        </div>
+    }
+</div>
+
+<section class="customer-directory">
+    <form asp-action="Index" method="get" class="invoice-filter-bar customer-filter-form">
+        <div class="invoice-filter-toolbar flex-wrap">
+            @if (Model.Aziende is not null)
+            {
+                <div>
+                    <select name="aziendaId" class="form-select" aria-label="Filtra per azienda">
+                        <option value="">Tutte le aziende</option>
+                        @foreach (var a in Model.Aziende) { <option value="@a.Value" selected="@a.Selected">@a.Text</option> }
+                    </select>
+                </div>
+            }
+            <div>
+                <select name="anno" class="form-select" aria-label="Filtra per anno">
+                    <option value="">Tutti gli anni</option>
+                    @foreach (var a in Model.Anni) { <option value="@a" selected="@(Model.Anno == a)">@a</option> }
+                </select>
+            </div>
+            <div>
+                <select name="mese" class="form-select" aria-label="Filtra per mese">
+                    <option value="">Tutti i mesi</option>
+                    @for (var m = 1; m <= 12; m++) { <option value="@m" selected="@(Model.Mese == m)">@ServizioBustePaga.NomeMese(m)</option> }
+                </select>
+            </div>
+            @if (gestore)
+            {
+                <div>
+                    <select name="stato" class="form-select" aria-label="Filtra per stato">
+                        <option value="">Tutti gli stati</option>
+                        <option value="Bozza" selected="@(Model.Stato == StatoBustaPaga.Bozza)">Bozze</option>
+                        <option value="Pubblicata" selected="@(Model.Stato == StatoBustaPaga.Pubblicata)">Pubblicate</option>
+                        <option value="Ritirata" selected="@(Model.Stato == StatoBustaPaga.Ritirata)">Ritirate</option>
+                    </select>
+                </div>
+            }
+            <div class="invoice-filter-actions"><button class="btn invoice-filter-submit" type="submit">Filtra <i class="ri-filter-3-line" aria-hidden="true"></i></button></div>
+        </div>
+    </form>
+
+    @if (Utente.IsDipendente)
+    {
+        <p class="small text-body-secondary">Apri il PDF per consultarlo o salvarlo. La prima apertura viene registrata come consegna del cedolino.</p>
+    }
+    <partial name="_TabellaBuste" model="(Model.Buste, gestore, Utente.IsConsulente, gestore, Utente.IsConsulente, ritorno)" />
+</section>

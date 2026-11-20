@@ -1,3 +1,4 @@
+using CL.Infrastructure.Archivio;
 using CL.Infrastructure.Email;
 using CL.Infrastructure.Identity;
 using CL.Infrastructure.Persistence;
@@ -45,6 +46,11 @@ public static class DependencyInjection
 
         services.Configure<OpzioniEmail>(configuration.GetSection("Email"));
         services.AddSingleton<IInvioEmail, InvioEmailSmtp>();
+        services.AddSingleton<CodaEmail>();
+        services.AddHostedService<InvioCodaEmail>();
+
+        services.Configure<OpzioniArchivio>(configuration.GetSection("Archivio"));
+        services.AddSingleton<IArchivioDocumenti, ArchivioSuDisco>();
 
         services.AddSingleton(TimeProvider.System);
         return services;

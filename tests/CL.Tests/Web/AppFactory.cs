@@ -21,6 +21,9 @@ public sealed class AppFactory : WebApplicationFactory<Program>
     public const string PasswordTest = "Password-di-test-1";
     private readonly SqliteConnection _conn = new("DataSource=:memory:");
 
+    /// <summary>Archivio dei PDF in una cartella temporanea, eliminata alla fine del test.</summary>
+    public string CartellaArchivio { get; } = Path.Combine(Path.GetTempPath(), "clhr-test-" + Guid.NewGuid().ToString("N"));
+
     /// <summary>Errori registrati dal server durante il test (utile per capire un 500).</summary>
     public List<string> ErroriServer { get; } = [];
 
@@ -31,6 +34,7 @@ public sealed class AppFactory : WebApplicationFactory<Program>
         builder.UseEnvironment("Testing");
         builder.ConfigureLogging(l => l.AddProvider(new RaccoltaErrori(ErroriServer)));
         builder.UseSetting("ConnectionStrings:Default", "Host=non-usato");
+        builder.UseSetting("Archivio:Percorso", CartellaArchivio);
         builder.ConfigureServices(services =>
         {
             services.RemoveAll<DbContextOptions<AppDbContext>>();
@@ -68,7 +72,11 @@ public sealed class AppFactory : WebApplicationFactory<Program>
     protected override void Dispose(bool disposing)
     {
         base.Dispose(disposing);
-        if (disposing) _conn.Dispose();
+        if (disposing)
+        {
+            _conn.Dispose();
+            if (Directory.Exists(CartellaArchivio)) Directory.Delete(CartellaArchivio, recursive: true);
+        }
     }
 }
 

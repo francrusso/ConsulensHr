@@ -1,0 +1,11 @@
+@model (StatoBustaPaga Stato, DateTime? VisualizzataIl, bool Gestore)
+@switch (Model.Stato)
+{
+    case StatoBustaPaga.Bozza: <span class="badge bg-warning text-dark">Bozza</span> break;
+    case StatoBustaPaga.Ritirata: <span class="badge bg-secondary">Ritirata</span> break;
+    default:
+        if (!Model.Gestore) { <span class="badge bg-success">Disponibile</span> }
+        else if (Model.VisualizzataIl is { } v) { <span class="badge bg-success" title="Aperta dal dipendente il @v.ToLocalTime().ToString("dd/MM/yyyy HH:mm")">Consegnata</span> }
+        else { <span class="badge bg-info">Pubblicata</span> }
+        break;
+}

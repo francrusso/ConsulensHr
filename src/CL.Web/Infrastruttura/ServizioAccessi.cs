@@ -117,7 +117,7 @@ public sealed class ServizioAccessi(
     /// In produzione "App:UrlPubblico" fissa l'indirizzo dei link: non ci si fida dell'header Host della richiesta,
     /// che chi chiede il recupero password potrebbe falsificare per far puntare il link a un altro sito.
     /// </summary>
-    private string ComponiUrl(string percorso)
+    public string ComponiUrl(string percorso)
     {
         if (config["App:UrlPubblico"] is { Length: > 0 } baseUrl) return baseUrl.TrimEnd('/') + percorso;
         var req = http.HttpContext?.Request ?? throw new InvalidOperationException("Serve una richiesta HTTP per comporre il link.");

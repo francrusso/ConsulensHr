@@ -53,7 +53,9 @@ public sealed class BustaPaga : Entity
     {
         if (anno is < 2000 or > 2100) throw new DomainException("Anno non valido.");
         if (mese is < 1 or > 12) throw new DomainException("Mese non valido.");
-        if (netto > lordo) throw new DomainException("Il netto non può superare il lordo.");
+        // Importi facoltativi (0 = non indicato): il controllo vale solo se il lordo è stato inserito.
+        if (lordo > 0 && netto > lordo) throw new DomainException("Il netto non può superare il lordo.");
+        Guard.NonNegative(netto, "Netto");
         if (dimensioneByte <= 0) throw new DomainException("Il file del cedolino è vuoto.");
 
         AziendaId = aziendaId;

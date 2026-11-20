@@ -77,6 +77,18 @@
                                 </a>
                             </li>
                         }
+                        <li>
+                            <a asp-controller="Assenze" asp-action="Index">
+                                <div class="parent-icon icon-color-1"><i class="ri-calendar-event-line ri-xs"></i></div>
+                                <div class="menu-title">Ferie e permessi</div>
+                            </a>
+                        </li>
+                        <li>
+                            <a asp-controller="BustePaga" asp-action="Index">
+                                <div class="parent-icon icon-color-1"><i class="ri-file-list-3-line ri-xs"></i></div>
+                                <div class="menu-title">Buste paga</div>
+                            </a>
+                        </li>
                         @if (Utente.IsConsulente)
                         {
                             <li>
@@ -95,12 +107,6 @@
                                 </a>
                             </li>
                         }
-                        <li>
-                            <a asp-controller="Assenze" asp-action="Index">
-                                <div class="parent-icon icon-color-1"><i class="ri-calendar-event-line ri-xs"></i></div>
-                                <div class="menu-title">Ferie e permessi</div>
-                            </a>
-                        </li>
                     </ul>
                 </div>
                 <div class="sidebar-footer">

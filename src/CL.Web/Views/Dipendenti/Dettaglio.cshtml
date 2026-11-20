@@ -8,7 +8,10 @@
     var richieste = (List<CL.Web.Controllers.RichiestaRiga>)ViewBag.Richieste;
     var ritorno = Context.Request.Path.ToString();
     var accesso = ViewBag.Accesso as CL.Web.Infrastruttura.UtenteRiga;
+    var buste = (List<BustaRiga>)ViewBag.Buste;
+    var mesePrecedente = oggi.AddMonths(-1);
 }
+@inject UtenteCorrente Utente
 
 <div class="breadcrumb-titolo d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
     <div>
@@ -159,4 +162,56 @@
     <div class="mt-3">
         <partial name="~/Views/Assenze/_TabellaRichieste.cshtml" model="(richieste, true, false, false, oggi, ritorno)" />
     </div>
+</section>
+
+<section class="mt-4" aria-labelledby="titoloBuste">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+        <h2 class="h5 mb-0" id="titoloBuste">Buste paga</h2>
+        @if (Utente.IsConsulente)
+        {
+            <button type="button" class="btn btn-primary" data-bs-toggle="collapse" data-bs-target="#nuovaBusta" aria-expanded="false" aria-controls="nuovaBusta">
+                <i class="ri-upload-2-line" aria-hidden="true"></i> Carica cedolino
+            </button>
+        }
+    </div>
+    @if (Utente.IsConsulente)
+    {
+        <div class="collapse mb-3" id="nuovaBusta">
+            <form asp-controller="BustePaga" asp-action="CaricaPerDipendente" method="post" enctype="multipart/form-data" class="card radius-15 p-3">
+                <input type="hidden" name="dipendenteId" value="@Model.Id" />
+                <div class="row g-2 align-items-end">
+                    <div class="col-sm-2">
+                        <label class="form-label small" for="busta-mese">Mese</label>
+                        <select class="form-select" id="busta-mese" name="mese">
+                            @for (var m = 1; m <= 12; m++) { <option value="@m" selected="@(m == mesePrecedente.Month)">@ServizioBustePaga.NomeMese(m)</option> }
+                        </select>
+                    </div>
+                    <div class="col-sm-2">
+                        <label class="form-label small" for="busta-anno">Anno</label>
+                        <input class="form-control" id="busta-anno" name="anno" type="number" min="2000" max="2100" value="@mesePrecedente.Year" />
+                    </div>
+                    <div class="col-sm-2">
+                        <label class="form-label small" for="busta-tipo">Tipo</label>
+                        <select class="form-select" id="busta-tipo" name="tipo" asp-items="CL.Web.Controllers.CaricaBusteForm.Tipi"></select>
+                    </div>
+                    <div class="col-sm-2">
+                        <label class="form-label small" for="busta-netto">Netto (€, facoltativo)</label>
+                        <input class="form-control" id="busta-netto" name="netto" type="text" inputmode="decimal" />
+                    </div>
+                    <div class="col-sm-4">
+                        <label class="form-label small" for="busta-file">PDF</label>
+                        <input class="form-control" id="busta-file" name="file" type="file" accept="application/pdf,.pdf" required />
+                    </div>
+                    <div class="col-sm-8">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="busta-pubblica" name="pubblica" value="true" checked />
+                            <label class="form-check-label" for="busta-pubblica">Pubblica subito e avvisa il dipendente</label>
+                        </div>
+                    </div>
+                    <div class="col-sm-4"><button type="submit" class="btn btn-primary w-100">Carica</button></div>
+                </div>
+            </form>
+        </div>
+    }
+    <partial name="~/Views/BustePaga/_TabellaBuste.cshtml" model="(buste, true, Utente.IsConsulente, false, false, ritorno)" />
 </section>

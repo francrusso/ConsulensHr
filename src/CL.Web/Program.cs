@@ -9,6 +9,10 @@ using Microsoft.AspNetCore.Mvc.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Cedolini su disco, fuori da wwwroot (mai serviti come file statici). Sovrascrivibile con "Archivio:Percorso".
+if (string.IsNullOrWhiteSpace(builder.Configuration["Archivio:Percorso"]))
+    builder.Configuration["Archivio:Percorso"] = Path.Combine(builder.Environment.ContentRootPath, "App_Data", "archivio");
+
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.ConfigureApplicationCookie(o =>
 {
@@ -34,6 +38,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<UtenteCorrente>();
 builder.Services.AddScoped<ServizioSaldi>();
 builder.Services.AddScoped<ServizioAccessi>();
+builder.Services.AddScoped<ServizioBustePaga>();
 
 builder.Services.AddControllersWithViews(o =>
 {
