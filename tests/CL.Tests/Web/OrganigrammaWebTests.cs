@@ -179,7 +179,27 @@ public sealed class OrganigrammaWebTests : IDisposable
         // Pagina "Team": gestione; pagina "Organigramma": l'albero. Entrambe nel sottomenù "Personale".
         var gestione = WebUtility.HtmlDecode(await hr.GetStringAsync("/Team"));
         Assert.Contains("<title>Team |", gestione);
-        Assert.Contains("Senza team", gestione); // Verdi non è in nessun team
+        Assert.Contains("Magazzino", gestione); // un'unica tabella con tutti i team
+        var cercati = WebUtility.HtmlDecode(await hr.GetStringAsync("/Team?q=magaz"));
+        Assert.Contains("Magazzino", cercati);
+        Assert.DoesNotContain("Apri il team Vendite", cercati);
+        Assert.Contains("Ricerca:", cercati); // chip per togliere la ricerca
+        Assert.DoesNotContain("li approva il", gestione); // niente più spiegazione delle regole
+        var magazzino = await _app.ConDb(db => db.Team.SingleAsync(t => t.Nome == "Magazzino"));
+
+        // Pagina del team: membri da aggiungere e togliere, posizione e responsabile diretto restano.
+        var paginaTeam = $"/Team/Dettaglio/{magazzino.Id}";
+        var htmlTeam = WebUtility.HtmlDecode(await hr.GetStringAsync(paginaTeam));
+        Assert.Contains("Nessun membro", htmlTeam);
+        Assert.Matches(@"<a href=""/Dipendenti"">Personale</a>[\s\S]*<a href=""/Team"">Team</a>[\s\S]*aria-current=""page"">Magazzino</li>", htmlTeam);
+        var conMembro = await Testo(await hr.InviaForm(paginaTeam, "/Team/Membro", new() { ["teamId"] = magazzino.Id.ToString(), ["dipendenteId"] = _bianchi.ToString() }));
+        Assert.Contains("aggiunto al team Magazzino", conMembro);
+        var bianchi = await _app.ConDb(db => db.Dipendenti.SingleAsync(d => d.Id == _bianchi));
+        Assert.Equal((magazzino.Id, "Commerciale"), (bianchi.TeamId!.Value, bianchi.Posizione));
+        Assert.Contains("tolto dal team", await Testo(await hr.InviaForm(paginaTeam, "/Team/Membro",
+            new() { ["teamId"] = magazzino.Id.ToString(), ["dipendenteId"] = _bianchi.ToString(), ["togli"] = "true" })));
+        Assert.Null((await _app.ConDb(db => db.Dipendenti.SingleAsync(d => d.Id == _bianchi))).TeamId);
+        await hr.InviaForm(paginaTeam, "/Team/Membro", new() { ["teamId"] = team.Id.ToString(), ["dipendenteId"] = _bianchi.ToString() });
         Assert.Contains("href=\"#nuovoTeam\"", gestione); // "Nuovo team" nella barra in alto
         Assert.DoesNotContain("class=\"organigramma\"", gestione);
         Assert.Contains("href=\"/Team/Organigramma\"", gestione);

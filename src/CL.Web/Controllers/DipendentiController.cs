@@ -313,8 +313,15 @@ public sealed class DipendentiController(AppDbContext db, UtenteCorrente utente,
                 })
                 .ToListAsync());
         var idTeam = righeDb.Where(d => d.TeamId != null).Select(d => d.TeamId!.Value).Distinct().ToList();
-        var team = idTeam.Count == 0 ? [] : await db.Team.AsNoTracking().Where(t => idTeam.Contains(t.Id))
-            .ToDictionaryAsync(t => t.Id, t => new TeamRiga(t.Nome, t.Colore, t.Emoji));
+        // Team con il colore mostrato (i sotto-team ereditano quello del team madre, più chiaro).
+        var team = new Dictionary<Guid, TeamRiga>();
+        if (idTeam.Count > 0)
+        {
+            var aziendeTeam = await db.Team.AsNoTracking().Where(t => idTeam.Contains(t.Id)).Select(t => t.AziendaId).Distinct().ToListAsync();
+            var tuttiTeam = await db.Team.AsNoTracking().Where(t => aziendeTeam.Contains(t.AziendaId)).ToListAsync();
+            foreach (var t in tuttiTeam.Where(t => idTeam.Contains(t.Id)))
+                team[t.Id] = new TeamRiga(t.Nome, CL.Domain.Organizzazione.Organigramma.ColoreDi(t, tuttiTeam), t.Emoji);
+        }
         var righe = righeDb
             .Select(d => new DipendenteRiga(d.Id, $"{d.Cognome} {d.Nome}", d.CodiceFiscale.Valore, d.Azienda ?? "—",
                 d.Tipo is { } tipo && !tipo.IsSubordinato() ? tipo.Descrizione() : string.IsNullOrEmpty(d.Livello) ? null : d.Livello,

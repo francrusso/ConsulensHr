@@ -110,6 +110,7 @@
                                     <li><a asp-controller="Dipendenti" asp-action="Index">Elenco personale</a></li>
                                     <li><a asp-controller="Team" asp-action="Index">Team</a></li>
                                     <li><a asp-controller="Team" asp-action="Organigramma">Organigramma</a></li>
+                                    <li><a asp-controller="Utenti" asp-action="Azienda">Referenti</a></li>
                                 </ul>
                             </li>
                         }
@@ -154,15 +155,6 @@
                                 <a asp-controller="Utenti" asp-action="Index">
                                     <div class="parent-icon icon-color-1"><i class="ri-shield-user-line ri-xs"></i></div>
                                     <div class="menu-title">Utenti</div>
-                                </a>
-                            </li>
-                        }
-                        else if (Utente.IsAzienda)
-                        {
-                            <li>
-                                <a asp-controller="Utenti" asp-action="Azienda">
-                                    <div class="parent-icon icon-color-1"><i class="ri-shield-user-line ri-xs"></i></div>
-                                    <div class="menu-title">Referenti</div>
                                 </a>
                             </li>
                         }

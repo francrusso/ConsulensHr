@@ -1,0 +1,26 @@
+    <script>
+        // Colore: preset o colore libero; emoji: suggerimenti e pulsante per toglierla.
+        document.querySelectorAll('.form-team').forEach(form => {
+            const libero = form.querySelector('.colore-libero');
+            libero?.addEventListener('input', () => {
+                form.querySelectorAll('input[name=colore]').forEach(r => r.checked = false);
+                let nascosto = form.querySelector('input[name=colore][type=hidden]');
+                if (!nascosto) { nascosto = document.createElement('input'); nascosto.type = 'hidden'; nascosto.name = 'colore'; form.append(nascosto); }
+                nascosto.value = libero.value;
+            });
+            form.querySelectorAll('input[name=colore][type=radio]').forEach(r => r.addEventListener('change', () =>
+                form.querySelector('input[name=colore][type=hidden]')?.remove()));
+            const emoji = form.querySelector('.campo-emoji'), altra = form.querySelector('.altra-emoji');
+            const segna = el => form.querySelectorAll('.tessera-emoji').forEach(t => t.classList.toggle('attiva', t === el));
+            form.querySelectorAll('button.tessera-emoji').forEach(b => b.addEventListener('click', () => {
+                emoji.value = b.dataset.emoji; if (altra) altra.value = ''; segna(b);
+            }));
+            altra?.addEventListener('input', () => {
+                emoji.value = altra.value.trim();
+                segna(altra.value.trim() ? altra : form.querySelector('.tessera-emoji.nessuna'));
+            });
+        });
+        document.querySelectorAll('[data-nascondi-colore]').forEach(sel => sel.addEventListener('change', () => {
+            document.getElementById(sel.dataset.nascondiColore).hidden = sel.value !== '';
+        }));
+    </script>

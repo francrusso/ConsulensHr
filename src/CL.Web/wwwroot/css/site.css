@@ -105,7 +105,7 @@ h1 .logo-azienda { max-height: 36px; }
 .campo-compilato { background-color: #fffaf4; }
 
 /* Organigramma: albero dall'alto in basso con linee arrotondate (CSS puro). */
-.organigramma-contenitore { overflow: auto; padding: 24px 12px 32px; background: linear-gradient(#fff, #fffdfb); }
+.organigramma-contenitore { overflow: auto; padding: 16px 0 32px; }
 .organigramma { min-width: max-content; margin: 0 auto; --linea: #e5d9cd; }
 .organigramma ul { display: flex; justify-content: center; padding: 26px 0 0; margin: 0; position: relative; }
 .organigramma > ul { padding-top: 0; }
@@ -452,3 +452,35 @@ td.elenco-vuoto { text-align: center; padding: 2.5rem 1rem !important; color: va
 .saldo-anno { font-size: 12px; color: var(--consulens-breadcrumb-muted); background: var(--consulens-canvas); border: 1px solid var(--consulens-border);
     border-radius: 50rem; padding: 2px 10px; }
 .tabella-residui input.form-control { max-width: 160px; }
+
+/* Pagina Team: elenco e scheda del team */
+.nome-team { color: var(--consulens-breadcrumb-active); font-weight: 500; }
+.team-titolo { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 10px; font-size: 1.05rem; font-weight: 600;
+    background: var(--colore-team); color: var(--testo-team); }
+.aggiungi-membro .form-select { min-width: 260px; }
+
+/* Membri del team: foto a cerchio sovrapposte e numero */
+.membri-team { display: inline-flex; align-items: center; gap: 10px; }
+.avatar-sovrapposti { display: inline-flex; align-items: center; }
+.avatar-sovrapposti img, .avatar-sovrapposti .avatar-altri { width: 30px; height: 30px; border-radius: 50%; border: 2px solid #fff;
+    object-fit: cover; background: var(--consulens-canvas); box-shadow: 0 1px 3px rgba(81, 45, 56, .15); }
+.avatar-sovrapposti > * + * { margin-left: -9px; }
+.avatar-sovrapposti .avatar-altri { display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600;
+    color: var(--consulens-breadcrumb-active); background: var(--consulens-border); }
+.numero-membri { font-weight: 500; color: var(--consulens-breadcrumb-active); font-variant-numeric: tabular-nums; }
+
+/* Scelta dell'emoji del team: tessere cliccabili con quella scelta evidenziata */
+.scelta-emoji { display: grid; grid-template-columns: repeat(auto-fill, minmax(40px, 1fr)); gap: 6px; }
+.tessera-emoji { height: 40px; border: 1px solid var(--consulens-border); border-radius: 10px; background: #fff; font-size: 19px; line-height: 1;
+    display: inline-flex; align-items: center; justify-content: center; padding: 0; cursor: pointer; transition: border-color .15s, box-shadow .15s, transform .1s; }
+.tessera-emoji:hover { border-color: #98494E; transform: translateY(-1px); }
+.tessera-emoji.attiva { border-color: #512D38; box-shadow: 0 0 0 2px rgba(81, 45, 56, .18); background: var(--consulens-canvas); }
+.tessera-emoji.nessuna { color: var(--consulens-breadcrumb-muted); font-size: 17px; }
+input.tessera-emoji.altra-emoji { grid-column: span 2; font-size: 15px; text-align: center; cursor: text; }
+input.tessera-emoji.altra-emoji::placeholder { font-size: 12.5px; color: var(--consulens-breadcrumb-muted); }
+.form-team fieldset { min-width: 0; }
+.scelta-emoji { grid-template-columns: repeat(auto-fill, minmax(42px, 42px)); }
+.form-team legend { float: none; width: auto; }
+/* Badge dei team nell'organigramma: Quasimoda maiuscolo, meno pesante */
+.organigramma .org-team { font-family: 'Quasimoda', 'Poppins', sans-serif; text-transform: uppercase; font-weight: 500; letter-spacing: .05em; }
+.organigramma .org-team .org-conteggio, .organigramma .org-team span:last-child { font-family: 'Poppins', sans-serif; letter-spacing: 0; }

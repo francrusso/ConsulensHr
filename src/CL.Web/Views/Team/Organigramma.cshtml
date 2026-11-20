@@ -11,6 +11,14 @@
         }
         <h1 class="titolo-pagina mb-0">Organigramma</h1>
     </div>
+    @if (Model.Team.Count > 0 || Model.Dipendenti.Count > 0)
+    {
+        <div class="org-strumenti d-flex gap-2" aria-label="Zoom del grafico">
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-zoom="-1" aria-label="Riduci"><i class="ri-zoom-out-line" aria-hidden="true"></i></button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-zoom="0" aria-label="Dimensione normale">100%</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-zoom="1" aria-label="Ingrandisci"><i class="ri-zoom-in-line" aria-hidden="true"></i></button>
+        </div>
+    }
 </div>
 
 @if (Model.Team.Count == 0 && Model.Dipendenti.Count == 0)
@@ -19,12 +27,8 @@
 }
 else
 {
-    <div class="org-strumenti d-flex gap-2 mb-2" aria-label="Zoom del grafico">
-        <button type="button" class="btn btn-sm btn-outline-secondary" data-zoom="-1" aria-label="Riduci"><i class="ri-zoom-out-line" aria-hidden="true"></i></button>
-        <button type="button" class="btn btn-sm btn-outline-secondary" data-zoom="0" aria-label="Dimensione normale">100%</button>
-        <button type="button" class="btn btn-sm btn-outline-secondary" data-zoom="1" aria-label="Ingrandisci"><i class="ri-zoom-in-line" aria-hidden="true"></i></button>
-    </div>
-    <div class="card radius-15 organigramma-contenitore">
+    @* Albero direttamente nella pagina, senza card intorno. *@
+    <div class="organigramma-contenitore">
         <div class="organigramma" id="organigramma">
             <ul><partial name="_Nodo" model="Model.Grafico()" view-data="ViewData" /></ul>
         </div>

@@ -14,7 +14,7 @@
     </div>
     <div class="col-md-3">
         <label class="form-label small" for="padre-@chiave">Dentro il team</label>
-        <select class="form-select" id="padre-@chiave" name="padreId">
+        <select class="form-select" id="padre-@chiave" name="padreId" data-nascondi-colore="colore-@chiave">
             <option value="">— (primo livello)</option>
             @foreach (var (t, livello) in vm.Albero().Where(x => x.Team.Id != team?.Id))
             {
@@ -31,7 +31,8 @@
     </div>
     <div class="col-md-2"><button type="submit" class="btn btn-primary w-100">@(team is null ? "Crea" : "Salva")</button></div>
 
-    <fieldset class="col-md-7">
+    @* I sotto-team prendono il colore del team madre, più chiaro: la scelta serve solo al primo livello. *@
+    <fieldset class="col-12 mt-3" id="colore-@chiave" hidden="@(team?.PadreId is not null)">
         <legend class="form-label small mb-1">Colore</legend>
         <div class="d-flex flex-wrap align-items-center gap-2">
             @foreach (var (nome, hex) in CL.Domain.Organizzazione.Team.Palette)
@@ -47,16 +48,19 @@
                 altro
             </label>
         </div>
-        @if (team is null) { <div class="form-text">Se non scegli, ne viene assegnato uno non ancora usato.</div> }
     </fieldset>
-    <div class="col-md-5">
-        <label class="form-label small" for="emoji-@chiave">Emoji (facoltativa)</label>
-        <div class="input-group">
-            <input class="form-control campo-emoji" id="emoji-@chiave" name="emoji" value="@team?.Emoji" maxlength="16" placeholder="—" autocomplete="off" />
-            <button type="button" class="btn btn-outline-secondary togli-emoji" aria-label="Togli l'emoji"><i class="ri-close-line" aria-hidden="true"></i></button>
+    <fieldset class="col-12 mt-3">
+        <legend class="form-label small mb-1">Emoji <span class="text-body-secondary">(facoltativa)</span></legend>
+        @* Griglia di emoji pronte: un clic per sceglierla; "altra" per incollarne una diversa. *@
+        <input type="hidden" name="emoji" value="@team?.Emoji" class="campo-emoji" />
+        <div class="scelta-emoji" role="group" aria-label="Emoji del team">
+            <button type="button" class="tessera-emoji nessuna @(string.IsNullOrEmpty(team?.Emoji) ? "attiva" : "")" data-emoji="" title="Nessuna emoji" aria-label="Nessuna emoji"><i class="ri-forbid-line" aria-hidden="true"></i></button>
+            @foreach (var e in emojiSuggerite)
+            {
+                <button type="button" class="tessera-emoji @(e == team?.Emoji ? "attiva" : "")" data-emoji="@e" aria-label="Usa @e">@e</button>
+            }
+            <input type="text" class="tessera-emoji altra-emoji @(!string.IsNullOrEmpty(team?.Emoji) && !emojiSuggerite.Contains(team!.Emoji) ? "attiva" : "")"
+                   value="@(!string.IsNullOrEmpty(team?.Emoji) && !emojiSuggerite.Contains(team!.Emoji) ? team.Emoji : "")" maxlength="16" placeholder="altra" aria-label="Altra emoji" autocomplete="off" />
         </div>
-        <div class="d-flex flex-wrap gap-1 mt-1" role="group" aria-label="Emoji suggerite">
-            @foreach (var e in emojiSuggerite) { <button type="button" class="btn btn-sm btn-light emoji-suggerita" aria-label="Usa @e">@e</button> }
-        </div>
-    </div>
+    </fieldset>
 </form>

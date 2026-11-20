@@ -1,0 +1,117 @@
+@model CL.Web.Controllers.OrganigrammaViewModel
+@{
+    var idTeam = (Guid)ViewBag.TeamId;
+    var team = Model.Team.First(t => t.Id == idTeam);
+    var modifica = (bool)ViewBag.Modifica;
+    ViewData["Title"] = team.Nome;
+    ViewData["Percorso"] = new List<(string, string?)>
+    {
+        (Model.PerConto ? "Dipendenti" : "Personale", Url.Action("Index", "Dipendenti")),
+        ("Team", Url.Action("Index", "Team", new { aziendaId = Model.PerConto ? Model.AziendaId : (Guid?)null })),
+    };
+    if (Model.HaLogo) ViewData["LogoAzienda"] = Url.Action("Logo", "Aziende", new { id = Model.AziendaId });
+    var membri = Model.Dipendenti.Where(d => d.TeamId == team.Id).OrderBy(d => d.Id == team.ResponsabileId ? 0 : 1).ThenBy(d => d.Nome).ToList();
+    var aggiungibili = Model.Dipendenti.Where(d => d.TeamId != team.Id && d.InForza).ToList();
+    var padre = team.PadreId is { } p ? Model.Team.FirstOrDefault(x => x.Id == p) : null;
+    var sottoTeam = Model.Team.Where(x => x.PadreId == team.Id).OrderBy(x => x.Nome).ToList();
+}
+<div class="breadcrumb-titolo d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+    <div>
+        <h1 class="titolo-pagina mb-0">Team</h1>
+    </div>
+</div>
+
+<div class="scheda-profilo">
+<section class="card radius-15 p-3 p-md-4 mb-3 sezione-profilo" aria-labelledby="titoloTeam">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+        <div class="d-flex align-items-center gap-3">
+            <span class="org-badge-team team-titolo" style="--colore-team:@Model.ColoreDi(team); --testo-team:@CL.Domain.Organizzazione.Team.TestoSu(Model.ColoreDi(team))">
+                @if (team.Emoji is not null) { <span aria-hidden="true">@team.Emoji</span> }
+                <span id="titoloTeam">@team.Nome</span>
+            </span>
+            <span class="small text-body-secondary">@membri.Count @(membri.Count == 1 ? "persona" : "persone")</span>
+        </div>
+        <div class="d-flex gap-2">
+            <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="collapse" data-bs-target="#modificaTeam" aria-expanded="@(modifica ? "true" : "false")" aria-controls="modificaTeam">Modifica team <i class="ri-pencil-line" aria-hidden="true"></i></button>
+            <form asp-action="Elimina" method="post" class="m-0" onsubmit="return confirm('Eliminare il team @team.Nome?');">
+                <input type="hidden" name="aziendaId" value="@Model.AziendaId" /><input type="hidden" name="id" value="@team.Id" />
+                <button type="submit" class="btn btn-outline-danger btn-sm">Elimina <i class="ri-delete-bin-line" aria-hidden="true"></i></button>
+            </form>
+        </div>
+    </div>
+    <dl class="campi-profilo valori-profilo mt-4 mb-0">
+        <div><dt>Dentro il team</dt><dd>@(padre?.Nome ?? "Primo livello")</dd></div>
+        <div><dt>Responsabile</dt><dd>@(team.ResponsabileId is null ? "Nessuno (decide il referente dell'azienda)" : Model.NomeDi(team.ResponsabileId))</dd></div>
+        <div class="campo-largo"><dt>Team al suo interno</dt><dd>@(sottoTeam.Count == 0 ? "Nessuno" : string.Join(", ", sottoTeam.Select(x => x.Nome)))</dd></div>
+    </dl>
+    <div class="collapse @(modifica ? "show" : "")" id="modificaTeam">
+        <div class="border-top mt-4 pt-4"><partial name="_FormTeam" model="(Model, (CL.Domain.Organizzazione.Team?)team)" /></div>
+    </div>
+</section>
+
+<section class="card radius-15 p-3 p-md-4 mb-3 sezione-profilo" aria-labelledby="titoloMembri">
+    <div class="d-flex flex-wrap align-items-end justify-content-between gap-3 mb-3">
+        <h2 class="titolo-sezione-profilo mb-0" id="titoloMembri">Membri</h2>
+        @if (aggiungibili.Count > 0)
+        {
+            <form asp-action="Membro" method="post" class="d-flex flex-wrap align-items-end gap-2 m-0 aggiungi-membro">
+                <input type="hidden" name="teamId" value="@team.Id" />
+                <div>
+                    <label for="nuovoMembro" class="visually-hidden">Persona da aggiungere</label>
+                    <select id="nuovoMembro" name="dipendenteId" class="form-select" required>
+                        <option value="">Aggiungi una persona…</option>
+                        @foreach (var d in aggiungibili)
+                        {
+                            var attuale = d.TeamId is { } tid ? Model.Team.FirstOrDefault(x => x.Id == tid)?.Nome : null;
+                            <option value="@d.Id">@d.Nome@(attuale is null ? "" : $" (ora in {attuale})")</option>
+                        }
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary"><i class="ri-user-add-line" aria-hidden="true"></i> Aggiungi</button>
+            </form>
+        }
+    </div>
+    <div class="table-responsive">
+        <table class="table mb-0 align-middle">
+            <thead><tr><th scope="col">Persona</th><th scope="col">Posizione</th><th scope="col">Approva ferie e permessi</th><th scope="col" class="text-end">Azioni</th></tr></thead>
+            <tbody>
+                @if (membri.Count == 0)
+                {
+                    <tr><td colspan="4" class="elenco-vuoto"><span class="elenco-vuoto-icona" aria-hidden="true"><i class="ri-user-add-line"></i></span><div>Nessun membro: aggiungi le persone del team</div></td></tr>
+                }
+                @foreach (var m in membri)
+                {
+                    <tr>
+                        <td data-label="Persona">
+                            <a asp-controller="Dipendenti" asp-action="Dettaglio" asp-route-id="@m.Id" class="customer-name">
+                                <img class="avatar-elenco" src="@(m.HaFoto ? Url.Action("Foto", "Dipendenti", new { id = m.Id }) : Url.Content($"~/assets/images/avatar/{m.Segnaposto}.png"))" alt="" loading="lazy" />
+                                <span>@m.Nome</span>
+                            </a>
+                            @if (m.Id == team.ResponsabileId) { <span class="badge bg-info ms-1">Responsabile</span> }
+                            @if (!m.InForza) { <span class="badge bg-secondary ms-1">Non in forza</span> }
+                        </td>
+                        <td data-label="Posizione">@(m.Posizione ?? "—")</td>
+                        <td data-label="Approva ferie e permessi">
+                            @if (m.ApprovatoreId is { } a) { @Model.NomeDi(a) @if (m.ResponsabileDirettoId == a) { <span class="small text-body-secondary">(diretto)</span> } }
+                            else { <span class="text-body-secondary">Referente dell'azienda</span> }
+                        </td>
+                        <td data-label="Azioni">
+                            <div class="customer-actions">
+                                <a asp-controller="Dipendenti" asp-action="Modifica" asp-route-id="@m.Id" title="Modifica la persona" aria-label="Modifica @m.Nome"><i class="ri-pencil-line" aria-hidden="true"></i></a>
+                                <form asp-action="Membro" method="post" class="m-0" onsubmit="return confirm('Togliere @m.Nome dal team?');">
+                                    <input type="hidden" name="teamId" value="@team.Id" /><input type="hidden" name="dipendenteId" value="@m.Id" /><input type="hidden" name="togli" value="true" />
+                                    <button type="submit" title="Togli dal team" aria-label="Togli @m.Nome dal team"><i class="ri-user-unfollow-line" aria-hidden="true"></i></button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</section>
+</div>
+
+@section Scripts {
+    <partial name="_ScriptTeam" />
+}

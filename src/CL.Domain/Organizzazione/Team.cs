@@ -21,14 +21,21 @@ public sealed class Team : Entity
     /// <summary>Emoji del team (facoltativa).</summary>
     public string? Emoji { get; private set; }
 
-    public const string ColorePredefinito = "#A47FE6";
+    public const string ColorePredefinito = "#C9B6F2";
 
-    /// <summary>Colori proposti (gli stessi toni pastello dei grafici di Consulens).</summary>
+    /// <summary>Colori proposti: toni pastello chiari, su cui il testo del badge resta scuro e leggibile.</summary>
     public static readonly IReadOnlyList<(string Nome, string Hex)> Palette =
     [
-        ("Viola", "#A47FE6"), ("Verde", "#8CC98A"), ("Arancio", "#F4A582"), ("Blu", "#6096FF"), ("Giallo", "#F2C14E"),
-        ("Rosa", "#EC8FB5"), ("Turchese", "#4FBFC4"), ("Bordeaux", "#98494E"), ("Grigio", "#9AA3AE"),
+        ("Lavanda", "#C9B6F2"), ("Salvia", "#B8DDB6"), ("Pesca", "#F7C9B0"), ("Celeste", "#B5CCFB"), ("Burro", "#F5E1A0"),
+        ("Rosa", "#F2C0D4"), ("Acqua", "#ADE0E2"), ("Malva", "#DDB3B6"), ("Perla", "#D3D7DD"),
     ];
+
+    /// <summary>I colori della tavolozza precedente, più intensi, e il loro corrispondente chiaro.</summary>
+    public static readonly IReadOnlyDictionary<string, string> ColoriPrecedenti = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+    {
+        ["#A47FE6"] = "#C9B6F2", ["#8CC98A"] = "#B8DDB6", ["#F4A582"] = "#F7C9B0", ["#6096FF"] = "#B5CCFB", ["#F2C14E"] = "#F5E1A0",
+        ["#EC8FB5"] = "#F2C0D4", ["#4FBFC4"] = "#ADE0E2", ["#98494E"] = "#DDB3B6", ["#9AA3AE"] = "#D3D7DD",
+    };
 
     private Team() { } // EF Core
 
@@ -69,6 +76,18 @@ public sealed class Team : Entity
         }
         var l = 0.2126 * Lin(1) + 0.7152 * Lin(3) + 0.0722 * Lin(5);
         return 1.05 / (l + 0.05) >= 2.4 ? "#ffffff" : "#3a2830"; // badge in grassetto con ombra: il bianco resta leggibile
+    }
+
+    /// <summary>Lo stesso colore più chiaro: <paramref name="quota"/> 0 = invariato, 1 = bianco.</summary>
+    public static string Schiarisci(string hex, double quota)
+    {
+        if (!Regex.IsMatch(hex ?? "", "^#[0-9A-Fa-f]{6}$")) return hex ?? ColorePredefinito;
+        int C(int i)
+        {
+            var v = int.Parse(hex.AsSpan(i, 2), NumberStyles.HexNumber);
+            return (int)Math.Round(v + (255 - v) * Math.Clamp(quota, 0, 1));
+        }
+        return $"#{C(1):X2}{C(3):X2}{C(5):X2}";
     }
 
     public void Rinomina(string nome)
@@ -125,6 +144,23 @@ public static class Organigramma
             // È lui il responsabile del team: decide il responsabile del team superiore.
         }
         return null;
+    }
+
+    /// <summary>
+    /// Colore con cui si mostra un team: quello scelto per i team di primo livello; per i sotto-team lo stesso colore
+    /// del team madre, sempre più chiaro a ogni livello.
+    /// </summary>
+    public static string ColoreDi(Team team, IReadOnlyCollection<Team> tutti)
+    {
+        var livello = 0;
+        var radice = team;
+        var visti = new HashSet<Guid> { team.Id };
+        while (radice.PadreId is { } p && tutti.FirstOrDefault(x => x.Id == p) is { } padre && visti.Add(padre.Id))
+        {
+            radice = padre;
+            livello++;
+        }
+        return livello == 0 ? team.Colore : Team.Schiarisci(radice.Colore, 1 - Math.Pow(0.55, livello));
     }
 
     /// <summary>Approvatore di ciascun dipendente (null = referente dell'azienda).</summary>

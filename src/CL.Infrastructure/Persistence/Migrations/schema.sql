@@ -1051,3 +1051,36 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261120162439_TavolozzaChiara') THEN
+    ALTER TABLE hr."Team" ALTER COLUMN "Colore" SET DEFAULT '#C9B6F2';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261120162439_TavolozzaChiara') THEN
+    UPDATE hr."Team" SET "Colore" = '#C9B6F2' WHERE upper("Colore") = '#A47FE6';
+    UPDATE hr."Team" SET "Colore" = '#B8DDB6' WHERE upper("Colore") = '#8CC98A';
+    UPDATE hr."Team" SET "Colore" = '#F7C9B0' WHERE upper("Colore") = '#F4A582';
+    UPDATE hr."Team" SET "Colore" = '#B5CCFB' WHERE upper("Colore") = '#6096FF';
+    UPDATE hr."Team" SET "Colore" = '#F5E1A0' WHERE upper("Colore") = '#F2C14E';
+    UPDATE hr."Team" SET "Colore" = '#F2C0D4' WHERE upper("Colore") = '#EC8FB5';
+    UPDATE hr."Team" SET "Colore" = '#ADE0E2' WHERE upper("Colore") = '#4FBFC4';
+    UPDATE hr."Team" SET "Colore" = '#DDB3B6' WHERE upper("Colore") = '#98494E';
+    UPDATE hr."Team" SET "Colore" = '#D3D7DD' WHERE upper("Colore") = '#9AA3AE';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261120162439_TavolozzaChiara') THEN
+    INSERT INTO hr."__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261120162439_TavolozzaChiara', '10.0.15');
+    END IF;
+END $EF$;
+COMMIT;
+

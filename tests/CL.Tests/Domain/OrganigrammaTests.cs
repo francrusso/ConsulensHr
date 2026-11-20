@@ -67,4 +67,28 @@ public class OrganigrammaTests
     [InlineData(Genere.NonBinario, Pronomi.Femminili, "donna")]
     public void Segnaposto_della_foto_da_pronomi_e_genere(Genere? genere, Pronomi? pronomi, string atteso) =>
         Assert.Equal(atteso, Dipendente.SegnapostoPer(genere, pronomi));
+
+    [Fact]
+    public void I_sotto_team_hanno_il_colore_del_team_madre_piu_chiaro()
+    {
+        var az = Guid.NewGuid();
+        var madre = new Team(az, "Vendite");
+        madre.ImpostaAspetto("#F7C9B0", null);
+        var figlio = new Team(az, "Vendite Nord");
+        figlio.ImpostaAspetto("#B5CCFB", null); // colore proprio ignorato: conta quello della madre
+        var tutti = new List<Team> { madre, figlio };
+        figlio.ImpostaPadre(madre, tutti);
+        var nipote = new Team(az, "Milano");
+        tutti.Add(nipote);
+        nipote.ImpostaPadre(figlio, tutti);
+
+        Assert.Equal("#F7C9B0", Organigramma.ColoreDi(madre, tutti));
+        var c1 = Organigramma.ColoreDi(figlio, tutti);
+        var c2 = Organigramma.ColoreDi(nipote, tutti);
+        Assert.Equal(Team.Schiarisci("#F7C9B0", 0.45), c1);
+        Assert.True(Luce(c2) > Luce(c1) && Luce(c1) > Luce("#F7C9B0"));
+        Assert.Equal("#FFFFFF", Team.Schiarisci("#F7C9B0", 1));
+
+        static int Luce(string h) => Convert.ToInt32(h[1..3], 16) + Convert.ToInt32(h[3..5], 16) + Convert.ToInt32(h[5..7], 16);
+    }
 }

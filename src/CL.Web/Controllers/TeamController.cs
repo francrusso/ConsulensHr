@@ -28,6 +28,9 @@ public sealed class OrganigrammaViewModel
     public required List<MembroTeam> Dipendenti { get; init; }
     public bool PerConto { get; init; }
 
+    /// <summary>Colore mostrato del team (i sotto-team ereditano quello del team madre, più chiaro).</summary>
+    public string ColoreDi(Team t) => CL.Domain.Organizzazione.Organigramma.ColoreDi(t, Team);
+
     public string NomeDi(Guid? dipendenteId) => dipendenteId is { } id ? Dipendenti.FirstOrDefault(d => d.Id == id)?.Nome ?? "—" : "—";
 
     /// <summary>
@@ -45,7 +48,7 @@ public sealed class OrganigrammaViewModel
             if (visti.Add(m.Id) || riferimento)
                 figli.AddRange(membri.Where(x => x.ResponsabileDirettoId == m.Id && x.Id != m.Id && !visti.Contains(x.Id))
                     .Select(x => Persona(x, team, false, membri)));
-            return new NodoGrafico("persona", m.Nome, m.Posizione, team?.Colore ?? "#9AA3AE", null,
+            return new NodoGrafico("persona", m.Nome, m.Posizione, team is null ? "#9AA3AE" : ColoreDi(team), null,
                 approvati.GetValueOrDefault(m.Id) is var n and > 0 ? n : null, m.Id, riferimento, figli, m.HaFoto, m.Segnaposto);
         }
 
@@ -60,9 +63,9 @@ public sealed class OrganigrammaViewModel
             sotto.AddRange(inCima.Select(m => Persona(m, t, false, membri)));
             sotto.AddRange(Team.Where(x => x.PadreId == t.Id).OrderBy(x => x.Nome).Select(TeamNodo));
             var figli = resp is null ? sotto
-                : [new NodoGrafico("persona", resp.Nome, resp.Posizione ?? "Responsabile", t.Colore, null,
+                : [new NodoGrafico("persona", resp.Nome, resp.Posizione ?? "Responsabile", ColoreDi(t), null,
                     approvati.GetValueOrDefault(resp.Id) is var n and > 0 ? n : null, resp.Id, resp.TeamId != t.Id, sotto, resp.HaFoto, resp.Segnaposto)];
-            return new NodoGrafico("team", t.Nome, null, t.Colore, t.Emoji, membri.Count, null, false, figli);
+            return new NodoGrafico("team", t.Nome, null, ColoreDi(t), t.Emoji, membri.Count, null, false, figli);
         }
 
         var radice = Team.Where(t => t.PadreId is null || Team.All(x => x.Id != t.PadreId)).OrderBy(t => t.Nome).Select(TeamNodo).ToList();
@@ -95,8 +98,39 @@ public sealed class OrganigrammaViewModel
 [Authorize(Policy = Policy.GestionePersonale)]
 public sealed class TeamController(AppDbContext db, UtenteCorrente utente, ServizioOrganigramma organigramma, TimeProvider clock) : AppController
 {
-    /// <summary>Gestione dei team: creazione, modifica, componenti.</summary>
-    public Task<IActionResult> Index(Guid? aziendaId) => Pagina(aziendaId, "Index");
+    /// <summary>Elenco dei team dell'azienda, con la creazione di un nuovo team.</summary>
+    public Task<IActionResult> Index(Guid? aziendaId, string? q)
+    {
+        ViewBag.Ricerca = q?.Trim();
+        return Pagina(aziendaId, "Index");
+    }
+
+    /// <summary>Un team: dati (modificabili) e membri, da aggiungere o togliere.</summary>
+    public async Task<IActionResult> Dettaglio(Guid id, bool modifica = false)
+    {
+        var aziendaTeam = await db.Team.AsNoTracking().Where(t => t.Id == id).Select(t => (Guid?)t.AziendaId).FirstOrDefaultAsync();
+        if (aziendaTeam is not { } az || (utente.IsAzienda && az != utente.AziendaId)) return NotFound();
+        ViewBag.TeamId = id;
+        ViewBag.Modifica = modifica;
+        return await Pagina(az, "Dettaglio");
+    }
+
+    /// <summary>Aggiunge una persona al team o la toglie (posizione e responsabile diretto restano).</summary>
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> Membro(Guid teamId, Guid dipendenteId, bool togli = false)
+    {
+        var team = await db.Team.FirstOrDefaultAsync(t => t.Id == teamId);
+        var dip = await utente.Filtra(db.Dipendenti).FirstOrDefaultAsync(d => d.Id == dipendenteId);
+        if (team is null || dip is null || dip.AziendaId != team.AziendaId) return NotFound();
+        var resp = dip.ResponsabileId is { } r ? await db.Dipendenti.FirstOrDefaultAsync(x => x.Id == r) : null;
+        if (Prova(() => dip.ImpostaOrganizzazione(togli ? null : team, dip.Posizione, resp)))
+        {
+            await db.SaveChangesAsync();
+            Conferma(togli ? $"{dip.NomeCompleto} tolto dal team {team.Nome}." : $"{dip.NomeCompleto} aggiunto al team {team.Nome}.");
+        }
+        else Errore(ModelState[""]!.Errors[0].ErrorMessage);
+        return RedirectToAction(nameof(Dettaglio), new { id = teamId });
+    }
 
     /// <summary>Albero grafico dell'azienda.</summary>
     public Task<IActionResult> Organigramma(Guid? aziendaId) => Pagina(aziendaId, "Organigramma");
@@ -155,11 +189,11 @@ public sealed class TeamController(AppDbContext db, UtenteCorrente utente, Servi
         catch (DomainException ex)
         {
             Errore(ex.Message);
-            return Torna(az.Value);
+            return id is { } tornaA ? RedirectToAction(nameof(Dettaglio), new { id = tornaA, modifica = true }) : Torna(az.Value);
         }
         await db.SaveChangesAsync();
-        Conferma(id is null ? $"Team \"{team.Nome}\" creato." : "Team aggiornato.");
-        return Torna(az.Value);
+        Conferma(id is null ? $"Team \"{team.Nome}\" creato: aggiungi i membri." : "Team aggiornato.");
+        return RedirectToAction(nameof(Dettaglio), new { id = team.Id });
     }
 
     [HttpPost, ValidateAntiForgeryToken]

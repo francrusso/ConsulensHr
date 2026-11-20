@@ -2,7 +2,12 @@
 @{
     ViewData["Title"] = "Team";
     if (Model.HaLogo) ViewData["LogoAzienda"] = Url.Action("Logo", "Aziende", new { id = Model.AziendaId });
-    var senzaTeam = Model.Dipendenti.Where(d => d.TeamId is null).ToList();
+    // Ricerca per nome del team o di una persona che ne fa parte.
+    var q = ViewBag.Ricerca as string;
+    bool Corrisponde(CL.Domain.Organizzazione.Team t) => string.IsNullOrEmpty(q)
+        || t.Nome.Contains(q, StringComparison.CurrentCultureIgnoreCase)
+        || Model.Dipendenti.Any(d => d.TeamId == t.Id && d.Nome.Contains(q, StringComparison.CurrentCultureIgnoreCase));
+    var elenco = Model.Albero().Where(x => Corrisponde(x.Team)).ToList();
 }
 <div class="breadcrumb-titolo d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
     <div>
@@ -11,75 +16,99 @@
             <a asp-controller="Aziende" asp-action="Dettaglio" asp-route-id="@Model.AziendaId" class="small text-body-secondary"><i class="ri-arrow-left-s-line" aria-hidden="true"></i> @Model.Azienda</a>
         }
         <h1 class="titolo-pagina mb-0">Team</h1>
-        <p class="text-body-secondary mb-0 small">
-            Ferie e permessi li approva il <strong>responsabile diretto</strong> del dipendente, se indicato; altrimenti il <strong>responsabile del suo team</strong>.
-            Se il team non ha un responsabile decide il <strong>referente dell'azienda</strong>, che può comunque approvare tutte le richieste.
-            Le richieste di un responsabile vanno al responsabile del team superiore.
-        </p>
     </div>
 </div>
 
-<div class="collapse mb-3" id="nuovoTeam">
-    <section class="card radius-15 p-3"><partial name="_FormTeam" model="(Model, (CL.Domain.Organizzazione.Team?)null)" /></section>
-</div>
-
-@if (Model.Team.Count == 0)
-{
-    <div class="alert alert-info radius-15">Nessun team ancora: crea il primo (es. "Direzione", "Vendite", "Magazzino") e assegna i dipendenti.</div>
-}
-
-@foreach (var (t, livello) in Model.Albero())
-{
-    var membri = Model.Dipendenti.Where(d => d.TeamId == t.Id).ToList();
-    var idModifica = "team-" + t.Id.ToString("N");
-    <section class="card radius-15 mb-3 team-card" style="margin-left:@(Math.Min(livello, 4) * 28)px" aria-labelledby="titolo-@idModifica">
-        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 px-3 pt-3 pb-2">
-            <div>
-                <h2 class="h6 mb-0" id="titolo-@idModifica">
-                    @if (livello > 0) { <i class="ri-corner-down-right-line text-body-secondary" aria-hidden="true"></i> }
-                    <span class="org-pallino" style="--colore-team:@t.Colore" aria-hidden="true"></span>
-                    @if (t.Emoji is not null) { <span aria-hidden="true">@t.Emoji</span> }
-                    @t.Nome <span class="small text-body-secondary fw-normal">· @membri.Count @(membri.Count == 1 ? "persona" : "persone")</span>
-                </h2>
-                <div class="small text-body-secondary">Responsabile: @(t.ResponsabileId is null ? "nessuno" : Model.NomeDi(t.ResponsabileId))</div>
-            </div>
-            <div class="d-flex gap-2">
-                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="collapse" data-bs-target="#@idModifica" aria-expanded="false" aria-controls="@idModifica"><i class="ri-pencil-line" aria-hidden="true"></i> Modifica</button>
-                <form asp-action="Elimina" method="post" class="m-0" onsubmit="return confirm('Eliminare il team @t.Nome?');">
-                    <input type="hidden" name="aziendaId" value="@Model.AziendaId" /><input type="hidden" name="id" value="@t.Id" />
-                    <button type="submit" class="btn btn-sm btn-outline-danger" aria-label="Elimina il team @t.Nome"><i class="ri-delete-bin-line" aria-hidden="true"></i></button>
-                </form>
+<form asp-action="Index" method="get" class="invoice-filter-bar customer-filter-form">
+    @if (Model.PerConto) { <input type="hidden" name="aziendaId" value="@Model.AziendaId" /> }
+    <div class="invoice-filter-toolbar">
+        <div class="invoice-filter-client">
+            <div class="input-group">
+                <span class="input-group-text"><i class="ri-search-line" aria-hidden="true"></i></span>
+                <input type="search" name="q" value="@q" class="form-control" placeholder="Cerca per nome del team o della persona" aria-label="Cerca per nome del team o della persona" />
             </div>
         </div>
-        <div class="collapse px-3 pb-2" id="@idModifica"><partial name="_FormTeam" model="(Model, (CL.Domain.Organizzazione.Team?)t)" /></div>
-        <partial name="_Membri" model="(Model, membri, t.ResponsabileId)" />
-    </section>
-}
-
-<section class="card radius-15 mb-3" aria-labelledby="titoloSenzaTeam">
-    <div class="px-3 pt-3 pb-2">
-        <h2 class="h6 mb-0" id="titoloSenzaTeam">Senza team <span class="small text-body-secondary fw-normal">· @senzaTeam.Count</span></h2>
-        <div class="small text-body-secondary">Assegnali a un team con il pulsante di modifica, oppure indica un responsabile diretto.</div>
+        <div class="invoice-filter-actions"><button class="btn invoice-filter-submit" type="submit">Cerca <i class="ri-search-line" aria-hidden="true"></i></button></div>
     </div>
-    <partial name="_Membri" model="(Model, senzaTeam, (Guid?)null)" />
-</section>
+</form>
+<partial name="_ChipRicerca" />
+
+<div class="collapse mb-3" id="nuovoTeam">
+    <section class="card radius-15 p-3 p-md-4" aria-label="Nuovo team"><partial name="_FormTeam" model="(Model, (CL.Domain.Organizzazione.Team?)null)" /></section>
+</div>
+
+<div class="card radius-15 table-responsive table-actions-responsive p-1 customer-results">
+    <table class="table mb-0 align-middle">
+        <thead>
+            <tr>
+                <th scope="col">Team</th>
+                <th scope="col">Dentro il team</th>
+                <th scope="col">Responsabile</th>
+                <th scope="col">Membri</th>
+                <th scope="col" class="text-end">Azioni</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (elenco.Count == 0)
+            {
+                <tr><td colspan="5" class="elenco-vuoto"><span class="elenco-vuoto-icona" aria-hidden="true"><i class="ri-team-line"></i></span><div>@(Model.Team.Count == 0 ? "Nessun team: crea il primo con \"Nuovo team\"" : "Nessun team trovato")</div></td></tr>
+            }
+            @foreach (var (t, livello) in elenco)
+            {
+                var membri = Model.Dipendenti.Where(d => d.TeamId == t.Id).ToList();
+                var padre = t.PadreId is { } p ? Model.Team.FirstOrDefault(x => x.Id == p) : null;
+                <tr>
+                    <td data-label="Team">
+                        <a asp-action="Dettaglio" asp-route-id="@t.Id" class="team-elenco nome-team" style="padding-left:@(Math.Min(livello, 4) * 18)px">
+                            @if (livello > 0) { <i class="ri-corner-down-right-line text-body-secondary" aria-hidden="true"></i> }
+                            <span class="org-pallino" style="--colore-team:@Model.ColoreDi(t)" aria-hidden="true"></span>
+                            @if (t.Emoji is not null) { <span aria-hidden="true">@t.Emoji</span> }
+                            <span>@t.Nome</span>
+                        </a>
+                    </td>
+                    <td data-label="Dentro il team">@(padre?.Nome ?? "—")</td>
+                    <td data-label="Responsabile">
+                        @if (t.ResponsabileId is { } rid && Model.Dipendenti.FirstOrDefault(d => d.Id == rid) is { } resp)
+                        {
+                            <a asp-controller="Dipendenti" asp-action="Dettaglio" asp-route-id="@resp.Id" class="customer-name">
+                                <img class="avatar-elenco" src="@(resp.HaFoto ? Url.Action("Foto", "Dipendenti", new { id = resp.Id }) : Url.Content($"~/assets/images/avatar/{resp.Segnaposto}.png"))" alt="" loading="lazy" />
+                                <span>@resp.Nome</span>
+                            </a>
+                        }
+                        else { <span class="text-body-secondary">—</span> }
+                    </td>
+                    <td data-label="Membri">
+                        @* Foto sovrapposte (al massimo 5) e numero dei membri. *@
+                        <div class="membri-team">
+                            @if (membri.Count > 0)
+                            {
+                                <div class="avatar-sovrapposti" aria-hidden="true">
+                                    @foreach (var m in membri.Take(5))
+                                    {
+                                        <img src="@(m.HaFoto ? Url.Action("Foto", "Dipendenti", new { id = m.Id }) : Url.Content($"~/assets/images/avatar/{m.Segnaposto}.png"))" alt="" title="@m.Nome" loading="lazy" />
+                                    }
+                                    @if (membri.Count > 5) { <span class="avatar-altri">+@(membri.Count - 5)</span> }
+                                </div>
+                            }
+                            <span class="numero-membri">@membri.Count</span>
+                        </div>
+                    </td>
+                    <td data-label="Azioni">
+                        <div class="customer-actions">
+                            <a asp-action="Dettaglio" asp-route-id="@t.Id" title="Apri" aria-label="Apri il team @t.Nome"><i class="ri-eye-line" aria-hidden="true"></i></a>
+                            <a asp-action="Dettaglio" asp-route-id="@t.Id" asp-route-modifica="true" title="Modifica" aria-label="Modifica il team @t.Nome"><i class="ri-pencil-line" aria-hidden="true"></i></a>
+                            <form asp-action="Elimina" method="post" class="m-0" onsubmit="return confirm('Eliminare il team @t.Nome?');">
+                                <input type="hidden" name="aziendaId" value="@Model.AziendaId" /><input type="hidden" name="id" value="@t.Id" />
+                                <button type="submit" title="Elimina" aria-label="Elimina il team @t.Nome"><i class="ri-delete-bin-line" aria-hidden="true"></i></button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
 
 @section Scripts {
-    <script>
-        // Colore: preset o colore libero; emoji: suggerimenti e pulsante per toglierla.
-        document.querySelectorAll('.form-team').forEach(form => {
-            const libero = form.querySelector('.colore-libero');
-            libero?.addEventListener('input', () => {
-                form.querySelectorAll('input[name=colore]').forEach(r => r.checked = false);
-                let nascosto = form.querySelector('input[name=colore][type=hidden]');
-                if (!nascosto) { nascosto = document.createElement('input'); nascosto.type = 'hidden'; nascosto.name = 'colore'; form.append(nascosto); }
-                nascosto.value = libero.value;
-            });
-            form.querySelectorAll('input[name=colore][type=radio]').forEach(r => r.addEventListener('change', () =>
-                form.querySelector('input[name=colore][type=hidden]')?.remove()));
-            const emoji = form.querySelector('.campo-emoji');
-            form.querySelectorAll('.emoji-suggerita').forEach(b => b.addEventListener('click', () => { emoji.value = b.textContent.trim(); }));
-            form.querySelector('.togli-emoji')?.addEventListener('click', () => { emoji.value = ''; });
-        });
-    </script>
+    <partial name="_ScriptTeam" />
 }

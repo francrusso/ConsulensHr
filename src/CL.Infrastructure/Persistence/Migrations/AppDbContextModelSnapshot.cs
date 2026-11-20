@@ -824,7 +824,7 @@ namespace CL.Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasMaxLength(7)
                         .HasColumnType("character varying(7)")
-                        .HasDefaultValue("#A47FE6");
+                        .HasDefaultValue("#C9B6F2");
 
                     b.Property<string>("Emoji")
                         .HasMaxLength(16)
