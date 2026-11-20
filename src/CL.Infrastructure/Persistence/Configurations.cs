@@ -20,6 +20,10 @@ internal sealed class AziendaConfig : IEntityTypeConfiguration<Azienda>
         b.Property(x => x.Indirizzo).HasMaxLength(300);
         b.Property(x => x.Comune).HasMaxLength(100);
         b.Property(x => x.Email).HasMaxLength(256);
+        b.Property(x => x.Cap).HasMaxLength(5);
+        b.Property(x => x.Provincia).HasMaxLength(2);
+        b.Property(x => x.LogoChiave).HasMaxLength(500);
+        b.Ignore(x => x.SedeCompleta);
         b.HasIndex(x => x.PartitaIva).IsUnique();
     }
 }

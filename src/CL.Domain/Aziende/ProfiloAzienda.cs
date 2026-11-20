@@ -14,7 +14,7 @@ public sealed record Indirizzo(string Via, string Cap, string Comune, string Pro
         var cap = Guard.NotEmpty(Cap, $"CAP {quale}");
         if (cap.Length != 5 || !cap.All(char.IsAsciiDigit)) throw new DomainException($"CAP {quale} non valido.");
         var prov = Guard.NotEmpty(Provincia, $"Provincia {quale}").ToUpperInvariant();
-        if (prov.Length != 2 || !prov.All(char.IsAsciiLetter)) throw new DomainException($"Provincia {quale}: usa la sigla (es. MI).");
+        if (!Province.IsValida(prov)) throw new DomainException($"Provincia {quale}: \"{prov}\" non esiste, usa la sigla (es. MI).");
         return new Indirizzo(Guard.NotEmpty(Via, $"Indirizzo {quale}"), cap, Guard.NotEmpty(Comune, $"Comune {quale}"), prov);
     }
 }

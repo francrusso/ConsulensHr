@@ -2,6 +2,7 @@ using CL.Infrastructure.Archivio;
 using CL.Infrastructure.Email;
 using CL.Infrastructure.Identity;
 using CL.Infrastructure.Persistence;
+using CL.Infrastructure.Registro;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -51,6 +52,13 @@ public static class DependencyInjection
 
         services.Configure<OpzioniArchivio>(configuration.GetSection("Archivio"));
         services.AddSingleton<IArchivioDocumenti, ArchivioSuDisco>();
+
+        services.AddHttpClient<IRicercaPartitaIva, RicercaVies>(c =>
+        {
+            c.BaseAddress = new Uri(RicercaVies.IndirizzoServizio);
+            c.Timeout = TimeSpan.FromSeconds(10);
+            c.DefaultRequestHeaders.UserAgent.ParseAdd("ConsulensHR/1.0");
+        });
 
         services.AddSingleton(TimeProvider.System);
         return services;

@@ -5,6 +5,7 @@
     var p = Model.Profilo;
     var aziendaId = Model.PerContoAzienda ? Model.AziendaId : (Guid?)null;
     if (aziendaId is not null) ViewData["AziendaIdOnboarding"] = aziendaId; // i form dello studio indicano l'azienda
+    ViewData["AziendaLogoUrl"] = Url.Action("Logo", "Aziende", new { id = Model.AziendaId });
 }
 <div class="breadcrumb-titolo mb-3">
     <div>

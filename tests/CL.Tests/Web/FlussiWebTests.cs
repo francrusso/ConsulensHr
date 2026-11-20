@@ -46,12 +46,12 @@ public sealed class FlussiWebTests : IDisposable
         // Azienda
         var r = await client.InviaForm("/Aziende/Nuova", "/Aziende/Salva", new()
         {
-            ["RagioneSociale"] = "Acme S.r.l.", ["PartitaIva"] = "01234567897", ["Comune"] = "Pisa",
-            ["PatronoGiorno"] = "17", ["PatronoMese"] = "6",
+            ["RagioneSociale"] = "Acme S.r.l.", ["PartitaIva"] = "01234567897", ["Indirizzo"] = "Via Roma 1", ["Cap"] = "56121",
+            ["Comune"] = "Pisa", ["Provincia"] = "pi",
         });
         var html = await Testo(r);
         Assert.Contains("Azienda Acme S.r.l. creata", html);
-        Assert.Contains("17 giugno", html);
+        Assert.Contains("Via Roma 1, 56121 Pisa (PI)", html);
         var aziendaId = await _app.ConDb(db => db.Aziende.Select(a => a.Id).SingleAsync());
 
         // Partita IVA duplicata

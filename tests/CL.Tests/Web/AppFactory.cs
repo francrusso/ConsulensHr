@@ -40,6 +40,9 @@ public sealed class AppFactory : WebApplicationFactory<Program>
             services.RemoveAll<DbContextOptions<AppDbContext>>();
             services.RemoveAll<IDbContextOptionsConfiguration<AppDbContext>>();
             services.AddDbContext<AppDbContext>(o => o.UseSqlite(_conn));
+            // Nessuna chiamata a VIES durante i test.
+            services.RemoveAll<CL.Infrastructure.Registro.IRicercaPartitaIva>();
+            services.AddSingleton<CL.Infrastructure.Registro.IRicercaPartitaIva, RegistroFinto>();
         });
     }
 
@@ -157,4 +160,17 @@ internal static partial class HttpTestExtensions
         Assert.Equal(HttpStatusCode.OK, r.StatusCode);
         Assert.DoesNotContain("Email o password non corretti", await r.Content.ReadAsStringAsync());
     }
+}
+
+/// <summary>Registro imprese finto: conosce solo la partita IVA 01234567897; 12345678903 simula il servizio fuori uso.</summary>
+internal sealed class RegistroFinto : CL.Infrastructure.Registro.IRicercaPartitaIva
+{
+    public Task<CL.Infrastructure.Registro.RisultatoRicerca> CercaAsync(CL.Domain.ValueObjects.PartitaIva p, CancellationToken ct = default) =>
+        Task.FromResult(p.Valore switch
+        {
+            "01234567897" => new CL.Infrastructure.Registro.RisultatoRicerca(CL.Infrastructure.Registro.EsitoRicerca.Trovata,
+                new CL.Infrastructure.Registro.DatiImpresa("Acme S.r.l.", "Via Roma 1", "20121", "Milano", "MI")),
+            "12345678903" => new CL.Infrastructure.Registro.RisultatoRicerca(CL.Infrastructure.Registro.EsitoRicerca.ServizioNonDisponibile),
+            _ => new CL.Infrastructure.Registro.RisultatoRicerca(CL.Infrastructure.Registro.EsitoRicerca.NonTrovata),
+        });
 }

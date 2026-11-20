@@ -9,9 +9,14 @@ public sealed class Azienda : Entity
     public string RagioneSociale { get; private set; } = null!;
     public PartitaIva PartitaIva { get; private set; } = null!;
     public string? CodiceFiscale { get; private set; }
+    /// <summary>Via e numero civico della sede.</summary>
     public string? Indirizzo { get; private set; }
+    public string? Cap { get; private set; }
     public string? Comune { get; private set; }
+    public string? Provincia { get; private set; }
     public string? Email { get; private set; }
+    /// <summary>Logo nell'archivio privato (chiave generata dall'applicazione), se caricato.</summary>
+    public string? LogoChiave { get; private set; }
     /// <summary>Data del santo patrono del comune della sede (festività locale), se applicabile.</summary>
     public int? SantoPatronoMese { get; private set; }
     public int? SantoPatronoGiorno { get; private set; }
@@ -25,14 +30,55 @@ public sealed class Azienda : Entity
         PartitaIva = partitaIva;
     }
 
-    public void AggiornaAnagrafica(string ragioneSociale, string? codiceFiscale, string? indirizzo, string? comune, string? email)
+    /// <summary>Dati anagrafici con controlli formali: CAP di 5 cifre, sigla di provincia esistente, codice fiscale valido, email.</summary>
+    public void AggiornaAnagrafica(string ragioneSociale, string? codiceFiscale, string? indirizzo, string? cap, string? comune,
+        string? provincia, string? email)
     {
-        RagioneSociale = Guard.NotEmpty(ragioneSociale, "Ragione sociale");
-        CodiceFiscale = codiceFiscale?.Trim();
-        Indirizzo = indirizzo?.Trim();
-        Comune = comune?.Trim();
-        Email = email?.Trim();
+        var rs = Guard.NotEmpty(ragioneSociale, "Ragione sociale");
+        if (rs.Length > 200) throw new DomainException("Ragione sociale troppo lunga (massimo 200 caratteri).");
+        var cf = Pulito(codiceFiscale)?.Replace(" ", "").ToUpperInvariant();
+        if (cf is not null) cf = ValidaCodiceFiscale(cf);
+        cap = Pulito(cap);
+        if (cap is not null && (cap.Length != 5 || !cap.All(char.IsAsciiDigit))) throw new DomainException("Il CAP è di 5 cifre.");
+        provincia = Pulito(provincia)?.ToUpperInvariant();
+        if (provincia is not null && !Province.IsValida(provincia)) throw new DomainException($"La provincia \"{provincia}\" non esiste: usa la sigla (es. MI).");
+        email = Pulito(email)?.ToLowerInvariant();
+        if (email is not null && !EmailValida(email)) throw new DomainException("Indirizzo email non valido.");
+
+        RagioneSociale = rs;
+        CodiceFiscale = cf;
+        Indirizzo = Pulito(indirizzo);
+        Cap = cap;
+        Comune = Pulito(comune);
+        Provincia = provincia;
+        Email = email;
     }
+
+    public string? SedeCompleta => Indirizzo is null && Comune is null ? null
+        : string.Join(", ", new[] { Indirizzo, string.Join(" ", new[] { Cap, Comune, Provincia is null ? null : $"({Provincia})" }.Where(x => x is not null)) }
+            .Where(x => !string.IsNullOrWhiteSpace(x)));
+
+    public void ImpostaLogo(string chiave) => LogoChiave = Guard.NotEmpty(chiave, "Logo");
+    public void RimuoviLogo() => LogoChiave = null;
+
+    /// <summary>Codice fiscale di una società (11 cifre, stesso controllo della partita IVA) o di una persona (16 caratteri, ditte individuali).</summary>
+    private static string ValidaCodiceFiscale(string cf)
+    {
+        if (cf.Length == 11 && cf.All(char.IsAsciiDigit))
+        {
+            try { return PartitaIva.Parse(cf).Valore; }
+            catch (DomainException) { throw new DomainException("Codice fiscale dell'azienda non valido (cifra di controllo errata)."); }
+        }
+        return ValueObjects.CodiceFiscale.Parse(cf).Valore;
+    }
+
+    private static bool EmailValida(string email)
+    {
+        var at = email.IndexOf('@');
+        return at > 0 && at == email.LastIndexOf('@') && email.IndexOf('.', at) > at + 1 && !email.EndsWith('.') && !email.Contains(' ') && email.Length <= 256;
+    }
+
+    private static string? Pulito(string? s) => string.IsNullOrWhiteSpace(s) ? null : s.Trim();
 
     public void ImpostaSantoPatrono(int mese, int giorno)
     {

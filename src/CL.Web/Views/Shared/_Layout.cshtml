@@ -176,7 +176,12 @@
                         <span class="visually-hidden" id="navigation-search-status" role="status"></span>
                     </div>
 
-                    <div class="right-topbar ms-auto">
+                    <div class="right-topbar ms-auto d-flex align-items-center">
+                        @if (!Utente.IsConsulente && Utente.AziendaId is { } aziendaLogo)
+                        {
+                            @* Logo dell'azienda per referenti e dipendenti; se non c'è, l'immagine si toglie da sola. *@
+                            <img src="@Url.Action("Logo", "Aziende", new { id = aziendaLogo })" alt="" class="topbar-logo-azienda d-none d-md-block" onerror="this.remove()" />
+                        }
                         <ul class="navbar-nav">
                             <li class="nav-item topbar-profile">
                                 <a class="nav-link" asp-controller="Account" asp-action="Profilo" title="Il mio profilo">
@@ -201,7 +206,7 @@
                         @RenderBody()
                     </div>
                     <footer class="page-footer">
-                        <p>&copy; @DateTime.Now.Year Consulens HR</p>
+                        <p>&copy; @DateTime.Now.Year Consulens</p>
                     </footer>
                 </main>
             </div>

@@ -91,7 +91,7 @@ public sealed class ProfiloDipendente : Entity
     {
         ComuneNascita = Guard.NotEmpty(d.ComuneNascita, "Comune di nascita");
         var prov = Guard.NotEmpty(d.ProvinciaNascita, "Provincia di nascita").ToUpperInvariant();
-        if (prov.Length != 2 || !prov.All(char.IsAsciiLetter)) throw new DomainException("Provincia di nascita: usa la sigla (EE se sei nato all'estero).");
+        if (!Province.IsValida(prov, ammessoEstero: true)) throw new DomainException("Provincia di nascita: usa la sigla (EE se sei nato all'estero).");
         ProvinciaNascita = prov;
         Cittadinanza = Guard.NotEmpty(d.Cittadinanza, "Cittadinanza");
         Telefono = Pulito(d.Telefono);

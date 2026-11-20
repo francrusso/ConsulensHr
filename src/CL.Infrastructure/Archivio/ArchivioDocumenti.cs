@@ -24,7 +24,7 @@ public sealed class OpzioniArchivio
 internal sealed partial class ArchivioSuDisco(IOptions<OpzioniArchivio> opzioni) : IArchivioDocumenti
 {
     // Solo lettere, cifre, trattini e barre: niente "..", percorsi assoluti o caratteri speciali.
-    [GeneratedRegex(@"^[A-Za-z0-9\-]+(/[A-Za-z0-9\-]+)*\.pdf$")]
+    [GeneratedRegex(@"^[A-Za-z0-9\-]+(/[A-Za-z0-9\-]+)*\.(pdf|png|jpg|webp)$")]
     private static partial Regex ChiaveValida();
 
     private string Percorso(string chiave)

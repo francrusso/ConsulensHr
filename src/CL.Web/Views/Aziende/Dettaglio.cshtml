@@ -10,7 +10,8 @@
 <div class="breadcrumb-titolo d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
     <div>
         <a asp-action="Index" class="small text-body-secondary"><i class="ri-arrow-left-s-line" aria-hidden="true"></i> Aziende</a>
-        <h1 class="titolo-pagina mb-0">
+        <h1 class="titolo-pagina mb-0 d-flex align-items-center gap-2">
+            @if (Model.LogoChiave is not null) { <img src="@Url.Action("Logo", new { id = Model.Id })" alt="" class="logo-azienda" /> }
             @Model.RagioneSociale
             @if (!Model.Attiva) { <span class="badge bg-secondary align-middle fs-6">Disattivata</span> }
         </h1>
@@ -51,10 +52,8 @@
             <dl class="scheda mb-0">
                 <dt>Partita IVA</dt><dd>@Model.PartitaIva</dd>
                 <dt>Codice fiscale</dt><dd>@(Model.CodiceFiscale ?? "—")</dd>
-                <dt>Sede</dt><dd>@(string.Join(", ", new[] { Model.Indirizzo, Model.Comune }.Where(s => !string.IsNullOrWhiteSpace(s))) is { Length: > 0 } sede ? sede : "—")</dd>
+                <dt>Sede</dt><dd>@(Model.SedeCompleta ?? "—")</dd>
                 <dt>Email</dt><dd>@(Model.Email ?? "—")</dd>
-                <dt>Santo patrono</dt>
-                <dd>@(Model.SantoPatronoGiorno is { } g && Model.SantoPatronoMese is { } m ? new DateTime(2024, m, g).ToString("d MMMM") : "—")</dd>
             </dl>
         </section>
     </div>

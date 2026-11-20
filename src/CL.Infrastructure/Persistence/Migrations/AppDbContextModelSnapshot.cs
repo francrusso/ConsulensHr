@@ -121,6 +121,10 @@ namespace CL.Infrastructure.Persistence.Migrations
                     b.Property<bool>("Attiva")
                         .HasColumnType("boolean");
 
+                    b.Property<string>("Cap")
+                        .HasMaxLength(5)
+                        .HasColumnType("character varying(5)");
+
                     b.Property<string>("CodiceFiscale")
                         .HasMaxLength(16)
                         .HasColumnType("character varying(16)");
@@ -137,10 +141,18 @@ namespace CL.Infrastructure.Persistence.Migrations
                         .HasMaxLength(300)
                         .HasColumnType("character varying(300)");
 
+                    b.Property<string>("LogoChiave")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
                     b.Property<string>("PartitaIva")
                         .IsRequired()
                         .HasMaxLength(11)
                         .HasColumnType("character varying(11)");
+
+                    b.Property<string>("Provincia")
+                        .HasMaxLength(2)
+                        .HasColumnType("character varying(2)");
 
                     b.Property<string>("RagioneSociale")
                         .IsRequired()

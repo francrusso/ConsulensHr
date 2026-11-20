@@ -46,6 +46,10 @@ public sealed class SocietariForm
     [StringLength(30), Display(Name = "Telefono")]
     public string? Telefono { get; set; }
 
+    [Display(Name = "Logo dell'azienda (facoltativo: PNG, JPEG o WebP, massimo 1 MB)")]
+    public IFormFile? Logo { get; set; }
+    public bool HaLogo { get; set; }
+
     public static readonly string[] Forme =
     [
         "Ditta individuale", "S.n.c.", "S.a.s.", "S.r.l.", "S.r.l. semplificata", "S.p.A.", "Società cooperativa",
@@ -75,10 +79,6 @@ public sealed class SediForm
     [RegularExpression(@"^[A-Za-z]{2}$", ErrorMessage = "Sigla di 2 lettere (es. MI)."), Display(Name = "Provincia")]
     public string? OperativaProvincia { get; set; }
 
-    [Range(1, 31, ErrorMessage = "Giorno non valido."), Display(Name = "Giorno")]
-    public int? PatronoGiorno { get; set; }
-    [Range(1, 12, ErrorMessage = "Mese non valido."), Display(Name = "Mese")]
-    public int? PatronoMese { get; set; }
 }
 
 public sealed class LegaleForm
@@ -155,7 +155,7 @@ public sealed class OnboardingViewModel
 [Authorize(Policy = Policy.GestionePersonale)]
 public sealed class OnboardingController(
     AppDbContext db, UtenteCorrente utente, SignInManager<ApplicationUser> signIn, CodaEmail coda,
-    ServizioAccessi accessi, TimeProvider clock) : AppController
+    ServizioAccessi accessi, LoghiAziende loghi, TimeProvider clock) : AppController
 {
     public async Task<IActionResult> Index(Guid? aziendaId, int? passo)
     {
@@ -167,7 +167,7 @@ public sealed class OnboardingController(
         return Mostra(azienda, profilo, p, FormDi(p, azienda, profilo));
     }
 
-    [HttpPost, ValidateAntiForgeryToken]
+    [HttpPost, ValidateAntiForgeryToken, RequestSizeLimit(LoghiAziende.DimensioneMassima + 256 * 1024)]
     public async Task<IActionResult> Societari(Guid? aziendaId, SocietariForm form)
     {
         var (azienda, profilo) = await Carica(aziendaId);
@@ -178,11 +178,16 @@ public sealed class OnboardingController(
 
         if (!Prova(() =>
             {
-                azienda.AggiornaAnagrafica(form.RagioneSociale, form.CodiceFiscale?.Trim().ToUpperInvariant(), azienda.Indirizzo, azienda.Comune,
+                azienda.AggiornaAnagrafica(form.RagioneSociale, form.CodiceFiscale, azienda.Indirizzo, azienda.Cap, azienda.Comune, azienda.Provincia,
                     string.IsNullOrWhiteSpace(form.Email) ? azienda.Email : form.Email);
                 profilo.ImpostaDatiSocietari(new DatiSocietari(form.FormaGiuridica!, form.NumeroRea, form.CodiceAteco!,
                     form.DataInizioAttivita, form.Pec!, form.Telefono));
             })) return Mostra(azienda, profilo, 1, form);
+        if (form.Logo is { Length: > 0 } logo && await loghi.SalvaAsync(azienda, logo) is { } errore)
+        {
+            ModelState.AddModelError(nameof(form.Logo), errore);
+            return Mostra(azienda, profilo, 1, form);
+        }
 
         return await SalvaEAvanza(azienda, profilo, 1);
     }
@@ -199,8 +204,6 @@ public sealed class OnboardingController(
             if (string.IsNullOrWhiteSpace(form.OperativaComune)) ModelState.AddModelError(nameof(form.OperativaComune), "Inserisci il comune.");
             if (string.IsNullOrWhiteSpace(form.OperativaProvincia)) ModelState.AddModelError(nameof(form.OperativaProvincia), "Inserisci la provincia.");
         }
-        if ((form.PatronoGiorno is null) != (form.PatronoMese is null))
-            ModelState.AddModelError(nameof(form.PatronoGiorno), "Indica giorno e mese del santo patrono, oppure lascia vuoti entrambi.");
         if (!ModelState.IsValid) return Mostra(azienda, profilo, 2, form);
 
         var legale = new Indirizzo(form.LegaleVia!, form.LegaleCap!, form.LegaleComune!, form.LegaleProvincia!);
@@ -208,12 +211,10 @@ public sealed class OnboardingController(
         if (!Prova(() =>
             {
                 profilo.ImpostaSedi(legale, operativa);
-                // L'indirizzo mostrato nell'anagrafica è quello dove si lavora (serve anche per il santo patrono).
-                var dove = operativa ?? legale;
-                azienda.AggiornaAnagrafica(azienda.RagioneSociale, azienda.CodiceFiscale, $"{dove.Via}, {dove.Cap}", $"{dove.Comune} ({dove.Provincia.ToUpperInvariant()})", azienda.Email);
-                if (form.PatronoGiorno is { } g && form.PatronoMese is { } m) azienda.ImpostaSantoPatrono(m, g);
-                else azienda.RimuoviSantoPatrono();
-            }, nameof(form.PatronoGiorno))) return Mostra(azienda, profilo, 2, form);
+                // L'indirizzo dell'anagrafica è quello dove si lavora.
+                var dove = profilo.SedeOperativa ?? profilo.SedeLegale!;
+                azienda.AggiornaAnagrafica(azienda.RagioneSociale, azienda.CodiceFiscale, dove.Via, dove.Cap, dove.Comune, dove.Provincia, azienda.Email);
+            })) return Mostra(azienda, profilo, 2, form);
 
         return await SalvaEAvanza(azienda, profilo, 2);
     }
@@ -316,13 +317,13 @@ public sealed class OnboardingController(
         {
             RagioneSociale = a.RagioneSociale, CodiceFiscale = a.CodiceFiscale, Email = a.Email, FormaGiuridica = p.FormaGiuridica,
             NumeroRea = p.NumeroRea, CodiceAteco = p.CodiceAteco, DataInizioAttivita = p.DataInizioAttivita, Pec = p.Pec, Telefono = p.Telefono,
+            HaLogo = a.LogoChiave is not null,
         },
         2 => new SediForm
         {
             LegaleVia = p.SedeLegaleVia, LegaleCap = p.SedeLegaleCap, LegaleComune = p.SedeLegaleComune, LegaleProvincia = p.SedeLegaleProvincia,
             OperativaDiversa = p.SedeOperativaVia is not null, OperativaVia = p.SedeOperativaVia, OperativaCap = p.SedeOperativaCap,
             OperativaComune = p.SedeOperativaComune, OperativaProvincia = p.SedeOperativaProvincia,
-            PatronoGiorno = a.SantoPatronoGiorno, PatronoMese = a.SantoPatronoMese,
         },
         3 => new LegaleForm
         {

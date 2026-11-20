@@ -44,7 +44,7 @@ public sealed class OnboardingWebTests : IDisposable
     {
         ["LegaleVia"] = "Via Roma 1", ["LegaleCap"] = "20121", ["LegaleComune"] = "Milano", ["LegaleProvincia"] = "mi",
         ["OperativaDiversa"] = "true", ["OperativaVia"] = "Via Po 5", ["OperativaCap"] = "10123", ["OperativaComune"] = "Torino",
-        ["OperativaProvincia"] = "TO", ["PatronoGiorno"] = "24", ["PatronoMese"] = "6",
+        ["OperativaProvincia"] = "TO",
     };
     private static readonly Dictionary<string, string> Legale = new()
     {
@@ -102,8 +102,9 @@ public sealed class OnboardingWebTests : IDisposable
         Assert.Equal("MI-123456", profilo.NumeroRea);
         Assert.Equal("MI", profilo.SedeLegaleProvincia);
         Assert.Equal("RSSMRA85T10A562S", profilo.LegaleCodiceFiscale!.Valore);
-        Assert.Equal("Torino (TO)", azienda.Comune);
-        Assert.Equal(6, azienda.SantoPatronoMese);
+        Assert.Equal("Torino", azienda.Comune); // l'anagrafica prende la sede dove si lavora
+        Assert.Equal("TO", azienda.Provincia);
+        Assert.Equal("10123", azienda.Cap);
         Assert.Empty(_app.ErroriServer);
     }
 

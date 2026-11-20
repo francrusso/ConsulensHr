@@ -7,20 +7,21 @@
 <h1 class="titolo-pagina mb-3">@ViewData["Title"]</h1>
 
 <div class="card radius-15 p-4">
-    <form asp-action="Salva" method="post" class="row g-3" novalidate>
+    <form asp-action="Salva" method="post" class="row g-3" enctype="multipart/form-data" novalidate>
         <div asp-validation-summary="ModelOnly" class="alert alert-danger radius-15" role="alert"></div>
         <input type="hidden" asp-for="Id" />
 
-        <div class="col-md-8">
-            <label asp-for="RagioneSociale" class="form-label"></label>
-            <input asp-for="RagioneSociale" class="form-control" aria-required="true" />
-            <span asp-validation-for="RagioneSociale" class="text-danger"></span>
-        </div>
-        <div class="col-md-4">
+        <div class="col-md-5">
             <label asp-for="PartitaIva" class="form-label"></label>
             @if (nuova)
             {
-                <input asp-for="PartitaIva" class="form-control" aria-required="true" inputmode="numeric" maxlength="13" />
+                <div class="input-group">
+                    <input asp-for="PartitaIva" class="form-control" aria-required="true" inputmode="numeric" maxlength="13" autocomplete="off" />
+                    <button type="button" class="btn btn-outline-secondary" id="cercaPiva" data-url="@Url.Action("CercaPartitaIva")">
+                        <i class="ri-search-line" aria-hidden="true"></i> Compila dai dati del registro
+                    </button>
+                </div>
+                <div class="form-text" id="esitoPiva" role="status" aria-live="polite">Inserisci la partita IVA: ragione sociale e sede legale vengono compilate dal registro europeo VIES.</div>
             }
             else
             {
@@ -28,9 +29,15 @@
             }
             <span asp-validation-for="PartitaIva" class="text-danger"></span>
         </div>
+        <div class="col-md-7">
+            <label asp-for="RagioneSociale" class="form-label"></label>
+            <input asp-for="RagioneSociale" class="form-control" aria-required="true" />
+            <span asp-validation-for="RagioneSociale" class="text-danger"></span>
+        </div>
         <div class="col-md-4">
             <label asp-for="CodiceFiscale" class="form-label"></label>
             <input asp-for="CodiceFiscale" class="form-control text-uppercase" maxlength="16" />
+            <div class="form-text">Se diverso dalla partita IVA.</div>
             <span asp-validation-for="CodiceFiscale" class="text-danger"></span>
         </div>
         <div class="col-md-8">
@@ -38,31 +45,46 @@
             <input asp-for="Email" class="form-control" type="email" />
             <span asp-validation-for="Email" class="text-danger"></span>
         </div>
-        <div class="col-md-8">
+
+        <div class="col-md-6">
             <label asp-for="Indirizzo" class="form-label"></label>
-            <input asp-for="Indirizzo" class="form-control" />
+            <input asp-for="Indirizzo" class="form-control" placeholder="Via Roma 1" />
+            <span asp-validation-for="Indirizzo" class="text-danger"></span>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-2">
+            <label asp-for="Cap" class="form-label"></label>
+            <input asp-for="Cap" class="form-control" inputmode="numeric" maxlength="5" />
+            <span asp-validation-for="Cap" class="text-danger"></span>
+        </div>
+        <div class="col-md-3">
             <label asp-for="Comune" class="form-label"></label>
             <input asp-for="Comune" class="form-control" />
+            <span asp-validation-for="Comune" class="text-danger"></span>
+        </div>
+        <div class="col-md-1">
+            <label asp-for="Provincia" class="form-label">Prov.</label>
+            <input asp-for="Provincia" class="form-control text-uppercase" maxlength="2" />
+            <span asp-validation-for="Provincia" class="text-danger"></span>
         </div>
 
-        <fieldset class="col-12">
-            <legend class="form-label fs-6 mb-1">Santo patrono del comune della sede</legend>
-            <p class="text-body-secondary small mb-2">È festivo per i dipendenti e non viene conteggiato nelle ferie. Lascia vuoto se non applicabile.</p>
-            <div class="row g-2" style="max-width: 320px">
-                <div class="col">
-                    <label asp-for="PatronoGiorno" class="form-label small"></label>
-                    <input asp-for="PatronoGiorno" class="form-control" type="number" min="1" max="31" />
-                </div>
-                <div class="col">
-                    <label asp-for="PatronoMese" class="form-label small"></label>
-                    <input asp-for="PatronoMese" class="form-control" type="number" min="1" max="12" />
-                </div>
+        <div class="col-md-8">
+            <label asp-for="Logo" class="form-label"></label>
+            <div class="d-flex align-items-center gap-3">
+                @if (Model.HaLogo && Model.Id is { } id)
+                {
+                    <img src="@Url.Action("Logo", new { id })" alt="Logo attuale" class="logo-azienda" />
+                }
+                <input asp-for="Logo" type="file" class="form-control" accept="@CL.Web.Infrastruttura.LoghiAziende.FormatiAccettati" />
             </div>
-            <span asp-validation-for="PatronoGiorno" class="text-danger"></span>
-            <span asp-validation-for="PatronoMese" class="text-danger"></span>
-        </fieldset>
+            <span asp-validation-for="Logo" class="text-danger"></span>
+            @if (Model.HaLogo)
+            {
+                <div class="form-check mt-2">
+                    <input asp-for="RimuoviLogo" class="form-check-input" />
+                    <label asp-for="RimuoviLogo" class="form-check-label"></label>
+                </div>
+            }
+        </div>
 
         <div class="col-12 d-flex gap-2 mt-4">
             <button type="submit" class="btn btn-primary">Salva</button>
@@ -70,3 +92,39 @@
         </div>
     </form>
 </div>
+
+@section Scripts {
+    <script>
+        // Precompilazione dalla partita IVA (registro VIES); i campi restano modificabili.
+        (function () {
+            const bottone = document.getElementById('cercaPiva');
+            if (!bottone) return;
+            const esito = document.getElementById('esitoPiva');
+            const campo = id => document.getElementById(id);
+            const imposta = (id, valore) => { if (valore) { campo(id).value = valore; campo(id).classList.add('campo-compilato'); } };
+            async function cerca() {
+                const piva = campo('PartitaIva').value.trim();
+                if (!piva) { esito.textContent = 'Inserisci prima la partita IVA.'; return; }
+                bottone.disabled = true;
+                esito.textContent = 'Ricerca in corso…';
+                try {
+                    const r = await fetch(bottone.dataset.url + '?partitaIva=' + encodeURIComponent(piva), { headers: { 'Accept': 'application/json' } });
+                    const d = await r.json();
+                    if (d.esito === 'trovata') {
+                        imposta('RagioneSociale', d.ragioneSociale); imposta('Indirizzo', d.indirizzo); imposta('Cap', d.cap);
+                        imposta('Comune', d.comune); imposta('Provincia', d.provincia);
+                        esito.textContent = 'Dati compilati dal registro: controllali prima di salvare.';
+                    } else {
+                        esito.textContent = d.messaggio;
+                    }
+                } catch {
+                    esito.textContent = 'Ricerca non riuscita: compila i dati a mano.';
+                } finally {
+                    bottone.disabled = false;
+                }
+            }
+            bottone.addEventListener('click', cerca);
+            campo('PartitaIva').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); cerca(); } });
+        })();
+    </script>
+}

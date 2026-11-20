@@ -97,3 +97,9 @@
 .grafico .tabella-grafico summary { color: var(--consulens-nav-text); cursor: pointer; }
 .grafico .apexcharts-tooltip { box-shadow: var(--consulens-shadow); border-color: var(--consulens-border) !important; }
 #graficoFerie .apexcharts-bar-series path { cursor: pointer; } /* clic = scheda del dipendente */
+
+/* Logo dell'azienda e campi compilati dal registro */
+.logo-azienda { max-height: 40px; max-width: 120px; object-fit: contain; border-radius: 6px; background: #fff; }
+h1 .logo-azienda { max-height: 36px; }
+.topbar-logo-azienda { max-height: 34px; max-width: 110px; object-fit: contain; margin-right: 12px; }
+.campo-compilato { background-color: #fffaf4; }

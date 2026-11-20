@@ -653,3 +653,35 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261120103443_AziendaSedeLogo') THEN
+    ALTER TABLE hr."Aziende" ADD "Cap" character varying(5);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261120103443_AziendaSedeLogo') THEN
+    ALTER TABLE hr."Aziende" ADD "LogoChiave" character varying(500);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261120103443_AziendaSedeLogo') THEN
+    ALTER TABLE hr."Aziende" ADD "Provincia" character varying(2);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261120103443_AziendaSedeLogo') THEN
+    INSERT INTO hr."__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261120103443_AziendaSedeLogo', '10.0.15');
+    END IF;
+END $EF$;
+COMMIT;
+
