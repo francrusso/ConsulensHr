@@ -1,0 +1,162 @@
+@model FoglioPresenze
+@inject UtenteCorrente Utente
+@{
+    ViewData["Title"] = "Presenze di " + Model.Periodo.ToLower();
+    var c = Model.Comunicazione;
+    var modificabile = Utente.IsAzienda && Model.Stato == StatoComunicazione.Bozza;
+    string N(decimal v) => v == 0 ? "" : v.ToString("0.##");
+    string O(decimal v) => v == 0 ? "—" : v.ToString("0.##");
+}
+<div class="breadcrumb-titolo d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+    <div>
+        @if (Utente.IsConsulente)
+        {
+            <a asp-action="Index" asp-route-anno="@Model.Anno" asp-route-mese="@Model.Mese" class="small text-body-secondary"><i class="ri-arrow-left-s-line" aria-hidden="true"></i> Presenze</a>
+        }
+        <h1 class="titolo-pagina mb-0">Presenze e variazioni</h1>
+        <p class="text-body-secondary mb-0">@Model.Azienda.RagioneSociale · <partial name="_StatoComunicazione" model="(StatoComunicazione?)c?.Stato" /></p>
+    </div>
+    <partial name="_Periodo" model='(Model.Anno, Model.Mese, Utente.IsConsulente ? Model.Azienda.Id : (Guid?)null, "Foglio")' />
+</div>
+
+@if (c?.Stato == StatoComunicazione.Inviata || c?.Stato == StatoComunicazione.Elaborata)
+{
+    <div class="alert alert-info radius-15">
+        Inviata allo studio il @c.InviataIl!.Value.ToLocalTime().ToString("dd/MM/yyyy 'alle' HH:mm") da @c.InviataDa.
+        @if (c.Stato == StatoComunicazione.Elaborata) { <span>Paghe elaborate il @c.ElaborataIl!.Value.ToLocalTime().ToString("dd/MM/yyyy").</span> }
+        @if (Utente.IsAzienda) { <span>Per correggere qualcosa chiedi allo studio di riaprirla.</span> }
+    </div>
+}
+else if (modificabile)
+{
+    <p class="small text-body-secondary">
+        Ferie, permessi e malattie registrati nel portale sono già inseriti (colonne grigie). Indica solo le variazioni del mese: straordinari,
+        ore non retribuite, buoni pasto, premi, rimborsi e anticipi. Puoi salvare e tornare più tardi; quando è tutto pronto invia allo studio.
+    </p>
+}
+
+@if (Utente.IsConsulente)
+{
+    <div class="d-flex flex-wrap gap-2 mb-3">
+        @if (c is null || c.Stato == StatoComunicazione.Bozza)
+        {
+            <form asp-action="Sollecita" method="post" class="m-0">
+                <input type="hidden" name="aziendaId" value="@Model.Azienda.Id" /><input type="hidden" name="anno" value="@Model.Anno" /><input type="hidden" name="mese" value="@Model.Mese" />
+                <button type="submit" class="btn btn-outline-secondary"><i class="ri-notification-3-line" aria-hidden="true"></i> Invia promemoria all'azienda</button>
+            </form>
+        }
+        else
+        {
+            <a asp-action="Esporta" asp-route-aziendaId="@Model.Azienda.Id" asp-route-anno="@Model.Anno" asp-route-mese="@Model.Mese" class="btn btn-outline-secondary"><i class="ri-file-excel-2-line" aria-hidden="true"></i> Scarica CSV per le paghe</a>
+            @if (c.Stato == StatoComunicazione.Inviata)
+            {
+                <form asp-action="Elabora" method="post" class="m-0">
+                    <input type="hidden" name="aziendaId" value="@Model.Azienda.Id" /><input type="hidden" name="anno" value="@Model.Anno" /><input type="hidden" name="mese" value="@Model.Mese" />
+                    <button type="submit" class="btn btn-primary"><i class="ri-check-double-line" aria-hidden="true"></i> Segna come elaborata</button>
+                </form>
+            }
+            <button type="button" class="btn btn-outline-danger" data-bs-toggle="collapse" data-bs-target="#riapri" aria-expanded="false" aria-controls="riapri"><i class="ri-arrow-go-back-line" aria-hidden="true"></i> Riapri per correzioni</button>
+        }
+    </div>
+    <div class="collapse mb-3" id="riapri">
+        <form asp-action="Riapri" method="post" class="card radius-15 p-3">
+            <input type="hidden" name="aziendaId" value="@Model.Azienda.Id" /><input type="hidden" name="anno" value="@Model.Anno" /><input type="hidden" name="mese" value="@Model.Mese" />
+            <label for="motivo" class="form-label">Cosa deve correggere l'azienda (lo riceve per email)</label>
+            <textarea id="motivo" name="motivo" class="form-control mb-2" rows="2" maxlength="1000"></textarea>
+            <div><button type="submit" class="btn btn-danger">Riapri e avvisa l'azienda</button></div>
+        </form>
+    </div>
+}
+
+<form asp-action="Salva" method="post">
+    <input type="hidden" name="anno" value="@Model.Anno" />
+    <input type="hidden" name="mese" value="@Model.Mese" />
+    <div class="card radius-15 table-responsive p-1 foglio-presenze">
+        <table class="table mb-0 align-middle">
+            <thead>
+                <tr>
+                    <th scope="col" rowspan="2">Dipendente</th>
+                    <th scope="colgroup" colspan="5" class="text-center gruppo-portale">Assenze dal portale (ore)</th>
+                    <th scope="colgroup" colspan="8" class="text-center">Variazioni del mese</th>
+                </tr>
+                <tr>
+                    <th scope="col" class="text-end gruppo-portale">Ferie</th>
+                    <th scope="col" class="text-end gruppo-portale">ROL</th>
+                    <th scope="col" class="text-end gruppo-portale">Ex-fest.</th>
+                    <th scope="col" class="text-end gruppo-portale">Malattia</th>
+                    <th scope="col" class="text-end gruppo-portale">Altre</th>
+                    <th scope="col">Straord. (h)</th>
+                    <th scope="col">Straord. fest. (h)</th>
+                    <th scope="col">Non retrib. (h)</th>
+                    <th scope="col">Buoni pasto</th>
+                    <th scope="col">Premi (€)</th>
+                    <th scope="col">Rimborsi (€)</th>
+                    <th scope="col">Anticipi (€)</th>
+                    <th scope="col">Note</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Righe.Count == 0)
+                {
+                    <tr><td colspan="14" class="text-center text-muted p-4">Nessun dipendente in forza nel mese</td></tr>
+                }
+                @for (var i = 0; i < Model.Righe.Count; i++)
+                {
+                    var r = Model.Righe[i];
+                    var (a, v) = (r.Assenze, r.Voci);
+                    <tr>
+                        <th scope="row" class="fw-normal">
+                            @r.Nome
+                            @if (r.Matricola is not null) { <div class="small text-body-secondary">matr. @r.Matricola</div> }
+                            <input type="hidden" name="righe[@i].DipendenteId" value="@r.DipendenteId" />
+                        </th>
+                        <td class="text-end gruppo-portale">@O(a.Ferie)</td>
+                        <td class="text-end gruppo-portale">@O(a.Rol)</td>
+                        <td class="text-end gruppo-portale">@O(a.ExFestivita)</td>
+                        <td class="text-end gruppo-portale">@O(a.Malattia)</td>
+                        <td class="text-end gruppo-portale">@O(a.Altre)</td>
+                        @if (modificabile)
+                        {
+                            <td><input class="form-control form-control-sm" name="righe[@i].OreStraordinario" value="@N(v.OreStraordinario)" inputmode="decimal" aria-label="Straordinario di @r.Nome" /></td>
+                            <td><input class="form-control form-control-sm" name="righe[@i].OreStraordinarioFestivo" value="@N(v.OreStraordinarioFestivo)" inputmode="decimal" aria-label="Straordinario festivo di @r.Nome" /></td>
+                            <td><input class="form-control form-control-sm" name="righe[@i].OreNonRetribuite" value="@N(v.OreNonRetribuite)" inputmode="decimal" aria-label="Ore non retribuite di @r.Nome" /></td>
+                            <td><input class="form-control form-control-sm" name="righe[@i].BuoniPasto" value="@(v.BuoniPasto == 0 ? "" : v.BuoniPasto.ToString())" type="number" min="0" max="31" aria-label="Buoni pasto di @r.Nome" /></td>
+                            <td><input class="form-control form-control-sm" name="righe[@i].Premi" value="@N(v.Premi)" inputmode="decimal" aria-label="Premi di @r.Nome" /></td>
+                            <td><input class="form-control form-control-sm" name="righe[@i].Rimborsi" value="@N(v.Rimborsi)" inputmode="decimal" aria-label="Rimborsi di @r.Nome" /></td>
+                            <td><input class="form-control form-control-sm" name="righe[@i].Anticipi" value="@N(v.Anticipi)" inputmode="decimal" aria-label="Anticipi di @r.Nome" /></td>
+                            <td><input class="form-control form-control-sm nota" name="righe[@i].Note" value="@v.Note" maxlength="500" aria-label="Note su @r.Nome" /></td>
+                        }
+                        else
+                        {
+                            <td>@O(v.OreStraordinario)</td>
+                            <td>@O(v.OreStraordinarioFestivo)</td>
+                            <td>@O(v.OreNonRetribuite)</td>
+                            <td>@(v.BuoniPasto == 0 ? "—" : v.BuoniPasto)</td>
+                            <td>@(v.Premi == 0 ? "—" : v.Premi.ToString("C"))</td>
+                            <td>@(v.Rimborsi == 0 ? "—" : v.Rimborsi.ToString("C"))</td>
+                            <td>@(v.Anticipi == 0 ? "—" : v.Anticipi.ToString("C"))</td>
+                            <td class="small">@(v.Note ?? "—")</td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="mt-3">
+        <label for="note" class="form-label">Note per lo studio</label>
+        @if (modificabile)
+        {
+            <textarea id="note" name="note" class="form-control" rows="2" maxlength="2000" placeholder="Assunzioni o cessazioni in arrivo, variazioni d'orario, comunicazioni particolari…">@c?.Note</textarea>
+        }
+        else { <p id="note" class="mb-0">@(c?.Note ?? "—")</p> }
+    </div>
+
+    @if (modificabile)
+    {
+        <div class="d-flex flex-wrap justify-content-end gap-2 mt-3">
+            <button type="submit" name="invia" value="false" class="btn btn-outline-secondary"><i class="ri-save-line" aria-hidden="true"></i> Salva bozza</button>
+            <button type="submit" name="invia" value="true" class="btn btn-primary" onclick="return confirm('Inviare allo studio le presenze di @Model.Periodo.ToLower()? Dopo l\'invio non potrai più modificarle.');"><i class="ri-send-plane-line" aria-hidden="true"></i> Invia allo studio</button>
+        </div>
+    }
+</form>

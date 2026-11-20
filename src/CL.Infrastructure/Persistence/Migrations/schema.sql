@@ -484,3 +484,89 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261120095307_PresenzeMensili') THEN
+    CREATE TABLE hr."ComunicazioniPresenze" (
+        "Id" uuid NOT NULL,
+        "AziendaId" uuid NOT NULL,
+        "Anno" integer NOT NULL,
+        "Mese" integer NOT NULL,
+        "Stato" character varying(32) NOT NULL,
+        "Note" character varying(2000),
+        "InviataIl" timestamp with time zone,
+        "InviataDa" character varying(256),
+        "ElaborataIl" timestamp with time zone,
+        "ElaborataDa" character varying(256),
+        CONSTRAINT "PK_ComunicazioniPresenze" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_ComunicazioniPresenze_Aziende_AziendaId" FOREIGN KEY ("AziendaId") REFERENCES hr."Aziende" ("Id") ON DELETE RESTRICT
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261120095307_PresenzeMensili') THEN
+    CREATE TABLE hr."RighePresenze" (
+        "Id" uuid NOT NULL,
+        "ComunicazioneId" uuid NOT NULL,
+        "DipendenteId" uuid NOT NULL,
+        "OreStraordinario" numeric(12,2) NOT NULL,
+        "OreStraordinarioFestivo" numeric(12,2) NOT NULL,
+        "OreNonRetribuite" numeric(12,2) NOT NULL,
+        "BuoniPasto" integer NOT NULL,
+        "Premi" numeric(12,2) NOT NULL,
+        "Rimborsi" numeric(12,2) NOT NULL,
+        "Anticipi" numeric(12,2) NOT NULL,
+        "Note" character varying(500),
+        "OreFerie" numeric(12,2) NOT NULL,
+        "OreRol" numeric(12,2) NOT NULL,
+        "OreExFestivita" numeric(12,2) NOT NULL,
+        "OreMalattia" numeric(12,2) NOT NULL,
+        "OreAltreAssenze" numeric(12,2) NOT NULL,
+        CONSTRAINT "PK_RighePresenze" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_RighePresenze_ComunicazioniPresenze_ComunicazioneId" FOREIGN KEY ("ComunicazioneId") REFERENCES hr."ComunicazioniPresenze" ("Id") ON DELETE CASCADE,
+        CONSTRAINT "FK_RighePresenze_Dipendenti_DipendenteId" FOREIGN KEY ("DipendenteId") REFERENCES hr."Dipendenti" ("Id") ON DELETE RESTRICT
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261120095307_PresenzeMensili') THEN
+    CREATE INDEX "IX_ComunicazioniPresenze_Anno_Mese_Stato" ON hr."ComunicazioniPresenze" ("Anno", "Mese", "Stato");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261120095307_PresenzeMensili') THEN
+    CREATE UNIQUE INDEX "IX_ComunicazioniPresenze_AziendaId_Anno_Mese" ON hr."ComunicazioniPresenze" ("AziendaId", "Anno", "Mese");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261120095307_PresenzeMensili') THEN
+    CREATE UNIQUE INDEX "IX_RighePresenze_ComunicazioneId_DipendenteId" ON hr."RighePresenze" ("ComunicazioneId", "DipendenteId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261120095307_PresenzeMensili') THEN
+    CREATE INDEX "IX_RighePresenze_DipendenteId" ON hr."RighePresenze" ("DipendenteId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261120095307_PresenzeMensili') THEN
+    INSERT INTO hr."__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261120095307_PresenzeMensili', '10.0.15');
+    END IF;
+END $EF$;
+COMMIT;
+

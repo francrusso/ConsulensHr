@@ -1,0 +1,19 @@
+@model (int Anno, int Mese, Guid? AziendaId, string Azione)
+@* Selettore del mese: dall'anno scorso al mese corrente. *@
+@{
+    var oggi = DateOnly.FromDateTime(DateTime.Today);
+    var mesi = Enumerable.Range(0, 15).Select(i => new DateOnly(oggi.Year, oggi.Month, 1).AddMonths(-i)).ToList();
+}
+<form asp-action="@Model.Azione" method="get" class="d-flex gap-2 align-items-center m-0">
+    @if (Model.AziendaId is { } az) { <input type="hidden" name="aziendaId" value="@az" /> }
+    <label for="periodo" class="visually-hidden">Mese</label>
+    <select id="periodo" class="form-select" onchange="const [a,m]=this.value.split('-'); this.form.anno.value=a; this.form.mese.value=m; this.form.submit();">
+        @foreach (var d in mesi)
+        {
+            <option value="@d.Year-@d.Month" selected="@(d.Year == Model.Anno && d.Month == Model.Mese)">@ServizioBustePaga.NomeMese(d.Month) @d.Year</option>
+        }
+    </select>
+    <input type="hidden" name="anno" value="@Model.Anno" />
+    <input type="hidden" name="mese" value="@Model.Mese" />
+    <noscript><button type="submit" class="btn btn-outline-secondary">Vai</button></noscript>
+</form>

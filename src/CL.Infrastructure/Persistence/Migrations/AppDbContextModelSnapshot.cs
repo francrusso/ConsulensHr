@@ -529,6 +529,125 @@ namespace CL.Infrastructure.Persistence.Migrations
                     b.ToTable("Dipendenti", "hr");
                 });
 
+            modelBuilder.Entity("CL.Domain.Presenze.ComunicazioneMensile", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Anno")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("AziendaId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ElaborataDa")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<DateTime?>("ElaborataIl")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("InviataDa")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<DateTime?>("InviataIl")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Mese")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("Stato")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Anno", "Mese", "Stato");
+
+                    b.HasIndex("AziendaId", "Anno", "Mese")
+                        .IsUnique();
+
+                    b.ToTable("ComunicazioniPresenze", "hr");
+                });
+
+            modelBuilder.Entity("CL.Domain.Presenze.RigaPresenze", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Anticipi")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.Property<int>("BuoniPasto")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("ComunicazioneId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("DipendenteId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<decimal>("OreAltreAssenze")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.Property<decimal>("OreExFestivita")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.Property<decimal>("OreFerie")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.Property<decimal>("OreMalattia")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.Property<decimal>("OreNonRetribuite")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.Property<decimal>("OreRol")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.Property<decimal>("OreStraordinario")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.Property<decimal>("OreStraordinarioFestivo")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.Property<decimal>("Premi")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.Property<decimal>("Rimborsi")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DipendenteId");
+
+                    b.HasIndex("ComunicazioneId", "DipendenteId")
+                        .IsUnique();
+
+                    b.ToTable("RighePresenze", "hr");
+                });
+
             modelBuilder.Entity("CL.Infrastructure.Identity.ApplicationUser", b =>
                 {
                     b.Property<string>("Id")
@@ -814,6 +933,30 @@ namespace CL.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.SetNull);
                 });
 
+            modelBuilder.Entity("CL.Domain.Presenze.ComunicazioneMensile", b =>
+                {
+                    b.HasOne("CL.Domain.Aziende.Azienda", null)
+                        .WithMany()
+                        .HasForeignKey("AziendaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("CL.Domain.Presenze.RigaPresenze", b =>
+                {
+                    b.HasOne("CL.Domain.Presenze.ComunicazioneMensile", null)
+                        .WithMany("Righe")
+                        .HasForeignKey("ComunicazioneId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("CL.Domain.Dipendenti.Dipendente", null)
+                        .WithMany()
+                        .HasForeignKey("DipendenteId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("CL.Infrastructure.Identity.ApplicationUser", b =>
                 {
                     b.HasOne("CL.Domain.Aziende.Azienda", null)
@@ -876,6 +1019,11 @@ namespace CL.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("CL.Domain.Dipendenti.Dipendente", b =>
                 {
                     b.Navigation("Contratti");
+                });
+
+            modelBuilder.Entity("CL.Domain.Presenze.ComunicazioneMensile", b =>
+                {
+                    b.Navigation("Righe");
                 });
 #pragma warning restore 612, 618
         }

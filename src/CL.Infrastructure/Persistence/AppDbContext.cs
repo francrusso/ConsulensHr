@@ -2,6 +2,7 @@ using CL.Domain.Assenze;
 using CL.Domain.Aziende;
 using CL.Domain.BustePaga;
 using CL.Domain.Dipendenti;
+using CL.Domain.Presenze;
 using CL.Domain.ValueObjects;
 using CL.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -20,6 +21,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : Ident
     public DbSet<SaldoIniziale> SaldiIniziali => Set<SaldoIniziale>();
     public DbSet<BustaPaga> BustePaga => Set<BustaPaga>();
     public DbSet<ProfiloAzienda> ProfiliAzienda => Set<ProfiloAzienda>();
+    public DbSet<ComunicazioneMensile> ComunicazioniPresenze => Set<ComunicazioneMensile>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

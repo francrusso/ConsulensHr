@@ -41,6 +41,7 @@ builder.Services.AddScoped<ServizioSaldi>();
 builder.Services.AddScoped<ServizioAccessi>();
 builder.Services.AddScoped<ServizioBustePaga>();
 builder.Services.AddScoped<NotificheAssenze>();
+builder.Services.AddScoped<ServizioPresenze>();
 
 builder.Services.AddControllersWithViews(o =>
 {

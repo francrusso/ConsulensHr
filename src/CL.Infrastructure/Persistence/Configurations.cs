@@ -2,6 +2,7 @@ using CL.Domain.Assenze;
 using CL.Domain.Aziende;
 using CL.Domain.BustePaga;
 using CL.Domain.Dipendenti;
+using CL.Domain.Presenze;
 using CL.Infrastructure.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -56,6 +57,39 @@ internal sealed class ProfiloAziendaConfig : IEntityTypeConfiguration<ProfiloAzi
         b.Property(x => x.SedeOperativaProvincia).HasMaxLength(2);
         b.Property(x => x.NoteStudio).HasMaxLength(2000);
         b.Property(x => x.OreSettimanali).HasPrecision(5, 2);
+    }
+}
+
+internal sealed class ComunicazioneMensileConfig : IEntityTypeConfiguration<ComunicazioneMensile>
+{
+    public void Configure(EntityTypeBuilder<ComunicazioneMensile> b)
+    {
+        b.ToTable("ComunicazioniPresenze");
+        b.Property(x => x.Id).ValueGeneratedNever();
+        b.Property(x => x.Note).HasMaxLength(2000);
+        b.Property(x => x.InviataDa).HasMaxLength(256);
+        b.Property(x => x.ElaborataDa).HasMaxLength(256);
+        b.Ignore(x => x.PrimoGiorno);
+        b.Ignore(x => x.UltimoGiorno);
+        b.HasOne<Azienda>().WithMany().HasForeignKey(x => x.AziendaId).OnDelete(DeleteBehavior.Restrict);
+        b.HasIndex(x => new { x.AziendaId, x.Anno, x.Mese }).IsUnique();
+        b.HasIndex(x => new { x.Anno, x.Mese, x.Stato });
+        b.HasMany(x => x.Righe).WithOne().HasForeignKey(r => r.ComunicazioneId).OnDelete(DeleteBehavior.Cascade);
+        b.Navigation(x => x.Righe).HasField("_righe").UsePropertyAccessMode(PropertyAccessMode.Field).AutoInclude();
+    }
+}
+
+internal sealed class RigaPresenzeConfig : IEntityTypeConfiguration<RigaPresenze>
+{
+    public void Configure(EntityTypeBuilder<RigaPresenze> b)
+    {
+        b.ToTable("RighePresenze");
+        b.Property(x => x.Id).ValueGeneratedNever();
+        b.Property(x => x.Note).HasMaxLength(500);
+        b.Ignore(x => x.Voci);
+        b.Ignore(x => x.Assenze);
+        b.HasOne<Dipendente>().WithMany().HasForeignKey(x => x.DipendenteId).OnDelete(DeleteBehavior.Restrict);
+        b.HasIndex(x => new { x.ComunicazioneId, x.DipendenteId }).IsUnique();
     }
 }
 

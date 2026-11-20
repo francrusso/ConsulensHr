@@ -1,0 +1,8 @@
+@model StatoComunicazione?
+@switch (Model)
+{
+    case null: <span class="badge bg-secondary">Non iniziata</span> break;
+    case StatoComunicazione.Bozza: <span class="badge bg-warning text-dark">In compilazione</span> break;
+    case StatoComunicazione.Inviata: <span class="badge bg-info">Inviata</span> break;
+    default: <span class="badge bg-success">Elaborata</span> break;
+}

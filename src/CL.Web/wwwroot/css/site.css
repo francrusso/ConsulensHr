@@ -85,3 +85,9 @@
 .passi-onboarding .passo-da-fare { opacity: .7; }
 .riepilogo-onboarding .scheda dd { margin-bottom: .5rem; }
 .riepilogo-onboarding .border { border-color: var(--consulens-border) !important; }
+
+/* Foglio presenze: colonne del portale (sola lettura) distinte, input compatti */
+.foglio-presenze .gruppo-portale { background: #fbf6f0; color: var(--consulens-muted); }
+.foglio-presenze td input.form-control-sm { min-width: 76px; }
+.foglio-presenze td input.nota { min-width: 160px; }
+.foglio-presenze th[scope="row"] { white-space: nowrap; }
