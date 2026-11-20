@@ -3,6 +3,7 @@
     ViewData["Title"] = Model.RagioneSociale;
     var dipendenti = (List<Dipendente>)ViewBag.Dipendenti;
     var referenti = (List<CL.Web.Infrastruttura.UtenteRiga>)ViewBag.Referenti;
+    var profilo = ViewBag.Profilo as CL.Domain.Aziende.ProfiloAzienda;
     var oggi = DateOnly.FromDateTime(DateTime.Today);
 }
 
@@ -21,6 +22,27 @@
         </form>
     </div>
 </div>
+
+<section class="card radius-15 p-3 mb-3 d-flex flex-row flex-wrap align-items-center justify-content-between gap-2" aria-label="Profilo azienda per lo studio">
+    <div>
+        <h2 class="h6 mb-1">Profilo per lo studio</h2>
+        @if (profilo?.Completato == true)
+        {
+            <p class="small mb-0"><span class="badge bg-success">Completo</span> Compilato il @profilo.CompletatoIl!.Value.ToLocalTime().ToString("dd/MM/yyyy") da @profilo.CompletatoDa: dati societari, sedi, legale rappresentante, INPS/INAIL e referente paghe.</p>
+        }
+        else if (profilo is not null)
+        {
+            <p class="small mb-0"><span class="badge bg-warning text-dark">In compilazione</span> L'azienda è al passo @profilo.Passo di 6. Lo completa il referente al primo accesso, oppure puoi compilarlo tu.</p>
+        }
+        else
+        {
+            <p class="small mb-0"><span class="badge bg-secondary">Non iniziato</span> Il referente lo compila al primo accesso al portale; puoi anche compilarlo tu per conto dell'azienda.</p>
+        }
+    </div>
+    <a asp-controller="Onboarding" asp-action="Index" asp-route-aziendaId="@Model.Id" class="btn btn-outline-secondary">
+        <i class="ri-file-list-2-line" aria-hidden="true"></i> @(profilo?.Completato == true ? "Vedi profilo" : "Apri il profilo")
+    </a>
+</section>
 
 <div class="row g-3">
     <div class="col-lg-4">

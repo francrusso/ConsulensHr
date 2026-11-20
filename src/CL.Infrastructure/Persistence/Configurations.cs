@@ -23,6 +23,42 @@ internal sealed class AziendaConfig : IEntityTypeConfiguration<Azienda>
     }
 }
 
+internal sealed class ProfiloAziendaConfig : IEntityTypeConfiguration<ProfiloAzienda>
+{
+    public void Configure(EntityTypeBuilder<ProfiloAzienda> b)
+    {
+        b.ToTable("ProfiliAzienda");
+        b.Property(x => x.Id).ValueGeneratedNever();
+        b.HasOne<Azienda>().WithOne().HasForeignKey<ProfiloAzienda>(x => x.AziendaId).OnDelete(DeleteBehavior.Cascade);
+        b.HasIndex(x => x.AziendaId).IsUnique();
+        b.Ignore(x => x.Societari);
+        b.Ignore(x => x.SedeLegale);
+        b.Ignore(x => x.SedeOperativa);
+        b.Ignore(x => x.Completato);
+
+        foreach (var p in new[] { nameof(ProfiloAzienda.FormaGiuridica), nameof(ProfiloAzienda.Ccnl), nameof(ProfiloAzienda.CassaEdile),
+                     nameof(ProfiloAzienda.EnteBilaterale), nameof(ProfiloAzienda.FondoPensione), nameof(ProfiloAzienda.SedeLegaleComune),
+                     nameof(ProfiloAzienda.SedeOperativaComune), nameof(ProfiloAzienda.LegaleNome), nameof(ProfiloAzienda.LegaleCognome),
+                     nameof(ProfiloAzienda.ReferenteNome) })
+            b.Property(p).HasMaxLength(150);
+        foreach (var p in new[] { nameof(ProfiloAzienda.SedeLegaleVia), nameof(ProfiloAzienda.SedeOperativaVia) })
+            b.Property(p).HasMaxLength(300);
+        foreach (var p in new[] { nameof(ProfiloAzienda.Pec), nameof(ProfiloAzienda.LegaleEmail), nameof(ProfiloAzienda.ReferenteEmail),
+                     nameof(ProfiloAzienda.CompletatoDa) })
+            b.Property(p).HasMaxLength(256);
+        foreach (var p in new[] { nameof(ProfiloAzienda.NumeroRea), nameof(ProfiloAzienda.CodiceAteco), nameof(ProfiloAzienda.Telefono),
+                     nameof(ProfiloAzienda.LegaleTelefono), nameof(ProfiloAzienda.ReferenteTelefono), nameof(ProfiloAzienda.MatricolaInps),
+                     nameof(ProfiloAzienda.InailCodiceDitta), nameof(ProfiloAzienda.InailPat) })
+            b.Property(p).HasMaxLength(30);
+        b.Property(x => x.SedeLegaleCap).HasMaxLength(5);
+        b.Property(x => x.SedeOperativaCap).HasMaxLength(5);
+        b.Property(x => x.SedeLegaleProvincia).HasMaxLength(2);
+        b.Property(x => x.SedeOperativaProvincia).HasMaxLength(2);
+        b.Property(x => x.NoteStudio).HasMaxLength(2000);
+        b.Property(x => x.OreSettimanali).HasPrecision(5, 2);
+    }
+}
+
 internal sealed class DipendenteConfig : IEntityTypeConfiguration<Dipendente>
 {
     public void Configure(EntityTypeBuilder<Dipendente> b)

@@ -28,7 +28,8 @@ builder.Services.ConfigureApplicationCookie(o =>
 
 builder.Services.AddAuthorizationBuilder()
     .AddPolicy(Policy.SoloConsulente, p => p.RequireRole(Ruoli.Consulente))
-    .AddPolicy(Policy.GestionePersonale, p => p.RequireRole(Ruoli.Consulente, Ruoli.Azienda));
+    .AddPolicy(Policy.GestionePersonale, p => p.RequireRole(Ruoli.Consulente, Ruoli.Azienda))
+    .AddPolicy(Policy.ApprovazioneAssenze, p => p.RequireRole(Ruoli.Azienda));
 
 // Lettere accentate scritte così come sono nell'HTML (senza &#xE0; ecc.).
 builder.Services.Configure<Microsoft.Extensions.WebEncoders.WebEncoderOptions>(o =>
@@ -39,11 +40,13 @@ builder.Services.AddScoped<UtenteCorrente>();
 builder.Services.AddScoped<ServizioSaldi>();
 builder.Services.AddScoped<ServizioAccessi>();
 builder.Services.AddScoped<ServizioBustePaga>();
+builder.Services.AddScoped<NotificheAssenze>();
 
 builder.Services.AddControllersWithViews(o =>
 {
     // Tutto richiede login, salvo le azioni marcate [AllowAnonymous].
     o.Filters.Add(new AuthorizeFilter(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build()));
+    o.Filters.Add<FiltroOnboarding>();
 });
 
 var app = builder.Build();

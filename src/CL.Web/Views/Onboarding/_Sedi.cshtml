@@ -1,0 +1,37 @@
+@model CL.Web.Controllers.SediForm
+<form asp-action="Sedi" method="post" novalidate>
+    <partial name="_AziendaId" />
+    <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+    <h3 class="h6 mt-3">Sede legale</h3>
+    <div class="row g-3">
+        <div class="col-md-6"><label asp-for="LegaleVia" class="form-label"></label><input asp-for="LegaleVia" class="form-control" placeholder="Via Roma 1" /><span asp-validation-for="LegaleVia" class="text-danger"></span></div>
+        <div class="col-md-2"><label asp-for="LegaleCap" class="form-label"></label><input asp-for="LegaleCap" class="form-control" inputmode="numeric" maxlength="5" /><span asp-validation-for="LegaleCap" class="text-danger"></span></div>
+        <div class="col-md-3"><label asp-for="LegaleComune" class="form-label"></label><input asp-for="LegaleComune" class="form-control" /><span asp-validation-for="LegaleComune" class="text-danger"></span></div>
+        <div class="col-md-1"><label asp-for="LegaleProvincia" class="form-label">Prov.</label><input asp-for="LegaleProvincia" class="form-control text-uppercase" maxlength="2" /><span asp-validation-for="LegaleProvincia" class="text-danger"></span></div>
+    </div>
+
+    <div class="form-check form-switch mt-4">
+        <input asp-for="OperativaDiversa" class="form-check-input" />
+        <label asp-for="OperativaDiversa" class="form-check-label"></label>
+    </div>
+    <div id="campiOperativa" class="mt-2">
+        <h3 class="h6">Sede operativa</h3>
+        <div class="row g-3">
+            <div class="col-md-6"><label asp-for="OperativaVia" class="form-label"></label><input asp-for="OperativaVia" class="form-control" /><span asp-validation-for="OperativaVia" class="text-danger"></span></div>
+            <div class="col-md-2"><label asp-for="OperativaCap" class="form-label"></label><input asp-for="OperativaCap" class="form-control" inputmode="numeric" maxlength="5" /><span asp-validation-for="OperativaCap" class="text-danger"></span></div>
+            <div class="col-md-3"><label asp-for="OperativaComune" class="form-label"></label><input asp-for="OperativaComune" class="form-control" /><span asp-validation-for="OperativaComune" class="text-danger"></span></div>
+            <div class="col-md-1"><label asp-for="OperativaProvincia" class="form-label">Prov.</label><input asp-for="OperativaProvincia" class="form-control text-uppercase" maxlength="2" /><span asp-validation-for="OperativaProvincia" class="text-danger"></span></div>
+        </div>
+    </div>
+
+    <h3 class="h6 mt-4">Santo patrono del comune in cui si lavora</h3>
+    <p class="small text-body-secondary mb-2">È un giorno festivo per i dipendenti: serve per calcolare correttamente ferie e permessi. Lascia vuoto se non lo conosci, lo indicherà lo studio.</p>
+    <div class="row g-3">
+        <div class="col-md-2"><label asp-for="PatronoGiorno" class="form-label"></label><input asp-for="PatronoGiorno" type="number" min="1" max="31" class="form-control" /><span asp-validation-for="PatronoGiorno" class="text-danger"></span></div>
+        <div class="col-md-3">
+            <label asp-for="PatronoMese" class="form-label"></label>
+            <select asp-for="PatronoMese" class="form-select" asp-items="CL.Web.Controllers.CaricaBusteForm.Mesi"><option value="">—</option></select>
+        </div>
+    </div>
+    <partial name="_Pulsanti" model="2" />
+</form>

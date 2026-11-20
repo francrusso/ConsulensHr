@@ -19,6 +19,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : Ident
     public DbSet<RichiestaAssenza> RichiesteAssenza => Set<RichiestaAssenza>();
     public DbSet<SaldoIniziale> SaldiIniziali => Set<SaldoIniziale>();
     public DbSet<BustaPaga> BustePaga => Set<BustaPaga>();
+    public DbSet<ProfiloAzienda> ProfiliAzienda => Set<ProfiloAzienda>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

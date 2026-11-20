@@ -1,0 +1,65 @@
+@model CL.Web.Controllers.OnboardingViewModel
+@using CL.Web.Controllers
+@{
+    ViewData["Title"] = Model.Profilo.Completato || Model.PerContoAzienda ? "Profilo azienda" : "Benvenuto in Consulens HR";
+    var p = Model.Profilo;
+    var aziendaId = Model.PerContoAzienda ? Model.AziendaId : (Guid?)null;
+    if (aziendaId is not null) ViewData["AziendaIdOnboarding"] = aziendaId; // i form dello studio indicano l'azienda
+}
+<div class="breadcrumb-titolo mb-3">
+    <div>
+        @if (Model.PerContoAzienda)
+        {
+            <a asp-controller="Aziende" asp-action="Dettaglio" asp-route-id="@Model.AziendaId" class="small text-body-secondary"><i class="ri-arrow-left-s-line" aria-hidden="true"></i> @Model.Azienda.RagioneSociale</a>
+        }
+        <h1 class="titolo-pagina mb-0">@(Model.PerContoAzienda ? "Profilo di " + Model.Azienda.RagioneSociale : ViewData["Title"])</h1>
+        @if (!p.Completato && !Model.PerContoAzienda)
+        {
+            <p class="text-body-secondary mb-0">Prima di iniziare servono alcune informazioni sull'azienda: lo studio le usa per gestire assunzioni, paghe e adempimenti. Ci vogliono circa 10 minuti e puoi interrompere quando vuoi: i dati di ogni passo restano salvati.</p>
+        }
+    </div>
+</div>
+
+<nav aria-label="Passi del profilo" class="mb-4">
+    <ol class="passi-onboarding">
+        @for (var i = 1; i <= OnboardingViewModel.Titoli.Length; i++)
+        {
+            var stato = i == Model.Passo ? "corrente" : i < p.Passo || p.Completato ? "fatto" : "da-fare";
+            <li class="passo-@stato">
+                @if (stato != "da-fare" && i != Model.Passo)
+                {
+                    <a asp-action="Index" asp-route-aziendaId="@aziendaId" asp-route-passo="@i"><span class="numero">@(stato == "fatto" ? "✓" : i.ToString())</span><span class="titolo">@OnboardingViewModel.Titoli[i - 1]</span></a>
+                }
+                else
+                {
+                    <span aria-current="@(i == Model.Passo ? "step" : null)"><span class="numero">@i</span><span class="titolo">@OnboardingViewModel.Titoli[i - 1]</span></span>
+                }
+            </li>
+        }
+    </ol>
+</nav>
+
+<section class="card radius-15 p-4" aria-labelledby="titoloPasso">
+    <h2 class="h5 mb-1" id="titoloPasso">@Model.Passo. @OnboardingViewModel.Titoli[Model.Passo - 1]</h2>
+    @switch (Model.Passo)
+    {
+        case 1: <partial name="_Societari" model="(SocietariForm)Model.Form!" view-data="ViewData" /> break;
+        case 2: <partial name="_Sedi" model="(SediForm)Model.Form!" view-data="ViewData" /> break;
+        case 3: <partial name="_Legale" model="(LegaleForm)Model.Form!" view-data="ViewData" /> break;
+        case 4: <partial name="_Posizioni" model="(PosizioniForm)Model.Form!" view-data="ViewData" /> break;
+        case 5: <partial name="_Paghe" model="(PagheForm)Model.Form!" view-data="ViewData" /> break;
+        default: <partial name="_Riepilogo" model="Model" /> break;
+    }
+</section>
+
+@section Scripts {
+    <script>
+        // Sede operativa: i campi compaiono solo se diversa dalla legale.
+        const diversa = document.getElementById('OperativaDiversa');
+        if (diversa) {
+            const campi = document.getElementById('campiOperativa');
+            const aggiorna = () => campi.hidden = !diversa.checked;
+            diversa.addEventListener('change', aggiorna); aggiorna();
+        }
+    </script>
+}

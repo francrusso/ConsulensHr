@@ -52,8 +52,13 @@ public sealed class AppFactory : WebApplicationFactory<Program>
         return host;
     }
 
-    public async Task<ApplicationUser> CreaUtente(string email, string ruolo, Guid? aziendaId = null)
+    /// <summary>
+    /// Crea un utente con password <see cref="PasswordTest"/>. Per un referente segna anche il profilo
+    /// dell'azienda come completo (salvo <paramref name="profiloCompleto"/> = false), altrimenti finirebbe nel percorso guidato.
+    /// </summary>
+    public async Task<ApplicationUser> CreaUtente(string email, string ruolo, Guid? aziendaId = null, bool profiloCompleto = true)
     {
+        if (ruolo == Ruoli.Azienda && aziendaId is { } az && profiloCompleto) await CompletaProfilo(az);
         using var scope = Services.CreateScope();
         var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
         var u = new ApplicationUser { UserName = email, Email = email, Nome = "Test", Cognome = ruolo, AziendaId = aziendaId };
@@ -62,6 +67,21 @@ public sealed class AppFactory : WebApplicationFactory<Program>
         await users.AddToRoleAsync(u, ruolo);
         return u;
     }
+
+    /// <summary>Profilo azienda compilato con dati di prova validi (idempotente).</summary>
+    public Task CompletaProfilo(Guid aziendaId) => ConDb(async db =>
+    {
+        if (await db.ProfiliAzienda.AnyAsync(p => p.AziendaId == aziendaId)) return 0;
+        var p = new CL.Domain.Aziende.ProfiloAzienda(aziendaId);
+        p.ImpostaDatiSocietari(new("S.r.l.", null, "47.11.10", null, "pec@test.it", null));
+        p.ImpostaSedi(new("Via Roma 1", "20100", "Milano", "MI"), null);
+        p.ImpostaLegaleRappresentante(new("Mario", "Rossi", CL.Domain.ValueObjects.CodiceFiscale.Parse("RSSMRA85T10A562S"), null, null));
+        p.ImpostaPosizioni(new("Commercio", "1234567890", "12345678", "87654321", null, null, null, 5, 40));
+        p.ImpostaPaghe(new(null, 27, "Laura Bianchi", "paghe@test.it", null, null));
+        p.Completa(true, "test", DateTime.UtcNow);
+        db.ProfiliAzienda.Add(p);
+        return await db.SaveChangesAsync();
+    });
 
     public async Task<T> ConDb<T>(Func<AppDbContext, Task<T>> f)
     {

@@ -21,9 +21,13 @@
         <div class="invoice-filter-toolbar">
             <div>
                 <select name="stato" class="form-select" aria-label="Stato della richiesta">
-                    @if (!Utente.IsDipendente)
+                    @if (Utente.IsAzienda)
                     {
                         <option value="InAttesa" selected="@(Model.Stato == StatoRichiesta.InAttesa)">Da approvare</option>
+                    }
+                    else if (Utente.IsConsulente)
+                    {
+                        <option value="InAttesa" selected="@(Model.Stato == StatoRichiesta.InAttesa)">In attesa dell'azienda</option>
                     }
                     else
                     {
@@ -56,5 +60,5 @@
         </div>
     </form>
 
-    <partial name="_TabellaRichieste" model="(Model.Richieste, gestore, gestore, Utente.IsConsulente, Model.Oggi, ritorno)" />
+    <partial name="_TabellaRichieste" model="(Model.Richieste, Utente.IsAzienda, gestore, Utente.IsConsulente, Model.Oggi, ritorno)" />
 </section>

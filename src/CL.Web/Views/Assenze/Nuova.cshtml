@@ -67,7 +67,7 @@
             <textarea asp-for="Note" class="form-control" rows="2"></textarea>
         </div>
 
-        @if (gestore)
+        @if (ViewBag.PuoApprovare == true)
         {
             <div class="col-12">
                 <div class="form-check">
@@ -75,6 +75,12 @@
                     <label asp-for="ApprovaSubito" class="form-check-label"></label>
                     <div class="form-text">Togli la spunta per lasciarla in attesa di approvazione.</div>
                 </div>
+            </div>
+        }
+        else if (gestore)
+        {
+            <div class="col-12">
+                <p class="form-text mb-0"><i class="ri-information-line" aria-hidden="true"></i> Ferie, ROL e permessi registrati dallo studio restano <strong>in attesa dell'approvazione dell'azienda</strong>; malattia e altre assenze documentate sono registrate subito.</p>
             </div>
         }
 

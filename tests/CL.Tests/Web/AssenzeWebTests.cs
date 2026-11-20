@@ -181,4 +181,40 @@ public sealed class AssenzeWebTests : IDisposable
         Assert.Contains("Saldo Ferie insufficiente", await Testo(r));
         Assert.Equal(0, await _app.ConDb(db => db.RichiesteAssenza.CountAsync()));
     }
+
+    [Fact]
+    public async Task Lo_studio_non_decide_le_ferie_che_restano_in_attesa_dell_azienda()
+    {
+        var studio = await Prepara(Ruoli.Consulente);
+        var giorno = DateOnly.FromDateTime(DateTime.Today).AddDays(30);
+        while (!CalendarioLavorativo.IsLavorativo(giorno, 5)) giorno = giorno.AddDays(1);
+        if (giorno.Year != DateTime.Today.Year) return;
+
+        // Anche con "approva subito" (campo non mostrato allo studio) la richiesta resta in attesa.
+        var r = await studio.InviaForm("/Assenze/Nuova", "/Assenze/Nuova", new()
+        {
+            ["DipendenteId"] = _dipId.ToString(), ["Tipo"] = "Ferie", ["Dal"] = giorno.ToString("yyyy-MM-dd"), ["ApprovaSubito"] = "true",
+        });
+        Assert.Contains("in attesa di approvazione dell'azienda", await Testo(r));
+        var richiesta = await _app.ConDb(db => db.RichiesteAssenza.SingleAsync());
+        Assert.Equal(StatoRichiesta.InAttesa, richiesta.Stato);
+
+        var html = WebUtility.HtmlDecode(await studio.GetStringAsync("/Assenze"));
+        Assert.Contains("In attesa dell'azienda", html);
+        Assert.DoesNotContain("modaleRifiuto", html); // nessun pulsante approva/rifiuta per lo studio
+
+        r = await studio.InviaForm("/Assenze", $"/Assenze/Approva/{richiesta.Id}", new());
+        Assert.Contains("/Account/AccessoNegato", r.RequestMessage!.RequestUri!.AbsolutePath);
+        r = await studio.InviaForm("/Assenze", $"/Assenze/Annulla/{richiesta.Id}", new());
+        Assert.Contains("/Account/AccessoNegato", r.RequestMessage!.RequestUri!.AbsolutePath);
+        Assert.Equal(StatoRichiesta.InAttesa, (await _app.ConDb(db => db.RichiesteAssenza.SingleAsync())).Stato);
+
+        // Il referente dell'azienda la approva.
+        await _app.CreaUtente("hr@acme.test", Ruoli.Azienda, _aziendaId);
+        var hr = _app.CreateClient();
+        await hr.Accedi("hr@acme.test");
+        r = await hr.InviaForm("/Assenze", $"/Assenze/Approva/{richiesta.Id}", new());
+        Assert.Contains("Richiesta approvata", await Testo(r));
+        Assert.Empty(_app.ErroriServer);
+    }
 }

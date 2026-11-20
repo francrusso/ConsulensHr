@@ -1,0 +1,53 @@
+@model CL.Web.Controllers.SocietariForm
+<p class="small text-body-secondary">Come risultano dalla visura camerale.</p>
+<form asp-action="Societari" method="post" novalidate>
+    <partial name="_AziendaId" />
+    <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+    <div class="row g-3">
+        <div class="col-md-8">
+            <label asp-for="RagioneSociale" class="form-label"></label>
+            <input asp-for="RagioneSociale" class="form-control" />
+            <span asp-validation-for="RagioneSociale" class="text-danger"></span>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="FormaGiuridica" class="form-label"></label>
+            <select asp-for="FormaGiuridica" class="form-select" asp-items="CL.Web.Controllers.SocietariForm.Forme.Select(f => new SelectListItem(f, f))">
+                <option value="">Seleziona…</option>
+            </select>
+            <span asp-validation-for="FormaGiuridica" class="text-danger"></span>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="CodiceFiscale" class="form-label"></label>
+            <input asp-for="CodiceFiscale" class="form-control text-uppercase" />
+            <div class="form-text">Se diverso dalla partita IVA.</div>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="NumeroRea" class="form-label"></label>
+            <input asp-for="NumeroRea" class="form-control text-uppercase" placeholder="MI-1234567" />
+        </div>
+        <div class="col-md-4">
+            <label asp-for="DataInizioAttivita" class="form-label"></label>
+            <input asp-for="DataInizioAttivita" type="date" class="form-control" />
+        </div>
+        <div class="col-md-4">
+            <label asp-for="CodiceAteco" class="form-label"></label>
+            <input asp-for="CodiceAteco" class="form-control" placeholder="47.11.10" />
+            <span asp-validation-for="CodiceAteco" class="text-danger"></span>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="Pec" class="form-label"></label>
+            <input asp-for="Pec" type="email" class="form-control" />
+            <span asp-validation-for="Pec" class="text-danger"></span>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="Email" class="form-label"></label>
+            <input asp-for="Email" type="email" class="form-control" />
+            <span asp-validation-for="Email" class="text-danger"></span>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="Telefono" class="form-label"></label>
+            <input asp-for="Telefono" type="tel" class="form-control" />
+        </div>
+    </div>
+    <partial name="_Pulsanti" model="1" />
+</form>

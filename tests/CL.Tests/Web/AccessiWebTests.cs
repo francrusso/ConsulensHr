@@ -72,6 +72,7 @@ public sealed partial class AccessiWebTests : IDisposable
         var (aziendaId, _) = await Dati();
         await Dati(null, "12345678903"); // seconda azienda, non deve vederla
         var studio = await Consulente();
+        await _app.CompletaProfilo(aziendaId); // il percorso guidato ha i suoi test
 
         var r = await studio.InviaForm($"/Aziende/Dettaglio/{aziendaId}", "/Utenti/InvitaReferente", new()
         {

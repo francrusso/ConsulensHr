@@ -160,7 +160,7 @@
     <p class="small text-body-secondary mt-2">Maturato calcolato fino a @oggi.ToString("MMMM yyyy") in dodicesimi (il mese matura con almeno 15 giorni di rapporto).</p>
 
     <div class="mt-3">
-        <partial name="~/Views/Assenze/_TabellaRichieste.cshtml" model="(richieste, true, false, false, oggi, ritorno)" />
+        <partial name="~/Views/Assenze/_TabellaRichieste.cshtml" model="(richieste, Utente.IsAzienda, false, false, oggi, ritorno)" />
     </div>
 </section>
 

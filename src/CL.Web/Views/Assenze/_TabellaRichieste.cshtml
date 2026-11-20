@@ -1,5 +1,7 @@
-@model (List<CL.Web.Controllers.RichiestaRiga> Righe, bool Gestore, bool MostraDipendente, bool MostraAzienda, DateOnly Oggi, string Ritorno)
+@model (List<CL.Web.Controllers.RichiestaRiga> Righe, bool PuoApprovare, bool MostraDipendente, bool MostraAzienda, DateOnly Oggi, string Ritorno)
+@inject UtenteCorrente Utente
 @{
+    @* Approva/rifiuta: solo il referente dell'azienda. Lo studio annulla solo assenze che non richiedono approvazione. *@
     var (righe, gestore, mostraDipendente, mostraAzienda, oggi, ritorno) = Model;
     var colonne = 5 + (mostraDipendente ? 1 : 0) + (mostraAzienda ? 1 : 0);
 }
@@ -23,7 +25,8 @@
             }
             @foreach (var r in righe)
             {
-                var annullabile = r.Stato == StatoRichiesta.InAttesa || (r.Stato == StatoRichiesta.Approvata && r.Dal > oggi);
+                var annullabile = (r.Stato == StatoRichiesta.InAttesa || (r.Stato == StatoRichiesta.Approvata && r.Dal > oggi))
+                                  && (!Utente.IsConsulente || !r.Tipo.RichiedeApprovazione());
                 <tr class="customer-result-row">
                     @if (mostraDipendente)
                     {

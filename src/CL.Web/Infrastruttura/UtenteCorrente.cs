@@ -9,6 +9,8 @@ public static class Policy
     public const string SoloConsulente = nameof(SoloConsulente);
     /// <summary>Consulente (tutte le aziende) o referente HR di un'azienda (solo la propria).</summary>
     public const string GestionePersonale = nameof(GestionePersonale);
+    /// <summary>Ferie e permessi li decide l'azienda (referente), non lo studio.</summary>
+    public const string ApprovazioneAssenze = nameof(ApprovazioneAssenze);
 }
 
 /// <summary>Chi sta usando l'applicazione e cosa può vedere.</summary>

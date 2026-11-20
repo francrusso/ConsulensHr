@@ -416,3 +416,71 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261120092527_ProfiloAzienda') THEN
+    CREATE TABLE hr."ProfiliAzienda" (
+        "Id" uuid NOT NULL,
+        "AziendaId" uuid NOT NULL,
+        "Passo" integer NOT NULL,
+        "FormaGiuridica" character varying(150),
+        "NumeroRea" character varying(30),
+        "CodiceAteco" character varying(30),
+        "DataInizioAttivita" date,
+        "Pec" character varying(256),
+        "Telefono" character varying(30),
+        "SedeLegaleVia" character varying(300),
+        "SedeLegaleCap" character varying(5),
+        "SedeLegaleComune" character varying(150),
+        "SedeLegaleProvincia" character varying(2),
+        "SedeOperativaVia" character varying(300),
+        "SedeOperativaCap" character varying(5),
+        "SedeOperativaComune" character varying(150),
+        "SedeOperativaProvincia" character varying(2),
+        "LegaleNome" character varying(150),
+        "LegaleCognome" character varying(150),
+        "LegaleCodiceFiscale" character varying(16),
+        "LegaleEmail" character varying(256),
+        "LegaleTelefono" character varying(30),
+        "Ccnl" character varying(150),
+        "MatricolaInps" character varying(30),
+        "InailCodiceDitta" character varying(30),
+        "InailPat" character varying(30),
+        "CassaEdile" character varying(150),
+        "EnteBilaterale" character varying(150),
+        "FondoPensione" character varying(150),
+        "GiorniLavorativiSettimana" integer,
+        "OreSettimanali" numeric(5,2),
+        "IbanAddebito" character varying(34),
+        "GiornoPagamento" integer,
+        "ReferenteNome" character varying(150),
+        "ReferenteEmail" character varying(256),
+        "ReferenteTelefono" character varying(30),
+        "NoteStudio" character varying(2000),
+        "PrivacyAccettataIl" timestamp with time zone,
+        "CompletatoIl" timestamp with time zone,
+        "CompletatoDa" character varying(256),
+        CONSTRAINT "PK_ProfiliAzienda" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_ProfiliAzienda_Aziende_AziendaId" FOREIGN KEY ("AziendaId") REFERENCES hr."Aziende" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261120092527_ProfiloAzienda') THEN
+    CREATE UNIQUE INDEX "IX_ProfiliAzienda_AziendaId" ON hr."ProfiliAzienda" ("AziendaId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261120092527_ProfiloAzienda') THEN
+    INSERT INTO hr."__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261120092527_ProfiloAzienda', '10.0.15');
+    END IF;
+END $EF$;
+COMMIT;
+

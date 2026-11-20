@@ -161,6 +161,168 @@ namespace CL.Infrastructure.Persistence.Migrations
                     b.ToTable("Aziende", "hr");
                 });
 
+            modelBuilder.Entity("CL.Domain.Aziende.ProfiloAzienda", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AziendaId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CassaEdile")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<string>("Ccnl")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<string>("CodiceAteco")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("CompletatoDa")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<DateTime?>("CompletatoIl")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateOnly?>("DataInizioAttivita")
+                        .HasColumnType("date");
+
+                    b.Property<string>("EnteBilaterale")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<string>("FondoPensione")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<string>("FormaGiuridica")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<int?>("GiorniLavorativiSettimana")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("GiornoPagamento")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("IbanAddebito")
+                        .HasMaxLength(34)
+                        .HasColumnType("character varying(34)");
+
+                    b.Property<string>("InailCodiceDitta")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("InailPat")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("LegaleCodiceFiscale")
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<string>("LegaleCognome")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<string>("LegaleEmail")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("LegaleNome")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<string>("LegaleTelefono")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("MatricolaInps")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("NoteStudio")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("NumeroRea")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<decimal?>("OreSettimanali")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("numeric(5,2)");
+
+                    b.Property<int>("Passo")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Pec")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<DateTime?>("PrivacyAccettataIl")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ReferenteEmail")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("ReferenteNome")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<string>("ReferenteTelefono")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("SedeLegaleCap")
+                        .HasMaxLength(5)
+                        .HasColumnType("character varying(5)");
+
+                    b.Property<string>("SedeLegaleComune")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<string>("SedeLegaleProvincia")
+                        .HasMaxLength(2)
+                        .HasColumnType("character varying(2)");
+
+                    b.Property<string>("SedeLegaleVia")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("SedeOperativaCap")
+                        .HasMaxLength(5)
+                        .HasColumnType("character varying(5)");
+
+                    b.Property<string>("SedeOperativaComune")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<string>("SedeOperativaProvincia")
+                        .HasMaxLength(2)
+                        .HasColumnType("character varying(2)");
+
+                    b.Property<string>("SedeOperativaVia")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("Telefono")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AziendaId")
+                        .IsUnique();
+
+                    b.ToTable("ProfiliAzienda", "hr");
+                });
+
             modelBuilder.Entity("CL.Domain.BustePaga.BustaPaga", b =>
                 {
                     b.Property<Guid>("Id")
@@ -601,6 +763,15 @@ namespace CL.Infrastructure.Persistence.Migrations
                     b.HasOne("CL.Domain.Dipendenti.Dipendente", null)
                         .WithMany()
                         .HasForeignKey("DipendenteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("CL.Domain.Aziende.ProfiloAzienda", b =>
+                {
+                    b.HasOne("CL.Domain.Aziende.Azienda", null)
+                        .WithOne()
+                        .HasForeignKey("CL.Domain.Aziende.ProfiloAzienda", "AziendaId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

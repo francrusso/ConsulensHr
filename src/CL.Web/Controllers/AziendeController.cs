@@ -54,7 +54,7 @@ public sealed class AziendaForm
     };
 }
 
-public sealed record AziendaRiga(Guid Id, string RagioneSociale, string PartitaIva, string? Comune, bool Attiva, int Dipendenti);
+public sealed record AziendaRiga(Guid Id, string RagioneSociale, string PartitaIva, string? Comune, bool Attiva, int Dipendenti, bool ProfiloCompleto);
 
 [Authorize(Policy = Policy.SoloConsulente)]
 public sealed class AziendeController(AppDbContext db, ServizioAccessi accessi) : AppController
@@ -71,7 +71,8 @@ public sealed class AziendeController(AppDbContext db, ServizioAccessi accessi) 
         var righe = await query
             .OrderBy(a => a.RagioneSociale)
             .Select(a => new AziendaRiga(a.Id, a.RagioneSociale, ((string)(object)a.PartitaIva), a.Comune, a.Attiva,
-                db.Dipendenti.Count(d => d.AziendaId == a.Id)))
+                db.Dipendenti.Count(d => d.AziendaId == a.Id),
+                db.ProfiliAzienda.Any(p => p.AziendaId == a.Id && p.CompletatoIl != null)))
             .ToListAsync();
 
         ViewBag.Ricerca = q;
@@ -137,6 +138,7 @@ public sealed class AziendeController(AppDbContext db, ServizioAccessi accessi) 
             .Where(d => d.AziendaId == id)
             .OrderBy(d => d.Cognome).ThenBy(d => d.Nome)
             .ToListAsync();
+        ViewBag.Profilo = await db.ProfiliAzienda.AsNoTracking().FirstOrDefaultAsync(p => p.AziendaId == id);
         ViewBag.Referenti = await accessi.Elenco().Where(u => u.AziendaId == id && u.Ruolo == Ruoli.Azienda)
             .OrderBy(u => u.Nome).ToListAsync();
         return View(azienda);

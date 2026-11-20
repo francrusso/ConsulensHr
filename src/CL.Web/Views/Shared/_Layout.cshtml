@@ -6,6 +6,7 @@
 @{
     var autenticato = User.Identity?.IsAuthenticated == true && ViewData["AuthPanel"] is not true;
     var ruolo = Utente.IsConsulente ? "Consulente" : Utente.IsAzienda ? "Referente azienda" : Utente.IsDipendente ? "Dipendente" : "";
+    var inOnboarding = User.HasClaim(c => c.Type == CL.Infrastructure.Identity.ClaimsPersonalizzati.OnboardingDaCompletare);
 }
 <!DOCTYPE html>
 <html lang="it" class="@(ViewData["AuthPanel"] is true ? "auth-panel-page" : "")">
@@ -53,6 +54,17 @@
                 </div>
                 <div class="sidebar-body" data-simplebar="true">
                     <ul class="metismenu" id="menu">
+                        @if (inOnboarding)
+                        {
+                            <li>
+                                <a asp-controller="Onboarding" asp-action="Index">
+                                    <div class="parent-icon icon-color-1"><i class="ri-building-2-line ri-xs"></i></div>
+                                    <div class="menu-title">Profilo azienda</div>
+                                </a>
+                            </li>
+                        }
+                        else
+                        {
                         <li>
                             <a asp-controller="Home" asp-action="Index">
                                 <div class="parent-icon icon-color-1"><i class="ri-dashboard-line ri-xs"></i></div>
@@ -106,6 +118,16 @@
                                     <div class="menu-title">Referenti</div>
                                 </a>
                             </li>
+                        }
+                        @if (Utente.IsAzienda)
+                        {
+                            <li>
+                                <a asp-controller="Onboarding" asp-action="Index">
+                                    <div class="parent-icon icon-color-1"><i class="ri-building-2-line ri-xs"></i></div>
+                                    <div class="menu-title">Profilo azienda</div>
+                                </a>
+                            </li>
+                        }
                         }
                     </ul>
                 </div>

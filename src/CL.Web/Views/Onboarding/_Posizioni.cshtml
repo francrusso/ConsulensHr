@@ -1,0 +1,20 @@
+@model CL.Web.Controllers.PosizioniForm
+<p class="small text-body-secondary">Li trovi nelle comunicazioni di INPS e INAIL o nei cedolini dell'eventuale consulente precedente. Se l'azienda non ha ancora dipendenti e non li ha, scrivi "da aprire": se ne occuperà lo studio.</p>
+<form asp-action="Posizioni" method="post" novalidate>
+    <partial name="_AziendaId" />
+    <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+    <div class="row g-3">
+        <div class="col-md-6"><label asp-for="Ccnl" class="form-label"></label><input asp-for="Ccnl" class="form-control" placeholder="Commercio e terziario (Confcommercio)" /><span asp-validation-for="Ccnl" class="text-danger"></span></div>
+        <div class="col-md-3"><label asp-for="GiorniLavorativiSettimana" class="form-label"></label>
+            <select asp-for="GiorniLavorativiSettimana" class="form-select"><option value="5">5 (lunedì–venerdì)</option><option value="6">6 (lunedì–sabato)</option></select></div>
+        <div class="col-md-3"><label asp-for="OreSettimanali" class="form-label"></label><input asp-for="OreSettimanali" class="form-control" inputmode="decimal" /><span asp-validation-for="OreSettimanali" class="text-danger"></span></div>
+        <div class="col-md-4"><label asp-for="MatricolaInps" class="form-label"></label><input asp-for="MatricolaInps" class="form-control" /><span asp-validation-for="MatricolaInps" class="text-danger"></span></div>
+        <div class="col-md-4"><label asp-for="InailCodiceDitta" class="form-label"></label><input asp-for="InailCodiceDitta" class="form-control" /><span asp-validation-for="InailCodiceDitta" class="text-danger"></span></div>
+        <div class="col-md-4"><label asp-for="InailPat" class="form-label"></label><input asp-for="InailPat" class="form-control" /><span asp-validation-for="InailPat" class="text-danger"></span></div>
+        <div class="col-12"><p class="small text-body-secondary mb-0">Facoltativi, se previsti dal contratto:</p></div>
+        <div class="col-md-4"><label asp-for="CassaEdile" class="form-label"></label><input asp-for="CassaEdile" class="form-control" /></div>
+        <div class="col-md-4"><label asp-for="EnteBilaterale" class="form-label"></label><input asp-for="EnteBilaterale" class="form-control" /></div>
+        <div class="col-md-4"><label asp-for="FondoPensione" class="form-label"></label><input asp-for="FondoPensione" class="form-control" /></div>
+    </div>
+    <partial name="_Pulsanti" model="4" />
+</form>

@@ -1,0 +1,69 @@
+@model CL.Web.Controllers.OnboardingViewModel
+@{
+    var p = Model.Profilo;
+    var a = Model.Azienda;
+    var aziendaId = Model.PerContoAzienda ? Model.AziendaId : (Guid?)null;
+    string V(string? s) => string.IsNullOrWhiteSpace(s) ? "—" : s;
+    string Ind(CL.Domain.Aziende.Indirizzo? i) => i is null ? "—" : $"{i.Via}, {i.Cap} {i.Comune} ({i.Provincia})";
+}
+@if (p.Completato)
+{
+    <p class="small text-body-secondary">Completato il @p.CompletatoIl!.Value.ToLocalTime().ToString("dd/MM/yyyy") da @p.CompletatoDa. Puoi modificare ogni sezione: lo studio vede sempre i dati aggiornati.</p>
+}
+else
+{
+    <p class="small text-body-secondary">Controlla i dati: puoi tornare su ogni sezione per correggerli.</p>
+}
+<div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+
+<div class="row g-3 riepilogo-onboarding">
+    @{
+        var sezioni = new (int Passo, string Titolo, (string, string)[] Righe)[]
+        {
+            (1, "Dati societari", [("Ragione sociale", a.RagioneSociale), ("Forma giuridica", V(p.FormaGiuridica)), ("Partita IVA", a.PartitaIva.Valore),
+                ("Codice fiscale", V(a.CodiceFiscale)), ("REA", V(p.NumeroRea)), ("ATECO", V(p.CodiceAteco)),
+                ("Inizio attività", p.DataInizioAttivita?.ToString("dd/MM/yyyy") ?? "—"), ("PEC", V(p.Pec)), ("Email", V(a.Email)), ("Telefono", V(p.Telefono))]),
+            (2, "Sedi", [("Sede legale", Ind(p.SedeLegale)), ("Sede operativa", p.SedeOperativa is null ? "come la sede legale" : Ind(p.SedeOperativa)),
+                ("Santo patrono", a.SantoPatronoGiorno is { } g && a.SantoPatronoMese is { } m ? new DateTime(2024, m, g).ToString("d MMMM") : "—")]),
+            (3, "Legale rappresentante", [("Nome", V($"{p.LegaleNome} {p.LegaleCognome}".Trim())), ("Codice fiscale", V(p.LegaleCodiceFiscale?.Valore)),
+                ("Email", V(p.LegaleEmail)), ("Telefono", V(p.LegaleTelefono))]),
+            (4, "Contratto e posizioni", [("CCNL", V(p.Ccnl)), ("Settimana", p.GiorniLavorativiSettimana is { } gl ? $"{gl} giorni, {p.OreSettimanali:0.##} ore" : "—"),
+                ("Matricola INPS", V(p.MatricolaInps)), ("INAIL", p.InailCodiceDitta is null ? "—" : $"ditta {p.InailCodiceDitta} · PAT {p.InailPat}"),
+                ("Cassa Edile", V(p.CassaEdile)), ("Ente bilaterale", V(p.EnteBilaterale)), ("Previdenza complementare", V(p.FondoPensione))]),
+            (5, "Paghe e referente", [("IBAN", V(p.IbanAddebito?.Valore)), ("Pagamento stipendi", p.GiornoPagamento is { } gp ? $"il {gp} del mese" : "—"),
+                ("Referente paghe", V(p.ReferenteNome)), ("Email", V(p.ReferenteEmail)), ("Telefono", V(p.ReferenteTelefono)), ("Note", V(p.NoteStudio))]),
+        };
+    }
+    @foreach (var s in sezioni)
+    {
+        <div class="col-lg-6">
+            <div class="border radius-15 p-3 h-100">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h3 class="h6 mb-0">@s.Titolo</h3>
+                    <a asp-action="Index" asp-route-aziendaId="@aziendaId" asp-route-passo="@s.Passo" class="small"><i class="ri-pencil-line" aria-hidden="true"></i> Modifica</a>
+                </div>
+                <dl class="scheda mb-0">
+                    @foreach (var (etichetta, valore) in s.Righe) { <dt>@etichetta</dt><dd>@valore</dd> }
+                </dl>
+            </div>
+        </div>
+    }
+</div>
+
+@if (!p.Completato)
+{
+    <form asp-action="Conferma" method="post" class="border-top pt-3 mt-4">
+        <partial name="_AziendaId" />
+        <div class="form-check mb-3">
+            <input class="form-check-input" type="checkbox" id="privacy" name="privacy" value="true" required />
+            <label class="form-check-label" for="privacy">
+                Confermo che i dati sono corretti e di aver preso visione dell'informativa sul trattamento dei dati personali:
+                lo studio tratterà i dati dell'azienda e dei dipendenti come responsabile del trattamento (art. 28 GDPR) per la gestione degli adempimenti di lavoro.
+            </label>
+        </div>
+        <div class="d-flex justify-content-between">
+            <a asp-action="Index" asp-route-aziendaId="@aziendaId" asp-route-passo="5" class="btn btn-outline-secondary"><i class="ri-arrow-left-line" aria-hidden="true"></i> Indietro</a>
+            <button type="submit" class="btn btn-primary"><i class="ri-check-line" aria-hidden="true"></i> Conferma e invia allo studio</button>
+        </div>
+    </form>
+}

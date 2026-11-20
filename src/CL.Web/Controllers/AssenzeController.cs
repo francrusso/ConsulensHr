@@ -60,7 +60,7 @@ public sealed class AssenzeViewModel
 }
 
 [Authorize]
-public sealed class AssenzeController(AppDbContext db, UtenteCorrente utente, ServizioSaldi saldi, TimeProvider clock) : AppController
+public sealed class AssenzeController(AppDbContext db, UtenteCorrente utente, ServizioSaldi saldi, NotificheAssenze notifiche, TimeProvider clock) : AppController
 {
     private DateOnly Oggi => DateOnly.FromDateTime(clock.GetLocalNow().DateTime);
     private DateTime AdessoUtc => clock.GetUtcNow().UtcDateTime;
@@ -155,21 +155,23 @@ public sealed class AssenzeController(AppDbContext db, UtenteCorrente utente, Se
                 form.AOre ? form.Ore : null, disponibile, form.Note, form.ProtocolloCertificato)))
             return await MostraForm(form);
 
-        if (Gestore && form.ApprovaSubito && richiesta!.Stato == StatoRichiesta.InAttesa)
+        // Solo l'azienda decide: se registra lo studio, ferie e permessi restano in attesa del referente.
+        if (utente.IsAzienda && form.ApprovaSubito && richiesta!.Stato == StatoRichiesta.InAttesa)
             richiesta.Approva(utente.Email, AdessoUtc);
 
         db.RichiesteAssenza.Add(richiesta!);
         await db.SaveChangesAsync();
+        await notifiche.NuovaRichiestaAsync(richiesta!);
 
         Conferma(richiesta!.Stato == StatoRichiesta.Approvata
             ? $"{richiesta.Tipo.Descrizione()} registrata: {richiesta.Ore:0.##} ore."
-            : $"Richiesta di {richiesta.Tipo.Descrizione().ToLower()} inviata ({richiesta.Ore:0.##} ore): in attesa di approvazione.");
+            : $"Richiesta di {richiesta.Tipo.Descrizione().ToLower()} inviata ({richiesta.Ore:0.##} ore): in attesa di approvazione dell'azienda.");
         return utente.IsDipendente
             ? RedirectToAction(nameof(Index))
             : RedirectToAction("Dettaglio", "Dipendenti", new { id = dip.Id });
     }
 
-    [HttpPost, ValidateAntiForgeryToken, Authorize(Policy = Policy.GestionePersonale)]
+    [HttpPost, ValidateAntiForgeryToken, Authorize(Policy = Policy.ApprovazioneAssenze)]
     public async Task<IActionResult> Approva(Guid id, string? ritorno)
     {
         var r = await Trova(id);
@@ -177,13 +179,14 @@ public sealed class AssenzeController(AppDbContext db, UtenteCorrente utente, Se
         if (Prova(() => r.Approva(utente.Email, AdessoUtc)))
         {
             await db.SaveChangesAsync();
+            await notifiche.EsitoAsync(r);
             Conferma("Richiesta approvata.");
         }
         else Errore(PrimoErrore());
         return Torna(ritorno);
     }
 
-    [HttpPost, ValidateAntiForgeryToken, Authorize(Policy = Policy.GestionePersonale)]
+    [HttpPost, ValidateAntiForgeryToken, Authorize(Policy = Policy.ApprovazioneAssenze)]
     public async Task<IActionResult> Rifiuta(Guid id, string? motivo, string? ritorno)
     {
         var r = await Trova(id);
@@ -191,6 +194,7 @@ public sealed class AssenzeController(AppDbContext db, UtenteCorrente utente, Se
         if (Prova(() => r.Rifiuta(utente.Email, motivo ?? "", AdessoUtc)))
         {
             await db.SaveChangesAsync();
+            await notifiche.EsitoAsync(r);
             Conferma("Richiesta rifiutata.");
         }
         else Errore(PrimoErrore());
@@ -202,6 +206,7 @@ public sealed class AssenzeController(AppDbContext db, UtenteCorrente utente, Se
     {
         var r = await Trova(id);
         if (r is null) return NotFound();
+        if (!PuoAnnullare(r.Tipo)) return Forbid();
         if (Prova(() => r.Annulla(Oggi)))
         {
             await db.SaveChangesAsync();
@@ -235,6 +240,9 @@ public sealed class AssenzeController(AppDbContext db, UtenteCorrente utente, Se
         return db.RichiesteAssenza.FirstOrDefaultAsync(r => r.Id == id && ids.Contains(r.DipendenteId));
     }
 
+    /// <summary>Lo studio annulla solo ciò che non richiede la decisione dell'azienda (es. malattia registrata per errore).</summary>
+    private bool PuoAnnullare(TipoAssenza tipo) => !utente.IsConsulente || !tipo.RichiedeApprovazione();
+
     private string PrimoErrore() => ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).FirstOrDefault() ?? "Operazione non riuscita.";
 
     private IActionResult Torna(string? ritorno) =>
@@ -243,6 +251,7 @@ public sealed class AssenzeController(AppDbContext db, UtenteCorrente utente, Se
     private async Task<IActionResult> MostraForm(RichiestaForm form)
     {
         ViewBag.Gestore = Gestore;
+        ViewBag.PuoApprovare = utente.IsAzienda;
         var scelto = form.DipendenteId;
         var attivo = Filtri.ContrattoAttivoIl(Oggi);
         // Filtro e proiezione nel database: solo id e nome dei dipendenti in forza (più quello già scelto).

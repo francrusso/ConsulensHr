@@ -65,3 +65,23 @@
 .customer-actions a:hover,
 .customer-actions button:not(.btn):hover { background: #f1e2d3; color: var(--consulens-accent); }
 .customer-actions button:not(.btn):focus-visible { outline: 2px solid var(--consulens-accent); outline-offset: 2px; }
+
+/* Percorso guidato (onboarding azienda) */
+.passi-onboarding { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; padding: 0; margin: 0; counter-reset: passo; }
+.passi-onboarding li { flex: 1 1 140px; }
+.passi-onboarding li > a, .passi-onboarding li > span {
+  display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 10px;
+  border: 1px solid var(--consulens-border); background: var(--consulens-surface); color: var(--consulens-muted);
+  font-size: .85rem; text-decoration: none; height: 100%;
+}
+.passi-onboarding .numero {
+  display: inline-flex; align-items: center; justify-content: center; flex: 0 0 26px; width: 26px; height: 26px;
+  border-radius: 50%; background: #f8efe5; color: var(--consulens-nav-text); font-weight: 600; font-size: .8rem;
+}
+.passi-onboarding .passo-corrente > span { border-color: var(--consulens-accent); color: var(--consulens-page-title); font-weight: 500; }
+.passi-onboarding .passo-corrente .numero { background: var(--consulens-accent); color: #fff; }
+.passi-onboarding .passo-fatto .numero { background: var(--consulens-badge-primary-bg); color: var(--consulens-accent); }
+.passi-onboarding .passo-fatto > a:hover { border-color: var(--consulens-accent); color: var(--consulens-page-title); }
+.passi-onboarding .passo-da-fare { opacity: .7; }
+.riepilogo-onboarding .scheda dd { margin-bottom: .5rem; }
+.riepilogo-onboarding .border { border-color: var(--consulens-border) !important; }
