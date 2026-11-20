@@ -1,15 +1,30 @@
 @model List<CL.Web.Controllers.DipendenteRiga>
 @inject CL.Web.Infrastruttura.UtenteCorrente Utente
 @{
-    ViewData["Title"] = "Dipendenti";
+    // Per il referente dell'azienda la sezione si chiama "Personale".
+    var p = Utente.IsAzienda;
+    ViewData["Title"] = p ? "Personale" : "Dipendenti";
     var aziende = ViewBag.Aziende as List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>;
     var tutti = (bool)ViewBag.Tutti;
+    var esterni = (bool)ViewBag.Esterni;
 }
 
-<div class="breadcrumb-titolo d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+<div class="breadcrumb-titolo d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
     <h1 class="titolo-pagina mb-0">@ViewData["Title"]</h1>
-    <a asp-action="Nuovo" asp-route-aziendaId="@ViewBag.AziendaId" class="btn btn-primary"><i class="ri-user-add-line" aria-hidden="true"></i> Nuovo dipendente</a>
+    <a asp-action="Nuovo" asp-route-aziendaId="@ViewBag.AziendaId" class="btn btn-primary"><i class="ri-user-add-line" aria-hidden="true"></i> @(esterni ? "Aggiungi professionista" : p ? "Aggiungi persona" : "Nuovo dipendente")</a>
 </div>
+
+@* Switch: lavoro dipendente / professionisti esterni (in base al contratto più recente). *@
+<nav class="switch-personale mb-3" aria-label="Tipo di rapporto">
+    <a asp-action="Index" asp-route-q="@ViewBag.Ricerca" asp-route-aziendaId="@ViewBag.AziendaId" asp-route-tutti="@(tutti ? true : (bool?)null)"
+       class="@(esterni ? "" : "attivo")" aria-current="@(esterni ? null : "page")">
+        <i class="ri-team-line" aria-hidden="true"></i> Personale dipendente <span class="conteggio">@ViewBag.NumeroDipendenti</span>
+    </a>
+    <a asp-action="Index" asp-route-q="@ViewBag.Ricerca" asp-route-aziendaId="@ViewBag.AziendaId" asp-route-tutti="@(tutti ? true : (bool?)null)" asp-route-esterni="true"
+       class="@(esterni ? "attivo" : "")" aria-current="@(esterni ? "page" : null)">
+        <i class="ri-briefcase-4-line" aria-hidden="true"></i> Professionisti esterni <span class="conteggio">@ViewBag.NumeroEsterni</span>
+    </a>
+</nav>
 
 <section class="customer-directory">
     <form asp-action="Index" method="get" class="invoice-filter-bar customer-filter-form">
@@ -17,7 +32,7 @@
             <div class="invoice-filter-client">
                 <div class="input-group">
                     <span class="input-group-text bg-transparent"><i class="ri-search-line" aria-hidden="true"></i></span>
-                    <input type="text" name="q" class="form-control" placeholder="Cerca per nome, cognome o codice fiscale" aria-label="Cerca dipendenti" value="@ViewBag.Ricerca" />
+                    <input type="text" name="q" class="form-control" placeholder="Cerca per nome, cognome o codice fiscale" aria-label="@(p ? "Cerca nel personale" : "Cerca dipendenti")" value="@ViewBag.Ricerca" />
                 </div>
             </div>
             @if (aziende is not null)
@@ -32,6 +47,7 @@
                 <input class="form-check-input" type="checkbox" role="switch" id="tutti" name="tutti" value="true" @(tutti ? "checked" : "") />
                 <label class="form-check-label" for="tutti">Includi cessati</label>
             </div>
+            @if (esterni) { <input type="hidden" name="esterni" value="true" /> }
             <div class="invoice-filter-actions"><button class="btn invoice-filter-submit" type="submit">Cerca <i class="ri-search-line" aria-hidden="true"></i></button></div>
         </div>
     </form>
@@ -40,10 +56,10 @@
         <table class="table mb-0">
             <thead>
                 <tr>
-                    <th scope="col">Dipendente</th>
+                    <th scope="col">@(esterni ? "Professionista" : p ? "Persona" : "Dipendente")</th>
                     <th scope="col">Codice fiscale</th>
                     @if (Utente.IsConsulente) { <th scope="col">Azienda</th> }
-                    <th scope="col">Livello</th>
+                    <th scope="col">@(esterni ? "Rapporto" : "Livello")</th>
                     <th scope="col">Stato</th>
                     <th scope="col" class="text-end">Azioni</th>
                 </tr>
@@ -51,23 +67,23 @@
             <tbody>
                 @if (Model.Count == 0)
                 {
-                    <tr><td colspan="6" class="text-center text-muted p-4">Nessun dipendente trovato</td></tr>
+                    <tr><td colspan="6" class="text-center text-muted p-4">@(esterni ? "Nessun professionista esterno" : p ? "Nessuna persona trovata" : "Nessun dipendente trovato")</td></tr>
                 }
                 @foreach (var d in Model)
                 {
                     <tr class="customer-result-row">
-                        <td data-label="Dipendente"><a class="customer-name" asp-action="Dettaglio" asp-route-id="@d.Id"><i class="ri-user-line" aria-hidden="true"></i><span>@d.NomeCompleto</span></a></td>
+                        <td data-label="@(p ? "Persona" : "Dipendente")"><a class="customer-name" asp-action="Dettaglio" asp-route-id="@d.Id"><i class="ri-user-line" aria-hidden="true"></i><span>@d.NomeCompleto</span></a></td>
                         <td data-label="Codice fiscale">@d.CodiceFiscale</td>
                         @if (Utente.IsConsulente) { <td data-label="Azienda">@d.Azienda</td> }
-                        <td data-label="Livello">@(d.Livello ?? "—")</td>
+                        <td data-label="@(esterni ? "Rapporto" : "Livello")">@(d.Inquadramento ?? "—")</td>
                         <td data-label="Stato">
                             @if (d.InForza) { <span class="badge bg-success">In forza</span> }
                             else { <span class="badge bg-secondary">Non in forza</span> }
                         </td>
                         <td data-label="Azioni">
                             <div class="customer-actions">
-                                <a asp-action="Dettaglio" asp-route-id="@d.Id" aria-label="Visualizza dipendente" title="Visualizza dipendente"><i class="ri-eye-line" aria-hidden="true"></i></a>
-                                <a asp-action="Modifica" asp-route-id="@d.Id" aria-label="Modifica dipendente" title="Modifica dipendente"><i class="ri-pencil-line" aria-hidden="true"></i></a>
+                                <a asp-action="Dettaglio" asp-route-id="@d.Id" aria-label="Visualizza scheda" title="Visualizza scheda"><i class="ri-eye-line" aria-hidden="true"></i></a>
+                                <a asp-action="Modifica" asp-route-id="@d.Id" aria-label="Modifica" title="Modifica"><i class="ri-pencil-line" aria-hidden="true"></i></a>
                             </div>
                         </td>
                     </tr>

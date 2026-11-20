@@ -15,7 +15,7 @@
 
 <div class="breadcrumb-titolo d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
     <div>
-        <a asp-action="Index" class="small text-body-secondary"><i class="ri-arrow-left-s-line" aria-hidden="true"></i> Dipendenti</a>
+        <a asp-action="Index" class="small text-body-secondary"><i class="ri-arrow-left-s-line" aria-hidden="true"></i> @(Utente.IsAzienda ? "Personale" : "Dipendenti")</a>
         <h1 class="titolo-pagina mb-0 d-flex align-items-center gap-2 flex-wrap">
             <img src="@(Model.FotoChiave is not null ? Url.Action("Foto", new { id = Model.Id }) : Url.Content($"~/assets/images/avatar/{Model.Segnaposto}.png"))" alt="" class="foto-dipendente" />
             @Model.NomeCompleto
@@ -96,7 +96,27 @@
     </div>
 
     <div class="col-lg-8 d-flex flex-column gap-3">
-        @if (attivo is not null)
+        @if (attivo is not null && !attivo.Tipo.IsSubordinato())
+        {
+            <section class="card radius-15 p-4">
+                <h2 class="h6 mb-3">Incarico in corso <span class="badge bg-info align-middle ms-1">Professionista esterno</span></h2>
+                <dl class="scheda mb-0 row">
+                    <div class="col-sm-6"><dt>Tipo di rapporto</dt><dd>@attivo.Tipo.Descrizione()</dd></div>
+                    <div class="col-sm-6"><dt>Attività</dt><dd>@(attivo.Mansione ?? "—")</dd></div>
+                    <div class="col-sm-6"><dt>Periodo</dt><dd>dal @attivo.DataInizio.ToString("dd/MM/yyyy")@(attivo.DataFine is { } fe ? $" al {fe:dd/MM/yyyy}" : "")</dd></div>
+                    <div class="col-sm-6"><dt>Compenso annuo lordo previsto</dt><dd>@(attivo.RetribuzioneLordaAnnua > 0 ? attivo.RetribuzioneLordaAnnua.ToString("C0") : "—")</dd></div>
+                </dl>
+                <form asp-action="Cessa" asp-route-id="@Model.Id" method="post" class="d-flex flex-wrap align-items-end gap-2 border-top pt-3 mt-2"
+                      onsubmit="return confirm('Confermi la chiusura dell\'incarico?');">
+                    <div>
+                        <label for="dataCessazioneEst" class="form-label small mb-1">Chiudi l'incarico al</label>
+                        <input type="date" id="dataCessazioneEst" name="dataCessazione" class="form-control form-control-sm" required />
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-outline-danger">Chiudi incarico</button>
+                </form>
+            </section>
+        }
+        else if (attivo is not null)
         {
             <section class="card radius-15 p-4">
                 <h2 class="h6 mb-3">Contratto in corso</h2>

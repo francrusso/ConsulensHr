@@ -25,7 +25,7 @@
     {
         <partial name="_Indicatore" model='("Aziende attive", Model.AziendeAttive.ToString(), "ri-building-line", Url.Action("Index", "Aziende"), (string?)null)' />
     }
-    <partial name="_Indicatore" model='("Dipendenti in forza", Model.DipendentiInForza.ToString(), "ri-team-line", Url.Action("Index", "Dipendenti"), (string?)null)' />
+    <partial name="_Indicatore" model='(Utente.IsAzienda ? "Personale in forza" : "Dipendenti in forza", Model.DipendentiInForza.ToString(), "ri-team-line", Url.Action("Index", "Dipendenti"), (string?)null)' />
     <partial name="_Indicatore" model='(Utente.IsConsulente ? "Richieste in attesa delle aziende" : "Richieste da approvare", Model.RichiesteInAttesa.ToString(), "ri-calendar-check-line", Url.Action("Index", "Assenze"), (string?)null)' />
     @if (Model.Presenze is { } p)
     {

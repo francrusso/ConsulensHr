@@ -1,5 +1,6 @@
 using CL.Domain.Assenze;
 using CL.Domain.BustePaga;
+using CL.Domain.Dipendenti;
 using CL.Domain.Presenze;
 using CL.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -88,7 +89,8 @@ public sealed class ServizioPanoramica(AppDbContext db, UtenteCorrente utente, T
         }
 
         // Ferie dell'anno per dipendente in forza oggi: godute, disponibili, in attesa di approvazione.
-        var ferie = dipendenti.Where(d => d.InForzaIl(oggi))
+        // Solo il lavoro dipendente: i professionisti esterni non maturano ferie.
+        var ferie = dipendenti.Where(d => d.ContrattoAttivo(oggi) is { } c && c.Tipo.IsSubordinato())
             .Select(d =>
             {
                 var s = CalcoloSaldi.Calcola(d, TipoAssenza.Ferie, oggi.Year, oggi.Month,

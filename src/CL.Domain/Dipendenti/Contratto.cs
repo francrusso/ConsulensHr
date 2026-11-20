@@ -11,8 +11,21 @@ public static class TipoContrattoExtensions
         TipoContratto.Apprendistato => "Apprendistato",
         TipoContratto.Intermittente => "Intermittente",
         TipoContratto.Somministrazione => "Somministrazione",
+        TipoContratto.Collaborazione => "Collaborazione (co.co.co.)",
+        TipoContratto.LavoroAutonomo => "Partita IVA / lavoro autonomo",
+        TipoContratto.PrestazioneOccasionale => "Prestazione occasionale",
+        TipoContratto.Tirocinio => "Tirocinio / stage",
+        TipoContratto.Altro => "Altro rapporto non dipendente",
         _ => tipo.ToString(),
     };
+
+    /// <summary>Lavoro dipendente (subordinato): matura ferie e permessi e compare nel foglio presenze.</summary>
+    public static bool IsSubordinato(this TipoContratto tipo) => tipo is TipoContratto.TempoIndeterminato or TipoContratto.TempoDeterminato
+        or TipoContratto.Apprendistato or TipoContratto.Intermittente or TipoContratto.Somministrazione;
+
+    /// <summary>Tipi dei professionisti esterni (collaborazioni, partite IVA, occasionali, tirocini, altro).</summary>
+    public static readonly IReadOnlyList<TipoContratto> Esterni =
+        [TipoContratto.Collaborazione, TipoContratto.LavoroAutonomo, TipoContratto.PrestazioneOccasionale, TipoContratto.Tirocinio, TipoContratto.Altro];
 }
 
 public enum TipoContratto
@@ -22,6 +35,12 @@ public enum TipoContratto
     Apprendistato,
     Intermittente,
     Somministrazione,
+    // Professionisti esterni (non lavoro dipendente)
+    Collaborazione,
+    LavoroAutonomo,
+    PrestazioneOccasionale,
+    Tirocinio,
+    Altro,
 }
 
 /// <summary>
@@ -75,8 +94,18 @@ public sealed class Contratto : Entity
 
         DipendenteId = dipendenteId;
         Tipo = tipo;
-        Ccnl = Guard.NotEmpty(ccnl, "CCNL");
-        Livello = Guard.NotEmpty(livello, "Livello");
+        if (tipo.IsSubordinato())
+        {
+            Ccnl = Guard.NotEmpty(ccnl, "CCNL");
+            Livello = Guard.NotEmpty(livello, "Livello");
+        }
+        else
+        {
+            // Rapporti esterni: CCNL e livello facoltativi, niente ferie/ROL/ex-festività da maturare.
+            Ccnl = ccnl?.Trim() ?? "";
+            Livello = livello?.Trim() ?? "";
+            (oreFerieAnnue, oreRolAnnue, oreExFestivitaAnnue) = (0, 0, 0);
+        }
         Mansione = mansione?.Trim();
         DataInizio = dataInizio;
         DataFine = dataFine;

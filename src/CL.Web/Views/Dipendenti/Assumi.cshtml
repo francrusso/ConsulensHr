@@ -4,10 +4,10 @@
 }
 
 <a asp-action="Dettaglio" asp-route-id="@Model.DipendenteId" class="small text-body-secondary"><i class="ri-arrow-left-s-line" aria-hidden="true"></i> @Model.NomeDipendente</a>
-<h1 class="titolo-pagina mb-3">Nuovo contratto · @Model.NomeDipendente</h1>
+<h1 class="titolo-pagina mb-3"><span class="solo-dipendente">Nuovo contratto</span><span class="solo-esterno">Nuovo incarico</span> · @Model.NomeDipendente</h1>
 
 <div class="card radius-15 p-4">
-    <form asp-action="Assumi" method="post" class="row g-3" novalidate>
+    <form asp-action="Assumi" method="post" class="row g-3" id="formContratto" novalidate>
         <div asp-validation-summary="All" class="alert alert-danger radius-15" role="alert"></div>
         <input type="hidden" asp-for="DipendenteId" />
 
@@ -15,6 +15,7 @@
         <div class="col-md-4">
             <label asp-for="Tipo" class="form-label"></label>
             <select asp-for="Tipo" asp-items="CL.Web.Controllers.ContrattoForm.Tipi" class="form-select"></select>
+            <div class="form-text solo-esterno">Professionista esterno: niente CCNL, orario né ferie da maturare.</div>
         </div>
         <div class="col-md-4">
             <label asp-for="DataInizio" class="form-label"></label>
@@ -25,11 +26,11 @@
             <input asp-for="DataFine" type="date" class="form-control" />
             <div class="form-text">Obbligatoria per il tempo determinato.</div>
         </div>
-        <div class="col-md-6">
+        <div class="col-md-6 solo-dipendente">
             <label asp-for="Ccnl" class="form-label"></label>
             <input asp-for="Ccnl" class="form-control" placeholder="es. Commercio – Terziario Confcommercio" aria-required="true" />
         </div>
-        <div class="col-md-2">
+        <div class="col-md-2 solo-dipendente">
             <label asp-for="Livello" class="form-label"></label>
             <input asp-for="Livello" class="form-control" aria-required="true" />
         </div>
@@ -38,25 +39,25 @@
             <input asp-for="Mansione" class="form-control" />
         </div>
 
-        <h2 class="h6 col-12 mt-4 mb-0">Retribuzione e orario</h2>
+        <h2 class="h6 col-12 mt-4 mb-0"><span class="solo-dipendente">Retribuzione e orario</span><span class="solo-esterno">Compenso</span></h2>
         <div class="col-md-4">
-            <label asp-for="RetribuzioneLordaAnnua" class="form-label"></label>
+            <label asp-for="RetribuzioneLordaAnnua" class="form-label"><span class="solo-dipendente">Retribuzione lorda annua (€)</span><span class="solo-esterno">Compenso annuo lordo previsto (€)</span></label>
             <input asp-for="RetribuzioneLordaAnnua" type="text" inputmode="decimal" class="form-control" placeholder="es. 28000,00" aria-required="true" />
         </div>
-        <div class="col-md-2">
+        <div class="col-md-2 solo-dipendente">
             <label asp-for="MensilitaAnnue" class="form-label"></label>
             <input asp-for="MensilitaAnnue" type="number" min="12" max="16" class="form-control" />
         </div>
-        <div class="col-md-3">
+        <div class="col-md-3 solo-dipendente">
             <label asp-for="OreSettimanaliFullTime" class="form-label"></label>
             <input asp-for="OreSettimanaliFullTime" type="text" inputmode="decimal" class="form-control" />
         </div>
-        <div class="col-md-3">
+        <div class="col-md-3 solo-dipendente">
             <label asp-for="PercentualePartTime" class="form-label"></label>
             <input asp-for="PercentualePartTime" type="text" inputmode="decimal" class="form-control" />
             <div class="form-text">100 = full-time.</div>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-3 solo-dipendente">
             <label asp-for="GiorniLavorativiSettimana" class="form-label"></label>
             <select asp-for="GiorniLavorativiSettimana" class="form-select">
                 <option value="5">5 (lun–ven)</option>
@@ -64,17 +65,17 @@
             </select>
         </div>
 
-        <h2 class="h6 col-12 mt-4 mb-0">Spettanze annue da CCNL</h2>
-        <p class="col-12 text-body-secondary small mb-0">Valori riferiti al full-time: per i part-time vengono riproporzionati automaticamente.</p>
-        <div class="col-md-4">
+        <h2 class="h6 col-12 mt-4 mb-0 solo-dipendente">Spettanze annue da CCNL</h2>
+        <p class="col-12 text-body-secondary small mb-0 solo-dipendente">Valori riferiti al full-time: per i part-time vengono riproporzionati automaticamente.</p>
+        <div class="col-md-4 solo-dipendente">
             <label asp-for="OreFerieAnnue" class="form-label"></label>
             <input asp-for="OreFerieAnnue" type="text" inputmode="decimal" class="form-control" />
         </div>
-        <div class="col-md-4">
+        <div class="col-md-4 solo-dipendente">
             <label asp-for="OreRolAnnue" class="form-label"></label>
             <input asp-for="OreRolAnnue" type="text" inputmode="decimal" class="form-control" />
         </div>
-        <div class="col-md-4">
+        <div class="col-md-4 solo-dipendente">
             <label asp-for="OreExFestivitaAnnue" class="form-label"></label>
             <input asp-for="OreExFestivitaAnnue" type="text" inputmode="decimal" class="form-control" />
         </div>
@@ -85,3 +86,15 @@
         </div>
     </form>
 </div>
+
+@section Scripts {
+    <script>
+        // Campi del lavoro dipendente nascosti per i professionisti esterni.
+        (function () {
+            const form = document.getElementById('formContratto'), tipo = document.getElementById('Tipo');
+            const esterni = [...tipo.querySelectorAll('optgroup')].find(g => g.label === 'Professionisti esterni');
+            const aggiorna = () => document.body.classList.toggle('rapporto-esterno', !!esterni && [...esterni.children].some(o => o.selected));
+            tipo.addEventListener('change', aggiorna); aggiorna();
+        })();
+    </script>
+}

@@ -83,11 +83,12 @@ public sealed class ContrattoForm
     [Display(Name = "Tipo di contratto")]
     public TipoContratto Tipo { get; set; } = TipoContratto.TempoIndeterminato;
 
-    [Required(ErrorMessage = "Inserisci il CCNL."), StringLength(100), Display(Name = "CCNL applicato")]
-    public string Ccnl { get; set; } = "";
+    // Obbligatori solo per il lavoro dipendente (controllo nell'azione).
+    [StringLength(100), Display(Name = "CCNL applicato")]
+    public string? Ccnl { get; set; }
 
-    [Required(ErrorMessage = "Inserisci il livello."), StringLength(20), Display(Name = "Livello")]
-    public string Livello { get; set; } = "";
+    [StringLength(20), Display(Name = "Livello")]
+    public string? Livello { get; set; }
 
     [StringLength(150), Display(Name = "Mansione")]
     public string? Mansione { get; set; }
@@ -122,11 +123,20 @@ public sealed class ContrattoForm
     [Range(0, 400), Display(Name = "Ex-festività annue (ore, full-time)")]
     public decimal OreExFestivitaAnnue { get; set; } = 32;
 
-    public static IEnumerable<SelectListItem> Tipi =>
-        Enum.GetValues<TipoContratto>().Select(t => new SelectListItem(t.Descrizione(), t.ToString()));
+    /// <summary>Tipi raggruppati: lavoro dipendente e professionisti esterni.</summary>
+    public static IEnumerable<SelectListItem> Tipi
+    {
+        get
+        {
+            var dipendente = new SelectListGroup { Name = "Lavoro dipendente" };
+            var esterni = new SelectListGroup { Name = "Professionisti esterni" };
+            return Enum.GetValues<TipoContratto>().Select(t => new SelectListItem(t.Descrizione(), t.ToString()) { Group = t.IsSubordinato() ? dipendente : esterni });
+        }
+    }
 }
 
-public sealed record DipendenteRiga(Guid Id, string NomeCompleto, string CodiceFiscale, string Azienda, string? Livello, bool InForza);
+/// <summary>Riga dell'elenco: <paramref name="Inquadramento"/> è il livello per i dipendenti, il tipo di rapporto per gli esterni.</summary>
+public sealed record DipendenteRiga(Guid Id, string NomeCompleto, string CodiceFiscale, string Azienda, string? Inquadramento, bool InForza);
 
 [Authorize(Policy = Policy.GestionePersonale)]
 public sealed class DipendentiController(AppDbContext db, UtenteCorrente utente, ServizioSaldi saldi, ServizioAccessi accessi,
@@ -134,7 +144,7 @@ public sealed class DipendentiController(AppDbContext db, UtenteCorrente utente,
 {
     private DateOnly Oggi => DateOnly.FromDateTime(clock.GetLocalNow().DateTime);
 
-    public async Task<IActionResult> Index(string? q, Guid? aziendaId, bool tutti = false)
+    public async Task<IActionResult> Index(string? q, Guid? aziendaId, bool tutti = false, bool esterni = false)
     {
         var oggi = Oggi;
         var query = utente.Filtra(db.Dipendenti.AsNoTracking());
@@ -149,6 +159,15 @@ public sealed class DipendentiController(AppDbContext db, UtenteCorrente utente,
         if (!tutti)
             query = query.Where(d => d.Contratti.AsQueryable().Any(attivo) || !d.Contratti.Any());
 
+        // Personale dipendente / professionisti esterni, in base al contratto più recente (senza contratto: tra i dipendenti).
+        var tipiEsterni = TipoContrattoExtensions.Esterni.ToList();
+        var esterno = (System.Linq.Expressions.Expression<Func<Dipendente, bool>>)(d =>
+            tipiEsterni.Contains(d.Contratti.OrderByDescending(c => c.DataInizio).Select(c => c.Tipo).FirstOrDefault()) && d.Contratti.Any());
+        ViewBag.NumeroEsterni = await query.CountAsync(esterno);
+        ViewBag.NumeroDipendenti = await query.CountAsync() - (int)ViewBag.NumeroEsterni;
+        query = esterni ? query.Where(esterno) : query.Where(System.Linq.Expressions.Expression.Lambda<Func<Dipendente, bool>>(
+            System.Linq.Expressions.Expression.Not(esterno.Body), esterno.Parameters));
+
         // Solo le colonne mostrate, con azienda e livello calcolati nel database (niente contratti né elenco aziende in memoria).
         var righe = (await query.OrderBy(d => d.Cognome).ThenBy(d => d.Nome)
                 .Select(d => new
@@ -156,14 +175,17 @@ public sealed class DipendentiController(AppDbContext db, UtenteCorrente utente,
                     d.Id, d.Cognome, d.Nome, d.CodiceFiscale,
                     Azienda = db.Aziende.Where(a => a.Id == d.AziendaId).Select(a => a.RagioneSociale).FirstOrDefault(),
                     Livello = d.Contratti.AsQueryable().Where(attivo).Select(c => c.Livello).FirstOrDefault(),
+                    Tipo = d.Contratti.OrderByDescending(c => c.DataInizio).Select(c => (TipoContratto?)c.Tipo).FirstOrDefault(),
                     InForza = d.Contratti.AsQueryable().Any(attivo),
                 })
                 .ToListAsync())
-            .Select(d => new DipendenteRiga(d.Id, $"{d.Cognome} {d.Nome}", d.CodiceFiscale.Valore, d.Azienda ?? "—", d.Livello, d.InForza))
+            .Select(d => new DipendenteRiga(d.Id, $"{d.Cognome} {d.Nome}", d.CodiceFiscale.Valore, d.Azienda ?? "—",
+                d.Tipo is { } tipo && !tipo.IsSubordinato() ? tipo.Descrizione() : string.IsNullOrEmpty(d.Livello) ? null : d.Livello, d.InForza))
             .ToList();
 
         ViewBag.Ricerca = q;
         ViewBag.Tutti = tutti;
+        ViewBag.Esterni = esterni;
         ViewBag.AziendaId = aziendaId;
         ViewBag.Aziende = utente.IsConsulente ? await ElencoAziende(aziendaId) : null;
         return View(righe);
@@ -289,15 +311,20 @@ public sealed class DipendentiController(AppDbContext db, UtenteCorrente utente,
         var d = await Trova(form.DipendenteId);
         if (d is null) return NotFound();
         form.NomeDipendente = d.NomeCompleto;
+        if (form.Tipo.IsSubordinato())
+        {
+            if (string.IsNullOrWhiteSpace(form.Ccnl)) ModelState.AddModelError(nameof(form.Ccnl), "Inserisci il CCNL.");
+            if (string.IsNullOrWhiteSpace(form.Livello)) ModelState.AddModelError(nameof(form.Livello), "Inserisci il livello.");
+        }
         if (!ModelState.IsValid) return View(form);
 
-        if (!Prova(() => d.Assumi(form.Tipo, form.Ccnl, form.Livello, form.DataInizio!.Value, form.DataFine,
+        if (!Prova(() => d.Assumi(form.Tipo, form.Ccnl ?? "", form.Livello ?? "", form.DataInizio!.Value, form.DataFine,
                 form.RetribuzioneLordaAnnua!.Value, form.MensilitaAnnue, form.OreSettimanaliFullTime, form.PercentualePartTime,
                 form.GiorniLavorativiSettimana, form.OreFerieAnnue, form.OreRolAnnue, form.OreExFestivitaAnnue, form.Mansione)))
             return View(form);
 
         await db.SaveChangesAsync();
-        Conferma("Contratto registrato.");
+        Conferma(form.Tipo.IsSubordinato() ? "Contratto registrato." : "Incarico registrato.");
         return RedirectToAction(nameof(Dettaglio), new { id = d.Id });
     }
 

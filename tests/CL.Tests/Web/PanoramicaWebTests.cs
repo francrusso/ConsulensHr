@@ -50,6 +50,13 @@ public sealed class PanoramicaWebTests : IDisposable
         Assert.Matches("\"name\":\"Ferie\",\"data\":\\[(0,){11}16\\]", html);
         Assert.Contains("\"name\":\"Godute\",\"data\":[16]", html);
         Assert.Contains("apexcharts.min.js", html);
+
+        // Per il referente la sezione dei dipendenti si chiama "Personale".
+        Assert.Contains("Personale in forza", html);
+        Assert.Contains(">Personale</div>", html);
+        var elenco = WebUtility.HtmlDecode(await hr.GetStringAsync("/Dipendenti"));
+        Assert.Contains("<title>Personale |", elenco);
+        Assert.Contains("Aggiungi persona", elenco);
         Assert.Empty(_app.ErroriServer);
     }
 

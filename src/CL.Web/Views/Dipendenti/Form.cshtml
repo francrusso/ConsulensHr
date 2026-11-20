@@ -1,7 +1,10 @@
 @model CL.Web.Controllers.DipendenteForm
+@inject UtenteCorrente Utente
 @{
     var nuovo = Model.Id is null;
-    ViewData["Title"] = nuovo ? "Nuovo dipendente" : "Modifica dipendente";
+    ViewData["Title"] = Utente.IsAzienda
+        ? (nuovo ? "Aggiungi persona" : "Modifica dati")
+        : (nuovo ? "Nuovo dipendente" : "Modifica dipendente");
     var aziende = ViewBag.Aziende as List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>;
 }
 

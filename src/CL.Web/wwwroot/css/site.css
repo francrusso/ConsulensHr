@@ -176,3 +176,17 @@ h1 .logo-azienda { max-height: 36px; }
 .org-ruolo { margin-top: 2px; }
 .foto-dipendente { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(81,45,56,.18); }
 h1 .foto-dipendente { width: 40px; height: 40px; }
+
+/* Switch Personale dipendente / Professionisti esterni */
+.switch-personale { display: inline-flex; gap: 4px; padding: 4px; background: #f6efe7; border: 1px solid var(--consulens-border); border-radius: 10px; }
+.switch-personale a { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 7px; font-size: .9rem;
+  color: var(--consulens-nav-text); text-decoration: none; white-space: nowrap; }
+.switch-personale a:hover { color: var(--consulens-page-title); background: rgba(255,255,255,.6); }
+.switch-personale a.attivo { background: #fff; color: var(--consulens-page-title); font-weight: 600; box-shadow: 0 1px 3px rgba(81,45,56,.12); }
+.switch-personale .conteggio { min-width: 22px; padding: 0 6px; border-radius: 5px; background: rgba(81,45,56,.08); font-size: .75rem; text-align: center; }
+.switch-personale a.attivo .conteggio { background: var(--consulens-accent); color: #fff; }
+
+/* Modulo contratto: campi del lavoro dipendente / dei professionisti esterni */
+.solo-esterno { display: none; }
+body.rapporto-esterno .solo-esterno { display: revert; }
+body.rapporto-esterno .solo-dipendente { display: none; }
