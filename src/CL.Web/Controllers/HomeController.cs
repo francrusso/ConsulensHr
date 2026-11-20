@@ -22,7 +22,7 @@ public sealed class HomeController(AppDbContext db, UtenteCorrente utente, TimeP
 
         // Un solo round-trip: i tre conteggi come sottoquery di un'unica SELECT.
         // Senza aziende non possono esistere dipendenti né richieste, quindi "nessuna riga" equivale a tutti zero.
-        var c = await db.Aziende.Take(1).Select(_ => new
+        var c = await db.Aziende.OrderBy(a => a.Id).Select(_ => new
         {
             Aziende = db.Aziende.Count(a => a.Attiva),
             InForza = dipendenti.Count(inForza),

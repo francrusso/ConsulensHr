@@ -132,7 +132,7 @@
 /* Colori scritti direttamente in authentication.css */
 .auth-panel {
   background: url("../images/auth-background.png") center / cover no-repeat,
-              radial-gradient(circle closest-side, #ffffff, #fff3e6);
+              radial-gradient(circle closest-side, #ffffff, #fdf9f4);
 }
 
 /* Colori scritti direttamente in app.css (componenti usati qui) */
