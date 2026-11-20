@@ -129,15 +129,22 @@ public sealed class DipendentiController(AppDbContext db, UtenteCorrente utente,
             query = query.Where(d => d.Cognome.ToLower().Contains(t) || d.Nome.ToLower().Contains(t)
                                      || ((string)(object)d.CodiceFiscale).ToLower().Contains(t));
         }
+        var attivo = Filtri.ContrattoAttivoIl(oggi);
         if (!tutti)
-            query = query.Where(d => d.Contratti.Any(c => c.DataInizio <= oggi && (c.DataFine == null || c.DataFine >= oggi))
-                                     || !d.Contratti.Any());
+            query = query.Where(d => d.Contratti.AsQueryable().Any(attivo) || !d.Contratti.Any());
 
-        var dipendenti = await query.OrderBy(d => d.Cognome).ThenBy(d => d.Nome).ToListAsync();
-        var aziende = await db.Aziende.AsNoTracking().ToDictionaryAsync(a => a.Id, a => a.RagioneSociale);
-
-        var righe = dipendenti.Select(d => new DipendenteRiga(d.Id, d.NomeCompleto, d.CodiceFiscale.Valore,
-            aziende.GetValueOrDefault(d.AziendaId, "—"), d.ContrattoAttivo(oggi)?.Livello, d.InForzaIl(oggi))).ToList();
+        // Solo le colonne mostrate, con azienda e livello calcolati nel database (niente contratti né elenco aziende in memoria).
+        var righe = (await query.OrderBy(d => d.Cognome).ThenBy(d => d.Nome)
+                .Select(d => new
+                {
+                    d.Id, d.Cognome, d.Nome, d.CodiceFiscale,
+                    Azienda = db.Aziende.Where(a => a.Id == d.AziendaId).Select(a => a.RagioneSociale).FirstOrDefault(),
+                    Livello = d.Contratti.AsQueryable().Where(attivo).Select(c => c.Livello).FirstOrDefault(),
+                    InForza = d.Contratti.AsQueryable().Any(attivo),
+                })
+                .ToListAsync())
+            .Select(d => new DipendenteRiga(d.Id, $"{d.Cognome} {d.Nome}", d.CodiceFiscale.Valore, d.Azienda ?? "—", d.Livello, d.InForza))
+            .ToList();
 
         ViewBag.Ricerca = q;
         ViewBag.Tutti = tutti;
@@ -207,15 +214,19 @@ public sealed class DipendentiController(AppDbContext db, UtenteCorrente utente,
 
     public async Task<IActionResult> Dettaglio(Guid id)
     {
-        var d = await Trova(id);
-        if (d is null) return NotFound();
+        // Dipendente (con contratti) e ragione sociale in una sola query; le richieste dell'anno servono sia
+        // alla tabella sia al calcolo dei saldi, quindi si caricano una volta sola.
+        var trovato = await utente.Filtra(db.Dipendenti.AsNoTracking()).Where(x => x.Id == id)
+            .Select(x => new { Dipendente = x, Azienda = db.Aziende.Where(a => a.Id == x.AziendaId).Select(a => a.RagioneSociale).FirstOrDefault() })
+            .FirstOrDefaultAsync();
+        if (trovato is null) return NotFound();
+        var d = trovato.Dipendente;
         var oggi = Oggi;
-        ViewBag.Azienda = await db.Aziende.AsNoTracking().Where(a => a.Id == d.AziendaId).Select(a => a.RagioneSociale).FirstAsync();
+        var richieste = await saldi.RichiesteAnno(d.Id, oggi.Year);
+        ViewBag.Azienda = trovato.Azienda;
         ViewBag.Oggi = oggi;
-        ViewBag.Saldi = await saldi.Calcola(d, oggi.Year, oggi.Month);
-        ViewBag.Richieste = (await db.RichiesteAssenza.AsNoTracking()
-                .Where(r => r.DipendenteId == d.Id && r.Dal.Year == oggi.Year)
-                .ToListAsync())
+        ViewBag.Saldi = await saldi.Calcola(d, oggi.Year, oggi.Month, richieste);
+        ViewBag.Richieste = richieste
             .OrderByDescending(r => r.Dal)
             .Select(r => new RichiestaRiga(r.Id, r.DipendenteId, d.NomeCompleto, "", r.Tipo, r.Dal, r.Al, r.AOre, r.Ore,
                 r.Stato, r.RichiestaIl, r.Note, r.DecisaDa, r.MotivoRifiuto))

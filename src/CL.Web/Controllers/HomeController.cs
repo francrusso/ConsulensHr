@@ -18,12 +18,18 @@ public sealed class HomeController(AppDbContext db, UtenteCorrente utente, TimeP
         var oggi = DateOnly.FromDateTime(clock.GetLocalNow().DateTime);
         var dipendenti = utente.Filtra(db.Dipendenti);
         var ids = dipendenti.Select(d => d.Id);
+        var inForza = Filtri.InForzaIl(oggi);
 
-        var vm = new PanoramicaViewModel(
-            utente.IsConsulente ? await db.Aziende.CountAsync(a => a.Attiva) : 0,
-            await dipendenti.CountAsync(d => d.Contratti.Any(c => c.DataInizio <= oggi && (c.DataFine == null || c.DataFine >= oggi))),
-            await db.RichiesteAssenza.CountAsync(r => ids.Contains(r.DipendenteId) && r.Stato == StatoRichiesta.InAttesa));
-        return View(vm);
+        // Un solo round-trip: i tre conteggi come sottoquery di un'unica SELECT.
+        // Senza aziende non possono esistere dipendenti né richieste, quindi "nessuna riga" equivale a tutti zero.
+        var c = await db.Aziende.Take(1).Select(_ => new
+        {
+            Aziende = db.Aziende.Count(a => a.Attiva),
+            InForza = dipendenti.Count(inForza),
+            InAttesa = db.RichiesteAssenza.Count(r => ids.Contains(r.DipendenteId) && r.Stato == StatoRichiesta.InAttesa),
+        }).FirstOrDefaultAsync();
+
+        return View(new PanoramicaViewModel(utente.IsConsulente ? c?.Aziende ?? 0 : 0, c?.InForza ?? 0, c?.InAttesa ?? 0));
     }
 
     [AllowAnonymous, ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]

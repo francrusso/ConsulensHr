@@ -26,9 +26,9 @@ public static class DatabaseInitializer
             await db.Database.MigrateAsync();
 
         var roleManager = sp.GetRequiredService<RoleManager<IdentityRole>>();
-        foreach (var ruolo in Ruoli.Tutti)
-            if (!await roleManager.RoleExistsAsync(ruolo))
-                await roleManager.CreateAsync(new IdentityRole(ruolo));
+        var esistenti = await roleManager.Roles.Select(r => r.Name).ToListAsync(); // una query invece di una per ruolo
+        foreach (var ruolo in Ruoli.Tutti.Except(esistenti))
+            await roleManager.CreateAsync(new IdentityRole(ruolo!));
 
         var config = sp.GetRequiredService<IConfiguration>();
         var email = config["Seed:Consulente:Email"];

@@ -10,12 +10,23 @@ public sealed class ServizioSaldi(AppDbContext db)
 {
     public static readonly TipoAssenza[] TipiConSaldo = [TipoAssenza.Ferie, TipoAssenza.Rol, TipoAssenza.ExFestivita];
 
-    /// <summary>Saldi dell'anno, con il maturato fino al mese indicato.</summary>
-    public async Task<IReadOnlyList<SaldoAssenza>> Calcola(Dipendente dipendente, int anno, int finoAlMese)
+    /// <summary>Richieste del dipendente che iniziano nell'anno indicato.</summary>
+    public Task<List<RichiestaAssenza>> RichiesteAnno(Guid dipendenteId, int anno)
     {
-        var richieste = await db.RichiesteAssenza.AsNoTracking()
-            .Where(r => r.DipendenteId == dipendente.Id && r.Dal.Year == anno)
+        var (inizio, fine) = Filtri.Anno(anno);
+        return db.RichiesteAssenza.AsNoTracking()
+            .Where(r => r.DipendenteId == dipendenteId && r.Dal >= inizio && r.Dal <= fine)
             .ToListAsync();
+    }
+
+    /// <summary>
+    /// Saldi dell'anno, con il maturato fino al mese indicato.
+    /// Se il chiamante ha già caricato le richieste dell'anno (<see cref="RichiesteAnno"/>) le passa, risparmiando una query.
+    /// </summary>
+    public async Task<IReadOnlyList<SaldoAssenza>> Calcola(Dipendente dipendente, int anno, int finoAlMese,
+        IReadOnlyList<RichiestaAssenza>? richiesteAnno = null)
+    {
+        var richieste = richiesteAnno ?? await RichiesteAnno(dipendente.Id, anno);
         var iniziali = await db.SaldiIniziali.AsNoTracking()
             .Where(s => s.DipendenteId == dipendente.Id && s.Anno == anno)
             .ToListAsync();

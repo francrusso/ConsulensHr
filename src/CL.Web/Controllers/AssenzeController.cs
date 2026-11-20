@@ -82,16 +82,24 @@ public sealed class AssenzeController(AppDbContext db, UtenteCorrente utente, Se
         if (filtroStato is { } s) query = query.Where(x => x.r.Stato == s);
         // Le richieste da approvare si vedono tutte, anche se riguardano l'anno prossimo.
         if (!(Gestore && filtroStato == StatoRichiesta.InAttesa))
-            query = query.Where(x => x.r.Dal.Year == annoScelto);
+        {
+            var (inizio, fine) = Filtri.Anno(annoScelto);
+            query = query.Where(x => x.r.Dal >= inizio && x.r.Dal <= fine);
+        }
 
-        var righe = (await query.OrderBy(x => x.r.Dal).ThenBy(x => x.Cognome).ToListAsync())
+        var risultati = await query.OrderBy(x => x.r.Dal).ThenBy(x => x.Cognome).ToListAsync();
+        var righe = risultati
             .Select(x => new RichiestaRiga(x.r.Id, x.r.DipendenteId, $"{x.Cognome} {x.Nome}", x.RagioneSociale, x.r.Tipo,
                 x.r.Dal, x.r.Al, x.r.AOre, x.r.Ore, x.r.Stato, x.r.RichiestaIl, x.r.Note, x.r.DecisaDa, x.r.MotivoRifiuto))
             .ToList();
 
         IReadOnlyList<SaldoAssenza>? mieiSaldi = null;
         if (utente.IsDipendente && await dipendenti.FirstOrDefaultAsync() is { } io)
-            mieiSaldi = await saldi.Calcola(io, annoScelto, annoScelto == Oggi.Year ? Oggi.Month : 12);
+        {
+            // Senza filtro di stato le righe sono proprio tutte le richieste dell'anno: si riusano per i saldi.
+            var richiesteAnno = filtroStato is null ? risultati.Select(x => x.r).ToList() : null;
+            mieiSaldi = await saldi.Calcola(io, annoScelto, annoScelto == Oggi.Year ? Oggi.Month : 12, richiesteAnno);
+        }
 
         return View(new AssenzeViewModel
         {
@@ -126,9 +134,12 @@ public sealed class AssenzeController(AppDbContext db, UtenteCorrente utente, Se
             ModelState.AddModelError(nameof(form.Ore), "Indica quante ore di permesso.");
         if (!ModelState.IsValid) return await MostraForm(form);
 
-        var dip = await utente.Filtra(db.Dipendenti).FirstOrDefaultAsync(d => d.Id == form.DipendenteId);
-        if (dip is null) return Forbid();
-        var azienda = await db.Aziende.FirstAsync(a => a.Id == dip.AziendaId);
+        // Dipendente (con contratti) e azienda (calendario, santo patrono) in una sola query.
+        var trovato = await utente.Filtra(db.Dipendenti.AsNoTracking()).Where(d => d.Id == form.DipendenteId)
+            .Join(db.Aziende.AsNoTracking(), d => d.AziendaId, a => a.Id, (d, a) => new { d, a })
+            .FirstOrDefaultAsync();
+        if (trovato is null) return Forbid();
+        var (dip, azienda) = (trovato.d, trovato.a);
 
         var dal = form.Dal!.Value;
         var al = form.AOre ? dal : form.Al ?? dal;
@@ -232,10 +243,14 @@ public sealed class AssenzeController(AppDbContext db, UtenteCorrente utente, Se
     private async Task<IActionResult> MostraForm(RichiestaForm form)
     {
         ViewBag.Gestore = Gestore;
+        var scelto = form.DipendenteId;
+        var attivo = Filtri.ContrattoAttivoIl(Oggi);
+        // Filtro e proiezione nel database: solo id e nome dei dipendenti in forza (più quello già scelto).
         ViewBag.Dipendenti = Gestore
-            ? (await utente.Filtra(db.Dipendenti.AsNoTracking()).OrderBy(d => d.Cognome).ThenBy(d => d.Nome).ToListAsync())
-                .Where(d => d.InForzaIl(Oggi) || d.Id == form.DipendenteId)
-                .Select(d => new SelectListItem(d.NomeCompleto, d.Id.ToString(), d.Id == form.DipendenteId)).ToList()
+            ? (await utente.Filtra(db.Dipendenti).Where(d => d.Id == scelto || d.Contratti.AsQueryable().Any(attivo))
+                    .OrderBy(d => d.Cognome).ThenBy(d => d.Nome)
+                    .Select(d => new { d.Id, d.Cognome, d.Nome }).ToListAsync())
+                .Select(d => new SelectListItem($"{d.Cognome} {d.Nome}", d.Id.ToString(), d.Id == scelto)).ToList()
             : null;
 
         if (utente.IsDipendente && utente.DipendenteId is { } mio

@@ -1,134 +1,136 @@
 /*
- * Consulens HR — tema beige chiaro.
+ * Consulens HR — tema beige (tendente al giallo) con prugna e bordeaux.
  * I fogli in assets/css sono copiati invariati da ConsulensNew (stessa struttura e componenti);
- * questo file, caricato per ultimo, sostituisce solo la palette blu con toni beige caldi.
- * Per riallineare l'estetica a ConsulensNew basta ricopiare quei fogli: questo file resta valido.
+ * questo file, caricato per ultimo, sostituisce solo la palette blu.
+ * Distribuzione dei colori come ConsulensNew: cornice (sidebar, topbar, sfondo) beige, contenuto della pagina bianco.
  *
- * Contrasti (WCAG AA): testo #3d3226 / #5a4a3a su #faf7f2 > 7:1; bottone #8a6a44 con testo bianco ≈ 4.9:1.
+ * Palette: #FFFAF4 cornice · #FFFDFA superfici tenui · #FFFFFF contenuto
+ *          #512D38 prugna (al posto del blu scuro Consulens) · #98494E accento bordeaux
+ * Contrasti (WCAG AA): #512D38 su #FFFAF4 ≈ 12:1; #98494E su bianco ≈ 6.6:1; testo bianco su #98494E ≈ 6.6:1.
  */
 
 :root,
 [data-bs-theme=light] {
-  /* Superfici */
-  --consulens-canvas: #faf7f2;
-  --consulens-surface: #fffdfa;
-  --consulens-surface-subtle: #f6f0e7;
-  --consulens-section-bg: #f8f4ee;
-  --consulens-border: #ebe2d4;
-  --consulens-divider: #f2ece3;
-  --consulens-hover: #f3ebdf;
-  --consulens-selected-bg: #eadfcd;
-  --consulens-surface-soft-blue: #f9f4ec;
-  --consulens-surface-light-blue: #f5eee3;
-  --consulens-surface-pale-blue: #fcf9f4;
-  --consulens-surface-muted-blue: #f4efe7;
-  --consulens-filter-panel-bg: #fbf8f3;
-  --consulens-filter-panel-border: #ece4d8;
-  --consulens-day-heading-bg: #ece4d8;
+  /* Superfici: cornice beige, contenuto bianco */
+  --consulens-canvas: #fffaf4;
+  --consulens-surface: #fff;
+  --consulens-surface-subtle: #fff6eb;
+  --consulens-section-bg: #fffdfa;
+  --consulens-border: #f1e3d2;
+  --consulens-divider: #f7efe5;
+  --consulens-hover: #fbefe2;
+  --consulens-selected-bg: #f4e1d6;
+  --consulens-surface-soft-blue: #fffaf4;
+  --consulens-surface-light-blue: #fff6eb;
+  --consulens-surface-pale-blue: #fffdfa;
+  --consulens-surface-muted-blue: #fbf6f0;
+  --consulens-filter-panel-bg: #fffdfa;
+  --consulens-filter-panel-border: #f1e3d2;
+  --consulens-day-heading-bg: #f6e9da;
   --consulens-surface-translucent: rgba(255, 253, 250, .75);
 
-  /* Testi e icone */
-  --consulens-page-title: #3d3226;
-  --consulens-text: #5a4a3a;
-  --consulens-muted: #7d6c58;
-  --consulens-placeholder: #ab9c88;
-  --consulens-icon: #a28c70;
-  --consulens-nav-text: #6b5640;
-  --consulens-description-text: #6f6151;
-  --consulens-breadcrumb-muted: #a0907b;
-  --consulens-breadcrumb-active: #5e4a35;
-  --consulens-text-subtle: #857766;
-  --consulens-text-subtle-alt: #847563;
-  --consulens-text-slate: #7d6d5b;
-  --consulens-text-faint: #a39581;
-  --consulens-text-note: #776856;
-  --consulens-text-help: #95846f;
-  --consulens-divider-soft: #c9bba7;
-  --consulens-stat-divider: #d8ccbb;
+  /* Testi e icone (famiglia prugna) */
+  --consulens-page-title: #512d38;
+  --consulens-text: #5c4049;
+  --consulens-muted: #7f6670;
+  --consulens-placeholder: #ad98a0;
+  --consulens-icon: #a07f8a;
+  --consulens-nav-text: #6a3f4c;
+  --consulens-description-text: #6f5961;
+  --consulens-breadcrumb-muted: #a3909a;
+  --consulens-breadcrumb-active: #512d38;
+  --consulens-text-subtle: #84707a;
+  --consulens-text-subtle-alt: #826e78;
+  --consulens-text-slate: #7c6670;
+  --consulens-text-faint: #a5939b;
+  --consulens-text-note: #765f69;
+  --consulens-text-help: #94808a;
+  --consulens-divider-soft: #cdb9bf;
+  --consulens-stat-divider: #dccbd0;
 
   /* Accento e pulsanti */
-  --consulens-accent: #8a6a44;
-  --consulens-button-primary-hover: #74583a;
-  --consulens-button-outline: #8a6a44;
+  --consulens-accent: #98494e;
+  --consulens-button-primary-hover: #7e3a3f;
+  --consulens-button-outline: #98494e;
 
   /* Badge e avvisi informativi (gli stati successo/errore/attenzione restano invariati) */
-  --consulens-badge-primary-bg: #f1e7d8;
-  --consulens-badge-primary-text: #5e4a35;
-  --consulens-badge-primary-dark-bg: #7a5f40;
-  --consulens-badge-info-bg: #f4ece0;
-  --consulens-badge-info-text: #6b5640;
-  --consulens-badge-info-dark-bg: #8a6a44;
-  --consulens-badge-dark-bg: #5a4632;
-  --consulens-badge-secondary-bg: #f1ece5;
-  --consulens-badge-secondary-text: #6b6050;
-  --consulens-alert-info-bg: #fbf6ee;
-  --consulens-alert-info-icon-bg: #efe2cf;
-  --consulens-alert-info-text: #7a5f40;
-  --consulens-alert-secondary-bg: #f7f4ef;
-  --consulens-alert-secondary-icon-bg: #ece6dc;
-  --consulens-alert-secondary-icon: #9c8d79;
-  --consulens-tint-info-bg: #faf4ea;
-  --consulens-tint-info-border: #e3d3bb;
+  --consulens-badge-primary-bg: #f6e8e4;
+  --consulens-badge-primary-text: #512d38;
+  --consulens-badge-primary-dark-bg: #512d38;
+  --consulens-badge-info-bg: #fbeee9;
+  --consulens-badge-info-text: #98494e;
+  --consulens-badge-info-dark-bg: #98494e;
+  --consulens-badge-dark-bg: #512d38;
+  --consulens-badge-secondary-bg: #f6f0ea;
+  --consulens-badge-secondary-text: #6b5a60;
+  --consulens-alert-info-bg: #fff8f2;
+  --consulens-alert-info-icon-bg: #f4e0d6;
+  --consulens-alert-info-text: #7e3a3f;
+  --consulens-alert-secondary-bg: #fbf8f5;
+  --consulens-alert-secondary-icon-bg: #efe6e2;
+  --consulens-alert-secondary-icon: #9c8790;
+  --consulens-tint-info-bg: #fff6ee;
+  --consulens-tint-info-border: #ecd2c6;
 
-  --consulens-shadow: 0 10px 28px rgba(90, 70, 45, .14), 0 3px 8px rgba(90, 70, 45, .06);
-  --consulens-card-shadow: 0 3px 10px rgba(70, 55, 35, .05);
+  --consulens-shadow: 0 10px 28px rgba(81, 45, 56, .13), 0 3px 8px rgba(81, 45, 56, .05);
+  --consulens-card-shadow: 0 3px 10px rgba(81, 45, 56, .045);
 
   /* Bootstrap */
-  --bs-blue: #3d3226;
-  --bs-primary: #3d3226;
-  --bs-secondary: #f1e7d8;
-  --bs-info: #8a6a44;
-  --bs-indigo: #fbf7f1;
-  --bs-light: #fbf7f1;
-  --bs-dark: #2b231a;
-  --bs-cyan: #b08d63;
-  --bs-primary-text-emphasis: #8a6a44;
-  --bs-secondary-text-emphasis: #3d3226;
-  --bs-info-text-emphasis: #8a6a44;
-  --bs-light-text-emphasis: #7a6b59;
-  --bs-dark-text-emphasis: #7a6b59;
-  --bs-primary-bg-subtle: #f1e7d8;
-  --bs-secondary-bg-subtle: #fbf7f1;
-  --bs-info-bg-subtle: #f1e7d8;
-  --bs-light-bg-subtle: #f1e7d8;
-  --bs-primary-border-subtle: #b08d63;
-  --bs-light-border-subtle: #fbf7f1;
-  --bs-secondary-bg: #fbf7f1;
-  --bs-link-color: #3d3226;
-  --bs-link-hover-color: #8a6a44;
-  --bs-highlight-color: #3d3226;
-  --bs-highlight-bg: #f1e7d8;
-  --bs-box-shadow-inset: inset 6px #3d3226;
-  --bs-focus-ring-color: #8a6a44;
-  --icon-menu-color: #6f6151;
+  --bs-blue: #512d38;
+  --bs-primary: #512d38;
+  --bs-secondary: #f6e8e4;
+  --bs-info: #98494e;
+  --bs-indigo: #fffaf4;
+  --bs-light: #fffaf4;
+  --bs-dark: #3a1f28;
+  --bs-cyan: #b9757a;
+  --bs-primary-text-emphasis: #98494e;
+  --bs-secondary-text-emphasis: #512d38;
+  --bs-info-text-emphasis: #98494e;
+  --bs-light-text-emphasis: #7f6670;
+  --bs-dark-text-emphasis: #7f6670;
+  --bs-primary-bg-subtle: #f6e8e4;
+  --bs-secondary-bg-subtle: #fffaf4;
+  --bs-info-bg-subtle: #f6e8e4;
+  --bs-light-bg-subtle: #f6e8e4;
+  --bs-primary-border-subtle: #c99a9d;
+  --bs-light-border-subtle: #fffaf4;
+  --bs-secondary-bg: #fffaf4;
+  --bs-link-color: #512d38;
+  --bs-link-hover-color: #98494e;
+  --bs-highlight-color: #512d38;
+  --bs-highlight-bg: #f6e8e4;
+  --bs-box-shadow-inset: inset 6px #512d38;
+  --bs-focus-ring-color: #98494e;
+  --icon-menu-color: #6f5961;
 }
 
 /* Colori scritti direttamente in navigation.css */
-.wrapper.toggled .sidebar-wrapper #menu > li > a:hover { background: #5a4632; }
-.sidebar-header .sidebar-collapse { color: #a28c70; }
-.sidebar-wrapper .parent-icon { color: #9c8466; }
-.sidebar-wrapper .metismenu ul { border-left-color: #e3d4bf; }
-.sidebar-wrapper .metismenu ul a { color: #7d6448; }
-.sidebar-wrapper .metismenu ul a.active { color: #5e4a35; }
-.sidebar-wrapper .sidebar-footer a { color: #85745f; }
-.sidebar-wrapper .sidebar-utility { background: #f1e8db; }
-.sidebar-wrapper .sidebar-footer .sidebar-logout { color: #8a6f50; }
-.sidebar-wrapper .sidebar-footer a:hover { background: #ece0cf; }
+.wrapper.toggled .sidebar-wrapper #menu > li > a:hover { background: #512d38; }
+.sidebar-header .sidebar-collapse { color: #a07f8a; }
+.sidebar-wrapper .parent-icon { color: #a07f8a; }
+.sidebar-wrapper .metismenu ul { border-left-color: #ecd9cc; }
+.sidebar-wrapper .metismenu ul a { color: #6a3f4c; }
+.sidebar-wrapper .metismenu ul a.active { color: #512d38; }
+.sidebar-wrapper .sidebar-footer a { color: #84707a; }
+.sidebar-wrapper .sidebar-utility { background: #fff6eb; }
+.sidebar-wrapper .sidebar-footer .sidebar-logout { color: #7e3a3f; }
+.sidebar-wrapper .sidebar-footer a:hover { background: #fbefe2; }
 .sidebar-wrapper button:focus-visible,
-.sidebar-wrapper a:focus-visible { outline-color: #8a6a44; }
-.sidebar-wrapper .simplebar-scrollbar::before { background: #b9a487; }
-.topbar-search:focus-within { border-color: #c4a77f; }
-.topbar-search-results small { color: #85745f; }
+.sidebar-wrapper a:focus-visible { outline-color: #98494e; }
+.sidebar-wrapper .simplebar-scrollbar::before { background: #cdb9bf; }
+.topbar-search:focus-within { border-color: #c99a9d; }
+.topbar-search-results small { color: #84707a; }
 .topbar-search-results a:hover,
-.topbar-search-results a:focus-visible { background: #f6efe4; }
-.top-header .topbar-notifications > .nav-link { background: #efe5d6; }
-.topbar-profile .user-img { background: #efe5d6; }
-.topbar-profile .user-name { color: #6b5640; }
-.topbar-profile .designattion { color: #9c8466; }
-.topbar-profile-chevron { color: #6b5640; }
+.topbar-search-results a:focus-visible { background: #fbefe2; }
+.top-header .topbar-notifications > .nav-link { background: #f6e8e4; }
+.topbar-profile .user-img { background: #f6e8e4; }
+.topbar-profile .user-name { color: #512d38; }
+.topbar-profile .designattion { color: #a07f8a; }
+.topbar-profile-chevron { color: #512d38; }
 
 /* Colori scritti direttamente in authentication.css */
-.auth-panel { background: radial-gradient(circle closest-side, #ffffff, #f4ece0); }
+.auth-panel { background: radial-gradient(circle closest-side, #ffffff, #fff3e6); }
 
 /* Colori scritti direttamente in app.css (componenti usati qui) */
 .table > :not(caption) > * > * { border-bottom-color: var(--consulens-divider); }
