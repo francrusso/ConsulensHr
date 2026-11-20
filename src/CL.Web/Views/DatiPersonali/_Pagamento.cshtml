@@ -1,0 +1,22 @@
+@model CL.Web.Controllers.PagamentoForm
+<form asp-action="Pagamento" method="post" novalidate>
+    <partial name="_IdDipendente" />
+    <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+    <div class="row g-3 mt-1">
+        <div class="col-md-7"><label asp-for="Iban" class="form-label"></label><input asp-for="Iban" class="form-control text-uppercase" placeholder="IT60X0542811101000000123456" /><span asp-validation-for="Iban" class="text-danger"></span></div>
+        <div class="col-md-5"><label asp-for="IntestatarioConto" class="form-label"></label><input asp-for="IntestatarioConto" class="form-control" /></div>
+    </div>
+    <h3 class="h6 mt-4">Trattamento di fine rapporto (TFR)</h3>
+    <p class="small text-body-secondary mb-2">Hai 6 mesi dall'assunzione per scegliere. Se hai già aderito a un fondo pensione (anche con un precedente datore di lavoro) indicalo; nel dubbio lascia "in azienda" e chiedi allo studio.</p>
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label asp-for="Tfr" class="form-label"></label>
+            <select asp-for="Tfr" class="form-select" data-mostra="campoFondo" data-valore="FondoPensione">
+                <option value="Azienda">Lo lascio in azienda</option>
+                <option value="FondoPensione">Lo destino a un fondo pensione</option>
+            </select>
+        </div>
+        <div class="col-md-6" id="campoFondo"><label asp-for="FondoPensione" class="form-label"></label><input asp-for="FondoPensione" class="form-control" placeholder="es. Fon.Te., Cometa, fondo aperto…" /><span asp-validation-for="FondoPensione" class="text-danger"></span></div>
+    </div>
+    <partial name="_Pulsanti" model="3" />
+</form>

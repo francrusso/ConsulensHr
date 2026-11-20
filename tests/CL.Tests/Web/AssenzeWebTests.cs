@@ -42,6 +42,7 @@ public sealed class AssenzeWebTests : IDisposable
             var u = await users.FindByIdAsync(utente.Id);
             u!.DipendenteId = _dipId;
             await users.UpdateAsync(u);
+            await _app.CompletaDatiPersonali(_dipId);
         }
 
         var client = _app.CreateClient();

@@ -93,6 +93,48 @@ internal sealed class RigaPresenzeConfig : IEntityTypeConfiguration<RigaPresenze
     }
 }
 
+internal sealed class ProfiloDipendenteConfig : IEntityTypeConfiguration<ProfiloDipendente>
+{
+    public void Configure(EntityTypeBuilder<ProfiloDipendente> b)
+    {
+        b.ToTable("ProfiliDipendente");
+        b.Property(x => x.Id).ValueGeneratedNever();
+        b.HasOne<Dipendente>().WithOne().HasForeignKey<ProfiloDipendente>(x => x.DipendenteId).OnDelete(DeleteBehavior.Cascade);
+        b.HasIndex(x => x.DipendenteId).IsUnique();
+        b.Ignore(x => x.Residenza);
+        b.Ignore(x => x.Domicilio);
+        b.Ignore(x => x.Completato);
+        foreach (var p in new[] { nameof(ProfiloDipendente.ComuneNascita), nameof(ProfiloDipendente.Cittadinanza), nameof(ProfiloDipendente.ResidenzaComune),
+                     nameof(ProfiloDipendente.DomicilioComune), nameof(ProfiloDipendente.IntestatarioConto), nameof(ProfiloDipendente.FondoPensione),
+                     nameof(ProfiloDipendente.TipoDocumento) })
+            b.Property(p).HasMaxLength(150);
+        foreach (var p in new[] { nameof(ProfiloDipendente.ResidenzaVia), nameof(ProfiloDipendente.DomicilioVia) })
+            b.Property(p).HasMaxLength(300);
+        foreach (var p in new[] { nameof(ProfiloDipendente.EmailPersonale), nameof(ProfiloDipendente.AggiornatoDa) })
+            b.Property(p).HasMaxLength(256);
+        foreach (var p in new[] { nameof(ProfiloDipendente.Telefono), nameof(ProfiloDipendente.NumeroDocumento) })
+            b.Property(p).HasMaxLength(30);
+        foreach (var p in new[] { nameof(ProfiloDipendente.ProvinciaNascita), nameof(ProfiloDipendente.ResidenzaProvincia), nameof(ProfiloDipendente.DomicilioProvincia) })
+            b.Property(p).HasMaxLength(2);
+        b.Property(x => x.ResidenzaCap).HasMaxLength(5);
+        b.Property(x => x.DomicilioCap).HasMaxLength(5);
+        b.HasMany(x => x.Familiari).WithOne().HasForeignKey(f => f.ProfiloId).OnDelete(DeleteBehavior.Cascade);
+        b.Navigation(x => x.Familiari).HasField("_familiari").UsePropertyAccessMode(PropertyAccessMode.Field).AutoInclude();
+    }
+}
+
+internal sealed class FamiliareACaricoConfig : IEntityTypeConfiguration<FamiliareACarico>
+{
+    public void Configure(EntityTypeBuilder<FamiliareACarico> b)
+    {
+        b.ToTable("FamiliariACarico");
+        b.Property(x => x.Id).ValueGeneratedNever();
+        b.Property(x => x.Nome).HasMaxLength(100);
+        b.Property(x => x.Cognome).HasMaxLength(100);
+        b.Ignore(x => x.Descrizione);
+    }
+}
+
 internal sealed class DipendenteConfig : IEntityTypeConfiguration<Dipendente>
 {
     public void Configure(EntityTypeBuilder<Dipendente> b)

@@ -529,6 +529,168 @@ namespace CL.Infrastructure.Persistence.Migrations
                     b.ToTable("Dipendenti", "hr");
                 });
 
+            modelBuilder.Entity("CL.Domain.Dipendenti.FamiliareACarico", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CodiceFiscale")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<string>("Cognome")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateOnly>("DataNascita")
+                        .HasColumnType("date");
+
+                    b.Property<bool>("Disabile")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int>("PercentualeCarico")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("ProfiloId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Relazione")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProfiloId");
+
+                    b.ToTable("FamiliariACarico", "hr");
+                });
+
+            modelBuilder.Entity("CL.Domain.Dipendenti.ProfiloDipendente", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AggiornatoDa")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<DateTime?>("AggiornatoIl")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Cittadinanza")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<DateTime?>("CompletatoIl")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ComuneNascita")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<Guid>("DipendenteId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("DomicilioCap")
+                        .HasMaxLength(5)
+                        .HasColumnType("character varying(5)");
+
+                    b.Property<string>("DomicilioComune")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<string>("DomicilioProvincia")
+                        .HasMaxLength(2)
+                        .HasColumnType("character varying(2)");
+
+                    b.Property<string>("DomicilioVia")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("EmailPersonale")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("FondoPensione")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<string>("Iban")
+                        .HasMaxLength(34)
+                        .HasColumnType("character varying(34)");
+
+                    b.Property<string>("IntestatarioConto")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<string>("NumeroDocumento")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<int>("Passo")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ProvinciaNascita")
+                        .HasMaxLength(2)
+                        .HasColumnType("character varying(2)");
+
+                    b.Property<string>("ResidenzaCap")
+                        .HasMaxLength(5)
+                        .HasColumnType("character varying(5)");
+
+                    b.Property<string>("ResidenzaComune")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<string>("ResidenzaProvincia")
+                        .HasMaxLength(2)
+                        .HasColumnType("character varying(2)");
+
+                    b.Property<string>("ResidenzaVia")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<bool?>("RichiedeDetrazioni")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateOnly?>("ScadenzaDocumento")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly?>("ScadenzaPermessoSoggiorno")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Telefono")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("Tfr")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<string>("TipoDocumento")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<string>("TitoloStudio")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DipendenteId")
+                        .IsUnique();
+
+                    b.ToTable("ProfiliDipendente", "hr");
+                });
+
             modelBuilder.Entity("CL.Domain.Presenze.ComunicazioneMensile", b =>
                 {
                     b.Property<Guid>("Id")
@@ -933,6 +1095,24 @@ namespace CL.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.SetNull);
                 });
 
+            modelBuilder.Entity("CL.Domain.Dipendenti.FamiliareACarico", b =>
+                {
+                    b.HasOne("CL.Domain.Dipendenti.ProfiloDipendente", null)
+                        .WithMany("Familiari")
+                        .HasForeignKey("ProfiloId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("CL.Domain.Dipendenti.ProfiloDipendente", b =>
+                {
+                    b.HasOne("CL.Domain.Dipendenti.Dipendente", null)
+                        .WithOne()
+                        .HasForeignKey("CL.Domain.Dipendenti.ProfiloDipendente", "DipendenteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("CL.Domain.Presenze.ComunicazioneMensile", b =>
                 {
                     b.HasOne("CL.Domain.Aziende.Azienda", null)
@@ -1019,6 +1199,11 @@ namespace CL.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("CL.Domain.Dipendenti.Dipendente", b =>
                 {
                     b.Navigation("Contratti");
+                });
+
+            modelBuilder.Entity("CL.Domain.Dipendenti.ProfiloDipendente", b =>
+                {
+                    b.Navigation("Familiari");
                 });
 
             modelBuilder.Entity("CL.Domain.Presenze.ComunicazioneMensile", b =>

@@ -1,0 +1,81 @@
+@model CL.Web.Controllers.DatiPersonaliViewModel
+@using CL.Web.Controllers
+@{
+    var p = Model.Profilo;
+    ViewData["Title"] = Model.PerConto ? "Dati personali" : p.Completato ? "I miei dati" : "Benvenuto in Consulens HR";
+    Guid? dipendenteId = Model.PerConto ? Model.Dipendente.Id : null;
+    if (dipendenteId is not null) ViewData["DipendenteIdDati"] = dipendenteId;
+}
+<div class="breadcrumb-titolo mb-3">
+    <div>
+        @if (Model.PerConto)
+        {
+            <a asp-controller="Dipendenti" asp-action="Dettaglio" asp-route-id="@Model.Dipendente.Id" class="small text-body-secondary"><i class="ri-arrow-left-s-line" aria-hidden="true"></i> @Model.Dipendente.NomeCompleto</a>
+            <h1 class="titolo-pagina mb-0">Dati personali di @Model.Dipendente.NomeCompleto</h1>
+        }
+        else
+        {
+            <h1 class="titolo-pagina mb-0">@ViewData["Title"]</h1>
+            @if (!p.Completato)
+            {
+                <p class="text-body-secondary mb-0">Per preparare correttamente le tue buste paga lo studio ha bisogno di alcuni dati. Ci vogliono circa 5 minuti; puoi interrompere quando vuoi, ogni passo resta salvato.</p>
+            }
+        }
+    </div>
+</div>
+
+<nav aria-label="Passi" class="mb-4">
+    <ol class="passi-onboarding">
+        @for (var i = 1; i <= DatiPersonaliViewModel.Titoli.Length; i++)
+        {
+            var stato = i == Model.Passo ? "corrente" : i < p.Passo || p.Completato ? "fatto" : "da-fare";
+            <li class="passo-@stato">
+                @if (stato != "da-fare" && i != Model.Passo)
+                {
+                    <a asp-action="Index" asp-route-dipendenteId="@dipendenteId" asp-route-passo="@i"><span class="numero">@(stato == "fatto" ? "✓" : i.ToString())</span><span class="titolo">@DatiPersonaliViewModel.Titoli[i - 1]</span></a>
+                }
+                else
+                {
+                    <span aria-current="@(i == Model.Passo ? "step" : null)"><span class="numero">@i</span><span class="titolo">@DatiPersonaliViewModel.Titoli[i - 1]</span></span>
+                }
+            </li>
+        }
+    </ol>
+</nav>
+
+<section class="card radius-15 p-4" aria-labelledby="titoloPasso">
+    <h2 class="h5 mb-1" id="titoloPasso">@Model.Passo. @DatiPersonaliViewModel.Titoli[Model.Passo - 1]</h2>
+    @switch (Model.Passo)
+    {
+        case 1: <partial name="_Anagrafica" model="(AnagraficaForm)Model.Form!" view-data="ViewData" /> break;
+        case 2: <partial name="_Residenza" model="(ResidenzaForm)Model.Form!" view-data="ViewData" /> break;
+        case 3: <partial name="_Pagamento" model="(PagamentoForm)Model.Form!" view-data="ViewData" /> break;
+        case 4: <partial name="_Famiglia" model="(FamigliaForm)Model.Form!" view-data="ViewData" /> break;
+        case 5: <partial name="_Altri" model="(AltriDatiForm)Model.Form!" view-data="ViewData" /> break;
+        default: <partial name="_Riepilogo" model="Model" /> break;
+    }
+</section>
+
+@section Scripts {
+    <script>
+        // Campi che compaiono solo quando servono (domicilio diverso, fondo pensione).
+        document.querySelectorAll('[data-mostra]').forEach(function (controllo) {
+            const blocco = document.getElementById(controllo.dataset.mostra);
+            const aggiorna = () => blocco.hidden = controllo.type === 'checkbox' ? !controllo.checked : controllo.value !== controllo.dataset.valore;
+            controllo.addEventListener('change', aggiorna); aggiorna();
+        });
+        // Familiari: una riga vuota alla volta.
+        document.getElementById('aggiungiFamiliare')?.addEventListener('click', function () {
+            const nascosta = document.querySelector('.riga-familiare[hidden]');
+            if (nascosta) { nascosta.hidden = false; nascosta.querySelector('input')?.focus(); }
+            if (!document.querySelector('.riga-familiare[hidden]')) this.hidden = true;
+        });
+        document.querySelectorAll('.togli-familiare').forEach(b => b.addEventListener('click', function () {
+            const riga = this.closest('.riga-familiare');
+            riga.querySelectorAll('input:not([type=checkbox])').forEach(i => i.value = '');
+            riga.querySelectorAll('input[type=checkbox]').forEach(i => i.checked = false);
+            riga.hidden = true;
+            document.getElementById('aggiungiFamiliare').hidden = false;
+        }));
+    </script>
+}

@@ -1,0 +1,18 @@
+@model CL.Web.Controllers.AltriDatiForm
+<form asp-action="AltriDati" method="post" novalidate>
+    <partial name="_IdDipendente" />
+    <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+    <div class="row g-3 mt-1">
+        <div class="col-md-6"><label asp-for="TitoloStudio" class="form-label"></label><select asp-for="TitoloStudio" class="form-select" asp-items="CL.Web.Controllers.DatiPersonaliController.Titoli"></select></div>
+        <div class="col-12"><h3 class="h6 mt-2 mb-0">Documento d'identità</h3></div>
+        <div class="col-md-4">
+            <label asp-for="TipoDocumento" class="form-label">Tipo</label>
+            <select asp-for="TipoDocumento" class="form-select" asp-items="CL.Web.Controllers.AltriDatiForm.Documenti.Select(d => new SelectListItem(d, d))"></select>
+            <span asp-validation-for="TipoDocumento" class="text-danger"></span>
+        </div>
+        <div class="col-md-4"><label asp-for="NumeroDocumento" class="form-label"></label><input asp-for="NumeroDocumento" class="form-control text-uppercase" /><span asp-validation-for="NumeroDocumento" class="text-danger"></span></div>
+        <div class="col-md-4"><label asp-for="ScadenzaDocumento" class="form-label"></label><input asp-for="ScadenzaDocumento" type="date" class="form-control" /><span asp-validation-for="ScadenzaDocumento" class="text-danger"></span></div>
+        <div class="col-md-6"><label asp-for="ScadenzaPermessoSoggiorno" class="form-label"></label><input asp-for="ScadenzaPermessoSoggiorno" type="date" class="form-control" /></div>
+    </div>
+    <partial name="_Pulsanti" model="5" />
+</form>

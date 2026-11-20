@@ -225,6 +225,8 @@ public sealed class DipendentiController(AppDbContext db, UtenteCorrente utente,
         var richieste = await saldi.RichiesteAnno(d.Id, oggi.Year);
         ViewBag.Azienda = trovato.Azienda;
         ViewBag.Accesso = await accessi.Elenco().FirstOrDefaultAsync(u => u.DipendenteId == d.Id);
+        ViewBag.ProfiloPersonale = await db.ProfiliDipendente.AsNoTracking().IgnoreAutoIncludes()
+            .Where(p => p.DipendenteId == d.Id).Select(p => new { p.Passo, p.CompletatoIl, p.AggiornatoIl }).FirstOrDefaultAsync();
         ViewBag.Buste = await db.BustePaga.AsNoTracking().Where(b => b.DipendenteId == d.Id)
             .OrderByDescending(b => b.Anno).ThenByDescending(b => b.Mese).Take(24)
             .Select(b => new BustaRiga

@@ -42,6 +42,18 @@
                 <dt>Indirizzo</dt><dd>@(Model.Indirizzo ?? "—")</dd>
                 <dt>IBAN</dt><dd>@(Model.Iban?.Valore ?? "—")</dd>
             </dl>
+            @{ dynamic? dati = ViewBag.ProfiloPersonale; }
+            <div class="border-top pt-3 mt-3">
+                <h2 class="h6 mb-2">Dati personali per le paghe</h2>
+                <div class="d-flex align-items-center justify-content-between gap-2">
+                    <div class="small">
+                        @if (dati is null) { <span class="badge bg-secondary">Non iniziati</span> }
+                        else if (dati.CompletatoIl is null) { <span class="badge bg-warning text-dark">Al passo @dati.Passo di 6</span> }
+                        else { <span class="badge bg-success">Completi</span> <span class="text-body-secondary">agg. @(((DateTime)dati.AggiornatoIl).ToLocalTime().ToString("dd/MM/yyyy"))</span> }
+                    </div>
+                    <a asp-controller="DatiPersonali" asp-action="Index" asp-route-dipendenteId="@Model.Id" class="small"><i class="ri-file-user-line" aria-hidden="true"></i> @(dati?.CompletatoIl is null ? "Apri" : "Vedi")</a>
+                </div>
+            </div>
             <div class="border-top pt-3 mt-auto">
                 <h2 class="h6 mb-2">Accesso al portale</h2>
                 @if (accesso is null)

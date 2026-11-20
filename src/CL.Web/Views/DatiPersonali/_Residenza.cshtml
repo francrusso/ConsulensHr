@@ -1,0 +1,23 @@
+@model CL.Web.Controllers.ResidenzaForm
+<p class="small text-body-secondary">Serve per le addizionali regionali e comunali IRPEF, calcolate sulla residenza.</p>
+<form asp-action="Residenza" method="post" novalidate>
+    <partial name="_IdDipendente" />
+    <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+    <div class="row g-3">
+        <div class="col-md-6"><label asp-for="Via" class="form-label"></label><input asp-for="Via" class="form-control" /><span asp-validation-for="Via" class="text-danger"></span></div>
+        <div class="col-md-2"><label asp-for="Cap" class="form-label"></label><input asp-for="Cap" class="form-control" inputmode="numeric" maxlength="5" /><span asp-validation-for="Cap" class="text-danger"></span></div>
+        <div class="col-md-3"><label asp-for="Comune" class="form-label"></label><input asp-for="Comune" class="form-control" /><span asp-validation-for="Comune" class="text-danger"></span></div>
+        <div class="col-md-1"><label asp-for="Provincia" class="form-label">Prov.</label><input asp-for="Provincia" class="form-control text-uppercase" maxlength="2" /><span asp-validation-for="Provincia" class="text-danger"></span></div>
+    </div>
+    <div class="form-check form-switch mt-4">
+        <input asp-for="DomicilioDiverso" class="form-check-input" data-mostra="campiDomicilio" />
+        <label asp-for="DomicilioDiverso" class="form-check-label"></label>
+    </div>
+    <div id="campiDomicilio" class="row g-3 mt-1">
+        <div class="col-md-6"><label asp-for="DomicilioVia" class="form-label"></label><input asp-for="DomicilioVia" class="form-control" /><span asp-validation-for="DomicilioVia" class="text-danger"></span></div>
+        <div class="col-md-2"><label asp-for="DomicilioCap" class="form-label"></label><input asp-for="DomicilioCap" class="form-control" inputmode="numeric" maxlength="5" /><span asp-validation-for="DomicilioCap" class="text-danger"></span></div>
+        <div class="col-md-3"><label asp-for="DomicilioComune" class="form-label"></label><input asp-for="DomicilioComune" class="form-control" /><span asp-validation-for="DomicilioComune" class="text-danger"></span></div>
+        <div class="col-md-1"><label asp-for="DomicilioProvincia" class="form-label">Prov.</label><input asp-for="DomicilioProvincia" class="form-control text-uppercase" maxlength="2" /><span asp-validation-for="DomicilioProvincia" class="text-danger"></span></div>
+    </div>
+    <partial name="_Pulsanti" model="2" />
+</form>

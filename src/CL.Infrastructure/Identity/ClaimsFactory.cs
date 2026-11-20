@@ -11,8 +11,13 @@ public static class ClaimsPersonalizzati
     public const string AziendaId = "cl:azienda_id";
     public const string DipendenteId = "cl:dipendente_id";
     public const string NomeVisualizzato = "cl:nome";
-    /// <summary>Presente finché l'azienda del referente non ha completato il profilo per lo studio.</summary>
+    /// <summary>
+    /// Presente finché manca il percorso guidato: valore "azienda" (profilo dell'azienda del referente)
+    /// o "dipendente" (dati personali per le paghe).
+    /// </summary>
     public const string OnboardingDaCompletare = "cl:onboarding";
+    public const string OnboardingAzienda = "azienda";
+    public const string OnboardingDipendente = "dipendente";
 }
 
 /// <summary>Aggiunge al cookie di login il perimetro dell'utente (azienda/dipendente) e il nome da mostrare.</summary>
@@ -34,7 +39,10 @@ internal sealed class ClaimsFactory(
         // Rigenerato a ogni login e a ogni verifica periodica del security stamp.
         if (user.AziendaId is { } az && id.HasClaim(id.RoleClaimType, Ruoli.Azienda)
             && !await db.ProfiliAzienda.AnyAsync(p => p.AziendaId == az && p.CompletatoIl != null))
-            id.AddClaim(new Claim(ClaimsPersonalizzati.OnboardingDaCompletare, "1"));
+            id.AddClaim(new Claim(ClaimsPersonalizzati.OnboardingDaCompletare, ClaimsPersonalizzati.OnboardingAzienda));
+        else if (user.DipendenteId is { } dip && id.HasClaim(id.RoleClaimType, Ruoli.Dipendente)
+                 && !await db.ProfiliDipendente.AnyAsync(p => p.DipendenteId == dip && p.CompletatoIl != null))
+            id.AddClaim(new Claim(ClaimsPersonalizzati.OnboardingDaCompletare, ClaimsPersonalizzati.OnboardingDipendente));
         return id;
     }
 }

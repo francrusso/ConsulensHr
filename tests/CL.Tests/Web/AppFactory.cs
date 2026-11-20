@@ -83,6 +83,22 @@ public sealed class AppFactory : WebApplicationFactory<Program>
         return await db.SaveChangesAsync();
     });
 
+    /// <summary>Dati personali del dipendente compilati (altrimenti al login finisce nel percorso guidato).</summary>
+    public Task CompletaDatiPersonali(Guid dipendenteId) => ConDb(async db =>
+    {
+        if (await db.ProfiliDipendente.AnyAsync(p => p.DipendenteId == dipendenteId)) return 0;
+        var p = new CL.Domain.Dipendenti.ProfiloDipendente(dipendenteId);
+        var t = DateTime.UtcNow;
+        p.ImpostaAnagrafica(new("Milano", "MI", "Italiana", null, null), "test", t);
+        p.ImpostaResidenza(new("Via Roma 1", "20100", "Milano", "MI"), null, "test", t);
+        p.ImpostaPagamento(CL.Domain.ValueObjects.Iban.Parse("IT60X0542811101000000123456"), null, CL.Domain.Dipendenti.DestinazioneTfr.Azienda, null, "test", t);
+        p.ImpostaFamiglia(true, [], "test", t);
+        p.ImpostaAltriDati(new(CL.Domain.Dipendenti.TitoloStudio.Diploma, "Carta d'identità", "CA1234567", DateOnly.FromDateTime(t).AddYears(5), null), "test", t);
+        p.Completa(true, "test", t);
+        db.ProfiliDipendente.Add(p);
+        return await db.SaveChangesAsync();
+    });
+
     public async Task<T> ConDb<T>(Func<AppDbContext, Task<T>> f)
     {
         using var scope = Services.CreateScope();

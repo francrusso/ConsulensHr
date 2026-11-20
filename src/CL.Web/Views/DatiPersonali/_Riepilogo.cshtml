@@ -1,0 +1,59 @@
+@model CL.Web.Controllers.DatiPersonaliViewModel
+@{
+    var p = Model.Profilo;
+    var d = Model.Dipendente;
+    Guid? dipendenteId = Model.PerConto ? d.Id : null;
+    string V(string? s) => string.IsNullOrWhiteSpace(s) ? "—" : s;
+    string Ind(CL.Domain.Aziende.Indirizzo? i) => i is null ? "—" : $"{i.Via}, {i.Cap} {i.Comune} ({i.Provincia})";
+    var familiari = p.Familiari.Count == 0 ? "Nessuno"
+        : string.Join("; ", p.Familiari.OrderBy(f => f.Relazione).Select(f => $"{f.Descrizione} {f.Nome} {f.Cognome} ({f.DataNascita:dd/MM/yyyy}, {f.PercentualeCarico}%{(f.Disabile ? ", disabile" : "")})"));
+    var sezioni = new (int Passo, string Titolo, (string, string)[] Righe)[]
+    {
+        (1, "Dati anagrafici", [("Nome", d.NomeCompleto), ("Codice fiscale", d.CodiceFiscale.Valore), ("Nato/a", $"{d.DataNascita:dd/MM/yyyy} a {V(p.ComuneNascita)} ({V(p.ProvinciaNascita)})"),
+            ("Cittadinanza", V(p.Cittadinanza)), ("Cellulare", V(p.Telefono)), ("Email personale", V(p.EmailPersonale))]),
+        (2, "Residenza", [("Residenza", Ind(p.Residenza)), ("Domicilio", p.Domicilio is null ? "come la residenza" : Ind(p.Domicilio))]),
+        (3, "Stipendio e TFR", [("IBAN", V(p.Iban?.Valore)), ("Intestatario", V(p.IntestatarioConto) == "—" ? "il dipendente" : p.IntestatarioConto!),
+            ("TFR", p.Tfr == DestinazioneTfr.FondoPensione ? $"fondo pensione {p.FondoPensione}" : p.Tfr is null ? "—" : "in azienda")]),
+        (4, "Detrazioni e familiari", [("Detrazioni lavoro dipendente", p.RichiedeDetrazioni is null ? "—" : p.RichiedeDetrazioni.Value ? "richieste" : "non richieste"), ("Familiari a carico", familiari)]),
+        (5, "Altri dati", [("Titolo di studio", p.TitoloStudio?.Descrizione() ?? "—"), ("Documento", p.NumeroDocumento is null ? "—" : $"{p.TipoDocumento} n. {p.NumeroDocumento}, scade il {p.ScadenzaDocumento:dd/MM/yyyy}"),
+            ("Permesso di soggiorno", p.ScadenzaPermessoSoggiorno is { } ps ? $"scade il {ps:dd/MM/yyyy}" : "—")]),
+    };
+}
+@if (p.Completato)
+{
+    <p class="small text-body-secondary">Ultimo aggiornamento il @p.AggiornatoIl!.Value.ToLocalTime().ToString("dd/MM/yyyy") da @p.AggiornatoDa. @(Model.PerConto ? "" : "Se qualcosa cambia (residenza, IBAN, familiari) aggiornalo qui: lo studio viene avvisato.")</p>
+}
+<div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+<div class="row g-3 riepilogo-onboarding">
+    @foreach (var s in sezioni)
+    {
+        <div class="col-lg-6">
+            <div class="border radius-15 p-3 h-100">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h3 class="h6 mb-0">@s.Titolo</h3>
+                    <a asp-action="Index" asp-route-dipendenteId="@dipendenteId" asp-route-passo="@s.Passo" class="small"><i class="ri-pencil-line" aria-hidden="true"></i> Modifica</a>
+                </div>
+                <dl class="scheda mb-0">
+                    @foreach (var (etichetta, valore) in s.Righe) { <dt>@etichetta</dt><dd>@valore</dd> }
+                </dl>
+            </div>
+        </div>
+    }
+</div>
+@if (!p.Completato)
+{
+    <form asp-action="Conferma" method="post" class="border-top pt-3 mt-4">
+        <partial name="_IdDipendente" />
+        <div class="form-check mb-3">
+            <input class="form-check-input" type="checkbox" id="dichiarazione" name="dichiarazione" value="true" required />
+            <label class="form-check-label" for="dichiarazione">
+                Dichiaro che i dati sono veritieri (artt. 46 e 47 del DPR 445/2000) e mi impegno a comunicare tempestivamente ogni variazione.
+                Ho preso visione dell'informativa sul trattamento dei dati personali per la gestione del rapporto di lavoro.
+            </label>
+        </div>
+        <div class="d-flex justify-content-between">
+            <a asp-action="Index" asp-route-dipendenteId="@dipendenteId" asp-route-passo="5" class="btn btn-outline-secondary"><i class="ri-arrow-left-line" aria-hidden="true"></i> Indietro</a>
+            <button type="submit" class="btn btn-primary"><i class="ri-check-line" aria-hidden="true"></i> Conferma e invia allo studio</button>
+        </div>
+    </form>
+}

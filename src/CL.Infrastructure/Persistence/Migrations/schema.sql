@@ -570,3 +570,86 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261120100517_ProfiloDipendente') THEN
+    CREATE TABLE hr."ProfiliDipendente" (
+        "Id" uuid NOT NULL,
+        "DipendenteId" uuid NOT NULL,
+        "Passo" integer NOT NULL,
+        "ComuneNascita" character varying(150),
+        "ProvinciaNascita" character varying(2),
+        "Cittadinanza" character varying(150),
+        "Telefono" character varying(30),
+        "EmailPersonale" character varying(256),
+        "ResidenzaVia" character varying(300),
+        "ResidenzaCap" character varying(5),
+        "ResidenzaComune" character varying(150),
+        "ResidenzaProvincia" character varying(2),
+        "DomicilioVia" character varying(300),
+        "DomicilioCap" character varying(5),
+        "DomicilioComune" character varying(150),
+        "DomicilioProvincia" character varying(2),
+        "Iban" character varying(34),
+        "IntestatarioConto" character varying(150),
+        "Tfr" character varying(32),
+        "FondoPensione" character varying(150),
+        "RichiedeDetrazioni" boolean,
+        "TitoloStudio" character varying(32),
+        "TipoDocumento" character varying(150),
+        "NumeroDocumento" character varying(30),
+        "ScadenzaDocumento" date,
+        "ScadenzaPermessoSoggiorno" date,
+        "CompletatoIl" timestamp with time zone,
+        "AggiornatoIl" timestamp with time zone,
+        "AggiornatoDa" character varying(256),
+        CONSTRAINT "PK_ProfiliDipendente" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_ProfiliDipendente_Dipendenti_DipendenteId" FOREIGN KEY ("DipendenteId") REFERENCES hr."Dipendenti" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261120100517_ProfiloDipendente') THEN
+    CREATE TABLE hr."FamiliariACarico" (
+        "Id" uuid NOT NULL,
+        "ProfiloId" uuid NOT NULL,
+        "Relazione" character varying(32) NOT NULL,
+        "Nome" character varying(100) NOT NULL,
+        "Cognome" character varying(100) NOT NULL,
+        "CodiceFiscale" character varying(16) NOT NULL,
+        "DataNascita" date NOT NULL,
+        "PercentualeCarico" integer NOT NULL,
+        "Disabile" boolean NOT NULL,
+        CONSTRAINT "PK_FamiliariACarico" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_FamiliariACarico_ProfiliDipendente_ProfiloId" FOREIGN KEY ("ProfiloId") REFERENCES hr."ProfiliDipendente" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261120100517_ProfiloDipendente') THEN
+    CREATE INDEX "IX_FamiliariACarico_ProfiloId" ON hr."FamiliariACarico" ("ProfiloId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261120100517_ProfiloDipendente') THEN
+    CREATE UNIQUE INDEX "IX_ProfiliDipendente_DipendenteId" ON hr."ProfiliDipendente" ("DipendenteId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261120100517_ProfiloDipendente') THEN
+    INSERT INTO hr."__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261120100517_ProfiloDipendente', '10.0.15');
+    END IF;
+END $EF$;
+COMMIT;
+

@@ -106,6 +106,7 @@ public sealed partial class AccessiWebTests : IDisposable
         var r = await hr.InviaForm($"/Dipendenti/Dettaglio/{dipId}", "/Utenti/InvitaDipendente", new() { ["dipendenteId"] = dipId.ToString() });
         var html = await Testo(r);
         Assert.Contains("Accesso creato per mario.rossi@acme.test", html);
+        await _app.CompletaDatiPersonali(dipId); // il percorso guidato del dipendente ha i suoi test
 
         var (dip, home) = await Attiva(Link(html));
         Assert.Contains("Dipendente", home);

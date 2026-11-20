@@ -22,6 +22,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : Ident
     public DbSet<BustaPaga> BustePaga => Set<BustaPaga>();
     public DbSet<ProfiloAzienda> ProfiliAzienda => Set<ProfiloAzienda>();
     public DbSet<ComunicazioneMensile> ComunicazioniPresenze => Set<ComunicazioneMensile>();
+    public DbSet<ProfiloDipendente> ProfiliDipendente => Set<ProfiloDipendente>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

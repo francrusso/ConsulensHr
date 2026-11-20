@@ -6,7 +6,18 @@ namespace CL.Domain.Aziende;
 public sealed record DatiSocietari(string FormaGiuridica, string? NumeroRea, string CodiceAteco, DateOnly? DataInizioAttivita,
     string Pec, string? Telefono);
 
-public sealed record Indirizzo(string Via, string Cap, string Comune, string Provincia);
+public sealed record Indirizzo(string Via, string Cap, string Comune, string Provincia)
+{
+    /// <summary>Controlla CAP (5 cifre) e sigla di provincia (2 lettere) e restituisce l'indirizzo normalizzato.</summary>
+    public Indirizzo Validato(string quale)
+    {
+        var cap = Guard.NotEmpty(Cap, $"CAP {quale}");
+        if (cap.Length != 5 || !cap.All(char.IsAsciiDigit)) throw new DomainException($"CAP {quale} non valido.");
+        var prov = Guard.NotEmpty(Provincia, $"Provincia {quale}").ToUpperInvariant();
+        if (prov.Length != 2 || !prov.All(char.IsAsciiLetter)) throw new DomainException($"Provincia {quale}: usa la sigla (es. MI).");
+        return new Indirizzo(Guard.NotEmpty(Via, $"Indirizzo {quale}"), cap, Guard.NotEmpty(Comune, $"Comune {quale}"), prov);
+    }
+}
 
 public sealed record LegaleRappresentante(string Nome, string Cognome, CodiceFiscale CodiceFiscale, string? Email, string? Telefono);
 
@@ -174,11 +185,8 @@ public sealed class ProfiloAzienda : Entity
 
     private static (string, string, string, string) Valida(Indirizzo i, string quale)
     {
-        var cap = Guard.NotEmpty(i.Cap, $"CAP della {quale}");
-        if (cap.Length != 5 || !cap.All(char.IsAsciiDigit)) throw new DomainException($"CAP della {quale} non valido.");
-        var prov = Guard.NotEmpty(i.Provincia, $"Provincia della {quale}").ToUpperInvariant();
-        if (prov.Length != 2 || !prov.All(char.IsAsciiLetter)) throw new DomainException($"Provincia della {quale}: usa la sigla (es. MI).");
-        return (Guard.NotEmpty(i.Via, $"Indirizzo della {quale}"), cap, Guard.NotEmpty(i.Comune, $"Comune della {quale}"), prov);
+        var v = i.Validato("della " + quale);
+        return (v.Via, v.Cap, v.Comune, v.Provincia);
     }
 
     private static string? Pulito(string? s) => string.IsNullOrWhiteSpace(s) ? null : s.Trim();

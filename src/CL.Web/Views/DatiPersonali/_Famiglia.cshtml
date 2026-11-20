@@ -1,0 +1,58 @@
+@model CL.Web.Controllers.FamigliaForm
+@{
+    var righe = Model.Familiari.ToList();
+    var visibili = righe.Count;
+    while (righe.Count < CL.Domain.Dipendenti.ProfiloDipendente.MaxFamiliari) righe.Add(new CL.Web.Controllers.FamiliareForm());
+}
+<form asp-action="Famiglia" method="post" novalidate>
+    <partial name="_IdDipendente" />
+    <div asp-validation-summary="All" class="text-danger" role="alert"></div>
+    <div class="form-check form-switch mt-2">
+        <input asp-for="RichiedeDetrazioni" class="form-check-input" />
+        <label asp-for="RichiedeDetrazioni" class="form-check-label"></label>
+    </div>
+    <p class="small text-body-secondary">Lascia attivo se questo è il tuo unico lavoro dipendente (o quello principale). Se hai più rapporti di lavoro nello stesso periodo, le detrazioni vanno chieste a un solo datore di lavoro.</p>
+
+    <h3 class="h6 mt-4">Familiari fiscalmente a carico</h3>
+    <p class="small text-body-secondary mb-3">
+        Coniuge, figli e altri familiari con reddito annuo non superiore a 2.840,51 € (4.000 € per i figli fino a 24 anni).
+        Per i figli sotto i 21 anni le detrazioni sono sostituite dall'Assegno unico INPS: indicali comunque, servono allo studio.
+    </p>
+    @for (var i = 0; i < righe.Count; i++)
+    {
+        var f = righe[i];
+        <fieldset class="riga-familiare border radius-15 p-3 mb-2" hidden="@(i >= visibili)">
+            <legend class="visually-hidden">Familiare @(i + 1)</legend>
+            <div class="row g-2 align-items-end">
+                <div class="col-md-2">
+                    <label class="form-label small" for="Familiari_@(i)_Relazione">Relazione</label>
+                    <select class="form-select form-select-sm" id="Familiari_@(i)_Relazione" name="Familiari[@i].Relazione">
+                        <option value="Coniuge" selected="@(f.Relazione == RelazioneFamiliare.Coniuge)">Coniuge</option>
+                        <option value="Figlio" selected="@(f.Relazione == RelazioneFamiliare.Figlio)">Figlio/a</option>
+                        <option value="AltroFamiliare" selected="@(f.Relazione == RelazioneFamiliare.AltroFamiliare)">Altro familiare</option>
+                    </select>
+                </div>
+                <div class="col-md-2"><label class="form-label small" for="Familiari_@(i)_Nome">Nome</label><input class="form-control form-control-sm" id="Familiari_@(i)_Nome" name="Familiari[@i].Nome" value="@f.Nome" maxlength="100" /></div>
+                <div class="col-md-2"><label class="form-label small" for="Familiari_@(i)_Cognome">Cognome</label><input class="form-control form-control-sm" id="Familiari_@(i)_Cognome" name="Familiari[@i].Cognome" value="@f.Cognome" maxlength="100" /></div>
+                <div class="col-md-2"><label class="form-label small" for="Familiari_@(i)_CodiceFiscale">Codice fiscale</label><input class="form-control form-control-sm text-uppercase" id="Familiari_@(i)_CodiceFiscale" name="Familiari[@i].CodiceFiscale" value="@f.CodiceFiscale" maxlength="16" /></div>
+                <div class="col-md-2"><label class="form-label small" for="Familiari_@(i)_DataNascita">Nato/a il</label><input class="form-control form-control-sm" type="date" id="Familiari_@(i)_DataNascita" name="Familiari[@i].DataNascita" value="@f.DataNascita?.ToString("yyyy-MM-dd")" /></div>
+                <div class="col-md-1">
+                    <label class="form-label small" for="Familiari_@(i)_PercentualeCarico">Carico</label>
+                    <select class="form-select form-select-sm" id="Familiari_@(i)_PercentualeCarico" name="Familiari[@i].PercentualeCarico">
+                        <option value="100" selected="@(f.PercentualeCarico == 100)">100%</option>
+                        <option value="50" selected="@(f.PercentualeCarico == 50)">50%</option>
+                    </select>
+                </div>
+                <div class="col-md-1 d-flex gap-2 align-items-center justify-content-between">
+                    <div class="form-check small mb-1" title="Persona con disabilità">
+                        <input class="form-check-input" type="checkbox" id="Familiari_@(i)_Disabile" name="Familiari[@i].Disabile" value="true" checked="@f.Disabile" />
+                        <label class="form-check-label" for="Familiari_@(i)_Disabile">Disab.</label>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-link text-danger p-0 togli-familiare" aria-label="Togli questo familiare"><i class="ri-close-circle-line" aria-hidden="true"></i></button>
+                </div>
+            </div>
+        </fieldset>
+    }
+    <button type="button" class="btn btn-outline-secondary btn-sm" id="aggiungiFamiliare"><i class="ri-user-add-line" aria-hidden="true"></i> Aggiungi un familiare</button>
+    <partial name="_Pulsanti" model="4" />
+</form>

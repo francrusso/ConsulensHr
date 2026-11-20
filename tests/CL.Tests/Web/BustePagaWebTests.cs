@@ -52,6 +52,7 @@ public sealed class BustePagaWebTests : IDisposable
             var x = (await users.FindByIdAsync(u.Id))!;
             x.DipendenteId = dipendenteId;
             await users.UpdateAsync(x);
+            await _app.CompletaDatiPersonali(dipendenteId.Value);
         }
         var c = _app.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = true });
         await c.Accedi(email);

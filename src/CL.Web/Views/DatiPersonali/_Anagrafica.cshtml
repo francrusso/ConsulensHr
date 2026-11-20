@@ -1,0 +1,13 @@
+@model CL.Web.Controllers.AnagraficaForm
+<form asp-action="Anagrafica" method="post" novalidate>
+    <partial name="_IdDipendente" />
+    <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+    <div class="row g-3 mt-1">
+        <div class="col-md-5"><label asp-for="ComuneNascita" class="form-label"></label><input asp-for="ComuneNascita" class="form-control" /><span asp-validation-for="ComuneNascita" class="text-danger"></span></div>
+        <div class="col-md-2"><label asp-for="ProvinciaNascita" class="form-label"></label><input asp-for="ProvinciaNascita" class="form-control text-uppercase" maxlength="2" /><span asp-validation-for="ProvinciaNascita" class="text-danger"></span></div>
+        <div class="col-md-5"><label asp-for="Cittadinanza" class="form-label"></label><input asp-for="Cittadinanza" class="form-control" /><span asp-validation-for="Cittadinanza" class="text-danger"></span></div>
+        <div class="col-md-5"><label asp-for="Telefono" class="form-label"></label><input asp-for="Telefono" type="tel" class="form-control" /></div>
+        <div class="col-md-7"><label asp-for="EmailPersonale" class="form-label"></label><input asp-for="EmailPersonale" type="email" class="form-control" /><span asp-validation-for="EmailPersonale" class="text-danger"></span></div>
+    </div>
+    <partial name="_Pulsanti" model="1" />
+</form>
