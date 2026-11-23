@@ -4,7 +4,9 @@ using System.Text.Json;
 using CL.Domain.Aziende;
 using CL.Domain.ValueObjects;
 using CL.Infrastructure.Identity;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace CL.Tests.Web;
 
@@ -117,5 +119,58 @@ public sealed class AziendeWebTests : IDisposable
         Assert.Equal(HttpStatusCode.OK, (await hr.GetAsync($"/Aziende/Logo/{acme.Id}")).StatusCode);
         Assert.Contains($"/Aziende/Logo/{acme.Id}", await hr.GetStringAsync("/")); // nella barra in alto
         Assert.Equal(HttpStatusCode.NotFound, (await hr.GetAsync($"/Aziende/Logo/{altra}")).StatusCode);
+    }
+
+    /// <summary>Dipendente con accesso al portale e dati personali completi, già entrato.</summary>
+    private async Task<HttpClient> Dipendente(Guid aziendaId, string email)
+    {
+        var dipId = await _app.ConDb(async db =>
+        {
+            var d = new CL.Domain.Dipendenti.Dipendente(aziendaId, "Mario", "Rossi", CodiceFiscale.Parse("RSSMRA85T10A562S"), new DateOnly(1985, 12, 10));
+            db.Add(d);
+            await db.SaveChangesAsync();
+            return d.Id;
+        });
+        var utente = await _app.CreaUtente(email, Ruoli.Dipendente, aziendaId);
+        using (var scope = _app.Services.CreateScope())
+        {
+            var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+            var u = await users.FindByIdAsync(utente.Id);
+            u!.DipendenteId = dipId;
+            await users.UpdateAsync(u);
+        }
+        await _app.CompletaDatiPersonali(dipId);
+        var c = _app.CreateClient();
+        await c.Accedi(email);
+        return c;
+    }
+
+    [Fact]
+    public async Task Il_dipendente_vede_in_alto_a_sinistra_il_marchio_della_sua_azienda()
+    {
+        var consulente = await Studio();
+        await Salva(consulente, new() { ["RagioneSociale"] = "Acme S.r.l.", ["PartitaIva"] = "01234567897" }, ("logo.png", Png));
+        var acme = await _app.ConDb(db => db.Aziende.SingleAsync());
+        var beta = await _app.ConDb(async db =>
+        {
+            var a = new Azienda("Beta S.p.A.", PartitaIva.Parse("12345678903"));
+            db.Add(a);
+            await db.SaveChangesAsync();
+            return a.Id;
+        });
+        const string MarchioConsulens = "/assets/images/logo-img.png";
+        Assert.Contains(MarchioConsulens, await consulente.GetStringAsync("/"));
+
+        // Con il logo: il logo dell'azienda, che il dipendente può scaricare.
+        var dipAcme = await Dipendente(acme.Id, "mario@acme.test");
+        var html = await dipAcme.GetStringAsync("/");
+        Assert.Contains($"src=\"/Aziende/Logo/{acme.Id}\" class=\"logo-img\"", html);
+        Assert.DoesNotContain(MarchioConsulens, html);
+        Assert.Equal(HttpStatusCode.OK, (await dipAcme.GetAsync($"/Aziende/Logo/{acme.Id}")).StatusCode);
+
+        // Senza logo: il nome dell'azienda.
+        html = WebUtility.HtmlDecode(await (await Dipendente(beta, "anna@beta.test")).GetStringAsync("/"));
+        Assert.Contains("id=\"logo-img\" title=\"Beta S.p.A.\">Beta S.p.A.</span>", html);
+        Assert.DoesNotContain(MarchioConsulens, html);
     }
 }

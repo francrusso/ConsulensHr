@@ -68,10 +68,32 @@
         {
             <div class="sidebar-wrapper">
                 <div class="sidebar-header">
-                    <div class="loghi">
-                        <img src="~/assets/images/logo-img.png" class="logo-img" alt="Consulens" id="logo-img" />
-                        <img src="~/assets/images/logo-icon.png" alt="Consulens" id="logo-icon" style="display:none" width="50" />
-                    </div>
+                    @{
+                        // Il dipendente vede il marchio della sua azienda, come in un portale interno; senza logo, il nome.
+                        var marchio = await Avatar.MarchioAsync();
+                    }
+                    @if (marchio is null)
+                    {
+                        <div class="loghi">
+                            <img src="~/assets/images/logo-img.png" class="logo-img" alt="Consulens" id="logo-img" />
+                            <img src="~/assets/images/logo-icon.png" alt="Consulens" id="logo-icon" style="display:none" width="50" />
+                        </div>
+                    }
+                    else if (marchio.HaLogo)
+                    {
+                        var srcLogo = Url.Action("Logo", "Aziende", new { id = marchio.Id });
+                        <div class="loghi loghi-azienda">
+                            <img src="@srcLogo" class="logo-img" alt="@marchio.Nome" id="logo-img" />
+                            <img src="@srcLogo" alt="@marchio.Nome" id="logo-icon" style="display:none" />
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="loghi loghi-azienda">
+                            <span class="logo-img logo-nome" id="logo-img" title="@marchio.Nome">@marchio.Nome</span>
+                            <span class="logo-iniziale" id="logo-icon" style="display:none" title="@marchio.Nome">@marchio.Nome.Trim()[..1].ToUpperInvariant()</span>
+                        </div>
+                    }
                     <button type="button" class="toggle-btn sidebar-collapse" aria-label="Riduci o espandi il menù" aria-expanded="true">
                         <i class="ri-side-bar-line" aria-hidden="true"></i>
                     </button>

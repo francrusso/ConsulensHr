@@ -96,6 +96,8 @@ A chi lavora in presenza si possono concedere giorni di smart working a settiman
 
 ## Area del dipendente
 
+- **Marchio**: in alto a sinistra, al posto di Consulens, c'è il logo dell'azienda del dipendente (senza logo, il suo
+  nome), così il portale sembra quello interno dell'azienda.
 - **I miei dati**: percorso in 6 passi (anagrafica, residenza, stipendio e TFR, detrazioni e familiari a carico, altri
   dati, riepilogo con dichiarazione). Finché non è completo il portale mostra solo questo. IBAN, residenza e cellulare
   vanno anche nell'anagrafica usata dallo studio. I consulenti e i referenti dell'azienda ricevono un'email al completamento
