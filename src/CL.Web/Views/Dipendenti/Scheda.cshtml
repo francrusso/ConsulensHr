@@ -294,6 +294,16 @@
                     <span asp-validation-for="ResponsabileId" class="text-danger"></span>
                 </div>
                 <div class="campo-largo">
+                    <label for="TeamReferente" class="form-label">Referente dei team</label>
+                    @* Chi è referente di un team ne approva le richieste (come responsabile del team nell'organigramma). *@
+                    <div class="valore-campo">@V(string.Join(", ", teamAzienda.Where(t => Model.TeamReferente.Contains(Guid.Parse(t.Value))).Select(t => t.Text)) is { Length: > 0 } guidati ? guidati : null)</div>
+                    <div class="campo-modifica">
+                        <select id="TeamReferente" name="TeamReferente" class="form-select select-multipla" multiple data-placeholder="Nessun team">
+                            @foreach (var t in teamAzienda) { <option value="@t.Value" selected="@Model.TeamReferente.Contains(Guid.Parse(t.Value))">@t.Text</option> }
+                        </select>
+                    </div>
+                </div>
+                <div class="campo-largo">
                     <label class="form-label">Approva ferie e permessi</label>
                     @* Calcolato dall'organigramma: si vede anche a campi aperti, non si modifica qui. *@
                     <div class="valore-campo valore-fisso">@(nuovo ? "Referente dell'azienda" : (string?)orgLettura?.Approvatore ?? "Referente dell'azienda")</div>
@@ -323,15 +333,19 @@
                     </div>
                 @if (accesso is null)
                 {
-                    <p class="small text-body-secondary mb-2">Con l'accesso il dipendente vede i propri saldi e chiede ferie e permessi.</p>
                     @if (string.IsNullOrWhiteSpace(d.Email))
                     {
                         <p class="small mb-0">Per invitarlo serve la sua email: <a asp-action="Modifica" asp-route-id="@d.Id">aggiungila all'anagrafica</a>.</p>
                     }
                     else
                     {
-                        <form asp-controller="Utenti" asp-action="InvitaDipendente" method="post" class="m-0">
+                        @* Si sceglie subito come entra: da dipendente o per gestire il portale per conto dell'azienda. *@
+                        <form asp-controller="Utenti" asp-action="InvitaDipendente" method="post" class="m-0 invito-accesso">
                             <input type="hidden" name="dipendenteId" value="@d.Id" />
+                            <div class="form-check form-switch mb-2">
+                                <input class="form-check-input" type="checkbox" role="switch" id="comeAzienda" name="comeAzienda" value="true" />
+                                <label class="form-check-label" for="comeAzienda">Gestisce il portale per conto dell'azienda</label>
+                            </div>
                             <button type="submit" class="btn btn-sm btn-primary"><i class="ri-mail-send-line" aria-hidden="true"></i> Invita a @d.Email</button>
                         </form>
                     }
@@ -343,7 +357,21 @@
                             <label class="form-label">Email di accesso</label>
                             <div class="valore-campo">@accesso.Email</div>
                         </div>
+                        <div class="campo-largo">
+                            <label class="form-label">Accede come</label>
+                            <div class="valore-campo">@(accesso.Ruolo == CL.Infrastructure.Identity.Ruoli.Azienda ? "Azienda: gestisce il portale" : "Dipendente")</div>
+                        </div>
                     </div>
+                    @* Con i campi aperti: interruttore per gestire il portale per conto dell'azienda. *@
+                    <form asp-controller="Utenti" asp-action="AccessoAzienda" method="post" class="solo-modifica mb-3">
+                        <input type="hidden" name="dipendenteId" value="@d.Id" />
+                        <input type="hidden" name="ritorno" value="@(ritorno + "?modifica=true")" />
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" role="switch" id="accessoAzienda" name="attivo" value="true"
+                                   checked="@(accesso.Ruolo == CL.Infrastructure.Identity.Ruoli.Azienda)" onchange="this.form.submit()" />
+                            <label class="form-check-label" for="accessoAzienda">Gestisce il portale per conto dell'azienda</label>
+                        </div>
+                    </form>
                     @* Con i campi aperti: email di accesso modificabile e invio del link per la password. *@
                     <div class="solo-modifica accesso-modifica">
                         <div class="d-flex flex-wrap align-items-end gap-2">
@@ -517,6 +545,9 @@
 }
 
 @section Scripts {
+    <script>
+        $(function () { if ($.fn.select2) $('.select-multipla').select2({ width: '100%', placeholder: 'Nessun team', closeOnSelect: false }); });
+    </script>
     <script>
         // Schede senza ricaricare; "Modifica dati" apre i campi. L'indirizzo ricorda scheda e modalità.
         (function () {

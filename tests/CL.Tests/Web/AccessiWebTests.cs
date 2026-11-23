@@ -168,10 +168,10 @@ public sealed partial class AccessiWebTests : IDisposable
         var hr = _app.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
         await hr.Accedi("hr@a.test");
 
-        var r = await hr.InviaForm("/Utenti/Azienda", $"/Utenti/CambiaStato/{altro.Id}", new());
+        var r = await hr.InviaForm("/Dipendenti", $"/Utenti/CambiaStato/{altro.Id}", new());
         Assert.Equal(HttpStatusCode.NotFound, r.StatusCode);
 
-        r = await hr.InviaForm("/Utenti/Azienda", "/Utenti/InvitaReferente", new()
+        r = await hr.InviaForm("/Dipendenti", "/Utenti/InvitaReferente", new()
         {
             ["aziendaId"] = aziendaB.ToString(), ["Nome"] = "X", ["Cognome"] = "Y", ["Email"] = "x@b.test",
         });

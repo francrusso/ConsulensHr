@@ -58,6 +58,9 @@ public sealed class DipendenteForm
     public string? Posizione { get; set; }
     [Display(Name = "Responsabile diretto")]
     public Guid? ResponsabileId { get; set; }
+    /// <summary>Team di cui la persona è referente (responsabile del team).</summary>
+    [Display(Name = "Referente dei team")]
+    public List<Guid> TeamReferente { get; set; } = [];
     [Display(Name = "Sede di lavoro")]
     public SedeLavoro? Sede { get; set; }
 
@@ -601,6 +604,12 @@ public sealed class DipendentiController(AppDbContext db, UtenteCorrente utente,
         var team = form.TeamId is { } tid ? await db.Team.FirstOrDefaultAsync(t => t.Id == tid && t.AziendaId == dip.AziendaId) : null;
         var resp = form.ResponsabileId is { } rid ? await db.Dipendenti.FirstOrDefaultAsync(x => x.Id == rid && x.AziendaId == dip.AziendaId) : null;
         if (!Prova(() => dip.ImpostaOrganizzazione(team, form.Posizione, resp), nameof(form.ResponsabileId))) return await MostraForm(form);
+        // Referente dei team scelti; dagli altri team dell'azienda, se lo era, non lo è più.
+        foreach (var t in await db.Team.Where(t => t.AziendaId == dip.AziendaId).ToListAsync())
+        {
+            if (form.TeamReferente.Contains(t.Id)) t.ImpostaResponsabile(dip);
+            else if (t.ResponsabileId == dip.Id) t.ImpostaResponsabile(null);
+        }
         if (form.Sede is SedeLavoro.SedeLegale or SedeLavoro.SedeOperativa && !(await SediAzienda(dip.AziendaId)).ContainsKey(form.Sede.Value))
         {
             ModelState.AddModelError(nameof(form.Sede), "Questa sede non è tra quelle dell'azienda.");
@@ -633,7 +642,9 @@ public sealed class DipendentiController(AppDbContext db, UtenteCorrente utente,
     {
         var d = await utente.Filtra(db.Dipendenti.AsNoTracking()).FirstOrDefaultAsync(x => x.Id == id);
         if (d is null) return NotFound();
-        return await MostraScheda(d, DipendenteForm.Da(d), modifica, sezione);
+        var form = DipendenteForm.Da(d);
+        form.TeamReferente = await db.Team.AsNoTracking().Where(t => t.ResponsabileId == d.Id).Select(t => t.Id).ToListAsync();
+        return await MostraScheda(d, form, modifica, sezione);
     }
 
     public async Task<IActionResult> Assumi(Guid id)

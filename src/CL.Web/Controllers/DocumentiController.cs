@@ -44,6 +44,7 @@ public sealed class NuovoContrattoForm
     public string? Cognome { get; set; }
     public string? CodiceFiscale { get; set; }
     public DateOnly? DataNascita { get; set; }
+    public string? Email { get; set; }
 }
 
 /// <summary>
@@ -200,6 +201,9 @@ public sealed class DocumentiController(AppDbContext db, UtenteCorrente utente, 
         if (string.IsNullOrWhiteSpace(form.Nome)) ModelState.AddModelError(nameof(form.Nome), "Inserisci il nome.");
         if (string.IsNullOrWhiteSpace(form.Cognome)) ModelState.AddModelError(nameof(form.Cognome), "Inserisci il cognome.");
         if (form.DataNascita is null) ModelState.AddModelError(nameof(form.DataNascita), "Inserisci la data di nascita.");
+        if (string.IsNullOrWhiteSpace(form.Email)) ModelState.AddModelError(nameof(form.Email), "Inserisci l'email.");
+        else if (!new System.ComponentModel.DataAnnotations.EmailAddressAttribute().IsValid(form.Email.Trim()))
+            ModelState.AddModelError(nameof(form.Email), "Email non valida.");
         CL.Domain.ValueObjects.CodiceFiscale? cf = null;
         try { cf = CL.Domain.ValueObjects.CodiceFiscale.Parse(form.CodiceFiscale); }
         catch (CL.Domain.Common.DomainException ex) { ModelState.AddModelError(nameof(form.CodiceFiscale), ex.Message); }
@@ -210,6 +214,7 @@ public sealed class DocumentiController(AppDbContext db, UtenteCorrente utente, 
         Dipendente? nuova = null;
         if (!Prova(() => nuova = new Dipendente(aziendaId!.Value, form.Nome!.Trim(), form.Cognome!.Trim(), cf!, form.DataNascita!.Value)))
             return await MostraNuovoContratto(form);
+        nuova!.AggiornaRecapiti(form.Email!.Trim(), null);
         db.Dipendenti.Add(nuova!);
         await db.SaveChangesAsync();
         Conferma($"{nuova!.NomeCompleto} aggiunta al personale: ora inserisci il contratto.");

@@ -40,6 +40,7 @@
         <div><label for="Nome" class="form-label">Nome</label><input id="Nome" name="Nome" value="@Model.Nome" class="form-control" maxlength="100" /></div>
         <div><label for="Cognome" class="form-label">Cognome</label><input id="Cognome" name="Cognome" value="@Model.Cognome" class="form-control" maxlength="100" /></div>
         <div><label for="CodiceFiscale" class="form-label">Codice fiscale</label><input id="CodiceFiscale" name="CodiceFiscale" value="@Model.CodiceFiscale" class="form-control text-uppercase" maxlength="16" /></div>
+        <div><label for="Email" class="form-label">Email</label><input id="Email" name="Email" type="email" value="@Model.Email" class="form-control" maxlength="256" autocomplete="off" /></div>
         <div><label for="DataNascita" class="form-label">Data di nascita</label><input id="DataNascita" name="DataNascita" type="date" value="@Model.DataNascita?.ToString("yyyy-MM-dd")" class="form-control" /></div>
     </div>
 

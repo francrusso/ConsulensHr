@@ -445,11 +445,53 @@ public sealed class UfficioWebTests : IDisposable
         r = await hr.InviaForm("/Documenti/NuovoContratto", "/Documenti/NuovoContratto", new()
         {
             ["NuovaPersona"] = "true", ["Nome"] = "Anna", ["Cognome"] = "Verdi", ["CodiceFiscale"] = "VRDNNA88C41F839V", ["DataNascita"] = "1988-03-01",
+            ["Email"] = "anna.verdi@test.it",
         });
         var nuova = await _app.ConDb(db => db.Dipendenti.SingleAsync(d => d.Cognome == "Verdi"));
         Assert.Equal(_aziendaId, nuova.AziendaId);
         Assert.EndsWith($"/Dipendenti/Assumi/{nuova.Id}", r.RequestMessage!.RequestUri!.AbsolutePath);
         Assert.Contains("ora inserisci il contratto", WebUtility.HtmlDecode(await r.Content.ReadAsStringAsync()));
+        Assert.Equal("anna.verdi@test.it", nuova.Email);
+        Assert.Contains("Verdi Anna", WebUtility.HtmlDecode(await hr.GetStringAsync("/Dipendenti"))); // subito nella tabella del personale
+    }
+
+    [Fact]
+    public async Task Dalla_scheda_si_sceglie_il_referente_del_team_e_chi_gestisce_il_portale()
+    {
+        await PreparaDipendente(SedeLavoro.SedeLegale);
+        var teamId = await _app.ConDb(async db =>
+        {
+            var t = new CL.Domain.Organizzazione.Team(_aziendaId, "Vendite");
+            db.Add(t);
+            await db.SaveChangesAsync();
+            return t.Id;
+        });
+        await _app.CreaUtente("hr@test.it", Ruoli.Azienda, _aziendaId);
+        var hr = _app.CreateClient();
+        await hr.Accedi("hr@test.it");
+        Assert.DoesNotContain(">Referenti</a>", await hr.GetStringAsync("/Dipendenti")); // niente più vista separata
+
+        var pagina = $"/Dipendenti/Modifica/{_dipId}";
+        Assert.Contains("Referente dei team", WebUtility.HtmlDecode(await hr.GetStringAsync(pagina)));
+        var campi = new Dictionary<string, string>
+        {
+            ["Id"] = _dipId.ToString(), ["AziendaId"] = _aziendaId.ToString(), ["Nome"] = "Mario", ["Cognome"] = "Rossi",
+            ["CodiceFiscale"] = "RSSMRA85T10A562S", ["DataNascita"] = "1985-12-10", ["TeamReferente"] = teamId.ToString(),
+        };
+        Assert.Contains("Modifiche salvate", WebUtility.HtmlDecode(await (await hr.InviaForm(pagina, "/Dipendenti/Salva", campi)).Content.ReadAsStringAsync()));
+        Assert.Equal(_dipId, (await _app.ConDb(db => db.Team.SingleAsync())).ResponsabileId);
+
+        // Accesso come azienda: Mario (dipendente con accesso) passa a gestire il portale.
+        await hr.InviaForm(pagina, "/Utenti/AccessoAzienda", new() { ["dipendenteId"] = _dipId.ToString(), ["attivo"] = "true" });
+        using (var scope = _app.Services.CreateScope())
+        {
+            var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+            var u = await users.FindByEmailAsync("dip@test.it");
+            Assert.True(await users.IsInRoleAsync(u!, Ruoli.Azienda));
+            Assert.False(await users.IsInRoleAsync(u!, Ruoli.Dipendente));
+            Assert.Equal(_aziendaId, u!.AziendaId);
+        }
+        Assert.Contains("Azienda: gestisce il portale", WebUtility.HtmlDecode(await hr.GetStringAsync($"/Dipendenti/Dettaglio/{_dipId}")));
     }
 
     [Fact]

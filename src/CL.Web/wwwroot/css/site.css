@@ -727,3 +727,5 @@ input.tessera-emoji.altra-emoji::placeholder { font-size: 12.5px; color: var(--c
     box-shadow: 0 0 0 1px var(--consulens-border), 0 1px 3px rgba(81, 45, 56, .1); }
 .scelta-persona .btn-check:focus-visible + .badge-filtro-categoria { outline: 2px solid #98494E; outline-offset: 2px; }
 .scelta-persona .badge-filtro-categoria { cursor: pointer; }
+/* Il tema di ConsulensNew sposta le pillole in fondo (order: 4): qui devono stare sopra ai campi. */
+.scelta-persona { order: 0 !important; width: 100%; }

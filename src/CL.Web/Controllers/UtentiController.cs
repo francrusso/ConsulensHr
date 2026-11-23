@@ -81,7 +81,7 @@ public sealed class UtentiController(
     }
 
     [HttpPost, ValidateAntiForgeryToken]
-    public async Task<IActionResult> InvitaDipendente(Guid dipendenteId)
+    public async Task<IActionResult> InvitaDipendente(Guid dipendenteId, bool comeAzienda = false)
     {
         var dip = await utente.Filtra(db.Dipendenti.AsNoTracking()).FirstOrDefaultAsync(d => d.Id == dipendenteId);
         if (dip is null) return NotFound();
@@ -98,7 +98,32 @@ public sealed class UtentiController(
             return LocalRedirect(ritorno);
         }
         return await Invita(new InvitoForm { Email = dip.Email, Nome = dip.Nome, Cognome = dip.Cognome },
-            Ruoli.Dipendente, dip.AziendaId, dip.Id, ritorno, validaForm: false);
+            comeAzienda ? Ruoli.Azienda : Ruoli.Dipendente, dip.AziendaId, dip.Id, ritorno, validaForm: false);
+    }
+
+    /// <summary>
+    /// La persona gestisce (o smette di gestire) il portale per conto dell'azienda: il suo accesso passa da dipendente
+    /// ad azienda e viceversa. Le sessioni aperte si chiudono, così al prossimo accesso vede il menù giusto.
+    /// </summary>
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> AccessoAzienda(Guid dipendenteId, bool attivo, string? ritorno)
+    {
+        var dip = await utente.Filtra(db.Dipendenti.AsNoTracking().IgnoreAutoIncludes()).FirstOrDefaultAsync(d => d.Id == dipendenteId);
+        var u = dip is null ? null : await users.Users.FirstOrDefaultAsync(x => x.DipendenteId == dipendenteId);
+        if (dip is null || u is null) return NotFound();
+        if (!attivo && u.Id == users.GetUserId(User))
+        {
+            Errore("Non puoi togliere a te stesso la gestione del portale.");
+            return Torna(ritorno);
+        }
+        var (togli, metti) = attivo ? (Ruoli.Dipendente, Ruoli.Azienda) : (Ruoli.Azienda, Ruoli.Dipendente);
+        if (await users.IsInRoleAsync(u, togli)) await users.RemoveFromRoleAsync(u, togli);
+        if (!await users.IsInRoleAsync(u, metti)) await users.AddToRoleAsync(u, metti);
+        u.AziendaId = dip.AziendaId; // serve al ruolo azienda per vedere la propria azienda
+        await users.UpdateAsync(u);
+        await users.UpdateSecurityStampAsync(u);
+        Conferma(attivo ? $"{dip.NomeCompleto} ora può gestire il portale per conto dell'azienda." : $"{dip.NomeCompleto} accede di nuovo come dipendente.");
+        return Torna(ritorno);
     }
 
     [HttpPost, ValidateAntiForgeryToken]
@@ -146,6 +171,8 @@ public sealed class UtentiController(
     public async Task<IActionResult> Azienda()
     {
         if (utente.IsConsulente) return RedirectToAction(nameof(Index));
+        // I referenti si gestiscono dalla scheda di ogni persona (accesso come azienda): la vista non è più nel menù.
+        if (utente.IsAzienda) return RedirectToAction("Index", "Dipendenti");
         var aziendaId = utente.AziendaId;
         ViewBag.AziendaId = aziendaId;
         var elenco = await accessi.Elenco().Where(u => u.AziendaId == aziendaId && u.Ruolo == Ruoli.Azienda)
