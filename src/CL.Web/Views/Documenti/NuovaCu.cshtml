@@ -1,0 +1,40 @@
+@inject UtenteCorrente Utente
+@{
+    ViewData["Title"] = "Carica CU";
+    ViewData["Percorso"] = new List<(string, string?)> { ("Documenti", null), ("CU", Url.Action("Cu", "Documenti")) };
+    var persone = (List<SelectListItem>)ViewBag.Persone;
+    var anno = (int)ViewBag.Anno;
+    var anni = (List<int>)ViewBag.Anni;
+}
+<div class="breadcrumb-titolo mb-3"><h1 class="titolo-pagina mb-0">Carica CU</h1></div>
+
+<form asp-action="CaricaCu" method="post" enctype="multipart/form-data" class="card radius-15 p-4 card-panoramica">
+    <input type="hidden" name="ritorno" value="@Url.Action("Cu", new { anno })" />
+    <div class="campi-presenza">
+        <div class="campo-note">
+            <label for="dipendenteId" class="form-label">Persona</label>
+            <select id="dipendenteId" name="dipendenteId" class="form-select select-persona" required>
+                <option value="">Cerca per nome</option>
+                @foreach (var p in persone) { <option value="@p.Value">@p.Text</option> }
+            </select>
+        </div>
+        <div>
+            <label for="anno" class="form-label">Redditi dell'anno</label>
+            <select id="anno" name="anno" class="form-select">
+                @foreach (var a in anni) { <option value="@a" selected="@(a == anno)">@a (CU @(a + 1))</option> }
+            </select>
+        </div>
+        <div class="campo-note">
+            <label for="documento" class="form-label">PDF della CU</label>
+            <input id="documento" name="documento" type="file" accept="application/pdf" class="form-control" required />
+        </div>
+    </div>
+    <div class="d-flex justify-content-end gap-2 mt-4">
+        <a asp-action="Cu" asp-route-anno="@anno" class="btn btn-outline-secondary">Annulla</a>
+        <button type="submit" class="btn btn-primary"><i class="ri-upload-2-line" aria-hidden="true"></i> Carica CU</button>
+    </div>
+</form>
+
+@section Scripts {
+    <script>$(function () { if ($.fn.select2) $('.select-persona').select2({ width: '100%', placeholder: 'Cerca per nome' }); });</script>
+}

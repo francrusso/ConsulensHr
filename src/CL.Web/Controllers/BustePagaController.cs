@@ -67,19 +67,22 @@ public sealed class BustePagaController(
         });
     }
 
-    [Authorize(Policy = Policy.SoloConsulente)]
+    /// <summary>Caricamento dei cedolini: il consulente per qualunque azienda, il referente per la propria.</summary>
+    [Authorize(Policy = Policy.GestionePersonale)]
     public async Task<IActionResult> Carica(Guid? aziendaId)
     {
+        if (utente.IsAzienda) aziendaId = utente.AziendaId;
         var mesePrecedente = DateOnly.FromDateTime(clock.GetLocalNow().DateTime).AddMonths(-1);
-        ViewBag.Aziende = await ElencoAziende(aziendaId, soloAttive: true);
+        ViewBag.Aziende = utente.IsConsulente ? await ElencoAziende(aziendaId, soloAttive: true) : new List<SelectListItem>();
         return View(new CaricaBusteForm { AziendaId = aziendaId, Anno = mesePrecedente.Year, Mese = mesePrecedente.Month });
     }
 
-    [HttpPost, ValidateAntiForgeryToken, Authorize(Policy = Policy.SoloConsulente)]
+    [HttpPost, ValidateAntiForgeryToken, Authorize(Policy = Policy.GestionePersonale)]
     [RequestSizeLimit(LimiteRichiesta), RequestFormLimits(MultipartBodyLengthLimit = LimiteRichiesta)]
     public async Task<IActionResult> Carica(CaricaBusteForm form, List<IFormFile> files)
     {
-        ViewBag.Aziende = await ElencoAziende(form.AziendaId, soloAttive: true);
+        if (utente.IsAzienda) form.AziendaId = utente.AziendaId; // il referente carica solo per la propria azienda
+        ViewBag.Aziende = utente.IsConsulente ? await ElencoAziende(form.AziendaId, soloAttive: true) : new List<SelectListItem>();
         if (form.AziendaId is not { } aziendaId || !await db.Aziende.AnyAsync(a => a.Id == aziendaId))
             ModelState.AddModelError(nameof(form.AziendaId), "Seleziona l'azienda.");
         if (files.Count == 0) ModelState.AddModelError("files", "Seleziona almeno un PDF.");

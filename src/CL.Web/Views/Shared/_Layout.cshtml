@@ -19,7 +19,11 @@
         "aziende" when Utente.IsConsulente => (Url.Action("Nuova", "Aziende"), "Nuova azienda", "ri-add-line"),
         "team" when (ViewContext.RouteData.Values["action"] as string) == "Index" => ("#nuovoTeam", "Nuovo team", "ri-add-line"),
         "assenze" => (Url.Action("Nuova", "Assenze"), "Nuova richiesta", "ri-calendar-event-line"),
-        "bustepaga" when Utente.IsConsulente => (Url.Action("Carica", "BustePaga"), "Carica cedolini", "ri-upload-2-line"),
+        "bustepaga" when !Utente.IsDipendente => (Url.Action("Carica", "BustePaga"), "Carica busta paga", "ri-upload-2-line"),
+        "documenti" when !Utente.IsDipendente && (ViewContext.RouteData.Values["action"] as string) is "Contratti" or "NuovoContratto"
+            => (Url.Action("NuovoContratto", "Documenti"), "Nuovo contratto", "ri-file-add-line"),
+        "documenti" when !Utente.IsDipendente && (ViewContext.RouteData.Values["action"] as string) is "Cu" or "NuovaCu"
+            => (Url.Action("NuovaCu", "Documenti", new { anno = Context.Request.Query["anno"].FirstOrDefault() }), "Carica CU", "ri-upload-2-line"),
         "home" => Utente.IsConsulente ? (Url.Action("Nuova", "Aziende"), "Nuova azienda", "ri-add-line")
             : Utente.IsAzienda ? (Url.Action("Nuovo", "Dipendenti"), "Aggiungi persona", "ri-user-add-line")
             : (Url.Action("Nuova", "Assenze"), "Chiedi ferie o permessi", "ri-calendar-event-line"),

@@ -140,7 +140,7 @@ public sealed class BustePagaWebTests : IDisposable
     }
 
     [Fact]
-    public async Task Referente_consulta_la_propria_azienda_ma_non_carica()
+    public async Task Referente_consulta_e_carica_solo_per_la_propria_azienda()
     {
         await Dati();
         var consulente = await Accedi("consulente@test.it", Ruoli.Consulente);
@@ -154,11 +154,16 @@ public sealed class BustePagaWebTests : IDisposable
         Assert.DoesNotContain("Verdi", elenco);
         Assert.Equal(HttpStatusCode.NotFound, (await hr.GetAsync($"/BustePaga/Apri/{diAltri.Id}")).StatusCode);
 
-        var carica = await hr.GetAsync("/BustePaga/Carica");
-        Assert.Contains("/Account/AccessoNegato", carica.RequestMessage!.RequestUri!.AbsolutePath);
+        // Il referente carica i cedolini, ma solo per la propria azienda: non sceglie l'azienda.
+        var carica = WebUtility.HtmlDecode(await hr.GetStringAsync("/BustePaga/Carica"));
+        Assert.Contains("Carica busta paga", carica);
+        Assert.DoesNotContain("Altra", carica);
+        var primaDiAltri = await _app.ConDb(db => db.BustePaga.CountAsync(b => b.AziendaId == _altraAziendaId));
+        await CaricaInBlocco(hr, _altraAziendaId, pubblica: true, ($"{CfRossi}.pdf", Pdf("tentativo")));
+        Assert.Equal(primaDiAltri, await _app.ConDb(db => db.BustePaga.CountAsync(b => b.AziendaId == _altraAziendaId)));
 
         // L'apertura del referente non vale come consegna al dipendente.
-        var mia = await _app.ConDb(db => db.BustePaga.SingleAsync(b => b.DipendenteId == _rossi));
+        var mia = await _app.ConDb(db => db.BustePaga.FirstAsync(b => b.DipendenteId == _rossi)); // il caricamento sopra è finito nella propria azienda
         await hr.GetAsync($"/BustePaga/Apri/{mia.Id}");
         Assert.Null((await _app.ConDb(db => db.BustePaga.SingleAsync(b => b.Id == mia.Id))).VisualizzataIl);
     }

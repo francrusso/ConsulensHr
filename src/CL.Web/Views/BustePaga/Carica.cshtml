@@ -1,6 +1,7 @@
 @model CL.Web.Controllers.CaricaBusteForm
+@inject UtenteCorrente Utente
 @{
-    ViewData["Title"] = "Carica cedolini";
+    ViewData["Title"] = "Carica busta paga";
     var esito = ViewBag.Esito as EsitoCaricamento;
     var aziende = (List<SelectListItem>)ViewBag.Aziende;
 }
@@ -37,12 +38,16 @@
 <form asp-action="Carica" method="post" enctype="multipart/form-data" class="card radius-15 p-4">
     <div asp-validation-summary="All" class="text-danger" role="alert"></div>
     <div class="row g-3">
-        <div class="col-md-6">
-            <label asp-for="AziendaId" class="form-label">Azienda</label>
-            <select asp-for="AziendaId" asp-items="aziende" class="form-select" required>
-                <option value="">Seleziona…</option>
-            </select>
-        </div>
+        @if (Utente.IsConsulente)
+        {
+            <div class="col-md-6">
+                <label asp-for="AziendaId" class="form-label">Azienda</label>
+                <select asp-for="AziendaId" asp-items="aziende" class="form-select" required>
+                    <option value="">Seleziona…</option>
+                </select>
+            </div>
+        }
+        else { <input type="hidden" asp-for="AziendaId" /> }
         <div class="col-md-2">
             <label asp-for="Mese" class="form-label">Mese</label>
             <select asp-for="Mese" asp-items="CL.Web.Controllers.CaricaBusteForm.Mesi" class="form-select"></select>

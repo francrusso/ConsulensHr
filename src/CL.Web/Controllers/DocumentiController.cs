@@ -34,6 +34,18 @@ public sealed class ElencoDocumentiViewModel<T>
     public List<SelectListItem>? Aziende { get; init; }
 }
 
+public sealed class NuovoContrattoForm
+{
+    /// <summary>Falso: contratto per una persona già presente; vero: si crea anche la persona.</summary>
+    public bool NuovaPersona { get; set; }
+    public Guid? DipendenteId { get; set; }
+    public Guid? AziendaId { get; set; }
+    public string? Nome { get; set; }
+    public string? Cognome { get; set; }
+    public string? CodiceFiscale { get; set; }
+    public DateOnly? DataNascita { get; set; }
+}
+
 /// <summary>
 /// Documenti del personale: CU per anno e contratti firmati (le buste paga hanno la loro pagina).
 /// Consulente e azienda li caricano e li consultano; il dipendente vede solo i propri.
@@ -146,6 +158,69 @@ public sealed class DocumentiController(AppDbContext db, UtenteCorrente utente, 
         var c = await db.Contratti.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id && visibili.Contains(x.DipendenteId));
         if (c?.DocumentoChiave is null || await archivio.ApriAsync(c.DocumentoChiave) is not { } file) return NotFound();
         return Pdf(file, c.DocumentoNome ?? "contratto.pdf");
+    }
+
+    /// <summary>Persone del perimetro per le scelte dei moduli (nome e azienda).</summary>
+    private async Task<List<SelectListItem>> ScelteIn(Guid? aziendaId) =>
+        (await (from d in Persone(aziendaId, null)
+                join az in db.Aziende.AsNoTracking() on d.AziendaId equals az.Id
+                orderby d.Cognome, d.Nome
+                select new { d.Id, Nome = d.Cognome + " " + d.Nome, az.RagioneSociale }).ToListAsync())
+            .Select(x => new SelectListItem(utente.IsConsulente ? $"{x.Nome} · {x.RagioneSociale}" : x.Nome, x.Id.ToString())).ToList();
+
+    /// <summary>Carica una CU scegliendo la persona (pulsante "Carica CU").</summary>
+    [Authorize(Policy = Policy.GestionePersonale)]
+    public async Task<IActionResult> NuovaCu(int? anno)
+    {
+        ViewBag.Persone = await ScelteIn(null);
+        ViewBag.Anno = anno ?? AnnoCorrente - 1;
+        ViewBag.Anni = Enumerable.Range(AnnoCorrente - 6, 7).Reverse().ToList();
+        return View();
+    }
+
+    /// <summary>Nuovo contratto: per una persona già presente o per una nuova, creata dalla stessa schermata.</summary>
+    [Authorize(Policy = Policy.GestionePersonale)]
+    public async Task<IActionResult> NuovoContratto() => await MostraNuovoContratto(new NuovoContrattoForm());
+
+    [HttpPost, ValidateAntiForgeryToken, Authorize(Policy = Policy.GestionePersonale)]
+    public async Task<IActionResult> NuovoContratto(NuovoContrattoForm form)
+    {
+        if (!form.NuovaPersona)
+        {
+            if (form.DipendenteId is not { } id || !await Persone(null, null).AnyAsync(d => d.Id == id))
+            {
+                ModelState.AddModelError(nameof(form.DipendenteId), "Scegli la persona.");
+                return await MostraNuovoContratto(form);
+            }
+            return RedirectToAction("Assumi", "Dipendenti", new { id });
+        }
+
+        var aziendaId = utente.IsAzienda ? utente.AziendaId : form.AziendaId;
+        if (aziendaId is null || !await db.Aziende.AnyAsync(a => a.Id == aziendaId)) ModelState.AddModelError(nameof(form.AziendaId), "Scegli l'azienda.");
+        if (string.IsNullOrWhiteSpace(form.Nome)) ModelState.AddModelError(nameof(form.Nome), "Inserisci il nome.");
+        if (string.IsNullOrWhiteSpace(form.Cognome)) ModelState.AddModelError(nameof(form.Cognome), "Inserisci il cognome.");
+        if (form.DataNascita is null) ModelState.AddModelError(nameof(form.DataNascita), "Inserisci la data di nascita.");
+        CL.Domain.ValueObjects.CodiceFiscale? cf = null;
+        try { cf = CL.Domain.ValueObjects.CodiceFiscale.Parse(form.CodiceFiscale); }
+        catch (CL.Domain.Common.DomainException ex) { ModelState.AddModelError(nameof(form.CodiceFiscale), ex.Message); }
+        if (cf is not null && aziendaId is { } az && await db.Dipendenti.AnyAsync(d => d.AziendaId == az && d.CodiceFiscale == cf))
+            ModelState.AddModelError(nameof(form.CodiceFiscale), "Questa persona c'è già: sceglila tra le persone presenti.");
+        if (!ModelState.IsValid) return await MostraNuovoContratto(form);
+
+        Dipendente? nuova = null;
+        if (!Prova(() => nuova = new Dipendente(aziendaId!.Value, form.Nome!.Trim(), form.Cognome!.Trim(), cf!, form.DataNascita!.Value)))
+            return await MostraNuovoContratto(form);
+        db.Dipendenti.Add(nuova!);
+        await db.SaveChangesAsync();
+        Conferma($"{nuova!.NomeCompleto} aggiunta al personale: ora inserisci il contratto.");
+        return RedirectToAction("Assumi", "Dipendenti", new { id = nuova.Id });
+    }
+
+    private async Task<IActionResult> MostraNuovoContratto(NuovoContrattoForm form)
+    {
+        ViewBag.Persone = await ScelteIn(null);
+        ViewBag.Aziende = await ElencoAziende(form.AziendaId);
+        return View("NuovoContratto", form);
     }
 
     private IQueryable<Dipendente> Persone(Guid? aziendaId, string? q)

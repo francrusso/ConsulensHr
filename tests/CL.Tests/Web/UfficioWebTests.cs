@@ -423,6 +423,36 @@ public sealed class UfficioWebTests : IDisposable
     }
 
     [Fact]
+    public async Task Dai_documenti_si_crea_un_contratto_anche_per_una_persona_nuova_e_si_caricano_cu_e_buste()
+    {
+        await PreparaDipendente(SedeLavoro.SedeLegale);
+        await _app.CreaUtente("hr@test.it", Ruoli.Azienda, _aziendaId);
+        var hr = _app.CreateClient();
+        await hr.Accedi("hr@test.it");
+
+        // Pulsanti nella barra in alto.
+        Assert.Contains("Nuovo contratto", WebUtility.HtmlDecode(await hr.GetStringAsync("/Documenti/Contratti")));
+        Assert.Contains("/Documenti/NuovaCu", WebUtility.HtmlDecode(await hr.GetStringAsync("/Documenti/Cu")));
+        Assert.Contains("Carica busta paga", WebUtility.HtmlDecode(await hr.GetStringAsync("/BustePaga")));
+        Assert.Contains("Carica busta paga", WebUtility.HtmlDecode(await hr.GetStringAsync("/BustePaga/Carica")));
+        Assert.Contains("Rossi Mario", WebUtility.HtmlDecode(await hr.GetStringAsync("/Documenti/NuovaCu")));
+
+        // Persona già presente: si va al modulo del contratto.
+        var r = await hr.InviaForm("/Documenti/NuovoContratto", "/Documenti/NuovoContratto", new() { ["NuovaPersona"] = "false", ["DipendenteId"] = _dipId.ToString() });
+        Assert.EndsWith($"/Dipendenti/Assumi/{_dipId}", r.RequestMessage!.RequestUri!.AbsolutePath);
+
+        // Persona nuova: la si crea dalla stessa schermata e poi si compila il contratto.
+        r = await hr.InviaForm("/Documenti/NuovoContratto", "/Documenti/NuovoContratto", new()
+        {
+            ["NuovaPersona"] = "true", ["Nome"] = "Anna", ["Cognome"] = "Verdi", ["CodiceFiscale"] = "VRDNNA88C41F839V", ["DataNascita"] = "1988-03-01",
+        });
+        var nuova = await _app.ConDb(db => db.Dipendenti.SingleAsync(d => d.Cognome == "Verdi"));
+        Assert.Equal(_aziendaId, nuova.AziendaId);
+        Assert.EndsWith($"/Dipendenti/Assumi/{nuova.Id}", r.RequestMessage!.RequestUri!.AbsolutePath);
+        Assert.Contains("ora inserisci il contratto", WebUtility.HtmlDecode(await r.Content.ReadAsStringAsync()));
+    }
+
+    [Fact]
     public async Task Senza_contratto_il_calendario_si_vede_ma_non_si_segna_nulla()
     {
         var dip = await PreparaDipendente(SedeLavoro.SedeLegale);
