@@ -223,6 +223,21 @@ internal sealed class GiornoInUfficioConfig : IEntityTypeConfiguration<CL.Domain
     }
 }
 
+internal sealed class GiornoSmartWorkingConfig : IEntityTypeConfiguration<CL.Domain.Presenze.GiornoSmartWorking>
+{
+    public void Configure(EntityTypeBuilder<CL.Domain.Presenze.GiornoSmartWorking> b)
+    {
+        b.ToTable("GiorniSmartWorking");
+        b.Property(x => x.Id).ValueGeneratedNever();
+        b.Property(x => x.Stato).HasConversion<string>().HasMaxLength(32);
+        b.Property(x => x.DecisoDa).HasMaxLength(256);
+        b.Property(x => x.MotivoRifiuto).HasMaxLength(500);
+        b.HasOne<Dipendente>().WithMany().HasForeignKey(x => x.DipendenteId).OnDelete(DeleteBehavior.Cascade);
+        b.HasIndex(x => new { x.DipendenteId, x.Giorno }).IsUnique();
+        b.HasIndex(x => new { x.Stato, x.Giorno });
+    }
+}
+
 internal sealed class ChiusuraAziendaleConfig : IEntityTypeConfiguration<ChiusuraAziendale>
 {
     public void Configure(EntityTypeBuilder<ChiusuraAziendale> b)

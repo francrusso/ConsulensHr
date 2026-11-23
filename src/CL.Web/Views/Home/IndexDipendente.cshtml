@@ -12,6 +12,7 @@
     {
         <partial name="_Indicatore" model='("Richieste del team", team.ToString(), "ri-team-line", Url.Action("Index", "Assenze"), "da approvare")' />
     }
+    <partial name="_Indicatore" model='("Dove lavoro", Model.Modalita ?? "Non inserito", "ri-building-line", Model.Modalita is null ? null : Url.Action("Index", "Ufficio"), Model.Modalita is null ? null : string.Join(" · ", new[] { Model.DettaglioLavoro, Model.SegnaUfficio ? "segna i giorni in ufficio" : "chiedi giorni di smart working" }.Where(x => x is not null)))' />
     <partial name="_Indicatore" model='("Mie richieste in attesa", Model.RichiesteInAttesa.ToString(), "ri-calendar-event-line", Url.Action("Index", "Assenze"), "in attesa di approvazione")' />
     <partial name="_Indicatore" model='("Ultima busta paga", Model.UltimaBusta?.Periodo ?? "—", "ri-file-list-3-line", Url.Action("Index", "BustePaga"), Model.UltimaBusta is null ? "nessuna ancora pubblicata" : Model.UltimaBusta.VisualizzataIl is null ? "da aprire" : "già aperta")' />
     <div class="col-sm-6 col-xl d-flex align-items-center">

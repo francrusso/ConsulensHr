@@ -74,7 +74,7 @@ public sealed class AssenzeWebTests : IDisposable
         });
         var html = await Testo(r);
         Assert.Contains("in attesa di approvazione", html);
-        Assert.Contains("Le mie ferie e permessi", html);
+        Assert.Contains("Richieste", html);
 
         var richiesta = await _app.ConDb(db => db.RichiesteAssenza.SingleAsync());
         Assert.Equal(_dipId, richiesta.DipendenteId);
@@ -111,7 +111,7 @@ public sealed class AssenzeWebTests : IDisposable
         });
         await dip.InviaForm("/Assenze/Nuova", "/Assenze/Nuova", new()
         {
-            ["DipendenteId"] = collega.ToString(), ["Tipo"] = "Malattia", ["Dal"] = Lunedi(2).ToString("yyyy-MM-dd"),
+            ["DipendenteId"] = collega.ToString(), ["Tipo"] = "Malattia", ["Dal"] = Lunedi(2).ToString("yyyy-MM-dd"), ["ProtocolloCertificato"] = "123456789",
         });
         var r = await _app.ConDb(db => db.RichiesteAssenza.SingleAsync());
         Assert.Equal(_dipId, r.DipendenteId);
@@ -259,7 +259,7 @@ public sealed class AssenzeWebTests : IDisposable
         Assert.DoesNotContain($">{DateTime.Today.Year - 2}</a>", richieste);
         Assert.Contains("cal-assenti", html);
         Assert.Contains("Rossi Mario", html);
-        Assert.Contains("FERIE E PERMESSI", html.ToUpperInvariant());
+        Assert.Contains("PRESENZE E ASSENZE", html.ToUpperInvariant()); // voce di menù e breadcrumb
         Assert.Empty(_app.ErroriServer);
     }
 

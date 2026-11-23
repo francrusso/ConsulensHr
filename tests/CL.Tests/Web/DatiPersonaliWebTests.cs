@@ -87,7 +87,7 @@ public sealed class DatiPersonaliWebTests : IDisposable
         var html = WebUtility.HtmlDecode(await mario.GetStringAsync("/Assenze"));
         Assert.Contains("1. Dati anagrafici", html);
         Assert.Contains("I miei dati", html);
-        Assert.DoesNotContain(">Ferie e permessi</div>", html);
+        Assert.DoesNotContain(">Presenze e assenze</div>", html);
 
         Assert.Contains("2. Residenza", await Testo(await Passo(mario, "Anagrafica", new(Anagrafica))));
         Assert.Contains("3. Stipendio e TFR", await Testo(await Passo(mario, "Residenza", new(Residenza))));

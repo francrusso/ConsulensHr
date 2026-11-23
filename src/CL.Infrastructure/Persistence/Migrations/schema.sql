@@ -1165,3 +1165,71 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261123090934_GiorniSmartWorking') THEN
+    CREATE TABLE hr."GiorniSmartWorking" (
+        "Id" uuid NOT NULL,
+        "DipendenteId" uuid NOT NULL,
+        "Giorno" date NOT NULL,
+        "Stato" character varying(32) NOT NULL,
+        "RichiestoIl" timestamp with time zone NOT NULL,
+        "DecisoDa" character varying(256),
+        "DecisoIl" timestamp with time zone,
+        "MotivoRifiuto" character varying(500),
+        CONSTRAINT "PK_GiorniSmartWorking" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_GiorniSmartWorking_Dipendenti_DipendenteId" FOREIGN KEY ("DipendenteId") REFERENCES hr."Dipendenti" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261123090934_GiorniSmartWorking') THEN
+    CREATE UNIQUE INDEX "IX_GiorniSmartWorking_DipendenteId_Giorno" ON hr."GiorniSmartWorking" ("DipendenteId", "Giorno");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261123090934_GiorniSmartWorking') THEN
+    CREATE INDEX "IX_GiorniSmartWorking_Stato_Giorno" ON hr."GiorniSmartWorking" ("Stato", "Giorno");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261123090934_GiorniSmartWorking') THEN
+    INSERT INTO hr."__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261123090934_GiorniSmartWorking', '10.0.15');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261123092355_SmartWorkingConcesso') THEN
+    ALTER TABLE hr."Contratti" ADD "GiorniSmartWorking" integer;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261123092355_SmartWorkingConcesso') THEN
+    ALTER TABLE hr."Contratti" ADD "PeriodoSmartWorking" character varying(32);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261123092355_SmartWorkingConcesso') THEN
+    INSERT INTO hr."__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261123092355_SmartWorkingConcesso', '10.0.15');
+    END IF;
+END $EF$;
+COMMIT;
+

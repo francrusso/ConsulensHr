@@ -1,7 +1,7 @@
 @model CL.Web.Controllers.AssenzeViewModel
 @inject CL.Web.Infrastruttura.UtenteCorrente Utente
 @{
-    ViewData["Title"] = Utente.IsDipendente ? "Le mie ferie e permessi" : "Richieste";
+    ViewData["Title"] = "Richieste";
     var gestore = Utente.IsConsulente || Utente.IsAzienda;
     var ritorno = Context.Request.Path + Context.Request.QueryString;
 }

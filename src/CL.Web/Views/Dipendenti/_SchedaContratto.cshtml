@@ -47,6 +47,10 @@ else
             <div><dt>Orario settimanale</dt><dd>@Ore(corrente.OreSettimanali)@(corrente.PercentualePartTime < 100 ? $" · part-time {corrente.PercentualePartTime.ToString("0.##", it)}%" : "")</dd></div>
             <div><dt>Giorni lavorativi</dt><dd>@corrente.GiorniLavorativiSettimana a settimana</dd></div>
             <div><dt>Modalità di lavoro</dt><dd>@corrente.Modalita.Descrizione()@(corrente.GiorniInUfficio is { } gu ? $" · {gu} {(gu == 1 ? "giorno" : "giorni")} in ufficio" : "")</dd></div>
+            @if (corrente.Modalita == CL.Domain.Dipendenti.ModalitaLavoro.InPresenza)
+            {
+                <div><dt>Smart working</dt><dd>@(corrente.SmartWorkingConcesso ?? "Non previsto")</dd></div>
+            }
             <div><dt>@(subordinato ? "RAL" : "Compenso annuo")</dt><dd>@E(corrente.RetribuzioneLordaAnnua)</dd></div>
             <div><dt>Mensilità</dt><dd>@corrente.MensilitaAnnue</dd></div>
             <div><dt>Mensile lordo</dt><dd>@E(corrente.RetribuzioneMensileLorda)</dd></div>
@@ -67,7 +71,9 @@ else
                 <div><label asp-for="@contratto.DataFine" class="form-label">Scadenza</label><input asp-for="@contratto.DataFine" type="date" class="form-control" /></div>
                 <div><label asp-for="@contratto.OreSettimanaliFullTime" class="form-label">Ore settimanali full-time</label><input asp-for="@contratto.OreSettimanaliFullTime" type="text" inputmode="decimal" class="form-control" /></div>
                 <div><label asp-for="@contratto.PercentualePartTime" class="form-label">Part-time (%)</label><input asp-for="@contratto.PercentualePartTime" type="text" inputmode="decimal" class="form-control" /></div>
-                <div><label asp-for="@contratto.Modalita" class="form-label">Modalità di lavoro</label><select asp-for="@contratto.Modalita" asp-items="CL.Web.Controllers.ContrattoForm.ElencoModalita" class="form-select" data-mostra="giorniUfficio" data-valore="Ibrido"></select></div>
+                <div><label asp-for="@contratto.Modalita" class="form-label">Modalità di lavoro</label><select asp-for="@contratto.Modalita" asp-items="CL.Web.Controllers.ContrattoForm.ElencoModalita" class="form-select" data-mostra="giorniUfficio smartConcesso" data-valore="Ibrido InPresenza"></select></div>
+                <div id="smartConcesso"><label asp-for="@contratto.GiorniSmartWorking" class="form-label"></label>
+                    <div class="input-group"><input asp-for="@contratto.GiorniSmartWorking" type="number" min="0" max="23" class="form-control" placeholder="0" /><select asp-for="@contratto.PeriodoSmartWorking" asp-items="CL.Web.Controllers.ContrattoForm.ElencoPeriodi" class="form-select" aria-label="Periodo dello smart working"></select></div></div>
                 <div id="giorniUfficio"><label asp-for="@contratto.GiorniInUfficio" class="form-label">Giorni in ufficio a settimana</label><input asp-for="@contratto.GiorniInUfficio" type="number" min="1" max="5" class="form-control" /></div>
                 <div><label asp-for="@contratto.GiorniLavorativiSettimana" class="form-label">Giorni a settimana</label><select asp-for="@contratto.GiorniLavorativiSettimana" class="form-select"><option value="5">5</option><option value="6">6</option></select></div>
                 <div><label asp-for="@contratto.RetribuzioneLordaAnnua" class="form-label">@(subordinato ? "RAL (€)" : "Compenso annuo (€)")</label><input asp-for="@contratto.RetribuzioneLordaAnnua" type="text" inputmode="decimal" class="form-control" /></div>

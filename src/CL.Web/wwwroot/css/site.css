@@ -570,3 +570,54 @@ input.tessera-emoji.altra-emoji::placeholder { font-size: 12.5px; color: var(--c
 .segno-ufficio.vuoto { color: var(--consulens-breadcrumb-muted); font-weight: 400; opacity: 0; transition: opacity .15s; }
 .giorno-cliccabile:hover .segno-ufficio.vuoto, .giorno-cliccabile:focus-visible .segno-ufficio.vuoto { opacity: 1; }
 .segno-assenza { font-size: 11.5px; color: #B5622E; }
+
+/* Smart working chiesto da chi lavora in presenza */
+.legenda-smart { display: flex; flex-wrap: wrap; gap: 16px; font-size: 12.5px; color: var(--consulens-breadcrumb-muted); }
+.legenda-smart > span { display: inline-flex; align-items: center; gap: 6px; }
+.pallino-legenda.smart-ok { background: #7C9CD6; }
+.pallino-legenda.smart-attesa { background: transparent; border: 2px dashed #7C9CD6; }
+.pallino-legenda.smart-no { background: #D98C8C; }
+.segno-smart { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 500; }
+.cal-giorno.smart-ok { background: color-mix(in srgb, #7C9CD6 14%, #fff); border-color: color-mix(in srgb, #7C9CD6 55%, #fff); }
+.cal-giorno.smart-ok .segno-smart { color: color-mix(in srgb, #7C9CD6 55%, #000); }
+.cal-giorno.smart-attesa { border: 1.5px dashed #7C9CD6; }
+.cal-giorno.smart-attesa .segno-smart { color: color-mix(in srgb, #7C9CD6 55%, #000); }
+.cal-giorno.smart-no { background: color-mix(in srgb, #D98C8C 10%, #fff); }
+.cal-giorno.smart-no .segno-smart { color: #A04848; }
+.cal-smart { display: inline-flex; align-items: center; gap: 4px; align-self: flex-start; padding: 2px 8px; border-radius: 50rem; font-size: 11px; font-weight: 500;
+    background: color-mix(in srgb, #7C9CD6 16%, #fff); color: color-mix(in srgb, #7C9CD6 55%, #000); }
+
+/* Calendario del dipendente: il box del giorno prende il colore della richiesta */
+.legenda-calendario { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 12.5px; color: var(--consulens-breadcrumb-muted); }
+.legenda-calendario > span { display: inline-flex; align-items: center; gap: 6px; }
+.pallino-legenda.tratteggiato { background: transparent; border: 2px dashed #9AA3AE; }
+.calendario-ufficio .cal-giorno { display: flex; flex-direction: column; align-items: stretch; gap: 4px; min-height: 104px; }
+.voci-giorno { display: flex; flex-direction: column; gap: 3px; align-items: flex-start; min-width: 0; }
+.voce-giorno { display: inline-flex; align-items: center; gap: 4px; max-width: 100%; padding: 2px 7px; border-radius: 6px; font-size: 11.5px; font-weight: 500; line-height: 1.35;
+    background: color-mix(in srgb, var(--colore-cat, #9AA3AE) 20%, #fff); color: color-mix(in srgb, var(--colore-cat, #9AA3AE) 55%, #000);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.voce-giorno.in-attesa { background: #fff; border: 1px dashed color-mix(in srgb, var(--colore-cat, #9AA3AE) 70%, #fff); }
+.voce-stato { font-weight: 400; opacity: .8; }
+.voce-chiusura { --colore-cat: #512D38; }
+.voce-festivo { --colore-cat: #98494E; }
+.voce-smart { --colore-cat: #7C9CD6; }
+.voce-ufficio { --colore-cat: #4FBFC4; }
+.voce-aggiungi { font-size: 11.5px; color: var(--consulens-breadcrumb-muted); opacity: 0; transition: opacity .15s; display: inline-flex; align-items: center; gap: 3px; }
+.giorno-cliccabile:hover .voce-aggiungi, .giorno-cliccabile:focus-visible .voce-aggiungi { opacity: 1; }
+.cal-giorno.con-richiesta { background: color-mix(in srgb, var(--colore-cat) 9%, #fff); border-color: color-mix(in srgb, var(--colore-cat) 50%, #fff); }
+.cal-giorno.con-richiesta.richiesta-ore { background: color-mix(in srgb, var(--colore-cat) 5%, #fff); }
+.cal-giorno.con-richiesta.richiesta-attesa { background: #fff; border-style: dashed; }
+.cal-giorno.con-chiusura { background: color-mix(in srgb, #512D38 6%, #fff); border-color: color-mix(in srgb, #512D38 30%, #fff); }
+.cal-giorno.festivo { background: color-mix(in srgb, #98494E 6%, #fff); }
+.voce-giorno[hidden] { display: none !important; }
+.cal-giorno.spento { background: #fff !important; border: 1px solid var(--consulens-border) !important; }
+.cal-giorno.spento.oggi { border-color: #98494E !important; }
+/* Azioni rapide sul giorno: compaiono al passaggio del mouse (sempre visibili sugli schermi touch) */
+.cal-giorno.con-azioni { position: relative; }
+.azioni-giorno { display: flex; flex-wrap: wrap; gap: 4px; margin-top: auto; opacity: 0; pointer-events: none; transition: opacity .15s; }
+.cal-giorno.con-azioni:hover .azioni-giorno, .cal-giorno.con-azioni:focus-within .azioni-giorno { opacity: 1; pointer-events: auto; }
+@media (hover: none) { .azioni-giorno { opacity: 1; pointer-events: auto; } }
+.azione-giorno { display: inline-flex; align-items: center; gap: 3px; padding: 2px 8px; border-radius: 50rem; font-size: 11px; font-weight: 500; line-height: 1.5;
+    border: 1px solid color-mix(in srgb, var(--colore-cat) 45%, #fff); background: #fff; color: color-mix(in srgb, var(--colore-cat) 60%, #000); text-decoration: none; cursor: pointer; }
+.azione-giorno:hover, .azione-giorno:focus-visible { background: color-mix(in srgb, var(--colore-cat) 16%, #fff); color: color-mix(in srgb, var(--colore-cat) 70%, #000); }
+.cal-giorno.con-azioni:hover { border-color: color-mix(in srgb, #98494E 40%, #fff); }

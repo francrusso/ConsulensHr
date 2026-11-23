@@ -111,6 +111,7 @@ public sealed class ContrattoForm
         OreSettimanaliFullTime = c.OreSettimanaliFullTime, PercentualePartTime = c.PercentualePartTime, GiorniLavorativiSettimana = c.GiorniLavorativiSettimana,
         OreFerieAnnue = c.OreFerieAnnue, OreRolAnnue = c.OreRolAnnue,
         Modalita = c.Modalita, GiorniInUfficio = c.GiorniInUfficio,
+        GiorniSmartWorking = c.GiorniSmartWorking, PeriodoSmartWorking = c.PeriodoSmartWorking ?? PeriodoSmartWorking.Mese,
     };
     public string NomeDipendente { get; set; } = "";
 
@@ -158,6 +159,13 @@ public sealed class ContrattoForm
     public ModalitaLavoro Modalita { get; set; } = ModalitaLavoro.InPresenza;
     [Range(1, 5, ErrorMessage = "Tra 1 e 5."), Display(Name = "Giorni in ufficio a settimana")]
     public int? GiorniInUfficio { get; set; }
+    /// <summary>Per chi lavora in presenza: giorni di smart working che può chiedere.</summary>
+    [Range(0, 23, ErrorMessage = "Tra 0 e 23."), Display(Name = "Smart working concesso")]
+    public int? GiorniSmartWorking { get; set; }
+    public PeriodoSmartWorking PeriodoSmartWorking { get; set; } = PeriodoSmartWorking.Mese;
+
+    public static IEnumerable<SelectListItem> ElencoPeriodi =>
+        [new("al mese", nameof(PeriodoSmartWorking.Mese)), new("a settimana", nameof(PeriodoSmartWorking.Settimana))];
 
     public static IEnumerable<SelectListItem> ElencoModalita =>
         Enum.GetValues<ModalitaLavoro>().Select(m => new SelectListItem(m.Descrizione(), m.ToString()));
@@ -495,10 +503,14 @@ public sealed class DipendentiController(AppDbContext db, UtenteCorrente utente,
             if (string.IsNullOrWhiteSpace(form.Livello)) ModelState.AddModelError("", "Inserisci il livello.");
         }
         if (ModelState.IsValid)
-            Prova(() => d.ModificaContratto(cid, form.Tipo, form.Ccnl ?? "", form.Livello ?? "", form.DataInizio!.Value, form.DataFine,
-                form.RetribuzioneLordaAnnua!.Value, form.MensilitaAnnue, form.OreSettimanaliFullTime, form.PercentualePartTime,
-                form.GiorniLavorativiSettimana, form.OreFerieAnnue, form.OreRolAnnue, form.Mansione,
-                form.Modalita, form.GiorniInUfficio));
+            Prova(() =>
+            {
+                d.ModificaContratto(cid, form.Tipo, form.Ccnl ?? "", form.Livello ?? "", form.DataInizio!.Value, form.DataFine,
+                    form.RetribuzioneLordaAnnua!.Value, form.MensilitaAnnue, form.OreSettimanaliFullTime, form.PercentualePartTime,
+                    form.GiorniLavorativiSettimana, form.OreFerieAnnue, form.OreRolAnnue, form.Mansione,
+                    form.Modalita, form.GiorniInUfficio);
+                d.Contratti.First(c => c.Id == cid).ImpostaSmartWorking(form.GiorniSmartWorking, form.PeriodoSmartWorking);
+            });
         if (!ModelState.IsValid)
         {
             Errore(string.Join(" ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).Distinct()));
@@ -644,7 +656,7 @@ public sealed class DipendentiController(AppDbContext db, UtenteCorrente utente,
         if (!Prova(() => d.Assumi(form.Tipo, form.Ccnl ?? "", form.Livello ?? "", form.DataInizio!.Value, form.DataFine,
                 form.RetribuzioneLordaAnnua!.Value, form.MensilitaAnnue, form.OreSettimanaliFullTime, form.PercentualePartTime,
                 form.GiorniLavorativiSettimana, form.OreFerieAnnue, form.OreRolAnnue, form.Mansione,
-                form.Modalita, form.GiorniInUfficio)))
+                form.Modalita, form.GiorniInUfficio).ImpostaSmartWorking(form.GiorniSmartWorking, form.PeriodoSmartWorking)))
             return View(form);
 
         await db.SaveChangesAsync();

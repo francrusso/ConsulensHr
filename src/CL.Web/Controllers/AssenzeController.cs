@@ -1,6 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 using CL.Domain.Assenze;
 using CL.Domain.Dipendenti;
+using CL.Domain.Presenze;
+using CL.Infrastructure.Identity;
 using CL.Infrastructure.Persistence;
 using CL.Web.Infrastruttura;
 using Microsoft.AspNetCore.Authorization;
@@ -45,9 +47,15 @@ public sealed class RichiestaForm
 
 public sealed record RichiestaRiga(
     Guid Id, Guid DipendenteId, string Dipendente, string Azienda, TipoAssenza Tipo, DateOnly Dal, DateOnly Al,
-    bool AOre, decimal Ore, StatoRichiesta Stato, DateTime RichiestaIl, string? Note, string? DecisaDa, string? MotivoRifiuto);
+    bool AOre, decimal Ore, StatoRichiesta Stato, DateTime RichiestaIl, string? Note, string? DecisaDa, string? MotivoRifiuto)
+{
+    /// <summary>Giorno di smart working chiesto da chi lavora in presenza (stessa tabella delle ferie, decisione a parte).</summary>
+    public bool SmartWorking { get; init; }
+}
 
 /// <summary>Persona nel calendario; <paramref name="ColoreTeam"/> fa da bordo alla foto (null senza team).</summary>
+public sealed record SmartWorkingRiga(Guid Id, Guid DipendenteId, string Dipendente, string Azienda, DateOnly Giorno,
+    StatoSmartWorking Stato, DateTime RichiestoIl, string? DecisoDa, string? MotivoRifiuto);
 public sealed record PersonaCalendario(Guid Id, string Nome, bool HaFoto, string Segnaposto, string? ColoreTeam);
 public sealed record AssenzaCalendario(PersonaCalendario Persona, TipoAssenza Tipo, StatoRichiesta Stato, bool AOre, decimal Ore);
 public sealed record GiornoCalendario(DateOnly Data, bool DelMese, bool Lavorativo, List<PersonaCalendario> Presenti, List<AssenzaCalendario> Assenti)
@@ -56,6 +64,8 @@ public sealed record GiornoCalendario(DateOnly Data, bool DelMese, bool Lavorati
     public List<string> Chiusure { get; init; } = [];
     /// <summary>Chi lavora a distanza e ha segnato di essere in ufficio.</summary>
     public List<PersonaCalendario> InUfficio { get; init; } = [];
+    /// <summary>Chi lavora in presenza e ha lo smart working approvato quel giorno.</summary>
+    public List<PersonaCalendario> InSmartWorking { get; init; } = [];
 }
 
 public sealed record TeamFiltro(Guid Id, string Nome, string Colore, string? Emoji);
@@ -73,6 +83,8 @@ public sealed class CalendarioAssenzeViewModel
     public List<SelectListItem>? Aziende { get; init; }
     public List<ChiusuraRiga> Chiusure { get; init; } = [];
     public Guid? TeamId { get; init; }
+    /// <summary>Filtro sul luogo di lavoro dei presenti: null (tutti), "ufficio" o "remoto".</summary>
+    public string? Luogo { get; init; }
     /// <summary>Team dell'azienda per il filtro (vuoto se il consulente non ha scelto un'azienda).</summary>
     public List<TeamFiltro> Team { get; init; } = [];
 }
@@ -111,7 +123,7 @@ public sealed class AssenzeViewModel
 
 [Authorize]
 public sealed class AssenzeController(AppDbContext db, UtenteCorrente utente, ServizioSaldi saldi, NotificheAssenze notifiche,
-    ServizioOrganigramma organigramma, TimeProvider clock) : AppController
+    ServizioOrganigramma organigramma, ServizioUfficio ufficio, TimeProvider clock) : AppController
 {
     private DateOnly Oggi => DateOnly.FromDateTime(clock.GetLocalNow().DateTime);
     private DateTime AdessoUtc => clock.GetUtcNow().UtcDateTime;
@@ -134,19 +146,42 @@ public sealed class AssenzeController(AppDbContext db, UtenteCorrente utente, Se
         var anniRichieste = await (from r in db.RichiesteAssenza.AsNoTracking()
                                    join d in dipendenti on r.DipendenteId equals d.Id
                                    select r.Dal.Year).Distinct().ToListAsync();
-        ViewBag.Anni = anniRichieste.Append(Oggi.Year).Append(annoScelto).Distinct().OrderDescending().ToList();
         var (inizioAnno, fineAnno) = Filtri.Anno(annoScelto);
+
+        // Smart working chiesto da chi lavora in presenza: nella stessa lista, con gli stessi stati.
+        var smart = await (from g in db.GiorniSmartWorking.AsNoTracking()
+                           join d in dipendenti on g.DipendenteId equals d.Id
+                           join a in db.Aziende.AsNoTracking() on d.AziendaId equals a.Id
+                           select new { g, d.Cognome, d.Nome, a.RagioneSociale }).ToListAsync();
+        anniRichieste.AddRange(smart.Select(x => x.g.Giorno.Year));
+        ViewBag.Anni = anniRichieste.Append(Oggi.Year).Append(annoScelto).Distinct().OrderDescending().ToList();
+        static StatoRichiesta Stato(StatoSmartWorking s) => s switch
+        {
+            StatoSmartWorking.Approvato => StatoRichiesta.Approvata, StatoSmartWorking.Rifiutato => StatoRichiesta.Rifiutata, _ => StatoRichiesta.InAttesa,
+        };
+        var righeSmart = smart.Where(x => x.g.Stato == StatoSmartWorking.InAttesa || (x.g.Giorno >= inizioAnno && x.g.Giorno <= fineAnno))
+            .Select(x => new RichiestaRiga(x.g.Id, x.g.DipendenteId, $"{x.Cognome} {x.Nome}", x.RagioneSociale, TipoAssenza.Ferie,
+                x.g.Giorno, x.g.Giorno, false, 0, Stato(x.g.Stato), x.g.RichiestoIl, null, x.g.DecisoDa, x.g.MotivoRifiuto) { SmartWorking = true })
+            .ToList();
         query = query.Where(x => x.r.Stato == StatoRichiesta.InAttesa || (x.r.Dal >= inizioAnno && x.r.Dal <= fineAnno));
         // Conteggi per le pillole di stato (prima del filtro sullo stato).
-        ViewBag.Conteggi = (await query.GroupBy(x => x.r.Stato).Select(g => new { g.Key, N = g.Count() }).ToListAsync())
+        var conteggi = (await query.GroupBy(x => x.r.Stato).Select(g => new { g.Key, N = g.Count() }).ToListAsync())
             .ToDictionary(x => x.Key, x => x.N);
-        if (filtroStato is { } s) query = query.Where(x => x.r.Stato == s);
+        foreach (var g in righeSmart.GroupBy(x => x.Stato)) conteggi[g.Key] = conteggi.GetValueOrDefault(g.Key) + g.Count();
+        ViewBag.Conteggi = conteggi;
+        if (filtroStato is { } s)
+        {
+            query = query.Where(x => x.r.Stato == s);
+            righeSmart = righeSmart.Where(x => x.Stato == s).ToList();
+        }
 
         var risultati = await query.OrderBy(x => x.r.Stato == StatoRichiesta.InAttesa ? 0 : 1)
             .ThenByDescending(x => x.r.Dal).ThenBy(x => x.Cognome).ToListAsync();
         var righe = risultati
             .Select(x => new RichiestaRiga(x.r.Id, x.r.DipendenteId, $"{x.Cognome} {x.Nome}", x.RagioneSociale, x.r.Tipo,
                 x.r.Dal, x.r.Al, x.r.AOre, x.r.Ore, x.r.Stato, x.r.RichiestaIl, x.r.Note, x.r.DecisaDa, x.r.MotivoRifiuto))
+            .Concat(righeSmart)
+            .OrderBy(x => x.Stato == StatoRichiesta.InAttesa ? 0 : 1).ThenByDescending(x => x.Dal).ThenBy(x => x.Dipendente)
             .ToList();
 
         // Il dipendente responsabile di qualcuno vede anche le richieste del suo team da decidere.
@@ -185,22 +220,38 @@ public sealed class AssenzeController(AppDbContext db, UtenteCorrente utente, Se
         });
     }
 
-    public async Task<IActionResult> Nuova(Guid? dipendenteId)
+    /// <summary>Voci in più del modulo per il dipendente, secondo il contratto: smart working o giorni in ufficio.</summary>
+    public const string SceltaSmartWorking = "SmartWorking", SceltaUfficio = "InUfficio";
+
+    public async Task<IActionResult> Nuova(Guid? dipendenteId, DateOnly? dal, string? tipo, bool aOre = false, string? ritorno = null)
     {
-        var form = new RichiestaForm { DipendenteId = utente.IsDipendente ? utente.DipendenteId : dipendenteId, Dal = Oggi };
+        ViewBag.Lavoro = tipo is SceltaSmartWorking or SceltaUfficio ? tipo : null;
+        // Dal calendario si arriva con giorno e tipo già scelti (es. permesso a ore di quel giorno).
+        var form = new RichiestaForm
+        {
+            DipendenteId = utente.IsDipendente ? utente.DipendenteId : dipendenteId,
+            Dal = dal ?? Oggi, Al = dal, Tipo = Enum.TryParse<TipoAssenza>(tipo, out var t) ? t : TipoAssenza.Ferie, AOre = aOre,
+        };
+        ViewBag.Ritorno = Url.IsLocalUrl(ritorno) ? ritorno : null;
         return await MostraForm(form);
     }
 
     [HttpPost, ValidateAntiForgeryToken]
-    public async Task<IActionResult> Nuova(RichiestaForm form)
+    public async Task<IActionResult> Nuova(RichiestaForm form, string? ritorno)
     {
+        ViewBag.Ritorno = Url.IsLocalUrl(ritorno) ? ritorno : null;
         if (utente.IsDipendente)
         {
             form.DipendenteId = utente.DipendenteId; // il dipendente chiede solo per sé: il campo non è nel form
             ModelState.Remove(nameof(form.DipendenteId));
         }
+        // Smart working (chi lavora in presenza) o giorni in ufficio (chi lavora a distanza): stesso modulo, regole del calendario.
+        if (utente.IsDipendente && Request.Form["Tipo"].ToString() is SceltaSmartWorking or SceltaUfficio && utente.DipendenteId is { } mio)
+            return await NuovaGiorniLavoro(form, Request.Form["Tipo"].ToString(), mio, ritorno);
         if (form.AOre && form.Ore is null)
             ModelState.AddModelError(nameof(form.Ore), "Indica quante ore di permesso.");
+        if (form.Tipo == TipoAssenza.Malattia && string.IsNullOrWhiteSpace(form.ProtocolloCertificato))
+            ModelState.AddModelError(nameof(form.ProtocolloCertificato), "Inserisci il numero di protocollo del certificato medico.");
         if (!ModelState.IsValid) return await MostraForm(form);
 
         // Dipendente (con contratti) e azienda (calendario, santo patrono) in una sola query.
@@ -235,9 +286,35 @@ public sealed class AssenzeController(AppDbContext db, UtenteCorrente utente, Se
         Conferma(richiesta!.Stato == StatoRichiesta.Approvata
             ? $"{richiesta.Tipo.Descrizione()} registrata: {richiesta.Ore:0.##} ore."
             : $"Richiesta di {richiesta.Tipo.Descrizione().ToLower()} inviata ({richiesta.Ore:0.##} ore): in attesa di approvazione dell'azienda.");
+        if (Url.IsLocalUrl(ritorno)) return LocalRedirect(ritorno);
         return utente.IsDipendente
             ? RedirectToAction(nameof(Index))
             : RedirectToAction("Dettaglio", "Dipendenti", new { id = dip.Id, sezione = "ferie" });
+    }
+
+    private async Task<IActionResult> NuovaGiorniLavoro(RichiestaForm form, string scelta, Guid id, string? ritorno)
+    {
+        ViewBag.Lavoro = scelta;
+        var modo = scelta == SceltaSmartWorking ? ModoLavoro.Presenza : ModoLavoro.Distanza;
+        if (await ufficio.ModoAsync() != modo) return Forbid();
+        ModelState.Clear(); // il tipo non è un'assenza: valgono solo le date
+        if (form.Dal is not { } dal)
+        {
+            ModelState.AddModelError(nameof(form.Dal), "Indica la data di inizio.");
+            return await MostraForm(form);
+        }
+        var (aggiunti, errore) = await ufficio.AggiungiAsync(id, modo, dal, form.Al ?? dal, AdessoUtc);
+        if (aggiunti == 0)
+        {
+            ModelState.AddModelError("", errore ?? "Nessun giorno da aggiungere.");
+            return await MostraForm(form);
+        }
+        await db.SaveChangesAsync();
+        var giorni = aggiunti == 1 ? "1 giorno" : $"{aggiunti} giorni";
+        Conferma((modo == ModoLavoro.Presenza
+            ? $"Smart working chiesto per {giorni}: in attesa di approvazione dell'azienda."
+            : $"{giorni} in ufficio segnat{(aggiunti == 1 ? "o" : "i")}.") + (errore is null ? "" : " " + errore));
+        return Url.IsLocalUrl(ritorno) ? LocalRedirect(ritorno) : RedirectToAction("Index", "Ufficio", new { anno = dal.Year, mese = dal.Month });
     }
 
     [HttpPost, ValidateAntiForgeryToken]
@@ -285,16 +362,32 @@ public sealed class AssenzeController(AppDbContext db, UtenteCorrente utente, Se
         return Torna(ritorno);
     }
 
+    /// <summary>Approva o rifiuta un giorno di smart working: decide il referente dell'azienda, come per le ferie.</summary>
+    [HttpPost, ValidateAntiForgeryToken, Authorize(Roles = Ruoli.Azienda)]
+    public async Task<IActionResult> DecidiSmartWorking(Guid id, bool approva, string? motivo, string? ritorno)
+    {
+        var ids = utente.Filtra(db.Dipendenti).Select(d => d.Id);
+        var g = await db.GiorniSmartWorking.FirstOrDefaultAsync(x => x.Id == id && ids.Contains(x.DipendenteId));
+        if (g is null) return NotFound();
+        if (Prova(() => { if (approva) g.Approva(utente.Email, AdessoUtc); else g.Rifiuta(utente.Email, motivo, AdessoUtc); }))
+        {
+            await db.SaveChangesAsync();
+            Conferma(approva ? "Smart working approvato." : "Smart working rifiutato.");
+        }
+        else Errore(PrimoErrore());
+        return Torna(ritorno);
+    }
+
     /// <summary>Calendario del mese con presenti e assenti, giorno per giorno.</summary>
     [Authorize(Policy = Policy.GestionePersonale)]
-    public async Task<IActionResult> Calendario(int? anno, int? mese, Guid? aziendaId, Guid? teamId)
+    public async Task<IActionResult> Calendario(int? anno, int? mese, Guid? aziendaId, Guid? teamId, string? luogo)
     {
         var a0 = anno ?? Oggi.Year;
         var m0 = mese is >= 1 and <= 12 ? mese.Value : Oggi.Month;
-        return await CalendarioMese(a0, m0, aziendaId, teamId);
+        return await CalendarioMese(a0, m0, aziendaId, teamId, luogo is "ufficio" or "remoto" ? luogo : null);
     }
 
-    private async Task<IActionResult> CalendarioMese(int anno, int mese, Guid? aziendaId, Guid? teamId)
+    private async Task<IActionResult> CalendarioMese(int anno, int mese, Guid? aziendaId, Guid? teamId, string? luogo = null)
     {
         var primo = new DateOnly(anno, mese, 1);
         var ultimo = primo.AddMonths(1).AddDays(-1);
@@ -341,6 +434,10 @@ public sealed class AssenzeController(AppDbContext db, UtenteCorrente utente, Se
         var inUfficio = (await db.GiorniInUfficio.AsNoTracking().Where(u => ids.Contains(u.DipendenteId) && u.Giorno >= primo && u.Giorno <= ultimo)
                 .Select(u => new { u.DipendenteId, u.Giorno }).ToListAsync())
             .ToLookup(u => u.Giorno, u => u.DipendenteId);
+        var smartWorking = (await db.GiorniSmartWorking.AsNoTracking()
+                .Where(u => ids.Contains(u.DipendenteId) && u.Stato == StatoSmartWorking.Approvato && u.Giorno >= primo && u.Giorno <= ultimo)
+                .Select(u => new { u.DipendenteId, u.Giorno }).ToListAsync())
+            .ToLookup(u => u.Giorno, u => u.DipendenteId);
 
         var giorni = new List<GiornoCalendario>();
         for (var g = inizio; g <= fine; g = g.AddDays(1))
@@ -358,15 +455,21 @@ public sealed class AssenzeController(AppDbContext db, UtenteCorrente utente, Se
                 .Select(r => new AssenzaCalendario(P(persone[r.DipendenteId]), r.Tipo, r.Stato, r.AOre, r.Ore)).ToList();
             // Chi è assente tutto il giorno (approvato) non è tra i presenti; le assenze a ore e quelle in attesa sì.
             var fuori = assenti.Where(a => !a.AOre && a.Stato == StatoRichiesta.Approvata).Select(a => a.Persona.Id).ToHashSet();
-            giorni.Add(new GiornoCalendario(g, true, true, inForza.Where(d => !fuori.Contains(d.Id)).Select(P).ToList(), assenti)
+            // In ufficio: chi lavora in presenza e chi, pur lavorando a distanza, ha segnato di venire quel giorno.
+            var segnati = inUfficio[giorno].ToHashSet();
+            var aCasa = smartWorking[giorno].ToHashSet();
+            bool InSede(Dipendente d) => segnati.Contains(d.Id) || (!ServizioUfficio.LavoraADistanza(d, giorno) && !aCasa.Contains(d.Id));
+            var presenti = inForza.Where(d => !fuori.Contains(d.Id) && luogo switch { "ufficio" => InSede(d), "remoto" => !InSede(d), _ => true }).ToList();
+            giorni.Add(new GiornoCalendario(g, true, true, presenti.Select(P).ToList(), assenti)
             {
                 Chiusure = chiuso,
-                InUfficio = inUfficio[giorno].Where(x => persone.ContainsKey(x) && !fuori.Contains(x)).Select(x => P(persone[x])).OrderBy(p => p.Nome).ToList(),
+                InUfficio = luogo == "remoto" ? [] : presenti.Where(d => segnati.Contains(d.Id)).Select(P).OrderBy(p => p.Nome).ToList(),
+                InSmartWorking = luogo == "ufficio" ? [] : presenti.Where(d => aCasa.Contains(d.Id)).Select(P).OrderBy(p => p.Nome).ToList(),
             });
         }
         return View("Calendario", new CalendarioAssenzeViewModel
         {
-            Anno = anno, Mese = mese, Giorni = giorni, Oggi = Oggi, AziendaId = aziendaId, TeamId = teamId,
+            Anno = anno, Mese = mese, Giorni = giorni, Oggi = Oggi, AziendaId = aziendaId, TeamId = teamId, Luogo = luogo,
             Team = teamAzienda.Select(t => new TeamFiltro(t.Id, t.Nome, CL.Domain.Organizzazione.Organigramma.ColoreDi(t, teamAzienda), t.Emoji)).ToList(),
             Chiusure = chiusure.Where(c => c.Dal <= new DateOnly(anno, mese, 1).AddMonths(1).AddDays(-1) && c.Al >= new DateOnly(anno, mese, 1)).ToList(),
             Aziende = utente.IsConsulente
@@ -540,6 +643,7 @@ public sealed class AssenzeController(AppDbContext db, UtenteCorrente utente, Se
     {
         ViewBag.Gestore = Gestore;
         ViewBag.PuoApprovare = utente.IsAzienda;
+        ViewBag.Modo = utente.IsDipendente ? await ufficio.ModoAsync() : null;
         var scelto = form.DipendenteId;
         var attivo = Filtri.ContrattoAttivoIl(Oggi);
         // Filtro e proiezione nel database: solo id e nome dei dipendenti in forza (più quello già scelto).

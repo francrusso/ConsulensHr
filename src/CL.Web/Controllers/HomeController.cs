@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using CL.Domain.BustePaga;
+using CL.Domain.Dipendenti;
 using CL.Infrastructure.Persistence;
 using CL.Web.Infrastruttura;
 using CL.Web.Models;
@@ -16,6 +17,12 @@ public sealed class PanoramicaDipendente
     public BustaRiga? UltimaBusta { get; init; }
     /// <summary>Per chi è responsabile di altri: richieste del team in attesa della sua decisione (null se non è responsabile).</summary>
     public int? RichiesteTeam { get; init; }
+    /// <summary>Modalità di lavoro dal contratto (In presenza, Ibrido, Full-remote); null senza contratto.</summary>
+    public string? Modalita { get; init; }
+    /// <summary>Giorni in ufficio previsti, sede di lavoro e simili, in una riga.</summary>
+    public string? DettaglioLavoro { get; init; }
+    /// <summary>Chi lavora a distanza segna da sé i giorni in ufficio.</summary>
+    public bool SegnaUfficio { get; init; }
 }
 
 public sealed class HomeController(AppDbContext db, UtenteCorrente utente, ServizioPanoramica panoramica, ServizioSaldi saldi,
@@ -30,9 +37,28 @@ public sealed class HomeController(AppDbContext db, UtenteCorrente utente, Servi
         var io = utente.DipendenteId is { } id ? await db.Dipendenti.AsNoTracking().FirstOrDefaultAsync(d => d.Id == id) : null;
         if (io is null) return View("IndexDipendente", new PanoramicaDipendente { Saldi = [] });
         var collaboratori = await organigramma.CollaboratoriAsync(io.Id);
+
+        // Dove lavora: modalità dal contratto in corso (o dal prossimo), sede indicata dall'azienda.
+        var contratto = io.ContrattoAttivo(oggi) ?? io.Contratti.Where(c => c.DataInizio > oggi).OrderBy(c => c.DataInizio).FirstOrDefault();
+        var profilo = await db.ProfiliAzienda.AsNoTracking().FirstOrDefaultAsync(p => p.AziendaId == io.AziendaId);
+        static string Indirizzo(CL.Domain.Aziende.Indirizzo i) => $"{i.Via}, {i.Comune} ({i.Provincia})";
+        string? sede = io.Sede switch
+        {
+            SedeLavoro.SmartWorking => "Smart working",
+            SedeLavoro.SedeLegale => profilo?.SedeLegale is { } l ? "Sede legale · " + Indirizzo(l) : "Sede legale",
+            SedeLavoro.SedeOperativa => profilo?.SedeOperativa is { } o ? "Sede operativa · " + Indirizzo(o) : "Sede operativa",
+            _ => null,
+        };
+        var giorniUfficio = contratto?.Modalita == ModalitaLavoro.Ibrido && contratto.GiorniInUfficio is { } gu
+            ? $"{gu} {(gu == 1 ? "giorno" : "giorni")} in ufficio a settimana" : null;
+        var smartConcesso = contratto?.Modalita == ModalitaLavoro.InPresenza && contratto.SmartWorkingConcesso is { } sc ? "Smart working " + sc : null;
+        var dettaglio = string.Join(" · ", new[] { giorniUfficio, smartConcesso, sede }.Where(x => x is not null));
         return View("IndexDipendente", new PanoramicaDipendente
         {
             Saldi = await saldi.Calcola(io, oggi.Year, oggi.Month),
+            Modalita = contratto?.Modalita.Descrizione() ?? (io.Sede == SedeLavoro.SmartWorking ? "Smart working" : null),
+            DettaglioLavoro = dettaglio.Length > 0 ? dettaglio : null,
+            SegnaUfficio = ServizioUfficio.LavoraADistanza(io, oggi),
             RichiesteInAttesa = await db.RichiesteAssenza.CountAsync(r => r.DipendenteId == io.Id && r.Stato == CL.Domain.Assenze.StatoRichiesta.InAttesa),
             RichiesteTeam = collaboratori.Count == 0 ? null
                 : await db.RichiesteAssenza.CountAsync(r => collaboratori.Contains(r.DipendenteId) && r.Stato == CL.Domain.Assenze.StatoRichiesta.InAttesa),

@@ -111,7 +111,7 @@ public sealed partial class AccessiWebTests : IDisposable
         var (dip, home) = await Attiva(Link(html));
         Assert.Contains("Dipendente", home);
         var ferie = WebUtility.HtmlDecode(await dip.GetStringAsync("/Assenze"));
-        Assert.Contains("Le mie ferie e permessi", ferie);
+        Assert.Contains("Richieste", ferie);
 
         var (userId, collegato) = await _app.ConDb(async db =>
         {

@@ -485,6 +485,9 @@ namespace CL.Infrastructure.Persistence.Migrations
                     b.Property<int>("GiorniLavorativiSettimana")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("GiorniSmartWorking")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Livello")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -517,6 +520,10 @@ namespace CL.Infrastructure.Persistence.Migrations
                     b.Property<decimal>("PercentualePartTime")
                         .HasPrecision(5, 2)
                         .HasColumnType("numeric(5,2)");
+
+                    b.Property<string>("PeriodoSmartWorking")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
 
                     b.Property<decimal>("RetribuzioneLordaAnnua")
                         .HasPrecision(12, 2)
@@ -961,6 +968,46 @@ namespace CL.Infrastructure.Persistence.Migrations
                     b.ToTable("GiorniInUfficio", "hr");
                 });
 
+            modelBuilder.Entity("CL.Domain.Presenze.GiornoSmartWorking", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("DecisoDa")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<DateTime?>("DecisoIl")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("DipendenteId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly>("Giorno")
+                        .HasColumnType("date");
+
+                    b.Property<string>("MotivoRifiuto")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime>("RichiestoIl")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Stato")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DipendenteId", "Giorno")
+                        .IsUnique();
+
+                    b.HasIndex("Stato", "Giorno");
+
+                    b.ToTable("GiorniSmartWorking", "hr");
+                });
+
             modelBuilder.Entity("CL.Domain.Presenze.RigaPresenze", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1395,6 +1442,15 @@ namespace CL.Infrastructure.Persistence.Migrations
                 });
 
             modelBuilder.Entity("CL.Domain.Presenze.GiornoInUfficio", b =>
+                {
+                    b.HasOne("CL.Domain.Dipendenti.Dipendente", null)
+                        .WithMany()
+                        .HasForeignKey("DipendenteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("CL.Domain.Presenze.GiornoSmartWorking", b =>
                 {
                     b.HasOne("CL.Domain.Dipendenti.Dipendente", null)
                         .WithMany()

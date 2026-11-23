@@ -54,7 +54,6 @@
         <button type="button" class="badge-filtro-categoria active" data-filtro="presenti" aria-pressed="true"><span class="pallino-legenda presente" aria-hidden="true"></span> Presenti</button>
         <button type="button" class="badge-filtro-categoria active" data-filtro="assenze" aria-pressed="true"><span class="pallino-legenda assente" aria-hidden="true"></span> Assenze</button>
         <button type="button" class="badge-filtro-categoria active" data-filtro="chiusure" aria-pressed="true"><span class="pallino-legenda chiusura" aria-hidden="true"></span> Chiusure aziendali</button>
-        <button type="button" class="badge-filtro-categoria active" data-filtro="ufficio" aria-pressed="true"><span class="pallino-legenda ufficio" aria-hidden="true"></span> In ufficio</button>
         <button type="button" class="badge-filtro-categoria active" data-filtro="attesa" aria-pressed="true"><span class="pallino-legenda in-attesa" aria-hidden="true"></span> In attesa di approvazione</button>
     </div>
     @* Filtri per azienda (solo consulente) e per team, applicati appena cambiano. *@
@@ -75,20 +74,26 @@
                 }
             </select>
         }
+        @* Dove lavorano i presenti: in ufficio (in presenza o giorno segnato) o da remoto. *@
+        <select name="luogo" class="form-select form-select-sm" aria-label="Filtra per luogo di lavoro" onchange="this.form.submit()">
+            <option value="">Ufficio e remoto</option>
+            <option value="ufficio" selected="@(Model.Luogo == "ufficio")">In ufficio</option>
+            <option value="remoto" selected="@(Model.Luogo == "remoto")">Da remoto</option>
+        </select>
     </form>
 </div>
 
 @* Mese a tutta larghezza, con le frecce ai due lati. *@
 <div class="barra-mese mb-3">
-    <a asp-action="Calendario" asp-route-anno="@prec.Year" asp-route-mese="@prec.Month" asp-route-aziendaId="@Model.AziendaId" asp-route-teamId="@Model.TeamId" class="btn btn-outline-primary btn-sm" aria-label="Mese precedente"><i class="ri-arrow-left-s-line" aria-hidden="true"></i></a>
+    <a asp-action="Calendario" asp-route-anno="@prec.Year" asp-route-mese="@prec.Month" asp-route-aziendaId="@Model.AziendaId" asp-route-teamId="@Model.TeamId" asp-route-luogo="@Model.Luogo" class="btn btn-outline-primary btn-sm" aria-label="Mese precedente"><i class="ri-arrow-left-s-line" aria-hidden="true"></i></a>
     <div class="d-flex align-items-center gap-2">
         <h2 class="titolo-mese mb-0">@nomeMese @Model.Anno</h2>
         @if (Model.Anno != Model.Oggi.Year || Model.Mese != Model.Oggi.Month)
         {
-            <a asp-action="Calendario" asp-route-aziendaId="@Model.AziendaId" asp-route-teamId="@Model.TeamId" class="btn btn-sm btn-link p-0">Oggi</a>
+            <a asp-action="Calendario" asp-route-aziendaId="@Model.AziendaId" asp-route-teamId="@Model.TeamId" asp-route-luogo="@Model.Luogo" class="btn btn-sm btn-link p-0">Oggi</a>
         }
     </div>
-    <a asp-action="Calendario" asp-route-anno="@succ.Year" asp-route-mese="@succ.Month" asp-route-aziendaId="@Model.AziendaId" asp-route-teamId="@Model.TeamId" class="btn btn-outline-primary btn-sm" aria-label="Mese successivo"><i class="ri-arrow-right-s-line" aria-hidden="true"></i></a>
+    <a asp-action="Calendario" asp-route-anno="@succ.Year" asp-route-mese="@succ.Month" asp-route-aziendaId="@Model.AziendaId" asp-route-teamId="@Model.TeamId" asp-route-luogo="@Model.Luogo" class="btn btn-outline-primary btn-sm" aria-label="Mese successivo"><i class="ri-arrow-right-s-line" aria-hidden="true"></i></a>
 </div>
 
 <div class="calendario-assenze-scorri">
@@ -106,6 +111,12 @@
                     {
                         <div class="cal-ufficio" title="In ufficio: @string.Join(", ", g.InUfficio.Select(p => p.Nome))">
                             <i class="ri-building-line" aria-hidden="true"></i> @g.InUfficio.Count in ufficio
+                        </div>
+                    }
+                    @if (g.InSmartWorking.Count > 0)
+                    {
+                        <div class="cal-smart" title="In smart working: @string.Join(", ", g.InSmartWorking.Select(p => p.Nome))">
+                            <i class="ri-home-wifi-line" aria-hidden="true"></i> @g.InSmartWorking.Count in smart working
                         </div>
                     }
                     @if (g.Presenti.Count > 0)
@@ -179,11 +190,10 @@
         // Nella card degli assenti si vedono al massimo 3 persone tra quelle filtrate, poi "e altri N".
         (function () {
             const cal = document.getElementById('calendarioAssenze');
-            const attivi = { presenti: true, assenze: true, chiusure: true, ufficio: true, attesa: true };
+            const attivi = { presenti: true, assenze: true, chiusure: true, attesa: true };
             function aggiorna() {
                 cal.querySelectorAll('.cal-presenti').forEach(p => p.hidden = !attivi.presenti);
                 cal.querySelectorAll('.cal-chiusura').forEach(c => c.hidden = !attivi.chiusure);
-                cal.querySelectorAll('.cal-ufficio').forEach(c => c.hidden = !attivi.ufficio);
                 cal.querySelectorAll('.cal-assenti').forEach(card => {
                     const tipo = attivi.assenze;
                     const righe = [...card.querySelectorAll('.cal-assente')]

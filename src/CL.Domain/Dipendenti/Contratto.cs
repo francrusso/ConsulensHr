@@ -31,8 +31,15 @@ public static class TipoContrattoExtensions
 /// <summary>Dove si svolge il lavoro: in sede, in parte da remoto (con i giorni in ufficio) o del tutto da remoto.</summary>
 public enum ModalitaLavoro { InPresenza, Ibrido, FullRemote }
 
+/// <summary>Periodo a cui si riferiscono i giorni di smart working concessi a chi lavora in presenza.</summary>
+public enum PeriodoSmartWorking { Settimana, Mese }
+
 public static class ModalitaLavoroExtensions
 {
+    /// <summary>Es. "1 giorno a settimana", "2 giorni al mese".</summary>
+    public static string Descrizione(int giorni, PeriodoSmartWorking periodo) =>
+        $"{giorni} {(giorni == 1 ? "giorno" : "giorni")} {(periodo == PeriodoSmartWorking.Settimana ? "a settimana" : "al mese")}";
+
     public static string Descrizione(this ModalitaLavoro m) => m switch
     {
         ModalitaLavoro.Ibrido => "Ibrido",
@@ -89,6 +96,12 @@ public sealed class Contratto : Entity
     public ModalitaLavoro Modalita { get; private set; }
     /// <summary>Giorni in ufficio a settimana, solo per la modalità ibrida.</summary>
     public int? GiorniInUfficio { get; private set; }
+    /// <summary>Giorni di smart working che chi lavora in presenza può chiedere (per settimana o per mese); null = nessuno.</summary>
+    public int? GiorniSmartWorking { get; private set; }
+    public PeriodoSmartWorking? PeriodoSmartWorking { get; private set; }
+
+    /// <summary>Es. "2 giorni al mese"; null se non concesso.</summary>
+    public string? SmartWorkingConcesso => GiorniSmartWorking is { } g && PeriodoSmartWorking is { } p ? ModalitaLavoroExtensions.Descrizione(g, p) : null;
 
     /// <summary>Contratto firmato (PDF) nell'archivio privato.</summary>
     public string? DocumentoChiave { get; private set; }
@@ -165,6 +178,7 @@ public sealed class Contratto : Entity
         OreRolAnnue = Guard.NonNegative(oreRolAnnue, "Ore ROL annue");
         Modalita = modalita;
         GiorniInUfficio = modalita == ModalitaLavoro.Ibrido ? giorniInUfficio : null;
+        if (modalita != ModalitaLavoro.InPresenza) (GiorniSmartWorking, PeriodoSmartWorking) = (null, null);
         // Una data di fine cambiata a mano non è più quella della cessazione registrata.
         if (DataCessazione is not null && DataCessazione != dataFine) DataCessazione = null;
     }
@@ -190,6 +204,16 @@ public void ImpostaDocumento(string chiave, string nomeFile, DateTime adesso)
         var nome = Path.GetFileName(nomeFile ?? "").Trim();
         DocumentoNome = string.IsNullOrEmpty(nome) ? "contratto.pdf" : nome.Length > 200 ? nome[..200] : nome;
         DocumentoCaricatoIl = adesso;
+    }
+
+    /// <summary>Smart working concesso a chi lavora in presenza (es. 2 giorni al mese); vuoto o 0 = nessuno.</summary>
+    public void ImpostaSmartWorking(int? giorni, PeriodoSmartWorking periodo)
+    {
+        if (Modalita != ModalitaLavoro.InPresenza || giorni is null or 0) { (GiorniSmartWorking, PeriodoSmartWorking) = (null, null); return; }
+        var massimo = periodo == Dipendenti.PeriodoSmartWorking.Settimana ? 5 : 23;
+        if (giorni < 0 || giorni > massimo)
+            throw new DomainException($"Giorni di smart working: da 1 a {massimo} {(periodo == Dipendenti.PeriodoSmartWorking.Settimana ? "a settimana" : "al mese")}.");
+        (GiorniSmartWorking, PeriodoSmartWorking) = (giorni, periodo);
     }
 
     /// <summary>Mansione svolta (es. "Designer"); vuota = non indicata.</summary>

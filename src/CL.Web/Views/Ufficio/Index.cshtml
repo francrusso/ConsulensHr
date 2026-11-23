@@ -1,20 +1,98 @@
 @model CL.Web.Controllers.UfficioViewModel
+@using CL.Domain.Presenze
+@using CL.Web.Infrastruttura
+@using CL.Web.Controllers
+@using Microsoft.AspNetCore.Mvc.Razor
 @{
-    ViewData["Title"] = "Giorni in ufficio";
+    // Calendario del dipendente: ferie, permessi e malattia (in attesa o approvati), chiusure aziendali, festività e,
+    // secondo come lavora, i giorni in ufficio da segnare (chi è a distanza) o lo smart working da chiedere (chi è in presenza).
+    ViewData["Title"] = "Calendario";
+    var smart = Model.Modo == ModoLavoro.Presenza;
+    var distanza = Model.Modo == ModoLavoro.Distanza;
     var primo = new DateOnly(Model.Anno, Model.Mese, 1);
     var prec = primo.AddMonths(-1);
     var succ = primo.AddMonths(1);
-    var nelMese = Model.Giorni.Count(g => g.DelMese && g.Segnato);
+    var delMese = Model.Giorni.Where(g => g.DelMese).ToList();
+    var inUfficio = delMese.Count(g => g.Segnato);
+    var approvati = delMese.Count(g => g.Smart == StatoSmartWorking.Approvato);
+    var inAttesaSmart = delMese.Count(g => g.Smart == StatoSmartWorking.InAttesa);
+    var inAttesa = delMese.SelectMany(g => g.Richieste).Count(r => r.Stato == StatoRichiesta.InAttesa);
+    string Giorni(int n) => n == 1 ? "giorno" : "giorni";
+    // Stessi colori del calendario dell'azienda e delle card dei saldi.
+    string Colore(TipoAssenza t) => t switch { TipoAssenza.Ferie => "#6096FF", TipoAssenza.Malattia => "#F08A4B", _ => "#8E6BD8" };
+    string Icona(TipoAssenza t) => t switch { TipoAssenza.Ferie => "ri-sun-line", TipoAssenza.Malattia => "ri-first-aid-kit-line", _ => "ri-time-line" };
+    string Filtro(TipoAssenza t) => t switch { TipoAssenza.Ferie => "ferie", TipoAssenza.Malattia => "malattia", _ => "permessi" };
+    string Breve(TipoAssenza t) => t switch
+    {
+        TipoAssenza.Ferie => "Ferie", TipoAssenza.Rol => "ROL", TipoAssenza.Malattia => "Malattia",
+        TipoAssenza.PermessoL104 => "L. 104", TipoAssenza.CongedoParentale => "Congedo", _ => t.Descrizione(),
+    };
+    // Il box prende il colore della richiesta del giorno: prima quella di tutta la giornata, poi quella a ore.
+    (string Classi, string Stile, string? Filtro) Aspetto(GiornoUfficio g)
+    {
+        if (!g.DelMese) return ("", "", null);
+        var r = g.Richieste.OrderBy(x => x.AOre).ThenBy(x => x.Stato == StatoRichiesta.InAttesa).FirstOrDefault();
+        if (r is not null) return ($"con-richiesta {(r.Stato == StatoRichiesta.InAttesa ? "richiesta-attesa" : "")} {(r.AOre ? "richiesta-ore" : "")}", $"--colore-cat:{Colore(r.Tipo)}", Filtro(r.Tipo));
+        if (g.Chiusure.Count > 0) return ("con-chiusura", "", "chiusure");
+        if (g.Festivo) return ("festivo", "", null);
+        if (g.Smart is { } s) return (s switch { StatoSmartWorking.InAttesa => "smart-attesa", StatoSmartWorking.Approvato => "smart-ok", _ => "smart-no" }, "", "smart");
+        return g.Segnato ? ("in-ufficio", "", "ufficio") : ("", "", null);
+    }
+    Func<GiornoUfficio, HelperResult> Contenuto = @<text>
+        <span class="cal-numero">@item.Data.Day</span>
+        @if (item.DelMese)
+        {
+            <span class="voci-giorno">
+                @foreach (var r in item.Richieste)
+                {
+                    <span class="voce-giorno @(r.Stato == StatoRichiesta.InAttesa ? "in-attesa" : "")" data-filtro="@Filtro(r.Tipo)" style="--colore-cat:@Colore(r.Tipo)" title="@r.Note">
+                        <i class="@Icona(r.Tipo)" aria-hidden="true"></i>
+                        @Breve(r.Tipo)@(r.AOre ? $" · {r.Ore:0.##} h" : "")
+                        @if (r.Stato == StatoRichiesta.InAttesa) { <span class="voce-stato">in attesa</span> }
+                    </span>
+                }
+                @foreach (var c in item.Chiusure) { <span class="voce-giorno voce-chiusura" data-filtro="chiusure"><i class="ri-door-closed-line" aria-hidden="true"></i> @c</span> }
+                @if (item.Festivo) { <span class="voce-giorno voce-festivo"><i class="ri-flag-line" aria-hidden="true"></i> Festivo</span> }
+                @if (item.Smart is { } s)
+                {
+                    <span class="voce-giorno voce-smart @(s == StatoSmartWorking.InAttesa ? "in-attesa" : "")" data-filtro="smart" title="@item.MotivoRifiuto"><i class="ri-home-wifi-line" aria-hidden="true"></i> Smart working
+                        @if (s != StatoSmartWorking.Approvato) { <span class="voce-stato">@s.Descrizione().ToLower()</span> }
+                    </span>
+                }
+                @if (item.Segnato) { <span class="voce-giorno voce-ufficio" data-filtro="ufficio"><i class="ri-building-line" aria-hidden="true"></i> In ufficio</span> }
+            </span>
+        }
+    </text>;
 }
 <div class="breadcrumb-titolo d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
-    <h1 class="titolo-pagina mb-0">@ViewData["Title"]</h1>
-    <div class="d-flex flex-wrap gap-2">
-        @if (Model.GiorniPrevisti is { } previsti)
+    <h1 class="titolo-pagina mb-0">Calendario</h1>
+    <div class="d-flex flex-wrap align-items-center gap-2">
+        @if (smart)
         {
-            <span class="avanzamento-data"><i class="ri-building-line" aria-hidden="true"></i> Previsti dal contratto: @previsti @(previsti == 1 ? "giorno" : "giorni") a settimana</span>
+            @if (Model.SmartConcesso is { } concesso)
+            {
+                <span class="avanzamento-data"><i class="ri-file-list-3-line" aria-hidden="true"></i> Concesso dal contratto: @concesso</span>
+            }
+            <span class="avanzamento-data"><i class="ri-home-wifi-line" aria-hidden="true"></i> Smart working nel mese: @approvati @Giorni(approvati)@(inAttesaSmart > 0 ? $" · {inAttesaSmart} in attesa" : "")</span>
         }
-        <span class="avanzamento-data"><i class="ri-calendar-check-line" aria-hidden="true"></i> Questo mese: @nelMese @(nelMese == 1 ? "giorno" : "giorni") in ufficio</span>
+        else if (distanza)
+        {
+            <span class="avanzamento-data"><i class="ri-building-line" aria-hidden="true"></i> In ufficio: @inUfficio @Giorni(inUfficio)@(Model.GiorniPrevisti is { } previsti ? $" · previsti {previsti} a settimana" : "")</span>
+        }
+        @if (inAttesa > 0) { <span class="avanzamento-data"><i class="ri-time-line" aria-hidden="true"></i> @inAttesa @(inAttesa == 1 ? "richiesta" : "richieste") in attesa</span> }
+        <a asp-controller="Assenze" asp-action="Nuova" class="btn btn-primary"><i class="ri-calendar-event-line" aria-hidden="true"></i> Chiedi ferie o permessi</a>
     </div>
+</div>
+
+@* Filtri come nel calendario dell'azienda: ogni pillola mostra o nasconde una categoria. *@
+<div class="invoice-filter-categories filtro-stati filtri-calendario mb-3" role="group" aria-label="Mostra nel calendario">
+    <button type="button" class="badge-filtro-categoria active" data-mostra-filtro="ferie" aria-pressed="true"><span class="pallino-legenda" style="background:#6096FF" aria-hidden="true"></span> Ferie</button>
+    <button type="button" class="badge-filtro-categoria active" data-mostra-filtro="permessi" aria-pressed="true"><span class="pallino-legenda" style="background:#8E6BD8" aria-hidden="true"></span> Permessi</button>
+    <button type="button" class="badge-filtro-categoria active" data-mostra-filtro="malattia" aria-pressed="true"><span class="pallino-legenda" style="background:#F08A4B" aria-hidden="true"></span> Malattia</button>
+    <button type="button" class="badge-filtro-categoria active" data-mostra-filtro="chiusure" aria-pressed="true"><span class="pallino-legenda chiusura" aria-hidden="true"></span> Chiusure aziendali</button>
+    @if (smart) { <button type="button" class="badge-filtro-categoria active" data-mostra-filtro="smart" aria-pressed="true"><span class="pallino-legenda smart-ok" aria-hidden="true"></span> Smart working</button> }
+    @if (distanza) { <button type="button" class="badge-filtro-categoria active" data-mostra-filtro="ufficio" aria-pressed="true"><span class="pallino-legenda ufficio" aria-hidden="true"></span> In ufficio</button> }
+    <button type="button" class="badge-filtro-categoria active" data-mostra-filtro="attesa" aria-pressed="true"><span class="pallino-legenda in-attesa" aria-hidden="true"></span> In attesa di approvazione</button>
 </div>
 
 <div class="barra-mese mb-3">
@@ -23,33 +101,69 @@
     <a asp-action="Index" asp-route-anno="@succ.Year" asp-route-mese="@succ.Month" class="btn btn-outline-primary btn-sm" aria-label="Mese successivo"><i class="ri-arrow-right-s-line" aria-hidden="true"></i></a>
 </div>
 
-@* Un clic su un giorno lavorativo lo segna come "in ufficio"; un altro clic lo toglie. *@
 <div class="calendario-assenze-scorri">
-    <div class="calendario-assenze calendario-ufficio" role="grid" aria-label="Giorni in ufficio">
+    <div class="calendario-assenze calendario-ufficio" id="calendarioPersonale" role="grid" aria-label="Calendario di @ServizioBustePaga.NomeMese(Model.Mese) @Model.Anno">
         @foreach (var nome in new[] { "Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom" }) { <div class="cal-intestazione" role="columnheader">@nome</div> }
         @foreach (var g in Model.Giorni)
         {
-            var classi = $"cal-giorno {(g.DelMese ? "" : "fuori-mese")} {(g.Lavorativo ? "" : "non-lavorativo")} {(g.Data == Model.Oggi ? "oggi" : "")} {(g.Segnato ? "in-ufficio" : "")}";
-            if (g.Modificabile)
-            {
-                <form asp-action="Segna" method="post" class="m-0">
-                    <input type="hidden" name="giorno" value="@g.Data.ToString("yyyy-MM-dd")" />
-                    <button type="submit" class="@classi giorno-cliccabile w-100" aria-pressed="@(g.Segnato ? "true" : "false")"
-                            aria-label="@g.Data.ToString("dddd d MMMM"): @(g.Segnato ? "in ufficio, clic per togliere" : "clic per segnare in ufficio")">
-                        <span class="cal-numero">@g.Data.Day</span>
-                        @if (g.Segnato) { <span class="segno-ufficio"><i class="ri-building-line" aria-hidden="true"></i> In ufficio</span> }
-                        else { <span class="segno-ufficio vuoto"><i class="ri-add-line" aria-hidden="true"></i> Segna</span> }
-                    </button>
-                </form>
-            }
-            else
-            {
-                <div class="@classi" role="gridcell">
-                    <span class="cal-numero">@g.Data.Day</span>
-                    @if (g.DelMese && g.Assenza is { } assenza) { <span class="segno-assenza">@assenza</span> }
-                    else if (g.DelMese && g.Segnato) { <span class="segno-ufficio"><i class="ri-building-line" aria-hidden="true"></i> In ufficio</span> }
-                </div>
-            }
+            var (aspetto, stile, filtro) = Aspetto(g);
+            var classi = $"cal-giorno {(g.DelMese ? "" : "fuori-mese")} {(g.Lavorativo ? "" : "non-lavorativo")} {(g.Data == Model.Oggi ? "oggi" : "")} {aspetto}";
+            var ritornoQui = Url.Action("Index", new { anno = Model.Anno, mese = Model.Mese });
+            var conAzioni = g.Richiedibile || g.Modificabile;
+            <div class="@classi @(conAzioni ? "con-azioni" : "")" style="@stile" data-filtro="@filtro" role="gridcell" tabindex="@(conAzioni ? "0" : null)"
+                 aria-label="@g.Data.ToString("dddd d MMMM")">
+                @Contenuto(g)
+                @if (conAzioni)
+                {
+                    @* Al passaggio del mouse: crea subito una richiesta per quel giorno. *@
+                    <div class="azioni-giorno">
+                        @if (g.Richiedibile)
+                        {
+                            <a class="azione-giorno" style="--colore-cat:#6096FF" asp-controller="Assenze" asp-action="Nuova" asp-route-dal="@g.Data.ToString("yyyy-MM-dd")" asp-route-tipo="Ferie" asp-route-ritorno="@ritornoQui"><i class="ri-sun-line" aria-hidden="true"></i> Ferie</a>
+                            <a class="azione-giorno" style="--colore-cat:#8E6BD8" asp-controller="Assenze" asp-action="Nuova" asp-route-dal="@g.Data.ToString("yyyy-MM-dd")" asp-route-tipo="Rol" asp-route-aOre="true" asp-route-ritorno="@ritornoQui"><i class="ri-time-line" aria-hidden="true"></i> Permesso</a>
+                            <a class="azione-giorno" style="--colore-cat:#F08A4B" asp-controller="Assenze" asp-action="Nuova" asp-route-dal="@g.Data.ToString("yyyy-MM-dd")" asp-route-tipo="Malattia" asp-route-ritorno="@ritornoQui"><i class="ri-first-aid-kit-line" aria-hidden="true"></i> Malattia</a>
+                        }
+                        @if (g.Modificabile)
+                        {
+                            var attivo = smart ? g.Smart is not null : g.Segnato;
+                            <form asp-action="@(smart ? "Richiedi" : "Segna")" method="post" class="m-0">
+                                <input type="hidden" name="giorno" value="@g.Data.ToString("yyyy-MM-dd")" />
+                                <button type="submit" class="azione-giorno" style="--colore-cat:@(smart ? "#7C9CD6" : "#4FBFC4")">
+                                    @if (attivo) { <i class="ri-close-line" aria-hidden="true"></i> @(smart ? "Ritira smart working" : "Togli ufficio") }
+                                    else if (smart) { <i class="ri-home-wifi-line" aria-hidden="true"></i> @:Smart working
+                                    }
+                                    else { <i class="ri-building-line" aria-hidden="true"></i> @:In ufficio
+                                    }
+                                </button>
+                            </form>
+                        }
+                    </div>
+                }
+            </div>
         }
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        // Pillole filtro: nascondono le voci della categoria e tolgono il colore ai giorni che lo prendevano da lì.
+        (function () {
+            const cal = document.getElementById('calendarioPersonale');
+            const attivi = {};
+            document.querySelectorAll('[data-mostra-filtro]').forEach(b => attivi[b.dataset.mostraFiltro] = true);
+            const visibile = el => (!el.dataset.filtro || attivi[el.dataset.filtro] !== false)
+                && (attivi.attesa || !el.matches('.in-attesa, .richiesta-attesa, .smart-attesa'));
+            function aggiorna() {
+                cal.querySelectorAll('.voce-giorno').forEach(v => v.hidden = !visibile(v));
+                cal.querySelectorAll('.cal-giorno[data-filtro]').forEach(g => g.classList.toggle('spento', !visibile(g)));
+            }
+            document.querySelectorAll('[data-mostra-filtro]').forEach(b => b.addEventListener('click', () => {
+                const k = b.dataset.mostraFiltro;
+                attivi[k] = !attivi[k];
+                b.classList.toggle('active', attivi[k]);
+                b.setAttribute('aria-pressed', String(attivi[k]));
+                aggiorna();
+            }));
+        })();
+    </script>
+}
