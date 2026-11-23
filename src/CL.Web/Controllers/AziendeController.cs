@@ -119,13 +119,17 @@ public sealed class AziendeController(AppDbContext db, ServizioAccessi accessi, 
             PartitaIva? piva = null;
             if (!Prova(() => piva = PartitaIva.Parse(form.PartitaIva), nameof(form.PartitaIva)))
                 return View("Form", form);
-            if (await db.Aziende.AnyAsync(a => a.PartitaIva == piva))
+            // Il controllo guarda tutte le aziende, anche quelle di altri consulenti (la partita IVA è unica).
+            if (await db.Aziende.IgnoreQueryFilters().AnyAsync(a => a.PartitaIva == piva))
             {
                 ModelState.AddModelError(nameof(form.PartitaIva), "Esiste già un'azienda con questa partita IVA.");
                 return View("Form", form);
             }
             azienda = new Azienda(form.RagioneSociale, piva!);
             db.Aziende.Add(azienda);
+            // L'azienda creata da un consulente è sua: gliela si assegna subito.
+            if (!utente.IsAmministratore && utente.UserId is { } mio)
+                db.AssegnazioniAziende.Add(new CL.Infrastructure.Persistence.AssegnazioneAzienda { AziendaId = azienda.Id, UserId = mio, AssegnataIl = DateTime.UtcNow });
         }
 
         // Il messaggio del dominio va sul campo giusto.

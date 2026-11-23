@@ -1,3 +1,5 @@
+using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 using System.Globalization;
 using CL.Infrastructure;
 using CL.Infrastructure.Identity;
@@ -82,6 +84,20 @@ if (!app.Environment.IsDevelopment())
 app.UseRouting();
 
 app.UseAuthentication();
+// Perimetro del consulente: le sole aziende assegnate a lui (il super amministratore vede tutto).
+// Da qui in poi i filtri globali del database nascondono il resto in ogni query.
+app.Use(async (contesto, prossimo) =>
+{
+    var u = contesto.User;
+    if (u.IsInRole(CL.Infrastructure.Identity.Ruoli.Consulente) && !u.IsInRole(CL.Infrastructure.Identity.Ruoli.Amministratore)
+        && u.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier) is { } id)
+    {
+        var db = contesto.RequestServices.GetRequiredService<CL.Infrastructure.Persistence.AppDbContext>();
+        var ids = await db.AssegnazioniAziende.AsNoTracking().Where(a => a.UserId == id).Select(a => a.AziendaId).ToListAsync();
+        contesto.RequestServices.GetRequiredService<CL.Infrastructure.Persistence.PerimetroAziende>().Consentite = ids;
+    }
+    await prossimo();
+});
 app.UseAuthorization();
 
 app.MapStaticAssets();

@@ -1,0 +1,58 @@
+@model CL.Web.Controllers.ConsulenteViewModel
+@{
+    var c = Model.Consulente;
+    ViewData["Title"] = string.IsNullOrWhiteSpace(c.Nome) ? c.Email : c.Nome;
+    ViewData["Percorso"] = new List<(string, string?)> { ("Consulenti", Url.Action("Index")) };
+}
+<div class="breadcrumb-titolo mb-3"><h1 class="titolo-pagina mb-0">@ViewData["Title"]</h1></div>
+
+<div class="scheda-profilo">
+    <div class="card radius-15 p-3 p-md-4 mb-3">
+        <div class="d-flex align-items-center gap-3">
+            <span class="foto-profilo logo-profilo logo-vuoto" aria-hidden="true"><i class="ri-user-star-line"></i></span>
+            <div>
+                <h2 class="fs-5 mb-0 text-breadcrumb nome-profilo d-flex align-items-center gap-2 flex-wrap">
+                    @ViewData["Title"]!.ToString()!.ToUpperInvariant()
+                    <partial name="~/Views/Utenti/_StatoAccesso.cshtml" model="c.Stato" />
+                </h2>
+                <div class="azienda-profilo">@c.Email</div>
+                <div class="mansione-profilo">@(c.Amministratore ? "Super amministratore: vede tutte le aziende" : $"{c.Aziende} {(c.Aziende == 1 ? "azienda assegnata" : "aziende assegnate")}")</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (!c.Amministratore)
+{
+    @* Aziende che il consulente vede: spunta e salva. Quelle che crea lui gli vengono assegnate da sole. *@
+    <form asp-action="Assegna" asp-route-id="@c.Id" method="post" class="card radius-15 p-3 p-md-4 modulo-profilo-azienda">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+            <h2 class="titolo-sezione-profilo mb-0"><i class="ri-building-line" aria-hidden="true"></i> Aziende assegnate</h2>
+            <input type="search" class="form-control w-auto" placeholder="Cerca azienda" aria-label="Cerca azienda" id="cercaAzienda" />
+        </div>
+        <ul class="elenco-assegnazioni">
+            @foreach (var a in Model.Aziende)
+            {
+                <li data-nome="@a.RagioneSociale.ToLowerInvariant() @a.PartitaIva">
+                    <label class="voce-assegnazione">
+                        <input type="checkbox" class="form-check-input" name="aziende" value="@a.Id" checked="@a.Assegnata" />
+                        <span class="flex-grow-1">
+                            <span class="nome-panoramica">@a.RagioneSociale</span>
+                            <span class="dettaglio-presenza d-block">P.IVA @a.PartitaIva@(a.AltriConsulenti > 0 ? $" · anche ad altri {a.AltriConsulenti}" : "")</span>
+                        </span>
+                    </label>
+                </li>
+            }
+        </ul>
+        <div class="d-flex justify-content-end mt-4"><button type="submit" class="btn btn-primary">Salva</button></div>
+    </form>
+}
+
+@section Scripts {
+    <script>
+        document.getElementById('cercaAzienda')?.addEventListener('input', function () {
+            const t = this.value.trim().toLowerCase();
+            document.querySelectorAll('.elenco-assegnazioni li').forEach(li => li.hidden = t && !li.dataset.nome.includes(t));
+        });
+    </script>
+}

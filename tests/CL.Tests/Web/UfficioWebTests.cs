@@ -560,6 +560,36 @@ public sealed class UfficioWebTests : IDisposable
     }
 
     [Fact]
+    public async Task Ogni_consulente_vede_solo_le_aziende_assegnate_o_create_da_lui()
+    {
+        await PreparaDipendente(SedeLavoro.SedeLegale); // Acme con Mario Rossi
+        var mio = await _app.CreaUtente("studio1@test.it", Ruoli.Consulente, amministratore: false);
+        await _app.CreaUtente("studio2@test.it", Ruoli.Consulente, amministratore: false);
+        var c1 = _app.CreateClient(); await c1.Accedi("studio1@test.it");
+        var c2 = _app.CreateClient(); await c2.Accedi("studio2@test.it");
+
+        // Nessuna azienda assegnata: niente Acme, niente personale.
+        Assert.DoesNotContain("Acme", WebUtility.HtmlDecode(await c1.GetStringAsync("/Aziende")));
+        Assert.DoesNotContain("Rossi Mario", WebUtility.HtmlDecode(await c1.GetStringAsync("/Dipendenti")));
+        Assert.Equal(HttpStatusCode.NotFound, (await c1.GetAsync($"/Dipendenti/Dettaglio/{_dipId}")).StatusCode);
+        Assert.Contains("AccessoNegato", (await c1.GetAsync("/Consulenti")).RequestMessage!.RequestUri!.AbsolutePath); // solo il super amministratore
+
+        // Il super amministratore gli assegna Acme: ora la vede, l'altro consulente no.
+        await _app.CreaUtente("admin@test.it", Ruoli.Consulente);
+        var admin = _app.CreateClient(); await admin.Accedi("admin@test.it");
+        Assert.Contains("studio1@test.it", WebUtility.HtmlDecode(await admin.GetStringAsync("/Consulenti")));
+        await admin.InviaForm($"/Consulenti/Dettaglio/{mio.Id}", $"/Consulenti/Assegna/{mio.Id}", new() { ["aziende"] = _aziendaId.ToString() });
+        Assert.Contains("Rossi Mario", WebUtility.HtmlDecode(await c1.GetStringAsync("/Dipendenti")));
+        Assert.DoesNotContain("Rossi Mario", WebUtility.HtmlDecode(await c2.GetStringAsync("/Dipendenti")));
+
+        // L'azienda creata da un consulente è sua.
+        await c2.InviaForm("/Aziende/Nuova", "/Aziende/Salva", new() { ["RagioneSociale"] = "Beta S.r.l.", ["PartitaIva"] = "12345678903" });
+        Assert.Contains("Beta", WebUtility.HtmlDecode(await c2.GetStringAsync("/Aziende")));
+        Assert.DoesNotContain("Beta", WebUtility.HtmlDecode(await c1.GetStringAsync("/Aziende")));
+        Assert.Contains("Beta", WebUtility.HtmlDecode(await admin.GetStringAsync("/Aziende"))); // il super amministratore vede tutto
+    }
+
+    [Fact]
     public async Task Senza_contratto_il_calendario_si_vede_ma_non_si_segna_nulla()
     {
         var dip = await PreparaDipendente(SedeLavoro.SedeLegale);

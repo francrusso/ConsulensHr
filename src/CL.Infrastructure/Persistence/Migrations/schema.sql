@@ -1357,3 +1357,48 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261123151149_AziendeConsulenti') THEN
+    CREATE TABLE hr."AziendeConsulenti" (
+        "AziendaId" uuid NOT NULL,
+        "UserId" character varying(450) NOT NULL,
+        "AssegnataIl" timestamp with time zone NOT NULL,
+        CONSTRAINT "PK_AziendeConsulenti" PRIMARY KEY ("AziendaId", "UserId"),
+        CONSTRAINT "FK_AziendeConsulenti_AspNetUsers_UserId" FOREIGN KEY ("UserId") REFERENCES hr."AspNetUsers" ("Id") ON DELETE CASCADE,
+        CONSTRAINT "FK_AziendeConsulenti_Aziende_AziendaId" FOREIGN KEY ("AziendaId") REFERENCES hr."Aziende" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261123151149_AziendeConsulenti') THEN
+    CREATE INDEX "IX_AziendeConsulenti_UserId" ON hr."AziendeConsulenti" ("UserId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261123151149_AziendeConsulenti') THEN
+    INSERT INTO hr."AziendeConsulenti" ("AziendaId", "UserId", "AssegnataIl")
+    SELECT a."Id", ur."UserId", now() at time zone 'utc'
+    FROM hr."Aziende" a
+    CROSS JOIN hr."AspNetUserRoles" ur
+    JOIN hr."AspNetRoles" r ON r."Id" = ur."RoleId"
+    WHERE r."Name" = 'Consulente'
+    ON CONFLICT DO NOTHING;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261123151149_AziendeConsulenti') THEN
+    INSERT INTO hr."__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261123151149_AziendeConsulenti', '10.0.15');
+    END IF;
+END $EF$;
+COMMIT;
+

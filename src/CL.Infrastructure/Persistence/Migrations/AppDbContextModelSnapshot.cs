@@ -1228,6 +1228,25 @@ namespace CL.Infrastructure.Persistence.Migrations
                     b.ToTable("AspNetUsers", "hr");
                 });
 
+            modelBuilder.Entity("CL.Infrastructure.Persistence.AssegnazioneAzienda", b =>
+                {
+                    b.Property<Guid>("AziendaId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("UserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("character varying(450)");
+
+                    b.Property<DateTime>("AssegnataIl")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("AziendaId", "UserId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("AziendeConsulenti", "hr");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
                 {
                     b.Property<string>("Id")
@@ -1553,6 +1572,21 @@ namespace CL.Infrastructure.Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("AziendaId")
                         .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("CL.Infrastructure.Persistence.AssegnazioneAzienda", b =>
+                {
+                    b.HasOne("CL.Domain.Aziende.Azienda", null)
+                        .WithMany()
+                        .HasForeignKey("AziendaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("CL.Infrastructure.Identity.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>

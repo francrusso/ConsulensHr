@@ -17,9 +17,11 @@ public sealed class ApplicationUser : IdentityUser
 
 public static class Ruoli
 {
+    /// <summary>Super amministratore: crea i consulenti e assegna loro le aziende; vede tutto (ha anche il ruolo consulente).</summary>
+    public const string Amministratore = "Amministratore";
     public const string Consulente = "Consulente";
     public const string Azienda = "Azienda";
     public const string Dipendente = "Dipendente";
 
-    public static readonly IReadOnlyList<string> Tutti = [Consulente, Azienda, Dipendente];
+    public static readonly IReadOnlyList<string> Tutti = [Amministratore, Consulente, Azienda, Dipendente];
 }

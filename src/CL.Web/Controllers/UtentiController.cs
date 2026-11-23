@@ -35,12 +35,19 @@ public sealed class UtentiViewModel
 /// </summary>
 [Authorize(Policy = Policy.GestionePersonale)]
 public sealed class UtentiController(
-    AppDbContext db, UserManager<ApplicationUser> users, ServizioAccessi accessi, UtenteCorrente utente, IInvioEmail email) : AppController
+    AppDbContext db, UserManager<ApplicationUser> users, ServizioAccessi accessi, UtenteCorrente utente, IInvioEmail email,
+    PerimetroAziende perimetro) : AppController
 {
     [Authorize(Policy = Policy.SoloConsulente)]
     public async Task<IActionResult> Index(string? ruolo, string? q)
     {
         var query = accessi.Elenco();
+        // Il consulente vede gli accessi delle sue aziende (e il proprio); i consulenti li gestisce il super amministratore.
+        if (perimetro.Consentite is { } consentite)
+        {
+            var mio = utente.UserId;
+            query = query.Where(u => u.Id == mio || (u.AziendaId != null && consentite.Contains(u.AziendaId.Value)));
+        }
         if (!string.IsNullOrEmpty(ruolo)) query = query.Where(u => u.Ruolo == ruolo);
         if (!string.IsNullOrWhiteSpace(q))
         {
@@ -68,9 +75,10 @@ public sealed class UtentiController(
         return RedirectToAction(nameof(Index));
     }
 
-    [HttpPost, ValidateAntiForgeryToken, Authorize(Policy = Policy.SoloConsulente)]
+    /// <summary>Solo il super amministratore crea i consulenti.</summary>
+    [HttpPost, ValidateAntiForgeryToken, Authorize(Roles = Ruoli.Amministratore)]
     public async Task<IActionResult> InvitaConsulente(InvitoForm form) =>
-        await Invita(form, Ruoli.Consulente, null, null, Url.Action(nameof(Index))!);
+        await Invita(form, Ruoli.Consulente, null, null, Url.Action("Index", "Consulenti")!);
 
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> InvitaReferente(Guid aziendaId, InvitoForm form)
@@ -212,8 +220,9 @@ public sealed class UtentiController(
     {
         var u = await users.FindByIdAsync(id);
         if (u is null) return null;
-        if (utente.IsConsulente) return u;
-        if (await users.IsInRoleAsync(u, Ruoli.Consulente)) return null;
+        if (utente.IsAmministratore) return u;
+        if (await users.IsInRoleAsync(u, Ruoli.Consulente)) return u.Id == utente.UserId ? u : null; // gli altri consulenti: solo il super amministratore
+        if (utente.IsConsulente) return u.AziendaId is { } az && (perimetro.Consentite is null || perimetro.Consentite.Contains(az)) ? u : null;
         return u.AziendaId is { } a && a == utente.AziendaId ? u : null;
     }
 

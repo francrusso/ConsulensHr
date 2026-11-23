@@ -196,6 +196,15 @@
                                 @if (!Utente.IsDipendente) { <li><a asp-controller="Documenti" asp-action="Contratti">Contratti</a></li> }
                             </ul>
                         </li>
+                        @if (Utente.IsAmministratore)
+                        {
+                            <li>
+                                <a asp-controller="Consulenti" asp-action="Index">
+                                    <div class="parent-icon icon-color-1"><i class="ri-user-star-line ri-xs"></i></div>
+                                    <div class="menu-title">Consulenti</div>
+                                </a>
+                            </li>
+                        }
                         @if (Utente.IsConsulente)
                         {
                             <li>

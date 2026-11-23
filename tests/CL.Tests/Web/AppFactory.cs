@@ -62,7 +62,9 @@ public sealed class AppFactory : WebApplicationFactory<Program>
     /// Crea un utente con password <see cref="PasswordTest"/>. Per un referente segna anche il profilo
     /// dell'azienda come completo (salvo <paramref name="profiloCompleto"/> = false), altrimenti finirebbe nel percorso guidato.
     /// </summary>
-    public async Task<ApplicationUser> CreaUtente(string email, string ruolo, Guid? aziendaId = null, bool profiloCompleto = true)
+    /// <param name="amministratore">Per un consulente: anche super amministratore (vede tutte le aziende). Falso = consulente
+    /// con le sole aziende assegnate.</param>
+    public async Task<ApplicationUser> CreaUtente(string email, string ruolo, Guid? aziendaId = null, bool profiloCompleto = true, bool amministratore = true)
     {
         if (ruolo == Ruoli.Azienda && aziendaId is { } az && profiloCompleto) await CompletaProfilo(az);
         using var scope = Services.CreateScope();
@@ -71,6 +73,7 @@ public sealed class AppFactory : WebApplicationFactory<Program>
         var r = await users.CreateAsync(u, PasswordTest);
         Assert.True(r.Succeeded, string.Join("; ", r.Errors.Select(e => e.Description)));
         await users.AddToRoleAsync(u, ruolo);
+        if (ruolo == Ruoli.Consulente && amministratore) await users.AddToRoleAsync(u, Ruoli.Amministratore);
         return u;
     }
 

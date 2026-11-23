@@ -19,6 +19,9 @@ public sealed class UtenteCorrente(IHttpContextAccessor accessor)
     public string Email => User.FindFirstValue(ClaimTypes.Email) ?? User.Identity?.Name ?? "";
     public string Nome => User.FindFirstValue(ClaimsPersonalizzati.NomeVisualizzato) ?? Email;
     public bool IsConsulente => User.IsInRole(Ruoli.Consulente);
+    /// <summary>Super amministratore: crea i consulenti e assegna le aziende; vede tutte le aziende.</summary>
+    public bool IsAmministratore => User.IsInRole(Ruoli.Amministratore);
+    public string? UserId => User.FindFirstValue(ClaimTypes.NameIdentifier);
     public bool IsAzienda => User.IsInRole(Ruoli.Azienda);
     public bool IsDipendente => User.IsInRole(Ruoli.Dipendente);
 

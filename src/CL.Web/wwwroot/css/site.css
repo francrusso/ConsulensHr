@@ -830,3 +830,9 @@ input.tessera-emoji.altra-emoji::placeholder { font-size: 12.5px; color: var(--c
 .numeri-saldo dt { font-family: 'Quasimoda', 'Poppins', sans-serif; text-transform: uppercase; font-size: 10.5px; font-weight: 400; letter-spacing: .04em; color: #9a858d; }
 .numeri-saldo dd { margin: 2px 0 0; font-weight: 600; color: var(--consulens-breadcrumb-active); font-variant-numeric: tabular-nums; }
 @media (max-width: 575.98px) { .numeri-saldo { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+/* Super amministratore: aziende assegnate a un consulente */
+.elenco-assegnazioni { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.elenco-assegnazioni li[hidden] { display: none; }
+.voce-assegnazione { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--consulens-border); cursor: pointer; }
+.voce-assegnazione:has(input:checked) { background: color-mix(in srgb, #2FBA6C 8%, #fff); border-color: color-mix(in srgb, #2FBA6C 30%, #fff); }
+@media (max-width: 767.98px) { .elenco-assegnazioni { grid-template-columns: 1fr; } }
