@@ -1,9 +1,12 @@
-@model (CL.Web.Controllers.OrganigrammaViewModel Vm, CL.Domain.Organizzazione.Team? Team)
+@model (OrganigrammaViewModel Vm, CL.Domain.Organizzazione.Team? Team)
+@* Form del team: vuoto per crearne uno nuovo (Team = null), compilato per modificarlo. *@
 @{
     var (vm, team) = Model;
     var chiave = team?.Id.ToString("N") ?? "nuovo";
     var coloreAttuale = team?.Colore;
     var emojiSuggerite = new[] { "🏢", "💼", "🛒", "📦", "🧾", "💻", "🎨", "📣", "🔧", "🚚", "🧪", "🍽️", "🏭", "🤝", "📊", "⭐" };
+    // Emoji scelta che non è tra i suggerimenti: va nel campo "altra".
+    var emojiLibera = !string.IsNullOrEmpty(team?.Emoji) && !emojiSuggerite.Contains(team.Emoji) ? team.Emoji : null;
 }
 <form asp-action="Salva" method="post" class="row g-2 align-items-end form-team">
     <input type="hidden" name="aziendaId" value="@vm.AziendaId" />
@@ -59,8 +62,8 @@
             {
                 <button type="button" class="tessera-emoji @(e == team?.Emoji ? "attiva" : "")" data-emoji="@e" aria-label="Usa @e">@e</button>
             }
-            <input type="text" class="tessera-emoji altra-emoji @(!string.IsNullOrEmpty(team?.Emoji) && !emojiSuggerite.Contains(team!.Emoji) ? "attiva" : "")"
-                   value="@(!string.IsNullOrEmpty(team?.Emoji) && !emojiSuggerite.Contains(team!.Emoji) ? team.Emoji : "")" maxlength="16" placeholder="altra" aria-label="Altra emoji" autocomplete="off" />
+            <input type="text" class="tessera-emoji altra-emoji @(emojiLibera is not null ? "attiva" : "")"
+                   value="@(emojiLibera ?? "")" maxlength="16" placeholder="altra" aria-label="Altra emoji" autocomplete="off" />
         </div>
     </fieldset>
 </form>

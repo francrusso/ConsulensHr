@@ -2,9 +2,8 @@
 @inject UtenteCorrente Utente
 @{
     ViewData["Title"] = Utente.IsDipendente ? "Le mie CU" : "Certificazioni Uniche";
-    var gestore = !Utente.IsDipendente;
     var ritorno = Context.Request.Path + Context.Request.QueryString;
-    var mie = ViewBag.Mie as List<CL.Domain.Documenti.CertificazioneUnica>;
+    var mie = ViewBag.Mie as List<CL.Domain.Documenti.CertificazioneUnica>; // solo per il dipendente
 }
 <div class="breadcrumb-titolo d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
     <h1 class="titolo-pagina mb-0">@ViewData["Title"]</h1>
@@ -87,26 +86,24 @@ else
                         <td data-label="Caricata il">@(r.CaricataIl?.ToLocalTime().ToString("dd/MM/yyyy") ?? "—")</td>
                         <td data-label="Vista dalla persona">@(r.VisualizzataIl?.ToLocalTime().ToString("dd/MM/yyyy") ?? "—")</td>
                         <td data-label="Azioni">
-                            @if (gestore)
-                            {
-                                <div class="customer-actions">
-                                    <form asp-action="CaricaCu" method="post" enctype="multipart/form-data" class="m-0">
-                                        <input type="hidden" name="dipendenteId" value="@r.DipendenteId" />
-                                        <input type="hidden" name="anno" value="@Model.Anno" />
+                            @* Scegliere il file lo carica subito (sostituisce la CU già presente). *@
+                            <div class="customer-actions">
+                                <form asp-action="CaricaCu" method="post" enctype="multipart/form-data" class="m-0">
+                                    <input type="hidden" name="dipendenteId" value="@r.DipendenteId" />
+                                    <input type="hidden" name="anno" value="@Model.Anno" />
+                                    <input type="hidden" name="ritorno" value="@ritorno" />
+                                    <input type="file" name="documento" id="@idCampo" accept="application/pdf" class="d-none" onchange="this.form.requestSubmit()" />
+                                    <label for="@idCampo" class="mb-0" title="@(r.CuId is null ? "Carica la CU" : "Sostituisci la CU")" aria-label="@(r.CuId is null ? "Carica la CU" : "Sostituisci la CU") di @r.Persona" role="button"><i class="ri-upload-2-line" aria-hidden="true"></i></label>
+                                </form>
+                                @if (r.CuId is { } elimina)
+                                {
+                                    <form asp-action="EliminaCu" method="post" class="m-0" onsubmit="return confirm('Eliminare la CU di @r.Persona?');">
+                                        <input type="hidden" name="id" value="@elimina" />
                                         <input type="hidden" name="ritorno" value="@ritorno" />
-                                        <input type="file" name="documento" id="@idCampo" accept="application/pdf" class="d-none" onchange="this.form.requestSubmit()" />
-                                        <label for="@idCampo" class="mb-0" title="@(r.CuId is null ? "Carica la CU" : "Sostituisci la CU")" aria-label="@(r.CuId is null ? "Carica la CU" : "Sostituisci la CU") di @r.Persona" role="button"><i class="ri-upload-2-line" aria-hidden="true"></i></label>
+                                        <button type="submit" title="Elimina" aria-label="Elimina la CU di @r.Persona"><i class="ri-delete-bin-line" aria-hidden="true"></i></button>
                                     </form>
-                                    @if (r.CuId is { } elimina)
-                                    {
-                                        <form asp-action="EliminaCu" method="post" class="m-0" onsubmit="return confirm('Eliminare la CU di @r.Persona?');">
-                                            <input type="hidden" name="id" value="@elimina" />
-                                            <input type="hidden" name="ritorno" value="@ritorno" />
-                                            <button type="submit" title="Elimina" aria-label="Elimina la CU di @r.Persona"><i class="ri-delete-bin-line" aria-hidden="true"></i></button>
-                                        </form>
-                                    }
-                                </div>
-                            }
+                                }
+                            </div>
                         </td>
                     </tr>
                 }

@@ -1,6 +1,4 @@
 @model CL.Web.Controllers.MioContrattoViewModel
-@using CL.Domain.Dipendenti
-@using CL.Web.Controllers
 @{
     ViewData["Title"] = "Il mio contratto";
     var d = Model.Dipendente;
@@ -11,8 +9,7 @@
     string E(decimal v) => v.ToString("C0", it);
     string Ore(decimal v) => v.ToString("0.##", it) + " h";
     string V(string? s) => string.IsNullOrWhiteSpace(s) ? "Non inserito" : s;
-    var stato = corrente is null ? StatoPersonale.SenzaContratto : corrente.AttivoIl(oggi) ? StatoPersonale.Attivo
-        : corrente.DataInizio > oggi ? StatoPersonale.Firmato : corrente.DataCessazione is not null ? StatoPersonale.Cessato : StatoPersonale.Scaduto;
+    var stato = StatoPersonaleExtensions.StatoDi(corrente, oggi);
 }
 <div class="breadcrumb-titolo mb-3"><h1 class="titolo-pagina mb-0">Il mio contratto</h1></div>
 

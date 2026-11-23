@@ -48,6 +48,11 @@ public static class CalcoloSaldi
 {
     public const int GiorniMinimiPerMaturazione = 15;
 
+    /// <summary>
+    /// Saldo di un anno fino al mese indicato (incluso). Le richieste contano nell'anno in cui iniziano
+    /// (non possono stare a cavallo d'anno): approvate = godute, anche se future; in attesa = prenotate.
+    /// Annullate e rifiutate non contano. Il residuo precedente è il <see cref="SaldoIniziale"/> dello stesso anno e tipo.
+    /// </summary>
     public static SaldoAssenza Calcola(Dipendente dipendente, TipoAssenza tipo, int anno, int finoAlMese,
         IEnumerable<RichiestaAssenza> richieste, SaldoIniziale? iniziale = null)
     {
@@ -71,20 +76,18 @@ public static class CalcoloSaldi
             dellAnno.Where(r => r.Stato == StatoRichiesta.InAttesa).Sum(r => r.Ore));
     }
 
+    /// <summary>
+    /// Un dodicesimo della spettanza annua (già riproporzionata al part-time) se nel mese i contratti della persona,
+    /// sommati, coprono almeno 15 giorni; vale la spettanza del contratto con più giorni nel mese.
+    /// </summary>
     public static decimal MaturatoNelMese(Dipendente dipendente, TipoAssenza tipo, int anno, int mese)
     {
         var inizio = new DateOnly(anno, mese, 1);
         var fine = inizio.AddMonths(1).AddDays(-1);
 
-        // Il contratto di riferimento è quello con più giorni nel mese.
-        var (contratto, _) = dipendente.Contratti
-            .Select(c => (c, giorni: GiorniAttivi(c, inizio, fine)))
-            .OrderByDescending(x => x.giorni)
-            .FirstOrDefault();
-
-        if (contratto is null) return 0m;
-        var giorniTotali = dipendente.Contratti.Sum(c => GiorniAttivi(c, inizio, fine));
-        return giorniTotali >= GiorniMinimiPerMaturazione ? contratto.SpettanzaAnnua(tipo) / 12m : 0m;
+        var giorni = dipendente.Contratti.Select(c => (Contratto: c, Giorni: GiorniAttivi(c, inizio, fine))).ToList();
+        if (giorni.Sum(x => x.Giorni) < GiorniMinimiPerMaturazione) return 0m;
+        return giorni.MaxBy(x => x.Giorni).Contratto.SpettanzaAnnua(tipo) / 12m;
     }
 
     private static int GiorniAttivi(Contratto c, DateOnly inizio, DateOnly fine)

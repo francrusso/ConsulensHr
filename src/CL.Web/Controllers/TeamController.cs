@@ -1,5 +1,4 @@
 using CL.Domain.Common;
-using CL.Domain.Dipendenti;
 using CL.Domain.Organizzazione;
 using CL.Infrastructure.Persistence;
 using CL.Web.Infrastruttura;
@@ -9,8 +8,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CL.Web.Controllers;
 
+/// <summary>Una persona nelle pagine dei team e nel grafico (Remoto = sede in smart working o contratto ibrido/full-remote).</summary>
 public sealed record MembroTeam(Guid Id, string Nome, string? Posizione, Guid? TeamId, Guid? ResponsabileDirettoId, Guid? ApprovatoreId, bool InForza,
-    bool HaFoto = false, string Segnaposto = "neutro", bool Remoto = false);
+    bool HaFoto, string Segnaposto, bool Remoto);
 
 /// <summary>Nodo del grafico: l'azienda in cima, i team come badge colorati, le persone come card.</summary>
 public sealed record NodoGrafico(string Tipo, string Titolo, string? Sottotitolo, string Colore, string? Emoji, int? Conteggio,
@@ -26,10 +26,11 @@ public sealed class OrganigrammaViewModel
     public bool HaLogo { get; init; }
     public required List<Team> Team { get; init; }
     public required List<MembroTeam> Dipendenti { get; init; }
+    /// <summary>Il consulente lavora per conto dell'azienda: link e percorsi indicano l'azienda.</summary>
     public bool PerConto { get; init; }
 
     /// <summary>Colore mostrato del team (i sotto-team ereditano quello del team madre, più chiaro).</summary>
-    public string ColoreDi(Team t) => CL.Domain.Organizzazione.Organigramma.ColoreDi(t, Team);
+    public string ColoreDi(Team t) => Organigramma.ColoreDi(t, Team);
 
     public string NomeDi(Guid? dipendenteId) => dipendenteId is { } id ? Dipendenti.FirstOrDefault(d => d.Id == id)?.Nome ?? "—" : "—";
 
@@ -40,6 +41,9 @@ public sealed class OrganigrammaViewModel
     public NodoGrafico Grafico()
     {
         var approvati = Dipendenti.Where(d => d.ApprovatoreId is not null).GroupBy(d => d.ApprovatoreId!.Value).ToDictionary(g => g.Key, g => g.Count());
+        // Numero sulla card: quante persone approva (nessun numero se nessuna).
+        int? Approva(Guid id) => approvati.GetValueOrDefault(id) is var n and > 0 ? n : null;
+        // Persone già disegnate: evita i cicli tra responsabili diretti e i doppioni.
         var visti = new HashSet<Guid>();
 
         NodoGrafico Persona(MembroTeam m, Team? team, bool riferimento, List<MembroTeam> membri)
@@ -49,7 +53,7 @@ public sealed class OrganigrammaViewModel
                 figli.AddRange(membri.Where(x => x.ResponsabileDirettoId == m.Id && x.Id != m.Id && !visti.Contains(x.Id))
                     .Select(x => Persona(x, team, false, membri)));
             return new NodoGrafico("persona", m.Nome, m.Posizione, team is null ? "#9AA3AE" : ColoreDi(team), null,
-                approvati.GetValueOrDefault(m.Id) is var n and > 0 ? n : null, m.Id, riferimento, figli, m.HaFoto, m.Segnaposto);
+                Approva(m.Id), m.Id, riferimento, figli, m.HaFoto, m.Segnaposto);
         }
 
         NodoGrafico TeamNodo(Team t)
@@ -62,9 +66,10 @@ public sealed class OrganigrammaViewModel
             var sotto = new List<NodoGrafico>();
             sotto.AddRange(inCima.Select(m => Persona(m, t, false, membri)));
             sotto.AddRange(Team.Where(x => x.PadreId == t.Id).OrderBy(x => x.Nome).Select(TeamNodo));
+            // Il responsabile fa da capo al team; se appartiene a un altro team la sua card è segnata come "riferimento".
             var figli = resp is null ? sotto
                 : [new NodoGrafico("persona", resp.Nome, resp.Posizione ?? "Responsabile", ColoreDi(t), null,
-                    approvati.GetValueOrDefault(resp.Id) is var n and > 0 ? n : null, resp.Id, resp.TeamId != t.Id, sotto, resp.HaFoto, resp.Segnaposto)];
+                    Approva(resp.Id), resp.Id, resp.TeamId != t.Id, sotto, resp.HaFoto, resp.Segnaposto)];
             return new NodoGrafico("team", t.Nome, null, ColoreDi(t), t.Emoji, membri.Count, null, false, figli, TeamId: t.Id);
         }
 
@@ -93,7 +98,8 @@ public sealed class OrganigrammaViewModel
 
 /// <summary>
 /// Organigramma dell'azienda: team con gerarchia e responsabile, posizione e responsabile diretto dei dipendenti.
-/// Lo gestiscono il referente (la propria azienda) e il consulente (per conto di qualsiasi azienda).
+/// Lo gestiscono il referente (la propria azienda) e il consulente (per conto delle aziende del suo perimetro).
+/// Chi approva ferie e permessi di ciascuno si ricava da qui (vedi <see cref="ServizioOrganigramma"/>).
 /// </summary>
 [Authorize(Policy = Policy.GestionePersonale)]
 public sealed class TeamController(AppDbContext db, UtenteCorrente utente, ServizioOrganigramma organigramma, TimeProvider clock) : AppController
@@ -123,18 +129,18 @@ public sealed class TeamController(AppDbContext db, UtenteCorrente utente, Servi
         var dip = await utente.Filtra(db.Dipendenti).FirstOrDefaultAsync(d => d.Id == dipendenteId);
         if (team is null || dip is null || dip.AziendaId != team.AziendaId) return NotFound();
         var resp = dip.ResponsabileId is { } r ? await db.Dipendenti.FirstOrDefaultAsync(x => x.Id == r) : null;
-        if (Prova(() => dip.ImpostaOrganizzazione(togli ? null : team, dip.Posizione, resp)))
+        if (ProvaOAvvisa(() => dip.ImpostaOrganizzazione(togli ? null : team, dip.Posizione, resp)))
         {
             await db.SaveChangesAsync();
             Conferma(togli ? $"{dip.NomeCompleto} tolto dal team {team.Nome}." : $"{dip.NomeCompleto} aggiunto al team {team.Nome}.");
         }
-        else Errore(ModelState[""]!.Errors[0].ErrorMessage);
         return RedirectToAction(nameof(Dettaglio), new { id = teamId });
     }
 
     /// <summary>Albero grafico dell'azienda.</summary>
     public Task<IActionResult> Organigramma(Guid? aziendaId) => Pagina(aziendaId, "Organigramma");
 
+    /// <summary>Le tre pagine condividono lo stesso modello: team e persone dell'azienda (in forza o assegnate a un team).</summary>
     private async Task<IActionResult> Pagina(Guid? aziendaId, string vista)
     {
         var id = Azienda(aziendaId);
@@ -181,10 +187,11 @@ public sealed class TeamController(AppDbContext db, UtenteCorrente utente, Servi
                 throw new DomainException($"Esiste già un team \"{team.Nome}\".");
             team.ImpostaPadre(padreId is { } pid ? tutti.FirstOrDefault(t => t.Id == pid) : null, tutti);
             team.ImpostaResponsabile(responsabile);
-            // Nuovo team senza colore scelto: il primo colore della tavolozza non ancora usato.
-            var predefinito = Team.Palette.Select(p => p.Hex).FirstOrDefault(h => tutti.All(t => !string.Equals(t.Colore, h, StringComparison.OrdinalIgnoreCase)))
-                              ?? Team.Palette[tutti.Count % Team.Palette.Count].Hex;
-            team.ImpostaAspetto(string.IsNullOrWhiteSpace(colore) && id is null ? predefinito : colore ?? team.Colore, emoji);
+            // Nuovo team senza colore scelto: il primo colore della tavolozza non ancora usato (finiti quelli, a rotazione).
+            if (id is null && string.IsNullOrWhiteSpace(colore))
+                colore = Team.Palette.Select(p => p.Hex).FirstOrDefault(h => tutti.All(t => !string.Equals(t.Colore, h, StringComparison.OrdinalIgnoreCase)))
+                         ?? Team.Palette[tutti.Count % Team.Palette.Count].Hex;
+            team.ImpostaAspetto(colore ?? team.Colore, emoji);
         }
         catch (DomainException ex)
         {
@@ -223,15 +230,15 @@ public sealed class TeamController(AppDbContext db, UtenteCorrente utente, Servi
         if (dip is null) return NotFound();
         var team = teamId is { } t ? await db.Team.FirstOrDefaultAsync(x => x.Id == t && x.AziendaId == dip.AziendaId) : null;
         var resp = responsabileId is { } r ? await db.Dipendenti.FirstOrDefaultAsync(x => x.Id == r && x.AziendaId == dip.AziendaId) : null;
-        if (Prova(() => dip.ImpostaOrganizzazione(team, posizione, resp)))
+        if (ProvaOAvvisa(() => dip.ImpostaOrganizzazione(team, posizione, resp)))
         {
             await db.SaveChangesAsync();
             Conferma($"Organizzazione di {dip.NomeCompleto} aggiornata.");
         }
-        else Errore(ModelState[""]!.Errors[0].ErrorMessage);
         return Url.IsLocalUrl(ritorno) ? LocalRedirect(ritorno) : Torna(dip.AziendaId);
     }
 
+    /// <summary>Il referente lavora sempre sulla propria azienda; il consulente su quella indicata (il perimetro lo limita il database).</summary>
     private Guid? Azienda(Guid? richiesta) => utente.IsAzienda ? utente.AziendaId : richiesta;
 
     /// <summary>Dopo una modifica si torna alla pagina dei team.</summary>

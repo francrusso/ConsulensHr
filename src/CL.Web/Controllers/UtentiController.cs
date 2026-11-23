@@ -1,11 +1,11 @@
 using System.ComponentModel.DataAnnotations;
-using CL.Infrastructure.Email;
 using CL.Infrastructure.Identity;
 using CL.Infrastructure.Persistence;
 using CL.Web.Infrastruttura;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
 namespace CL.Web.Controllers;
@@ -30,12 +30,13 @@ public sealed class UtentiViewModel
 }
 
 /// <summary>
-/// Accessi al portale. Il consulente gestisce tutti; il referente di un'azienda gestisce i colleghi referenti
-/// e i dipendenti della propria azienda. Nessuno può disattivare sé stesso.
+/// Accessi al portale. Il consulente gestisce quelli delle aziende del suo perimetro; il referente di un'azienda
+/// quelli dei colleghi e del personale della propria azienda (dalla scheda di ogni persona); i consulenti li crea
+/// e gestisce il super amministratore. Nessuno può disattivare sé stesso.
 /// </summary>
 [Authorize(Policy = Policy.GestionePersonale)]
 public sealed class UtentiController(
-    AppDbContext db, UserManager<ApplicationUser> users, ServizioAccessi accessi, UtenteCorrente utente, IInvioEmail email,
+    AppDbContext db, UserManager<ApplicationUser> users, ServizioAccessi accessi, UtenteCorrente utente,
     PerimetroAziende perimetro) : AppController
 {
     [Authorize(Policy = Policy.SoloConsulente)]
@@ -56,23 +57,7 @@ public sealed class UtentiController(
                                      || (u.Azienda != null && u.Azienda.ToLower().Contains(t)));
         }
         var elenco = await query.OrderBy(u => u.Nome).ThenBy(u => u.Email).ToListAsync();
-        ViewBag.EmailConfigurata = email.Configurato;
         return View(new UtentiViewModel { Utenti = elenco, Ruolo = ruolo, Ricerca = q });
-    }
-
-    /// <summary>Verifica la configurazione SMTP inviando un messaggio all'utente collegato.</summary>
-    [HttpPost, ValidateAntiForgeryToken, Authorize(Policy = Policy.SoloConsulente)]
-    public async Task<IActionResult> EmailProva()
-    {
-        var destinatario = utente.Email;
-        if (!email.Configurato)
-            Errore("L'invio delle email non è configurato: mancano server, mittente o password negli user-secrets.");
-        else if (await email.InviaAsync(destinatario, "Prova di invio da Consulens HR",
-                     "<p>Se leggi questo messaggio, l'invio delle email di Consulens HR funziona.</p>"))
-            Conferma($"Email di prova inviata a {destinatario}: controlla la casella (anche lo spam).");
-        else
-            Errore("Invio non riuscito: il server ha rifiutato il messaggio. Il dettaglio è nel log del terminale (di solito password per app errata).");
-        return RedirectToAction(nameof(Index));
     }
 
     /// <summary>Solo il super amministratore crea i consulenti.</summary>
@@ -85,14 +70,14 @@ public sealed class UtentiController(
     public async Task<IActionResult> Nuovo()
     {
         ViewBag.Aziende = await db.Aziende.AsNoTracking().Where(a => a.Attiva).OrderBy(a => a.RagioneSociale)
-            .Select(a => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem(a.RagioneSociale, a.Id.ToString())).ToListAsync();
+            .Select(a => new SelectListItem(a.RagioneSociale, a.Id.ToString())).ToListAsync();
         // Persone con email e ancora senza accesso al portale.
         ViewBag.Persone = (await (from d in db.Dipendenti.AsNoTracking().IgnoreAutoIncludes()
                                   join a in db.Aziende.AsNoTracking() on d.AziendaId equals a.Id
                                   where d.Email != null && d.Email != "" && !db.Users.Any(u => u.DipendenteId == d.Id)
                                   orderby d.Cognome, d.Nome
                                   select new { d.Id, Nome = d.Cognome + " " + d.Nome, d.Email, a.RagioneSociale }).ToListAsync())
-            .Select(x => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem($"{x.Nome} · {x.RagioneSociale} · {x.Email}", x.Id.ToString())).ToList();
+            .Select(x => new SelectListItem($"{x.Nome} · {x.RagioneSociale} · {x.Email}", x.Id.ToString())).ToList();
         return View();
     }
 
@@ -100,7 +85,8 @@ public sealed class UtentiController(
     public async Task<IActionResult> InvitaReferente(Guid aziendaId, InvitoForm form, string? ritorno = null)
     {
         if (!utente.PuoGestireAzienda(aziendaId) || !await db.Aziende.AnyAsync(a => a.Id == aziendaId)) return Forbid();
-        ritorno = Url.IsLocalUrl(ritorno) ? ritorno : utente.IsConsulente ? Url.Action("Dettaglio", "Aziende", new { id = aziendaId })! : Url.Action(nameof(Azienda))!;
+        ritorno = Url.IsLocalUrl(ritorno) ? ritorno
+            : utente.IsConsulente ? Url.Action("Dettaglio", "Aziende", new { id = aziendaId })! : Url.Action("Index", "Dipendenti")!;
         return await Invita(form, Ruoli.Azienda, aziendaId, null, ritorno);
     }
 
@@ -133,9 +119,8 @@ public sealed class UtentiController(
     public async Task<IActionResult> AccessoAzienda(Guid dipendenteId, bool attivo, string? ritorno)
     {
         var dip = await utente.Filtra(db.Dipendenti.AsNoTracking().IgnoreAutoIncludes()).FirstOrDefaultAsync(d => d.Id == dipendenteId);
-        var u = dip is null ? null : await users.Users.FirstOrDefaultAsync(x => x.DipendenteId == dipendenteId);
-        if (dip is null || u is null) return NotFound();
-        if (!attivo && u.Id == users.GetUserId(User))
+        if (dip is null || await users.Users.FirstOrDefaultAsync(x => x.DipendenteId == dipendenteId) is not { } u) return NotFound();
+        if (!attivo && u.Id == utente.UserId)
         {
             Errore("Non puoi togliere a te stesso la gestione del portale.");
             return Torna(ritorno);
@@ -180,7 +165,7 @@ public sealed class UtentiController(
     {
         var u = await Gestibile(id);
         if (u is null) return NotFound();
-        if (u.Id == users.GetUserId(User))
+        if (u.Id == utente.UserId)
         {
             Errore("Non puoi disattivare il tuo stesso accesso.");
             return Torna(ritorno);
@@ -191,18 +176,11 @@ public sealed class UtentiController(
         return Torna(ritorno);
     }
 
-    /// <summary>Per il referente: i colleghi con accesso alla propria azienda.</summary>
-    public async Task<IActionResult> Azienda()
-    {
-        if (utente.IsConsulente) return RedirectToAction(nameof(Index));
-        // I referenti si gestiscono dalla scheda di ogni persona (accesso come azienda): la vista non è più nel menù.
-        if (utente.IsAzienda) return RedirectToAction("Index", "Dipendenti");
-        var aziendaId = utente.AziendaId;
-        ViewBag.AziendaId = aziendaId;
-        var elenco = await accessi.Elenco().Where(u => u.AziendaId == aziendaId && u.Ruolo == Ruoli.Azienda)
-            .OrderBy(u => u.Nome).ToListAsync();
-        return View(elenco);
-    }
+    /// <summary>
+    /// Vecchio indirizzo della pagina dei referenti: i referenti ora si gestiscono dalla scheda di ogni persona
+    /// (accesso come azienda), quindi si va all'elenco del personale (o, per lo studio, a quello degli utenti).
+    /// </summary>
+    public IActionResult Azienda() => Torna(null);
 
     private async Task<IActionResult> Invita(InvitoForm form, string ruolo, Guid? aziendaId, Guid? dipendenteId, string ritorno,
         bool validaForm = true)
@@ -225,23 +203,27 @@ public sealed class UtentiController(
             Conferma(nuovo ? $"Invito inviato a {email}." : $"Nuovo link inviato a {email}.");
             return;
         }
-        // Email non configurata (o invio fallito): chi invita comunica il link di persona.
+        // Email non configurata (o invio fallito): chi invita comunica il link di persona (lo mostra _Messaggi).
         Conferma(nuovo ? $"Accesso creato per {email}." : $"Nuovo link generato per {email}.");
         TempData["LinkInvito"] = esito.Link;
         TempData["LinkInvitoEmail"] = email;
     }
 
-    /// <summary>L'utente se rientra nel perimetro di chi agisce, altrimenti null.</summary>
+    /// <summary>
+    /// L'utente se rientra nel perimetro di chi agisce, altrimenti null: il super amministratore gestisce tutti;
+    /// un consulente sé stesso e gli accessi delle aziende assegnate; un referente quelli della propria azienda.
+    /// </summary>
     private async Task<ApplicationUser?> Gestibile(string id)
     {
         var u = await users.FindByIdAsync(id);
         if (u is null) return null;
         if (utente.IsAmministratore) return u;
-        if (await users.IsInRoleAsync(u, Ruoli.Consulente)) return u.Id == utente.UserId ? u : null; // gli altri consulenti: solo il super amministratore
+        if (await users.IsInRoleAsync(u, Ruoli.Consulente)) return u.Id == utente.UserId ? u : null;
         if (utente.IsConsulente) return u.AziendaId is { } az && (perimetro.Consentite is null || perimetro.Consentite.Contains(az)) ? u : null;
         return u.AziendaId is { } a && a == utente.AziendaId ? u : null;
     }
 
     private IActionResult Torna(string? ritorno) =>
-        Url.IsLocalUrl(ritorno) ? LocalRedirect(ritorno) : RedirectToAction(utente.IsConsulente ? nameof(Index) : nameof(Azienda));
+        Url.IsLocalUrl(ritorno) ? LocalRedirect(ritorno)
+        : utente.IsConsulente ? RedirectToAction(nameof(Index)) : RedirectToAction("Index", "Dipendenti");
 }

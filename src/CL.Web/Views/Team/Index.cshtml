@@ -1,13 +1,14 @@
-@model CL.Web.Controllers.OrganigrammaViewModel
+@model OrganigrammaViewModel
 @{
     ViewData["Title"] = "Team";
-    if (Model.HaLogo) ViewData["LogoAzienda"] = Url.Action("Logo", "Aziende", new { id = Model.AziendaId });
     // Ricerca per nome del team o di una persona che ne fa parte.
     var q = ViewBag.Ricerca as string;
     bool Corrisponde(CL.Domain.Organizzazione.Team t) => string.IsNullOrEmpty(q)
         || t.Nome.Contains(q, StringComparison.CurrentCultureIgnoreCase)
         || Model.Dipendenti.Any(d => d.TeamId == t.Id && d.Nome.Contains(q, StringComparison.CurrentCultureIgnoreCase));
     var elenco = Model.Albero().Where(x => Corrisponde(x.Team)).ToList();
+    // Foto della persona o, se manca, l'immagine segnaposto scelta per lei.
+    string? Avatar(MembroTeam m) => m.HaFoto ? Url.Action("Foto", "Dipendenti", new { id = m.Id }) : Url.Content($"~/assets/images/avatar/{m.Segnaposto}.png");
 }
 <div class="breadcrumb-titolo d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
     <div>
@@ -73,7 +74,7 @@
                         @if (t.ResponsabileId is { } rid && Model.Dipendenti.FirstOrDefault(d => d.Id == rid) is { } resp)
                         {
                             <a asp-controller="Dipendenti" asp-action="Dettaglio" asp-route-id="@resp.Id" class="customer-name">
-                                <img class="avatar-elenco" src="@(resp.HaFoto ? Url.Action("Foto", "Dipendenti", new { id = resp.Id }) : Url.Content($"~/assets/images/avatar/{resp.Segnaposto}.png"))" alt="" loading="lazy" />
+                                <img class="avatar-elenco" src="@Avatar(resp)" alt="" loading="lazy" />
                                 <span>@resp.Nome</span>
                             </a>
                         }
@@ -87,7 +88,7 @@
                                 <div class="avatar-sovrapposti" aria-hidden="true">
                                     @foreach (var m in membri.Take(5))
                                     {
-                                        <img src="@(m.HaFoto ? Url.Action("Foto", "Dipendenti", new { id = m.Id }) : Url.Content($"~/assets/images/avatar/{m.Segnaposto}.png"))" alt="" title="@m.Nome" loading="lazy" />
+                                        <img src="@Avatar(m)" alt="" title="@m.Nome" loading="lazy" />
                                     }
                                     @if (membri.Count > 5) { <span class="avatar-altri">+@(membri.Count - 5)</span> }
                                 </div>
@@ -105,7 +106,7 @@
                                     <div class="avatar-sovrapposti" aria-hidden="true">
                                         @foreach (var m in gruppo.Take(4))
                                         {
-                                            <img src="@(m.HaFoto ? Url.Action("Foto", "Dipendenti", new { id = m.Id }) : Url.Content($"~/assets/images/avatar/{m.Segnaposto}.png"))" alt="" loading="lazy" />
+                                            <img src="@Avatar(m)" alt="" loading="lazy" />
                                         }
                                         @if (gruppo.Count > 4) { <span class="avatar-altri">+@(gruppo.Count - 4)</span> }
                                     </div>

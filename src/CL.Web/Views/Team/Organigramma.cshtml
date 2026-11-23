@@ -1,6 +1,7 @@
-@model CL.Web.Controllers.OrganigrammaViewModel
+@model OrganigrammaViewModel
 @{
     ViewData["Title"] = "Organigramma";
+    // Il nodo dell'azienda in cima al grafico mostra il logo (letto da _Nodo).
     if (Model.HaLogo) ViewData["LogoAzienda"] = Url.Action("Logo", "Aziende", new { id = Model.AziendaId });
 }
 <div class="breadcrumb-titolo d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">

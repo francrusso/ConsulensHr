@@ -1,5 +1,4 @@
-@model (Guid DipendenteId, List<CL.Domain.Dipendenti.Contratto> Contratti, DateOnly Oggi)
-@using CL.Domain.Dipendenti
+@model (Guid DipendenteId, List<Contratto> Contratti, DateOnly Oggi)
 @{
     var (idDip, contratti, oggi) = Model;
     var it = System.Globalization.CultureInfo.GetCultureInfo("it-IT");
@@ -38,18 +37,13 @@ else
             <div><dt>Tipo di rapporto</dt><dd>@corrente.Tipo.Descrizione()</dd></div>
             <div><dt>CCNL</dt><dd>@(string.IsNullOrEmpty(corrente.Ccnl) ? "—" : corrente.Ccnl)</dd></div>
             <div><dt>Livello</dt><dd>@(string.IsNullOrEmpty(corrente.Livello) ? "—" : corrente.Livello)</dd></div>
-            <div>
-                <dt>Mansione</dt>
-                <dd>
-                    @(corrente.Mansione ?? "—")
-                </dd>
-            </div>
+            <div><dt>Mansione</dt><dd>@(corrente.Mansione ?? "—")</dd></div>
             <div><dt>Data di inizio</dt><dd>@corrente.DataInizio.ToString("dd/MM/yyyy")</dd></div>
             <div><dt>Scadenza</dt><dd>@(corrente.DataFine?.ToString("dd/MM/yyyy") ?? "Indeterminato")</dd></div>
             <div><dt>Orario settimanale</dt><dd>@Ore(corrente.OreSettimanali)@(corrente.PercentualePartTime < 100 ? $" · part-time {corrente.PercentualePartTime.ToString("0.##", it)}%" : "")</dd></div>
             <div><dt>Giorni lavorativi</dt><dd>@corrente.GiorniLavorativiSettimana a settimana</dd></div>
             <div><dt>Modalità di lavoro</dt><dd>@corrente.Modalita.Descrizione()@(corrente.GiorniInUfficio is { } gu ? $" · {gu} {(gu == 1 ? "giorno" : "giorni")} in ufficio" : "")</dd></div>
-            @if (corrente.Modalita == CL.Domain.Dipendenti.ModalitaLavoro.InPresenza)
+            @if (corrente.Modalita == ModalitaLavoro.InPresenza)
             {
                 <div><dt>Smart working</dt><dd>@(corrente.SmartWorkingConcesso ?? "Non previsto")</dd></div>
             }
@@ -61,7 +55,9 @@ else
                 <div><dt>Ferie · ROL</dt><dd>@Ore(corrente.SpettanzaAnnua(CL.Domain.Assenze.TipoAssenza.Ferie)) · @Ore(corrente.SpettanzaAnnua(CL.Domain.Assenze.TipoAssenza.Rol))</dd></div>
             }
         </dl>
-        @{ var contratto = CL.Web.Controllers.ContrattoForm.Da(corrente); }
+        @* Correzione del contratto (campi aperti con "Modifica dati"). Il nome della variabile dà il prefisso dei campi
+           ("contratto."), lo stesso di [Bind(Prefix = "contratto")] nell'azione ModificaContratto. *@
+        @{ var contratto = ContrattoForm.Da(corrente); }
         <form asp-action="ModificaContratto" asp-route-id="@idDip" method="post" novalidate class="solo-modifica modulo-contratto">
             <input type="hidden" asp-for="@contratto.ContrattoId" />
             <div class="campi-profilo">

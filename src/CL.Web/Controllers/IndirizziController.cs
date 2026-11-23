@@ -1,20 +1,22 @@
-using CL.Domain.ValueObjects;
 using CL.Infrastructure.Indirizzi;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace CL.Web.Controllers;
 
-/// <summary>Suggerimenti di indirizzo per i moduli (via, CAP, comune, provincia) mentre si scrive.</summary>
-[Authorize]
+/// <summary>
+/// Suggerimenti di indirizzo per i moduli mentre si scrive (usati da wwwroot/js/indirizzi.js): comuni dall'elenco ISTAT
+/// e vie dal servizio esterno di ricerca indirizzi.
+/// </summary>
 public sealed class IndirizziController(IRicercaIndirizzi ricerca, IMemoryCache cache) : Controller
 {
     /// <summary>Comuni ISTAT per la select con ricerca, eventualmente solo quelli di una provincia.</summary>
     [HttpGet]
     public IActionResult Comuni(string? q, string? p) =>
+        // Nome completo del tipo: dentro il controller "Comuni" è questa azione.
         Json(CL.Domain.ValueObjects.Comuni.Cerca(q, p).Select(c => new { id = c.Nome, text = $"{c.Nome} ({c.Provincia})", provincia = c.Provincia }));
 
+    /// <summary>Vie che corrispondono al testo scritto, con CAP, comune e provincia da compilare in automatico.</summary>
     [HttpGet]
     public async Task<IActionResult> Cerca(string? q, CancellationToken ct)
     {

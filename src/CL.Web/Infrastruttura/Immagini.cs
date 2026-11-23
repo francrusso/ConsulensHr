@@ -14,7 +14,10 @@ public sealed class Immagini(IArchivioDocumenti archivio)
     public const long DimensioneMassima = 2 * 1024 * 1024;
     public const string FormatiAccettati = "image/png,image/jpeg,image/webp";
 
-    /// <summary>Salva l'immagine in <paramref name="cartella"/>: restituisce la nuova chiave o il messaggio d'errore per l'utente.</summary>
+    /// <summary>
+    /// Salva l'immagine in <paramref name="cartella"/> con un nome nuovo ed elimina subito la <paramref name="precedente"/>
+    /// (la nuova chiave la registra poi il chiamante sull'entità). Restituisce la chiave o il messaggio d'errore per l'utente.
+    /// </summary>
     public async Task<(string? Chiave, string? Errore)> SalvaAsync(string cartella, Guid proprietario, IFormFile file, string? precedente, long massimo)
     {
         if (file.Length == 0) return (null, "Il file è vuoto.");
@@ -39,6 +42,7 @@ public sealed class Immagini(IArchivioDocumenti archivio)
         _ => "image/jpeg",
     };
 
+    /// <summary>Estensione dai primi byte del file ("firma" di PNG, JPEG e WebP), null se non è uno dei tre formati.</summary>
     private static string? Formato(byte[] b) =>
         b is [0x89, 0x50, 0x4E, 0x47, ..] ? "png"
         : b is [0xFF, 0xD8, 0xFF, ..] ? "jpg"
@@ -46,7 +50,7 @@ public sealed class Immagini(IArchivioDocumenti archivio)
         : null;
 }
 
-/// <summary>Logo dell'azienda (massimo 1 MB).</summary>
+/// <summary>Logo dell'azienda (massimo 1 MB), nella cartella <c>loghi/</c> dell'archivio.</summary>
 public sealed class LoghiAziende(Immagini immagini)
 {
     public const long DimensioneMassima = 1024 * 1024;
@@ -56,7 +60,7 @@ public sealed class LoghiAziende(Immagini immagini)
     public async Task<string?> SalvaAsync(Azienda azienda, IFormFile file)
     {
         var (chiave, errore) = await immagini.SalvaAsync("loghi", azienda.Id, file, azienda.LogoChiave, DimensioneMassima);
-        if (errore is not null) return errore.Replace("L'immagine deve essere", "Il logo deve essere un'immagine").Replace("PNG, JPEG o WebP", "PNG, JPEG o WebP");
+        if (errore is not null) return errore.Replace("L'immagine deve essere", "Il logo deve essere un'immagine");
         azienda.ImpostaLogo(chiave!);
         return null;
     }
@@ -70,7 +74,7 @@ public sealed class LoghiAziende(Immagini immagini)
     public static string TipoMime(string chiave) => Immagini.TipoMime(chiave);
 }
 
-/// <summary>Foto del dipendente (massimo 2 MB), mostrata nell'organigramma e nella sua scheda.</summary>
+/// <summary>Foto del dipendente (massimo 2 MB), nella cartella <c>foto/</c> dell'archivio: si vede negli elenchi, nell'organigramma e nella scheda.</summary>
 public sealed class FotoDipendenti(Immagini immagini)
 {
     public async Task<string?> SalvaAsync(Dipendente dipendente, IFormFile file)

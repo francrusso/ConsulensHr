@@ -1,9 +1,11 @@
 @model CL.Domain.Aziende.Azienda
+@inject UtenteCorrente Utente
 @{
     ViewData["Title"] = Model.RagioneSociale;
     var dipendenti = (List<Dipendente>)ViewBag.Dipendenti;
-    var referenti = (List<CL.Web.Infrastruttura.UtenteRiga>)ViewBag.Referenti;
+    var referenti = (List<UtenteRiga>)ViewBag.Referenti;
     var profilo = ViewBag.Profilo as CL.Domain.Aziende.ProfiloAzienda;
+    var consulenti = (Dictionary<Guid, string>)ViewBag.ConsulentiAziende;
     var oggi = DateOnly.FromDateTime(DateTime.Today);
 }
 
@@ -50,7 +52,7 @@
         <section class="card radius-15 p-4 h-100">
             <h2 class="h6 mb-3">Dati aziendali</h2>
             <dl class="scheda mb-0">
-                @if (ViewBag.ConsulentiAziende is Dictionary<Guid, string> consulenti && User.IsInRole(CL.Infrastructure.Identity.Ruoli.Amministratore))
+                @if (Utente.IsAmministratore)
                 {
                     <dt>Consulente</dt><dd>@(consulenti.GetValueOrDefault(Model.Id) ?? "Nessuno")</dd>
                 }

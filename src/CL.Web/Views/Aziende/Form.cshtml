@@ -1,4 +1,4 @@
-@model CL.Web.Controllers.AziendaForm
+@model AziendaForm
 @{
     var nuova = Model.Id is null;
     ViewData["Title"] = nuova ? "Nuova azienda" : "Modifica azienda";
@@ -74,7 +74,7 @@
                 {
                     <img src="@Url.Action("Logo", new { id })" alt="Logo attuale" class="logo-azienda" />
                 }
-                <input asp-for="Logo" type="file" class="form-control" accept="@CL.Web.Infrastruttura.LoghiAziende.FormatiAccettati" />
+                <input asp-for="Logo" type="file" class="form-control" accept="@LoghiAziende.FormatiAccettati" />
             </div>
             <span asp-validation-for="Logo" class="text-danger"></span>
             @if (Model.HaLogo)
@@ -94,6 +94,7 @@
 </div>
 
 @section Scripts {
+    @* Aziende/CercaPartitaIva interroga il registro VIES e risponde con un esito: trovata, non-trovata, esistente, non-valida, non-disponibile. *@
     <script>
         // Precompilazione dalla partita IVA (registro VIES); i campi restano modificabili.
         (function () {

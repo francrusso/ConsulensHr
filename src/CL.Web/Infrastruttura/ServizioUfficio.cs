@@ -1,4 +1,5 @@
 using CL.Domain.Assenze;
+using CL.Domain.Aziende;
 using CL.Domain.Dipendenti;
 using CL.Domain.Presenze;
 using CL.Infrastructure.Persistence;
@@ -15,10 +16,11 @@ public enum ModoLavoro { Distanza, Presenza }
 /// </summary>
 public sealed class ServizioUfficio(AppDbContext db, UtenteCorrente utente, TimeProvider clock)
 {
+    // Il modo si legge una volta per richiesta HTTP (il servizio è scoped).
     private bool _letto;
     private ModoLavoro? _modo;
 
-    /// <summary>Modo di lavoro del dipendente collegato; null se non è un dipendente o non ha un contratto.</summary>
+    /// <summary>Modo di lavoro del dipendente collegato; null se non è un dipendente o non ha un contratto (né in corso né futuro).</summary>
     public async Task<ModoLavoro?> ModoAsync()
     {
         if (_letto) return _modo;
@@ -34,9 +36,14 @@ public sealed class ServizioUfficio(AppDbContext db, UtenteCorrente utente, Time
     /// <summary>Il dipendente collegato può segnare i giorni in ufficio (contratto ibrido o full-remote, o sede in smart working).</summary>
     public async Task<bool> PuoSegnareAsync() => await ModoAsync() == ModoLavoro.Distanza;
 
+    /// <summary>Il contratto in corso o, se non c'è, il prossimo.</summary>
     private static Contratto? Contratto(Dipendente d, DateOnly oggi) =>
         d.ContrattoAttivo(oggi) ?? d.Contratti.Where(x => x.DataInizio > oggi).OrderBy(x => x.DataInizio).FirstOrDefault();
 
+    /// <summary>
+    /// Lavora a distanza chi ha la sede "Smart working" o un contratto ibrido o full-remote: è in ufficio solo nei giorni
+    /// che segna. Tutti gli altri lavorano in presenza, salvo i giorni di smart working approvati.
+    /// </summary>
     public static bool LavoraADistanza(Dipendente d, DateOnly oggi) =>
         d.Sede == SedeLavoro.SmartWorking || Contratto(d, oggi)?.Modalita is ModalitaLavoro.Ibrido or ModalitaLavoro.FullRemote;
 
@@ -56,7 +63,7 @@ public sealed class ServizioUfficio(AppDbContext db, UtenteCorrente utente, Time
 
         var d = await db.Dipendenti.AsNoTracking().FirstAsync(x => x.Id == id);
         var azienda = await db.Aziende.AsNoTracking().FirstAsync(a => a.Id == d.AziendaId);
-        if (!azienda.Abilitata(modo == ModoLavoro.Presenza ? CL.Domain.Aziende.TipiRichiesta.SmartWorking : CL.Domain.Aziende.TipiRichiesta.InUfficio))
+        if (!azienda.Abilitata(modo == ModoLavoro.Presenza ? TipiRichiesta.SmartWorking : TipiRichiesta.InUfficio))
             return (0, "Questo tipo di richiesta non è previsto dall'azienda.");
         var assenze = await db.RichiesteAssenza.AsNoTracking()
             .Where(r => r.DipendenteId == id && !r.AOre && (r.Stato == StatoRichiesta.Approvata || r.Stato == StatoRichiesta.InAttesa) && r.Dal <= al && r.Al >= dal)
@@ -83,6 +90,8 @@ public sealed class ServizioUfficio(AppDbContext db, UtenteCorrente utente, Time
             else
             {
                 if (smart.Contains(g)) continue;
+                // Limite del contratto (es. 2 giorni a settimana): contano i giorni già chiesti o approvati nella stessa
+                // settimana (da lunedì a domenica) o nello stesso mese, compresi quelli aggiunti in questo giro.
                 if (c.GiorniSmartWorking is { } concessi && c.PeriodoSmartWorking is { } periodo)
                 {
                     var (da, a) = periodo == PeriodoSmartWorking.Settimana

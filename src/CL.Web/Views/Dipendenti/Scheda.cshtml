@@ -3,18 +3,17 @@
 @{
     // Una sola scheda per vedere e modificare: con "in-modifica" i valori lasciano il posto ai campi.
     var nuovo = Model.Id is null;
-    var persona = true; // "persona" e "Personale" per tutti
     var modifica = (bool)ViewBag.Modifica;
     var sezione = (string)ViewBag.Sezione;
     var d = ViewBag.Dipendente as Dipendente;
     var oggi = (DateOnly)ViewBag.Oggi;
-    var contratti = (List<Contratto>)ViewBag.Contratti;
-    var corrente = contratti.FirstOrDefault(c => c.AttivoIl(oggi)) ?? contratti.FirstOrDefault();
+    var contratti = (List<Contratto>)ViewBag.Contratti; // dal più recente
+    var corrente = contratti.FirstOrDefault(c => c.AttivoIl(oggi)) ?? contratti.FirstOrDefault(); // in corso, altrimenti l'ultimo
     var aziende = ViewBag.Aziende as List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>;
     var nomeAzienda = ViewBag.NomeAzienda as string;
-    var nomeCompleto = nuovo && string.IsNullOrWhiteSpace(Model.Cognome) ? (persona ? "Nuova persona" : "Nuovo dipendente") : $"{Model.Cognome} {Model.Nome}".Trim();
+    var nomeCompleto = nuovo && string.IsNullOrWhiteSpace(Model.Cognome) ? "Nuova persona" : $"{Model.Cognome} {Model.Nome}".Trim();
     var segnaposto = Dipendente.SegnapostoPer(Model.Genere, Model.Pronomi);
-    ViewData["Title"] = nuovo ? (persona ? "Aggiungi persona" : "Nuovo dipendente") : nomeCompleto;
+    ViewData["Title"] = nuovo ? "Aggiungi persona" : nomeCompleto;
     // Campo vuoto: "Non inserito" in grigio, al posto del trattino.
     Microsoft.AspNetCore.Html.IHtmlContent V(string? v) => string.IsNullOrWhiteSpace(v)
         ? new Microsoft.AspNetCore.Html.HtmlString("<span class=\"non-inserito\">Non inserito</span>")
@@ -25,7 +24,7 @@
 
 <div class="breadcrumb-titolo d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
     <div>
-        <h1 class="titolo-pagina mb-0">@(nuovo ? ViewData["Title"] : persona ? "Scheda persona" : "Scheda dipendente")</h1>
+        <h1 class="titolo-pagina mb-0">@(nuovo ? ViewData["Title"] : "Scheda persona")</h1>
     </div>
 </div>
 
@@ -40,8 +39,7 @@
                         @nomeCompleto.ToUpperInvariant()
                         @if (d is not null)
                         {
-                            var stato = d.ContrattoAttivo(oggi) is not null ? StatoPersonale.Attivo : contratti.Any(c => c.DataInizio > oggi) ? StatoPersonale.Firmato
-                                : contratti.Count == 0 ? StatoPersonale.SenzaContratto : contratti[0].DataCessazione is not null ? StatoPersonale.Cessato : StatoPersonale.Scaduto;
+                            var stato = StatoPersonaleExtensions.StatoDi(corrente, oggi);
                             <span class="badge badge-stato" style="--colore-stato:@stato.Colore()"><span class="pallino-stato" aria-hidden="true"></span>@stato.Descrizione()</span>
                         }
                     </h2>
@@ -195,15 +193,14 @@
             </div>
         </section>
 
-
-
         @if (d is not null)
         {
-            var datiPaghe = ViewBag.ProfiloPersonale as CL.Domain.Dipendenti.ProfiloDipendente;
-            var formPaghe = ViewBag.DatiPagheForm as CL.Web.Controllers.DatiPagheForm;
+            // Dati per le paghe (percorso guidato del dipendente): dopo un salvataggio non riuscito la card resta aperta con quanto inviato.
+            var datiPaghe = ViewBag.ProfiloPersonale as ProfiloDipendente;
+            var formPaghe = ViewBag.DatiPagheForm as DatiPagheForm;
             var apriPaghe = formPaghe is not null;
-            var paghe = formPaghe ?? CL.Web.Controllers.DatiPagheForm.Da(d, datiPaghe ?? new CL.Domain.Dipendenti.ProfiloDipendente(d.Id));
-            int passo = datiPaghe is null ? 0 : datiPaghe.CompletatoIl is null ? datiPaghe.Passo - 1 : 6;
+            var paghe = formPaghe ?? DatiPagheForm.Da(d, datiPaghe ?? new ProfiloDipendente(d.Id));
+            int passo = datiPaghe is null ? 0 : datiPaghe.CompletatoIl is null ? datiPaghe.Passo - 1 : 6; // passi già fatti
             <section class="card radius-15 p-3 p-md-4 mb-3 sezione-profilo scheda-paghe @(apriPaghe ? "in-modifica-paghe" : "")" id="cardPaghe" data-compilati="@((datiPaghe is not null).ToString().ToLowerInvariant())" aria-labelledby="titoloDatiPaghe">
                 <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
                     <div class="d-flex flex-wrap align-items-center gap-2">
@@ -250,7 +247,7 @@
                         <div class="campo-largo"><dt>Permesso di soggiorno</dt><dd>@V(p.ScadenzaPermessoSoggiorno is { } ps ? $"Scade il {ps:dd/MM/yyyy}" : null)</dd></div>
                     </dl>
                 }
-                <partial name="_ModuloPaghe" model="(d.Id, paghe)" />
+                <partial name="_ModuloPaghe" model="paghe" />
             </section>
         }
 
@@ -311,19 +308,15 @@
                         </select>
                     </div>
                 </div>
-
             </div>
         </section>
-
     </form>
-
 
     @if (d is not null)
     {
         var accesso = ViewBag.Accesso as CL.Web.Infrastruttura.UtenteRiga;
         var ritorno = Context.Request.Path.ToString();
-        dynamic org = ViewBag.Organizzazione;
-        dynamic? dati = ViewBag.ProfiloPersonale;
+        var ritornoAperta = ritorno + "?modifica=true"; // dopo le azioni sull'accesso si torna con i campi aperti
         <div class="row g-3 mb-3">
             <div class="col-12">
                 <section class="card radius-15 p-3 p-md-4 h-100 sezione-profilo" aria-labelledby="titoloAccesso">
@@ -368,7 +361,7 @@
                     @* Con i campi aperti: interruttore per gestire il portale per conto dell'azienda. *@
                     <form asp-controller="Utenti" asp-action="AccessoAzienda" method="post" class="solo-modifica mb-3">
                         <input type="hidden" name="dipendenteId" value="@d.Id" />
-                        <input type="hidden" name="ritorno" value="@(ritorno + "?modifica=true")" />
+                        <input type="hidden" name="ritorno" value="@ritornoAperta" />
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" role="switch" id="accessoAzienda" name="attivo" value="true"
                                    checked="@(accesso.Ruolo == CL.Infrastructure.Identity.Ruoli.Azienda)" onchange="this.form.submit()" />
@@ -379,7 +372,7 @@
                     <div class="solo-modifica accesso-modifica">
                         <div class="d-flex flex-wrap align-items-end gap-2">
                             <form asp-controller="Utenti" asp-action="CambiaEmail" asp-route-id="@accesso.Id" method="post" class="d-flex flex-wrap align-items-end gap-2 m-0 flex-grow-1">
-                                <input type="hidden" name="ritorno" value="@(ritorno + "?modifica=true")" />
+                                <input type="hidden" name="ritorno" value="@ritornoAperta" />
                                 <div class="flex-grow-1" style="min-width: 240px;">
                                     <label for="emailAccesso" class="form-label">Email di accesso</label>
                                     <input id="emailAccesso" name="email" type="email" value="@accesso.Email" class="form-control" required />
@@ -389,7 +382,7 @@
                             @if (accesso.Stato != CL.Web.Infrastruttura.StatoAccesso.Disattivato)
                             {
                                 <form asp-controller="Utenti" asp-action="Reinvia" asp-route-id="@accesso.Id" method="post" class="m-0">
-                                    <input type="hidden" name="ritorno" value="@(ritorno + "?modifica=true")" />
+                                    <input type="hidden" name="ritorno" value="@ritornoAperta" />
                                     <button type="submit" class="btn btn-primary"><i class="ri-mail-send-line" aria-hidden="true"></i>
                                         @(accesso.Stato == CL.Web.Infrastruttura.StatoAccesso.InvitoInAttesa ? "Invia di nuovo l'invito" : "Invia email di reset password")</button>
                                 </form>

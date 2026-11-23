@@ -1,5 +1,4 @@
 @model CL.Web.Controllers.NuovoContrattoForm
-@inject UtenteCorrente Utente
 @{
     ViewData["Title"] = "Nuovo contratto";
     ViewData["Percorso"] = new List<(string, string?)> { ("Documenti", null), ("Contratti", Url.Action("Contratti", "Documenti")) };

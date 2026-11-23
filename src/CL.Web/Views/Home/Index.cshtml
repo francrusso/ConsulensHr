@@ -4,6 +4,7 @@
     ViewData["Title"] = "Panoramica";
     string H(decimal v) => v.ToString("#,0");
     var (consegnati, pubblicati) = Model.Cedolini;
+    string Foto(PersonaOggi p) => p.HaFoto ? Url.Action("Foto", "Dipendenti", new { id = p.Id })! : Url.Content($"~/assets/images/avatar/{p.Segnaposto}.png");
 }
 <div class="breadcrumb-titolo d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
     <h1 class="titolo-pagina mb-0">Ciao, @Utente.Nome</h1>
@@ -31,7 +32,7 @@
     <partial name="_Indicatore" model='(Utente.IsConsulente ? "Richieste in attesa delle aziende" : "Richieste da approvare", Model.RichiesteInAttesa.ToString(), "ri-calendar-check-line", Url.Action("Index", "Assenze"), (string?)null)' />
     @if (Model.Presenze is { } p)
     {
-        <partial name="_Indicatore" model='("Presenze di " + ServizioBustePaga.NomeMese(p.Item4).ToLower(), $"{p.Item1} su {p.Item2}", "ri-time-line", Url.Action("Index", "Presenze", new { anno = p.Item3, mese = p.Item4 }), "aziende hanno inviato")' />
+        <partial name="_Indicatore" model='("Presenze di " + ServizioBustePaga.NomeMese(p.Mese).ToLower(), $"{p.Ricevute} su {p.Totale}", "ri-time-line", Url.Action("Index", "Presenze", new { anno = p.Anno, mese = p.Mese }), "aziende hanno inviato")' />
     }
     else
     {
@@ -67,7 +68,7 @@
                                 {
                                     <li>
                                         <a asp-controller="Dipendenti" asp-action="Dettaglio" asp-route-id="@persona.Id" class="customer-name">
-                                            <img class="avatar-elenco" src="@(persona.HaFoto ? Url.Action("Foto", "Dipendenti", new { id = persona.Id }) : Url.Content($"~/assets/images/avatar/{persona.Segnaposto}.png"))" alt="" loading="lazy" />
+                                            <img class="avatar-elenco" src="@Foto(persona)" alt="" loading="lazy" />
                                             <span class="text-truncate">@persona.Nome</span>
                                         </a>
                                         @if (persona.Dettaglio is not null) { <span class="dettaglio-oggi">@persona.Dettaglio</span> }
@@ -96,7 +97,7 @@
                     @foreach (var r in Model.DaApprovare)
                     {
                         <li>
-                            <img class="avatar-elenco" src="@(r.Persona.HaFoto ? Url.Action("Foto", "Dipendenti", new { id = r.Persona.Id }) : Url.Content($"~/assets/images/avatar/{r.Persona.Segnaposto}.png"))" alt="" loading="lazy" />
+                            <img class="avatar-elenco" src="@Foto(r.Persona)" alt="" loading="lazy" />
                             <div class="flex-grow-1 min-w-0">
                                 <a asp-controller="Dipendenti" asp-action="Dettaglio" asp-route-id="@r.Persona.Id" class="nome-panoramica">@r.Persona.Nome</a>
                                 <div class="small text-body-secondary">
@@ -141,7 +142,7 @@
                 @foreach (var sc in Model.Scadenze.Take(8))
                 {
                     <li>
-                        <img class="avatar-elenco" src="@(sc.Persona.HaFoto ? Url.Action("Foto", "Dipendenti", new { id = sc.Persona.Id }) : Url.Content($"~/assets/images/avatar/{sc.Persona.Segnaposto}.png"))" alt="" loading="lazy" />
+                        <img class="avatar-elenco" src="@Foto(sc.Persona)" alt="" loading="lazy" />
                         <div class="flex-grow-1 min-w-0">
                             <a asp-controller="Dipendenti" asp-action="Dettaglio" asp-route-id="@sc.Persona.Id" asp-route-sezione="contratto" class="nome-panoramica">@sc.Persona.Nome</a>
                             <div class="small text-body-secondary">@sc.Tipo · scade il @sc.DataFine.ToString("dd/MM/yyyy")</div>

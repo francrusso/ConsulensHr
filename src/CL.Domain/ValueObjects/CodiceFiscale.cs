@@ -23,12 +23,8 @@ public sealed partial record CodiceFiscale
         return new CodiceFiscale(cf);
     }
 
-    public static bool IsValid(string? input)
-    {
-        try { Parse(input); return true; }
-        catch (DomainException) { return false; }
-    }
-
+    // Valore di ciascuna cifra/lettera (0-9 come A-J) quando sta in posizione dispari (tabella ministeriale);
+    // in posizione pari vale la sua posizione nell'alfabeto (A = 0) o la cifra stessa.
     private static readonly int[] Dispari =
         [1, 0, 5, 7, 9, 13, 15, 17, 19, 21, 2, 4, 18, 20, 11, 3, 6, 8, 12, 14, 16, 10, 22, 25, 24, 23];
 

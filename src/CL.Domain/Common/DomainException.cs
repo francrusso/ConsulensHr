@@ -18,4 +18,14 @@ internal static class Guard
             throw new DomainException($"Il campo '{campo}' non può essere negativo.");
         return value;
     }
+
+    /// <summary>Testo facoltativo: senza spazi ai lati, null se vuoto.</summary>
+    public static string? Facoltativo(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+    /// <summary>Nome di un file caricato, senza percorso e al massimo di 200 caratteri; se manca, <paramref name="predefinito"/>.</summary>
+    public static string NomeFile(string? nomeFile, string predefinito)
+    {
+        var nome = Path.GetFileName(nomeFile ?? "").Trim();
+        return nome.Length == 0 ? predefinito : nome.Length > 200 ? nome[..200] : nome;
+    }
 }

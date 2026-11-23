@@ -38,17 +38,26 @@ public sealed class CruscottoPresenzeViewModel
 [Authorize(Policy = Policy.GestionePersonale)]
 public sealed class PresenzeController(AppDbContext db, UtenteCorrente utente, ServizioPresenze servizio, TimeProvider clock) : AppController
 {
-    private DateOnly Oggi => DateOnly.FromDateTime(clock.GetLocalNow().DateTime);
+    private DateTime AdessoUtc => clock.GetUtcNow().UtcDateTime;
 
-    /// <summary>Mese proposto: nei primi 10 giorni quello appena chiuso, poi quello in corso.</summary>
+    /// <summary>Mese proposto: nei primi 10 giorni quello appena chiuso, poi quello in corso. Niente mesi futuri.</summary>
     private (int Anno, int Mese) Periodo(int? anno, int? mese)
     {
-        var predefinito = Oggi.Day <= 10 ? Oggi.AddMonths(-1) : Oggi;
+        var oggi = DateOnly.FromDateTime(clock.GetLocalNow().DateTime);
+        var predefinito = oggi.Day <= 10 ? oggi.AddMonths(-1) : oggi;
         var p = new DateOnly(anno ?? predefinito.Year, Math.Clamp(mese ?? predefinito.Month, 1, 12), 1);
-        if (p > new DateOnly(Oggi.Year, Oggi.Month, 1)) p = new DateOnly(Oggi.Year, Oggi.Month, 1); // niente mesi futuri
+        var corrente = new DateOnly(oggi.Year, oggi.Month, 1);
+        if (p > corrente) p = corrente;
         return (p.Year, p.Month);
     }
 
+    /// <summary>Il referente vede sempre la propria azienda; il consulente quella indicata.</summary>
+    private Guid? AziendaScelta(Guid? aziendaId) => utente.IsAzienda ? utente.AziendaId : aziendaId;
+
+    private Task<ComunicazioneMensile?> Comunicazione(Guid aziendaId, int anno, int mese) =>
+        db.ComunicazioniPresenze.FirstOrDefaultAsync(x => x.AziendaId == aziendaId && x.Anno == anno && x.Mese == mese);
+
+    /// <summary>Cruscotto del consulente; il referente va direttamente al foglio della propria azienda.</summary>
     public async Task<IActionResult> Index(int? anno, int? mese)
     {
         var (a, m) = Periodo(anno, mese);
@@ -58,13 +67,16 @@ public sealed class PresenzeController(AppDbContext db, UtenteCorrente utente, S
 
     public async Task<IActionResult> Foglio(Guid? aziendaId, int? anno, int? mese)
     {
-        var id = utente.IsAzienda ? utente.AziendaId : aziendaId;
-        if (id is null) return RedirectToAction(nameof(Index));
+        if (AziendaScelta(aziendaId) is not { } id) return RedirectToAction(nameof(Index));
         var (a, m) = Periodo(anno, mese);
-        var foglio = await servizio.FoglioAsync(id.Value, a, m);
+        var foglio = await servizio.FoglioAsync(id, a, m);
         return foglio is null ? NotFound() : View(foglio);
     }
 
+    /// <summary>
+    /// Salva le variazioni del mese (bozza) e, con <paramref name="invia"/>, manda la comunicazione al consulente.
+    /// Righe di persone che non sono nel foglio vengono ignorate.
+    /// </summary>
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Salva(int anno, int mese, List<RigaPresenzeForm> righe, string? note, bool invia)
     {
@@ -76,14 +88,15 @@ public sealed class PresenzeController(AppDbContext db, UtenteCorrente utente, S
         if (foglio is null) return NotFound();
         var ammessi = foglio.Righe.Select(r => r.DipendenteId).ToHashSet();
 
-        var c = await db.ComunicazioniPresenze.FirstOrDefaultAsync(x => x.AziendaId == aziendaId && x.Anno == a && x.Mese == m);
+        var c = await Comunicazione(aziendaId, a, m);
         if (c is null) db.ComunicazioniPresenze.Add(c = new ComunicazioneMensile(aziendaId, a, m));
 
         try
         {
             foreach (var r in righe.Where(r => ammessi.Contains(r.DipendenteId))) c.ImpostaVoci(r.DipendenteId, r.Voci);
             c.ImpostaNote(note);
-            if (invia) c.Invia(foglio.Righe.ToDictionary(r => r.DipendenteId, r => r.Assenze), utente.Email, clock.GetUtcNow().UtcDateTime);
+            // All'invio si fotografano le assenze del foglio: il consulente elabora esattamente ciò che ha ricevuto.
+            if (invia) c.Invia(foglio.Righe.ToDictionary(r => r.DipendenteId, r => r.Assenze), utente.Email, AdessoUtc);
         }
         catch (DomainException ex)
         {
@@ -104,33 +117,33 @@ public sealed class PresenzeController(AppDbContext db, UtenteCorrente utente, S
     [HttpPost, ValidateAntiForgeryToken, Authorize(Policy = Policy.SoloConsulente)]
     public async Task<IActionResult> Elabora(Guid aziendaId, int anno, int mese)
     {
-        var c = await db.ComunicazioniPresenze.FirstOrDefaultAsync(x => x.AziendaId == aziendaId && x.Anno == anno && x.Mese == mese);
+        var c = await Comunicazione(aziendaId, anno, mese);
         if (c is null) return NotFound();
-        if (Prova(() => c.SegnaElaborata(utente.Email, clock.GetUtcNow().UtcDateTime)))
+        if (ProvaOAvvisa(() => c.SegnaElaborata(utente.Email, AdessoUtc)))
         {
             await db.SaveChangesAsync();
             Conferma("Mese segnato come elaborato.");
         }
-        else Errore(ModelState[""]!.Errors[0].ErrorMessage);
         return RedirectToAction(nameof(Foglio), new { aziendaId, anno, mese });
     }
 
+    /// <summary>Il consulente rimette la comunicazione in bozza e avvisa per email i referenti dell'azienda.</summary>
     [HttpPost, ValidateAntiForgeryToken, Authorize(Policy = Policy.SoloConsulente)]
     public async Task<IActionResult> Riapri(Guid aziendaId, int anno, int mese, string? motivo)
     {
-        var c = await db.ComunicazioniPresenze.FirstOrDefaultAsync(x => x.AziendaId == aziendaId && x.Anno == anno && x.Mese == mese);
+        var c = await Comunicazione(aziendaId, anno, mese);
         var azienda = await db.Aziende.AsNoTracking().FirstOrDefaultAsync(x => x.Id == aziendaId);
         if (c is null || azienda is null) return NotFound();
-        if (Prova(c.Riapri))
+        if (ProvaOAvvisa(c.Riapri))
         {
             await db.SaveChangesAsync();
             var n = await servizio.AvvisaAziendaAsync(azienda, anno, mese, riaperta: true, motivo);
             Conferma(n > 0 ? "Comunicazione riaperta: l'azienda è stata avvisata per email." : "Comunicazione riaperta (l'azienda non ha referenti con accesso da avvisare).");
         }
-        else Errore(ModelState[""]!.Errors[0].ErrorMessage);
         return RedirectToAction(nameof(Foglio), new { aziendaId, anno, mese });
     }
 
+    /// <summary>Promemoria per email ai referenti di un'azienda che non ha ancora inviato il mese.</summary>
     [HttpPost, ValidateAntiForgeryToken, Authorize(Policy = Policy.SoloConsulente)]
     public async Task<IActionResult> Sollecita(Guid aziendaId, int anno, int mese)
     {
@@ -145,10 +158,10 @@ public sealed class PresenzeController(AppDbContext db, UtenteCorrente utente, S
     /// <summary>Riepilogo del mese in CSV: l'azienda il proprio, il consulente quello di un'azienda.</summary>
     public async Task<IActionResult> Esporta(Guid? aziendaId, int anno, int mese)
     {
-        var id = utente.IsAzienda ? utente.AziendaId : aziendaId;
-        if (id is null) return NotFound();
-        var foglio = await servizio.FoglioAsync(id.Value, anno, mese);
+        if (AziendaScelta(aziendaId) is not { } id) return NotFound();
+        var foglio = await servizio.FoglioAsync(id, anno, mese);
         if (foglio is null) return NotFound();
+        // Nome del file: ragione sociale senza simboli, spazi come trattini bassi.
         var nome = new string(foglio.Azienda.RagioneSociale.Where(ch => char.IsLetterOrDigit(ch) || ch == ' ').ToArray()).Trim().Replace(' ', '_');
         return File(ServizioPresenze.Csv(foglio), "text/csv; charset=utf-8", $"Riepilogo_presenze_{nome}_{anno}-{mese:00}.csv");
     }

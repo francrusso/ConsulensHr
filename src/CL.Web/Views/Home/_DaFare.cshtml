@@ -1,8 +1,9 @@
 @model List<CL.Web.Infrastruttura.CosaDaFare>
 @inject UtenteCorrente Utente
 @*
-    Lista "da fare" in cima alla panoramica. Lo stato arriva dai dati (es. nessuna richiesta in attesa = fatto),
-    ma la casella si può spuntare o togliere a mano: la scelta resta in questo browser, per quel periodo.
+    Lista "da fare" in cima alla panoramica. Lo stato arriva dai dati (es. nessuna richiesta in attesa = fatto; oggi
+    ServizioPanoramica manda solo le voci ancora da fare), ma la casella si può spuntare o togliere a mano: la scelta
+    resta in questo browser (localStorage, per utente) e vale per il periodo scritto nella chiave della voce.
 *@
 <section class="card radius-15 p-3 p-md-4 mb-3 card-da-fare" aria-labelledby="titoloDaFare" id="daFare" data-utente="@Utente.Email">
     <h2 class="titolo-card-panoramica mb-3" id="titoloDaFare">Da fare</h2>

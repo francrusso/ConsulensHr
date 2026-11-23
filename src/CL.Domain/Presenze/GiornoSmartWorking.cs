@@ -53,7 +53,7 @@ public sealed class GiornoSmartWorking : Entity
         if (Stato != StatoSmartWorking.InAttesa) throw new DomainException("Solo le richieste in attesa possono essere rifiutate.");
         Stato = StatoSmartWorking.Rifiutato;
         DecisoDa = Guard.NotEmpty(approvatore, "Approvatore");
-        MotivoRifiuto = string.IsNullOrWhiteSpace(motivo) ? null : motivo.Trim();
+        MotivoRifiuto = Guard.Facoltativo(motivo);
         DecisoIl = adesso;
     }
 }

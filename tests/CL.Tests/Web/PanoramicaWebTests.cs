@@ -63,7 +63,7 @@ public sealed class PanoramicaWebTests : IDisposable
     [Fact]
     public async Task Studio_vede_tutte_le_aziende_o_ne_filtra_una()
     {
-        var (acme, altra) = await Dati();
+        var (_, altra) = await Dati();
         await _app.CreaUtente("consulente@test.it", Ruoli.Consulente);
         var consulente = _app.CreateClient();
         await consulente.Accedi("consulente@test.it");

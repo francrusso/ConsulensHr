@@ -3,6 +3,8 @@
 // - comune come select con ricerca sull'elenco ISTAT:                          <select data-comune="gruppo">
 // - provincia come select con ricerca:                                          <select data-provincia="gruppo">
 // - CAP:                                                                        <input data-cap="gruppo">
+// Il "gruppo" lega i campi di uno stesso indirizzo (es. residenza e domicilio nella stessa pagina).
+// Le ricerche passano dal server (IndirizziController), che tiene in memoria le risposte del servizio esterno.
 (function ($) {
     const urlComuni = '/Indirizzi/Comuni', urlVie = '/Indirizzi/Cerca';
     const lingua = {
@@ -11,6 +13,7 @@
     };
     const campo = (tipo, gruppo) => document.querySelector(`[data-${tipo}="${gruppo}"]`);
 
+    // La select del comune contiene solo le voci già cercate: il comune scelto da un suggerimento si aggiunge come opzione.
     function impostaComune(gruppo, nome, provincia) {
         const sel = campo('comune', gruppo);
         if (sel && nome) {
@@ -22,12 +25,13 @@
         if (prov && provincia) $(prov).val(provincia).trigger('change.select2');
     }
 
-    function preparaSelect(radice) {
-        $(radice).find('select[data-provincia]').each(function () {
+    function preparaSelect() {
+        $('select[data-provincia]').each(function () {
             if ($(this).data('select2')) return;
             $(this).select2({ width: '100%', language: lingua, placeholder: 'Scegli…', allowClear: true });
         });
-        $(radice).find('select[data-comune]').each(function () {
+        // Comuni cercati sul server (circa 8.000: non si caricano tutti nella pagina); scegliendo il comune si imposta la provincia.
+        $('select[data-comune]').each(function () {
             if ($(this).data('select2')) return;
             const gruppo = this.dataset.comune;
             $(this).select2({
@@ -45,6 +49,7 @@
         });
     }
 
+    // Campo via con l'elenco dei suggerimenti sotto (stile dropdown di Bootstrap), navigabile anche da tastiera.
     function preparaVia(input) {
         if (input.dataset.pronto) return;
         input.dataset.pronto = '1';
@@ -83,6 +88,7 @@
                 b.type = 'button'; b.className = 'dropdown-item'; b.setAttribute('role', 'option');
                 b.innerHTML = '<i class="ri-map-pin-line" aria-hidden="true"></i> ';
                 b.append(r.etichetta);
+                // mousedown (non click): arriva prima del blur del campo, che chiuderebbe l'elenco.
                 b.addEventListener('mousedown', e => { e.preventDefault(); scegli(i); });
                 li.append(b); return li;
             }));
@@ -90,6 +96,7 @@
             lista.classList.toggle('show', !vuoto);
             input.setAttribute('aria-expanded', String(!vuoto));
         };
+        // Si cerca solo quando si smette di scrivere (350 ms) e da 4 caratteri, come richiede il server.
         input.addEventListener('input', () => {
             clearTimeout(timer);
             const q = input.value.trim();
@@ -98,7 +105,7 @@
                 ultima = q;
                 try {
                     const r = await fetch(urlVie + '?q=' + encodeURIComponent(q), { headers: { Accept: 'application/json' } });
-                    if (!r.ok || q !== ultima) return;
+                    if (!r.ok || q !== ultima) return; // nel frattempo è partita una ricerca più recente: questa risposta si ignora
                     risultati = await r.json(); attivo = -1; mostra();
                 } catch { chiudi(); }
             }, 350);
@@ -115,7 +122,7 @@
 
     $(function () {
         if (!$.fn.select2) return;
-        preparaSelect(document);
+        preparaSelect();
         document.querySelectorAll('input[data-indirizzo]').forEach(preparaVia);
     });
 })(jQuery);

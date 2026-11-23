@@ -42,7 +42,8 @@ public sealed record BustaRiga
     public string Periodo => ServizioBustePaga.NomeMese(Mese) + " " + Anno;
 }
 
-public sealed record FileCaricato(string Nome, string Contenuto, Func<Stream> Apri, long Dimensione);
+/// <summary>PDF ricevuto dal modulo: si apre solo quando serve (il tipo dichiarato dal browser non conta).</summary>
+public sealed record FileCaricato(string Nome, Func<Stream> Apri, long Dimensione);
 
 public sealed record EsitoCaricamento(List<(string File, string Dipendente)> Caricati, List<(string File, string Motivo)> Scartati, bool Pubblicati);
 
@@ -62,10 +63,12 @@ public sealed partial class ServizioBustePaga(
 
     /// <summary>
     /// Carica più cedolini della stessa azienda e mese. Ogni file si abbina al dipendente se il nome contiene
-    /// il suo codice fiscale oppure la matricola come parola a sé (es. "0042_ottobre.pdf").
+    /// il suo codice fiscale oppure la matricola come parola a sé (es. "0042_ottobre.pdf"); con <paramref name="soloDipendente"/>
+    /// (caricamento dalla scheda) va a quella persona qualunque sia il nome. I file scartati non bloccano gli altri,
+    /// ma i cedolini validi si salvano tutti insieme: se il salvataggio fallisce si tolgono anche i PDF già archiviati.
     /// </summary>
     public async Task<EsitoCaricamento> CaricaAsync(Guid aziendaId, int anno, int mese, TipoCedolino tipo,
-        IReadOnlyList<FileCaricato> files, bool pubblica, Guid? soloDipendente = null, decimal lordo = 0, decimal netto = 0)
+        IReadOnlyList<FileCaricato> files, bool pubblica, Guid? soloDipendente = null, decimal netto = 0)
     {
         var dipendenti = await db.Dipendenti.AsNoTracking().IgnoreAutoIncludes()
             .Where(d => d.AziendaId == aziendaId && (soloDipendente == null || d.Id == soloDipendente))
@@ -89,7 +92,7 @@ public sealed partial class ServizioBustePaga(
                 await s.CopyToAsync(ms);
                 dati = ms.ToArray();
             }
-            if (dati.Length < 5 || dati[0] != '%' || dati[1] != 'P' || dati[2] != 'D' || dati[3] != 'F' || dati[4] != '-')
+            if (!dati.AsSpan().StartsWith("%PDF-"u8)) // riconosciuto dal contenuto, non dall'estensione
             {
                 scartati.Add((f.Nome, "non è un PDF"));
                 continue;
@@ -108,6 +111,7 @@ public sealed partial class ServizioBustePaga(
             }
             var dip = trovati[0];
 
+            // Lo stesso PDF (stessa impronta) non si carica due volte, né nello stesso invio né in uno precedente.
             var hash = Convert.ToHexStringLower(SHA256.HashData(dati));
             if (!hashVisti.Add(hash) || await db.BustePaga.AnyAsync(b => b.HashSha256 == hash))
             {
@@ -119,7 +123,7 @@ public sealed partial class ServizioBustePaga(
             BustaPaga busta;
             try
             {
-                busta = new BustaPaga(aziendaId, dip.Id, anno, mese, tipo, lordo, netto, Path.GetFileName(f.Nome), chiave, hash, dati.Length, Adesso);
+                busta = new BustaPaga(aziendaId, dip.Id, anno, mese, tipo, 0, netto, Path.GetFileName(f.Nome), chiave, hash, dati.Length, Adesso);
             }
             catch (DomainException ex)
             {
@@ -163,14 +167,18 @@ public sealed partial class ServizioBustePaga(
 
     private DateTime Adesso => clock.GetUtcNow().UtcDateTime;
 
-    /// <summary>Corrispondenza nel nome del file: codice fiscale ovunque, matricola come parola a sé.</summary>
+    /// <summary>
+    /// Corrispondenza nel nome del file: codice fiscale ovunque, matricola come parola a sé (separata da spazi, trattini,
+    /// underscore…) e senza badare agli zeri iniziali: "0042_ottobre.pdf" e "42.pdf" sono della matricola 42.
+    /// </summary>
     internal static bool Corrisponde(string nomeFile, string codiceFiscale, string? matricola)
     {
         var nome = Path.GetFileNameWithoutExtension(nomeFile).ToUpperInvariant();
         if (nome.Contains(codiceFiscale, StringComparison.Ordinal)) return true;
         if (string.IsNullOrWhiteSpace(matricola)) return false;
         var m = matricola.Trim().ToUpperInvariant();
-        return Separatori().Split(nome).Any(parola => parola == m || (parola.TrimStart('0') == m.TrimStart('0') && m.TrimStart('0').Length > 0));
+        var senzaZeri = m.TrimStart('0');
+        return Separatori().Split(nome).Any(parola => parola == m || (senzaZeri.Length > 0 && parola.TrimStart('0') == senzaZeri));
     }
 
     /// <summary>Email di avviso (senza allegato: il cedolino si apre solo dal portale, dopo il login).</summary>

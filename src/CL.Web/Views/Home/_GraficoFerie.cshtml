@@ -1,7 +1,8 @@
 @model (List<FerieDipendente> Righe, int Anno, bool MostraAzienda)
 @*
     Barre orizzontali impilate (ApexCharts): ore di ferie godute e disponibili per dipendente in forza,
-    ordinate per ore disponibili. Le prime 15 nel grafico, tutte nella tabella. Clic su una barra = scheda del dipendente.
+    ordinate per ore disponibili. Le prime 15 nel grafico, per le altre solo il numero. Clic su una barra = scheda del dipendente.
+    I dati vanno al grafico (wwwroot/js/grafici-panoramica.js) in un blocco JSON.
 *@
 @{
     var (righe, anno, mostraAzienda) = Model;
@@ -11,7 +12,6 @@
         nomi = visibili.Select(r => r.Nome).ToArray(),
         aziende = visibili.Select(r => r.Azienda).ToArray(),
         link = visibili.Select(r => Url.Action("Dettaglio", "Dipendenti", new { id = r.DipendenteId })).ToArray(),
-        inAttesa = visibili.Select(r => (double)Math.Round(r.InAttesa, 1)).ToArray(),
         mostraAzienda,
         serie = new[]
         {

@@ -1,4 +1,6 @@
 using CL.Domain.Assenze;
+using CL.Domain.Aziende;
+using CL.Domain.Dipendenti;
 using CL.Domain.Presenze;
 using CL.Infrastructure.Identity;
 using CL.Infrastructure.Persistence;
@@ -9,7 +11,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CL.Web.Controllers;
 
-public sealed record GiornoUfficio(DateOnly Data, bool DelMese, bool Lavorativo, bool Segnato, string? Assenza, bool Modificabile)
+/// <param name="Modificabile">Si può segnare in ufficio o chiedere lo smart working con un clic.</param>
+public sealed record GiornoUfficio(DateOnly Data, bool DelMese, bool Lavorativo, bool Segnato, bool Modificabile)
 {
     /// <summary>Per chi lavora in presenza: stato della richiesta di smart working del giorno.</summary>
     public StatoSmartWorking? Smart { get; init; }
@@ -40,10 +43,8 @@ public sealed class UfficioViewModel
     public ModoLavoro? Modo { get; init; }
     /// <summary>Smart working concesso dal contratto a chi lavora in presenza (es. "2 giorni al mese").</summary>
     public string? SmartConcesso { get; init; }
-    public CL.Domain.Dipendenti.PeriodoSmartWorking? PeriodoSmart { get; init; }
     /// <summary>Tipi di richiesta offerti dall'azienda (chiavi di TipiRichiesta).</summary>
     public required Func<string, bool> Abilitata { get; init; }
-    public int? GiorniSmartConcessi { get; init; }
 }
 
 /// <summary>
@@ -63,10 +64,12 @@ public sealed class UfficioController(AppDbContext db, UtenteCorrente utente, Se
         var oggi = Oggi;
         var primo = new DateOnly(anno ?? oggi.Year, mese is >= 1 and <= 12 ? mese.Value : oggi.Month, 1);
         var ultimo = primo.AddMonths(1).AddDays(-1);
+        // La griglia mostra settimane intere, da lunedì a domenica.
         var inizio = primo.AddDays(-(((int)primo.DayOfWeek + 6) % 7));
         var fine = ultimo.AddDays(6 - (((int)ultimo.DayOfWeek + 6) % 7));
 
         var d = await db.Dipendenti.AsNoTracking().FirstAsync(x => x.Id == id);
+        var azienda = await db.Aziende.AsNoTracking().FirstAsync(a => a.Id == d.AziendaId);
         var richieste = modo == ModoLavoro.Presenza
             ? await db.GiorniSmartWorking.AsNoTracking().Where(g => g.DipendenteId == id && g.Giorno >= inizio && g.Giorno <= fine).ToDictionaryAsync(g => g.Giorno)
             : [];
@@ -75,41 +78,42 @@ public sealed class UfficioController(AppDbContext db, UtenteCorrente utente, Se
         var assenze = await db.RichiesteAssenza.AsNoTracking()
             .Where(r => r.DipendenteId == id && (r.Stato == StatoRichiesta.Approvata || r.Stato == StatoRichiesta.InAttesa) && r.Dal <= fine && r.Al >= inizio)
             .OrderBy(r => r.Dal).ToListAsync();
-        var azienda = await db.Aziende.AsNoTracking().FirstAsync(a => a.Id == d.AziendaId);
         var straordinari = await db.Straordinari.AsNoTracking()
             .Where(x => x.DipendenteId == id && x.Giorno >= inizio && x.Giorno <= fine && (x.Stato == StatoRichiesta.InAttesa || x.Stato == StatoRichiesta.Approvata)).ToListAsync();
         var chiusure = await db.ChiusureAziendali.AsNoTracking().Where(c => c.AziendaId == d.AziendaId && c.Dal <= fine && c.Al >= inizio).ToListAsync();
         var contratto = d.ContrattoAttivo(oggi) ?? d.Contratti.OrderByDescending(c => c.DataInizio).FirstOrDefault();
         var giorniSettimana = contratto?.GiorniLavorativiSettimana ?? 5;
 
+        // Si segna (o si chiede) con un clic solo se l'azienda offre la voce. Lo smart working si chiede da oggi in poi;
+        // i giorni in ufficio si segnano anche a posteriori, dal primo del mese in corso.
+        var puoSegnare = modo is not null && azienda.Abilitata(modo == ModoLavoro.Presenza ? TipiRichiesta.SmartWorking : TipiRichiesta.InUfficio);
+        var daQuando = modo == ModoLavoro.Presenza ? oggi : new DateOnly(oggi.Year, oggi.Month, 1);
+
         var giorni = new List<GiornoUfficio>();
         for (var g = inizio; g <= fine; g = g.AddDays(1))
         {
             var giorno = g;
+            var delMese = g.Month == primo.Month;
             var lavorativo = CalendarioLavorativo.IsLavorativo(g, giorniSettimana, azienda.SantoPatronoMese, azienda.SantoPatronoGiorno);
             var delGiorno = assenze.Where(r => r.Dal <= giorno && r.Al >= giorno).ToList();
-            // Assente tutto il giorno (approvato o in attesa): niente ufficio né smart working da segnare.
-            var assenza = delGiorno.FirstOrDefault(r => !r.AOre)?.Tipo.Descrizione();
-            // Lo smart working si chiede da oggi in poi; i giorni in ufficio si segnano anche a posteriori nel mese.
-            var daQuando = modo == ModoLavoro.Presenza ? oggi : new DateOnly(oggi.Year, oggi.Month, 1);
-            var chiaveModo = modo == ModoLavoro.Presenza ? CL.Domain.Aziende.TipiRichiesta.SmartWorking : CL.Domain.Aziende.TipiRichiesta.InUfficio;
-            var modificabile = modo is not null && azienda.Abilitata(chiaveModo) && g.Month == primo.Month && lavorativo && assenza is null && d.InForzaIl(g) && g >= daQuando;
+            // Giorno libero: lavorativo, del mese, con un contratto e senza un'assenza di tutta la giornata (approvata o in attesa).
+            var libero = delMese && lavorativo && !delGiorno.Any(r => !r.AOre) && d.InForzaIl(g);
             var richiesta = richieste.GetValueOrDefault(g);
-            giorni.Add(new GiornoUfficio(g, g.Month == primo.Month, lavorativo, segnati.Contains(g), assenza, modificabile)
+            giorni.Add(new GiornoUfficio(g, delMese, lavorativo, segnati.Contains(g), puoSegnare && libero && g >= daQuando)
             {
                 Smart = richiesta?.Stato, MotivoRifiuto = richiesta?.MotivoRifiuto,
                 Richieste = delGiorno.Select(r => new RichiestaDelGiorno(r.Tipo, r.Stato, r.AOre, r.AOre ? r.Ore : 0, r.Note)).ToList(),
                 Chiusure = chiusure.Where(c => c.Dal <= giorno && c.Al >= giorno).Select(c => c.Descrizione).ToList(),
                 Straordinari = straordinari.Where(x => x.Giorno == giorno).Select(x => (x.Ore, x.Stato)).ToList(),
-                Richiedibile = g.Month == primo.Month && lavorativo && assenza is null && g >= oggi && d.InForzaIl(g),
+                Richiedibile = libero && g >= oggi,
                 Festa = CalendarioLavorativo.NomeFestivita(g, azienda.SantoPatronoMese, azienda.SantoPatronoGiorno),
             });
         }
         return View(new UfficioViewModel
         {
             Anno = primo.Year, Mese = primo.Month, Giorni = giorni, Oggi = oggi, Modo = modo, Abilitata = azienda.Abilitata,
-            SmartConcesso = contratto?.SmartWorkingConcesso, PeriodoSmart = contratto?.PeriodoSmartWorking, GiorniSmartConcessi = contratto?.GiorniSmartWorking,
-            GiorniPrevisti = contratto?.Modalita == CL.Domain.Dipendenti.ModalitaLavoro.Ibrido ? contratto.GiorniInUfficio : null,
+            SmartConcesso = contratto?.SmartWorkingConcesso,
+            GiorniPrevisti = contratto?.Modalita == ModalitaLavoro.Ibrido ? contratto.GiorniInUfficio : null,
         });
     }
 
@@ -137,17 +141,15 @@ public sealed class UfficioController(AppDbContext db, UtenteCorrente utente, Se
     public async Task<IActionResult> Richiedi(DateOnly giorno, string? ritorno)
     {
         if (utente.DipendenteId is not { } id) return Forbid();
-        var oggi = Oggi;
         IActionResult torna = Url.IsLocalUrl(ritorno) ? LocalRedirect(ritorno) : RedirectToAction(nameof(Index), new { anno = giorno.Year, mese = giorno.Month });
         // Ritirare una richiesta già fatta si può sempre (finché il giorno non è passato); chiederne una nuova solo a chi lavora in presenza.
-        var giaChiesto = await db.GiorniSmartWorking.AnyAsync(g => g.DipendenteId == id && g.Giorno == giorno);
-        if (!giaChiesto && await ufficio.ModoAsync() != ModoLavoro.Presenza) return Forbid();
-        if (giorno < oggi)
+        var esistente = await db.GiorniSmartWorking.FirstOrDefaultAsync(g => g.DipendenteId == id && g.Giorno == giorno);
+        if (esistente is null && await ufficio.ModoAsync() != ModoLavoro.Presenza) return Forbid();
+        if (giorno < Oggi)
         {
             Errore("Lo smart working si chiede per oggi o per i giorni futuri.");
             return torna;
         }
-        var esistente = await db.GiorniSmartWorking.FirstOrDefaultAsync(g => g.DipendenteId == id && g.Giorno == giorno);
         if (esistente is not null)
         {
             db.GiorniSmartWorking.Remove(esistente);

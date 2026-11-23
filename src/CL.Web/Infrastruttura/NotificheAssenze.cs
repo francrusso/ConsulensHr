@@ -8,11 +8,12 @@ using Microsoft.EntityFrameworkCore;
 namespace CL.Web.Infrastruttura;
 
 /// <summary>
-/// Avvisi email sulle richieste di assenza: a chi deve decidere (il responsabile dall'organigramma, altrimenti i referenti),
-/// al dipendente quando la richiesta è approvata o rifiutata. Partono in background.
+/// Avvisi email sulle richieste di assenza (non su smart working e straordinari): a chi deve decidere (il responsabile
+/// dall'organigramma, altrimenti i referenti), al dipendente quando la richiesta è approvata o rifiutata. Partono in background.
 /// </summary>
 public sealed class NotificheAssenze(AppDbContext db, CodaEmail coda, ServizioAccessi accessi, ServizioOrganigramma organigramma)
 {
+    /// <summary>Nuova richiesta in attesa: avvisa chi la deve decidere. Le richieste già approvate non mandano nulla.</summary>
     public async Task NuovaRichiestaAsync(RichiestaAssenza r)
     {
         if (r.Stato != StatoRichiesta.InAttesa) return;
@@ -34,17 +35,19 @@ public sealed class NotificheAssenze(AppDbContext db, CodaEmail coda, ServizioAc
 
         var link = WebUtility.HtmlEncode(accessi.ComponiUrl("/Assenze"));
         var chi = WebUtility.HtmlEncode($"{dip.Nome} {dip.Cognome}");
+        var cosa = r.Tipo.Descrizione().ToLower();
         foreach (var u in referenti.Where(x => x.Email is not null))
-            coda.Accoda(new MessaggioEmail(u.Email!, $"Richiesta di {r.Tipo.Descrizione().ToLower()} da approvare: {dip.Nome} {dip.Cognome}",
+            coda.Accoda(new MessaggioEmail(u.Email!, $"Richiesta di {cosa} da approvare: {dip.Nome} {dip.Cognome}",
                 $"""
                 <p>Ciao {WebUtility.HtmlEncode(u.Nome)},</p>
-                <p>{chi} ha chiesto <strong>{WebUtility.HtmlEncode(r.Tipo.Descrizione().ToLower())}</strong> {Periodo(r)} ({r.Ore:0.##} ore).</p>
+                <p>{chi} ha chiesto <strong>{WebUtility.HtmlEncode(cosa)}</strong> {Periodo(r)} ({r.Ore:0.##} ore).</p>
                 {(string.IsNullOrWhiteSpace(r.Note) ? "" : $"<p>Note: {WebUtility.HtmlEncode(r.Note)}</p>")}
                 <p>Puoi approvarla o rifiutarla dal portale: <a href="{link}">{link}</a></p>
                 <p>Consulens HR</p>
                 """));
     }
 
+    /// <summary>Esito della richiesta al dipendente, se ha un accesso attivo (con il motivo, se rifiutata).</summary>
     public async Task EsitoAsync(RichiestaAssenza r)
     {
         if (r.Stato is not (StatoRichiesta.Approvata or StatoRichiesta.Rifiutata)) return;
@@ -55,12 +58,12 @@ public sealed class NotificheAssenze(AppDbContext db, CodaEmail coda, ServizioAc
 
         var approvata = r.Stato == StatoRichiesta.Approvata;
         var link = WebUtility.HtmlEncode(accessi.ComponiUrl("/Assenze"));
-        var cosa = WebUtility.HtmlEncode(r.Tipo.Descrizione().ToLower());
+        var cosa = r.Tipo.Descrizione().ToLower();
         coda.Accoda(new MessaggioEmail(u.Email,
-            approvata ? $"Richiesta di {r.Tipo.Descrizione().ToLower()} approvata" : $"Richiesta di {r.Tipo.Descrizione().ToLower()} non approvata",
+            approvata ? $"Richiesta di {cosa} approvata" : $"Richiesta di {cosa} non approvata",
             $"""
             <p>Ciao {WebUtility.HtmlEncode(u.Nome)},</p>
-            <p>la tua richiesta di <strong>{cosa}</strong> {Periodo(r)} è stata <strong>{(approvata ? "approvata" : "rifiutata")}</strong>.</p>
+            <p>la tua richiesta di <strong>{WebUtility.HtmlEncode(cosa)}</strong> {Periodo(r)} è stata <strong>{(approvata ? "approvata" : "rifiutata")}</strong>.</p>
             {(approvata || string.IsNullOrWhiteSpace(r.MotivoRifiuto) ? "" : $"<p>Motivo: {WebUtility.HtmlEncode(r.MotivoRifiuto)}</p>")}
             <p>Il dettaglio è nel portale: <a href="{link}">{link}</a></p>
             <p>Consulens HR</p>

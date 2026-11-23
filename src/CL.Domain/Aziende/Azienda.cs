@@ -17,7 +17,10 @@ public sealed class Azienda : Entity
     public string? Email { get; private set; }
     /// <summary>Logo nell'archivio privato (chiave generata dall'applicazione), se caricato.</summary>
     public string? LogoChiave { get; private set; }
-    /// <summary>Data del santo patrono del comune della sede (festività locale), se applicabile.</summary>
+    /// <summary>
+    /// Data del santo patrono del comune della sede (festività locale), se applicabile. Il calendario la considera,
+    /// ma oggi nessuna funzione la imposta: le colonne restano nello schema per quando servirà.
+    /// </summary>
     public int? SantoPatronoMese { get; private set; }
     public int? SantoPatronoGiorno { get; private set; }
     public bool Attiva { get; private set; } = true;
@@ -50,27 +53,34 @@ public sealed class Azienda : Entity
     {
         var rs = Guard.NotEmpty(ragioneSociale, "Ragione sociale");
         if (rs.Length > 200) throw new DomainException("Ragione sociale troppo lunga (massimo 200 caratteri).");
-        var cf = Pulito(codiceFiscale)?.Replace(" ", "").ToUpperInvariant();
+        var cf = Guard.Facoltativo(codiceFiscale)?.Replace(" ", "").ToUpperInvariant();
         if (cf is not null) cf = ValidaCodiceFiscale(cf);
-        cap = Pulito(cap);
+        cap = Guard.Facoltativo(cap);
         if (cap is not null && (cap.Length != 5 || !cap.All(char.IsAsciiDigit))) throw new DomainException("Il CAP è di 5 cifre.");
-        provincia = Pulito(provincia)?.ToUpperInvariant();
+        provincia = Guard.Facoltativo(provincia)?.ToUpperInvariant();
         if (provincia is not null && !Province.IsValida(provincia)) throw new DomainException($"La provincia \"{provincia}\" non esiste: usa la sigla (es. MI).");
-        email = Pulito(email)?.ToLowerInvariant();
+        email = Guard.Facoltativo(email)?.ToLowerInvariant();
         if (email is not null && !EmailValida(email)) throw new DomainException("Indirizzo email non valido.");
 
         RagioneSociale = rs;
         CodiceFiscale = cf;
-        Indirizzo = Pulito(indirizzo);
+        Indirizzo = Guard.Facoltativo(indirizzo);
         Cap = cap;
-        Comune = Pulito(comune);
+        Comune = Guard.Facoltativo(comune);
         Provincia = provincia;
         Email = email;
     }
 
-    public string? SedeCompleta => Indirizzo is null && Comune is null ? null
-        : string.Join(", ", new[] { Indirizzo, string.Join(" ", new[] { Cap, Comune, Provincia is null ? null : $"({Provincia})" }.Where(x => x is not null)) }
-            .Where(x => !string.IsNullOrWhiteSpace(x)));
+    /// <summary>"Via Roma 1, 20121 Milano (MI)" con le sole parti presenti; null se mancano sia la via sia il comune.</summary>
+    public string? SedeCompleta
+    {
+        get
+        {
+            if (Indirizzo is null && Comune is null) return null;
+            var localita = string.Join(" ", new[] { Cap, Comune, Provincia is null ? null : $"({Provincia})" }.OfType<string>());
+            return string.Join(", ", new[] { Indirizzo, localita }.Where(x => !string.IsNullOrWhiteSpace(x)));
+        }
+    }
 
     public void ImpostaLogo(string chiave) => LogoChiave = Guard.NotEmpty(chiave, "Logo");
     public void RimuoviLogo() => LogoChiave = null;
@@ -86,26 +96,11 @@ public sealed class Azienda : Entity
         return ValueObjects.CodiceFiscale.Parse(cf).Valore;
     }
 
+    /// <summary>Controllo formale minimo: una sola @ non in testa, un punto nel dominio, niente spazi.</summary>
     private static bool EmailValida(string email)
     {
         var at = email.IndexOf('@');
         return at > 0 && at == email.LastIndexOf('@') && email.IndexOf('.', at) > at + 1 && !email.EndsWith('.') && !email.Contains(' ') && email.Length <= 256;
-    }
-
-    private static string? Pulito(string? s) => string.IsNullOrWhiteSpace(s) ? null : s.Trim();
-
-    public void ImpostaSantoPatrono(int mese, int giorno)
-    {
-        try { _ = new DateOnly(2024, mese, giorno); } // 2024 bisestile: ammette il 29/02
-        catch (ArgumentOutOfRangeException) { throw new DomainException("Data del santo patrono non valida."); }
-        SantoPatronoMese = mese;
-        SantoPatronoGiorno = giorno;
-    }
-
-    public void RimuoviSantoPatrono()
-    {
-        SantoPatronoMese = null;
-        SantoPatronoGiorno = null;
     }
 
     public void Disattiva() => Attiva = false;

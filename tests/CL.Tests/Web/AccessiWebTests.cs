@@ -4,6 +4,8 @@ using CL.Domain.Aziende;
 using CL.Domain.Dipendenti;
 using CL.Domain.ValueObjects;
 using CL.Infrastructure.Identity;
+using CL.Infrastructure.Persistence;
+using CL.Web.Infrastruttura;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
@@ -228,5 +230,32 @@ public sealed partial class AccessiWebTests : IDisposable
         using var scope = _app.Services.CreateScope();
         var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
         Assert.True(await users.CheckPasswordAsync((await users.FindByEmailAsync("consulente@test.it"))!, NuovaPassword));
+    }
+
+    [Fact]
+    public async Task Gli_avvisi_allo_studio_vanno_ai_consulenti_dell_azienda()
+    {
+        var (acme, altra) = await _app.ConDb(async db =>
+        {
+            var a = new Azienda("Acme S.r.l.", PartitaIva.Parse("01234567897"));
+            var b = new Azienda("Beta S.r.l.", PartitaIva.Parse("12345678903"));
+            db.AddRange(a, b);
+            await db.SaveChangesAsync();
+            return (a.Id, b.Id);
+        });
+        await _app.CreaUtente("admin@studio.test", Ruoli.Consulente); // super amministratore
+        var rossi = await _app.CreaUtente("rossi@studio.test", Ruoli.Consulente, amministratore: false);
+        await _app.CreaUtente("bianchi@studio.test", Ruoli.Consulente, amministratore: false);
+        await _app.ConDb(async db =>
+        {
+            foreach (var u in await db.Users.ToListAsync()) u.EmailConfirmed = true; // solo le email confermate ricevono avvisi
+            db.AssegnazioniAziende.Add(new AssegnazioneAzienda { AziendaId = acme, UserId = rossi.Id, AssegnataIl = DateTime.UtcNow });
+            return await db.SaveChangesAsync();
+        });
+
+        // Solo il consulente a cui l'azienda è assegnata, non tutto lo studio.
+        Assert.Equal(["rossi@studio.test"], await _app.ConDb(db => db.EmailStudioAsync(acme)));
+        // Azienda senza consulenti assegnati: l'avviso va al super amministratore, così non si perde.
+        Assert.Equal(["admin@studio.test"], await _app.ConDb(db => db.EmailStudioAsync(altra)));
     }
 }

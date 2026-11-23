@@ -1,8 +1,10 @@
-@model List<CL.Web.Controllers.AziendaRiga>
+@model List<AziendaRiga>
 @inject UtenteCorrente Utente
 @{
-    var consulentiAziende = ViewBag.ConsulentiAziende as Dictionary<Guid, string> ?? new();
     ViewData["Title"] = "Aziende";
+    // Solo il super amministratore vede la colonna con i consulenti di ogni azienda.
+    var colonnaConsulente = Utente.IsAmministratore;
+    var consulentiAziende = ViewBag.ConsulentiAziende as Dictionary<Guid, string> ?? new();
 }
 
 <div class="breadcrumb-titolo d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
@@ -32,14 +34,14 @@
                     <th scope="col">Partita IVA</th>
                     <th scope="col">Comune</th>
                     <th scope="col" class="text-end">Personale</th>
-                    @if (consulentiAziende.Count > 0 || Utente.IsAmministratore) { <th scope="col">Consulente</th> }
+                    @if (colonnaConsulente) { <th scope="col">Consulente</th> }
                     <th scope="col" class="text-end">Azioni</th>
                 </tr>
             </thead>
             <tbody>
                 @if (Model.Count == 0)
                 {
-                    <tr><td colspan="@(Utente.IsAmministratore ? 6 : 5)" class="elenco-vuoto"><span class="elenco-vuoto-icona" aria-hidden="true"><i class="ri-building-line"></i></span><div>Nessuna azienda trovata</div></td></tr>
+                    <tr><td colspan="@(colonnaConsulente ? 6 : 5)" class="elenco-vuoto"><span class="elenco-vuoto-icona" aria-hidden="true"><i class="ri-building-line"></i></span><div>Nessuna azienda trovata</div></td></tr>
                 }
                 @foreach (var a in Model)
                 {
@@ -52,7 +54,7 @@
                         <td data-label="Partita IVA">@a.PartitaIva</td>
                         <td data-label="Comune">@(string.IsNullOrWhiteSpace(a.Comune) ? "—" : a.Comune)</td>
                         <td data-label="Personale" class="text-end">@a.Dipendenti</td>
-                        @if (consulentiAziende.Count > 0 || Utente.IsAmministratore) { <td data-label="Consulente">@(consulentiAziende.GetValueOrDefault(a.Id) ?? "Nessuno")</td> }
+                        @if (colonnaConsulente) { <td data-label="Consulente">@(consulentiAziende.GetValueOrDefault(a.Id) ?? "Nessuno")</td> }
                         <td data-label="Azioni">
                             <div class="customer-actions">
                                 <a asp-action="Dettaglio" asp-route-id="@a.Id" aria-label="Visualizza azienda" title="Visualizza azienda"><i class="ri-eye-line" aria-hidden="true"></i></a>

@@ -28,7 +28,7 @@ public sealed class Straordinario : Entity
         if (dipendenteId == Guid.Empty) throw new DomainException("Dipendente obbligatorio.");
         if (ore <= 0 || ore > OreMassime) throw new DomainException($"Le ore di straordinario vanno da 0,5 a {OreMassime:0} al giorno.");
         if (ore * 2 != Math.Floor(ore * 2)) throw new DomainException("Le ore di straordinario si indicano a mezz'ore (es. 1,5).");
-        var n = string.IsNullOrWhiteSpace(note) ? null : note.Trim();
+        var n = Guard.Facoltativo(note);
         if (n is { Length: > 500 }) throw new DomainException("Note troppo lunghe (massimo 500 caratteri).");
         DipendenteId = dipendenteId;
         Giorno = giorno;
@@ -62,7 +62,7 @@ public sealed class Straordinario : Entity
         if (Stato != StatoRichiesta.InAttesa) throw new DomainException("Solo le richieste in attesa possono essere rifiutate.");
         Stato = StatoRichiesta.Rifiutata;
         DecisoDa = Guard.NotEmpty(approvatore, "Approvatore");
-        MotivoRifiuto = string.IsNullOrWhiteSpace(motivo) ? null : motivo.Trim();
+        MotivoRifiuto = Guard.Facoltativo(motivo);
         DecisoIl = adesso;
     }
 }

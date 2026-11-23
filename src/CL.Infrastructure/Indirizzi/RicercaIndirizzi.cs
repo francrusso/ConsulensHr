@@ -1,8 +1,9 @@
 using System.Globalization;
+using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json.Serialization;
+using CL.Domain.ValueObjects;
 using Microsoft.Extensions.Logging;
-using System.Net.Http.Json;
 
 namespace CL.Infrastructure.Indirizzi;
 
@@ -57,7 +58,7 @@ internal sealed class RicercaPhoton(HttpClient http, ILogger<RicercaPhoton> logg
                 if (strada is null) return null;
                 var via = p.HouseNumber is { Length: > 0 } n ? $"{strada} {n}" : strada;
                 // Comune e provincia con i nomi ufficiali ISTAT, gli stessi delle select del modulo.
-                var ufficiale = CL.Domain.ValueObjects.Comuni.Trova(p.City ?? p.Locality, SiglaProvincia(p.County));
+                var ufficiale = Comuni.Trova(p.City ?? p.Locality, SiglaProvincia(p.County));
                 var comune = ufficiale?.Nome ?? p.City ?? p.Locality;
                 var prov = ufficiale?.Provincia ?? SiglaProvincia(p.County);
                 var cap = p.Postcode is { Length: 5 } c && c.All(char.IsAsciiDigit) ? c : null;

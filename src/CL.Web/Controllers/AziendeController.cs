@@ -69,37 +69,39 @@ public sealed class AziendaForm
 
 public sealed record AziendaRiga(Guid Id, string RagioneSociale, string PartitaIva, string? Comune, bool Attiva, int Dipendenti, bool ProfiloCompleto);
 
+/// <summary>
+/// Aziende clienti dello studio. Il consulente vede (e trova nella ricerca) solo quelle del suo perimetro;
+/// quelle che crea gli vengono assegnate subito. Il super amministratore le vede tutte e può filtrarle per consulente.
+/// </summary>
 [Authorize(Policy = Policy.SoloConsulente)]
-public sealed class AziendeController(AppDbContext db, ServizioAccessi accessi, LoghiAziende loghi, IArchivioDocumenti archivio,
-    IRicercaPartitaIva registro, UtenteCorrente utente) : AppController
+public sealed class AziendeController(AppDbContext db, ServizioAccessi accessi, ServizioConsulentiAziende consulenti, LoghiAziende loghi,
+    IArchivioDocumenti archivio, IRicercaPartitaIva registro, UtenteCorrente utente) : AppController
 {
     public async Task<IActionResult> Index(string? q, string? consulenteId)
     {
         var query = db.Aziende.AsNoTracking();
-        var servizio = HttpContext.RequestServices.GetRequiredService<ServizioConsulentiAziende>();
-        // Super amministratore: filtro per consulente.
         if (utente.IsAmministratore && !string.IsNullOrEmpty(consulenteId))
         {
-            var sue = await servizio.AziendeDiAsync(consulenteId);
+            var sue = await consulenti.AziendeDiAsync(consulenteId);
             query = query.Where(a => sue.Contains(a.Id));
         }
-        ViewBag.Consulenti = await servizio.ElencoAsync(consulenteId);
-        ViewBag.ConsulenteId = consulenteId;
         if (!string.IsNullOrWhiteSpace(q))
         {
             var testo = q.Trim().ToLower();
+            // (string)(object): la partita IVA è un value object salvato come testo; il doppio cast fa confrontare a EF la colonna.
             query = query.Where(a => a.RagioneSociale.ToLower().Contains(testo) || ((string)(object)a.PartitaIva).Contains(testo));
         }
 
         var righe = await query
             .OrderBy(a => a.RagioneSociale)
-            .Select(a => new AziendaRiga(a.Id, a.RagioneSociale, ((string)(object)a.PartitaIva), a.Comune, a.Attiva,
+            .Select(a => new AziendaRiga(a.Id, a.RagioneSociale, a.PartitaIva.Valore, a.Comune, a.Attiva,
                 db.Dipendenti.Count(d => d.AziendaId == a.Id),
                 db.ProfiliAzienda.Any(p => p.AziendaId == a.Id && p.CompletatoIl != null)))
             .ToListAsync();
 
         ViewBag.Ricerca = q;
-        ViewBag.ConsulentiAziende = await HttpContext.RequestServices.GetRequiredService<ServizioConsulentiAziende>().NomiAsync();
+        ViewBag.Consulenti = await consulenti.ElencoAsync(consulenteId);
+        ViewBag.ConsulentiAziende = await consulenti.NomiAsync();
         return View(righe);
     }
 
@@ -139,21 +141,18 @@ public sealed class AziendeController(AppDbContext db, ServizioAccessi accessi, 
             db.Aziende.Add(azienda);
             // L'azienda creata da un consulente è sua: gliela si assegna subito.
             if (!utente.IsAmministratore && utente.UserId is { } mio)
-                db.AssegnazioniAziende.Add(new CL.Infrastructure.Persistence.AssegnazioneAzienda { AziendaId = azienda.Id, UserId = mio, AssegnataIl = DateTime.UtcNow });
+                db.AssegnazioniAziende.Add(new AssegnazioneAzienda { AziendaId = azienda.Id, UserId = mio, AssegnataIl = DateTime.UtcNow });
         }
 
-        // Il messaggio del dominio va sul campo giusto.
-        var campo = "";
-        if (!Prova(() =>
-            {
-                try { azienda.AggiornaAnagrafica(form.RagioneSociale, form.CodiceFiscale, form.Indirizzo, form.Cap, form.Comune, form.Provincia, form.Email); }
-                catch (DomainException ex)
-                {
-                    campo = ex.Message.Contains("CAP") ? nameof(form.Cap) : ex.Message.Contains("provincia") ? nameof(form.Provincia)
-                        : ex.Message.Contains("email") ? nameof(form.Email) : ex.Message.Contains("odice fiscale") || ex.Message.Contains("arattere") ? nameof(form.CodiceFiscale) : "";
-                    throw;
-                }
-            })) { MoveErrore(campo); return View("Form", form); }
+        try
+        {
+            azienda.AggiornaAnagrafica(form.RagioneSociale, form.CodiceFiscale, form.Indirizzo, form.Cap, form.Comune, form.Provincia, form.Email);
+        }
+        catch (DomainException ex)
+        {
+            ModelState.AddModelError(CampoDellErrore(ex.Message), ex.Message);
+            return View("Form", form);
+        }
 
         if (form.Logo is { Length: > 0 } file && await loghi.SalvaAsync(azienda, file) is { } errore)
         {
@@ -205,14 +204,6 @@ public sealed class AziendeController(AppDbContext db, ServizioAccessi accessi, 
         return File(file, LoghiAziende.TipoMime(chiave));
     }
 
-    private void MoveErrore(string campo)
-    {
-        if (campo.Length == 0 || ModelState[""] is not { Errors.Count: > 0 } generale) return;
-        var messaggio = generale.Errors[0].ErrorMessage;
-        ModelState.Remove("");
-        ModelState.AddModelError(campo, messaggio);
-    }
-
     public async Task<IActionResult> Dettaglio(Guid id)
     {
         var azienda = await db.Aziende.AsNoTracking().FirstOrDefaultAsync(a => a.Id == id);
@@ -224,7 +215,7 @@ public sealed class AziendeController(AppDbContext db, ServizioAccessi accessi, 
         ViewBag.Profilo = await db.ProfiliAzienda.AsNoTracking().FirstOrDefaultAsync(p => p.AziendaId == id);
         ViewBag.Referenti = await accessi.Elenco().Where(u => u.AziendaId == id && u.Ruolo == Ruoli.Azienda)
             .OrderBy(u => u.Nome).ToListAsync();
-        ViewBag.ConsulentiAziende = await HttpContext.RequestServices.GetRequiredService<ServizioConsulentiAziende>().NomiAsync();
+        ViewBag.ConsulentiAziende = await consulenti.NomiAsync();
         return View(azienda);
     }
 
@@ -238,4 +229,12 @@ public sealed class AziendeController(AppDbContext db, ServizioAccessi accessi, 
         Conferma(azienda.Attiva ? "Azienda riattivata." : "Azienda disattivata.");
         return RedirectToAction(nameof(Dettaglio), new { id });
     }
+
+    /// <summary>Il campo del form a cui si riferisce un messaggio del dominio (riconosciuto dal testo); "" = errore generale.</summary>
+    private static string CampoDellErrore(string messaggio) =>
+        messaggio.Contains("CAP") ? nameof(AziendaForm.Cap)
+        : messaggio.Contains("provincia") ? nameof(AziendaForm.Provincia)
+        : messaggio.Contains("email") ? nameof(AziendaForm.Email)
+        : messaggio.Contains("odice fiscale") || messaggio.Contains("arattere") ? nameof(AziendaForm.CodiceFiscale)
+        : "";
 }

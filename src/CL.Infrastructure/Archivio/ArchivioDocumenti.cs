@@ -4,8 +4,8 @@ using Microsoft.Extensions.Options;
 namespace CL.Infrastructure.Archivio;
 
 /// <summary>
-/// Archivio privato dei documenti (cedolini). Le chiavi sono generate dall'applicazione, mai dall'utente,
-/// e i file si leggono solo passando dai controller che verificano i permessi.
+/// Archivio privato dei file (cedolini, CU, contratti firmati, foto e loghi). Le chiavi sono generate dall'applicazione,
+/// mai dall'utente, e i file si leggono solo passando dai controller che verificano i permessi.
 /// </summary>
 public interface IArchivioDocumenti
 {

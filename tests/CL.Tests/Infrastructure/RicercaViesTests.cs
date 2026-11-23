@@ -13,12 +13,12 @@ public class RicercaViesTests
         Assert.Equal("Roma", comune);
         Assert.Equal("RM", prov);
 
-        (via, cap, comune, prov) = RicercaVies.ScomponiIndirizzo("VIA DEI MILLE 5\nSCALA B\n80121 NAPOLI NA");
+        (via, _, comune, _) = RicercaVies.ScomponiIndirizzo("VIA DEI MILLE 5\nSCALA B\n80121 NAPOLI NA");
         Assert.Equal("Via Dei Mille 5, Scala B", via);
         Assert.Equal("Napoli", comune);
 
         // Formato inatteso: tutto nell'indirizzo, niente invenzioni.
-        (via, cap, comune, prov) = RicercaVies.ScomponiIndirizzo("SOMEWHERE STREET 3");
+        (via, cap, comune, _) = RicercaVies.ScomponiIndirizzo("SOMEWHERE STREET 3");
         Assert.Equal("Somewhere Street 3", via);
         Assert.Null(cap);
         Assert.Null(comune);

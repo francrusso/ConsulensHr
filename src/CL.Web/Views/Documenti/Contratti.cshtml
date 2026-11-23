@@ -1,32 +1,29 @@
 @model CL.Web.Controllers.ElencoDocumentiViewModel<CL.Web.Controllers.RigaContrattoDoc>
 @inject UtenteCorrente Utente
 @{
-    ViewData["Title"] = Utente.IsDipendente ? "I miei contratti" : "Contratti";
-    var gestore = !Utente.IsDipendente;
+    // Solo consulente e referente: il dipendente viene mandato a "Il mio contratto".
+    ViewData["Title"] = "Contratti";
     var oggi = DateOnly.FromDateTime(DateTime.Today);
-    var colonne = 5 + (gestore ? 2 : 0) + (Utente.IsConsulente ? 1 : 0);
+    var colonne = 7 + (Utente.IsConsulente ? 1 : 0);
 }
 <div class="breadcrumb-titolo d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
     <h1 class="titolo-pagina mb-0">@ViewData["Title"]</h1>
 </div>
 
-@if (gestore)
-{
-    <partial name="_Filtri" model="(nameof(CL.Web.Controllers.DocumentiController.Contratti), Model.Ricerca, Model.AziendaId, Model.Aziende, (int?)null, (List<int>?)null)" />
-}
+<partial name="_Filtri" model="(nameof(CL.Web.Controllers.DocumentiController.Contratti), Model.Ricerca, Model.AziendaId, Model.Aziende, (int?)null, (List<int>?)null)" />
 
 <div class="card radius-15 table-responsive table-actions-responsive p-1 customer-results">
     <table class="table mb-0 align-middle">
         <thead>
             <tr>
-                @if (gestore) { <th scope="col">Persona</th> }
+                <th scope="col">Persona</th>
                 @if (Utente.IsConsulente) { <th scope="col">Azienda</th> }
                 <th scope="col">Rapporto</th>
                 <th scope="col">Periodo</th>
                 <th scope="col">Contratto</th>
                 <th scope="col">Caricato il</th>
                 <th scope="col">Stato</th>
-                @if (gestore) { <th scope="col" class="text-end">Azioni</th> }
+                <th scope="col" class="text-end">Azioni</th>
             </tr>
         </thead>
         <tbody>
@@ -37,7 +34,7 @@
             @foreach (var r in Model.Righe)
             {
                 <tr>
-                    @if (gestore) { <td data-label="Persona"><a asp-controller="Dipendenti" asp-action="Dettaglio" asp-route-id="@r.DipendenteId" asp-route-sezione="contratto" asp-route-contratto="@r.ContrattoId" class="customer-name"><span>@r.Persona</span></a></td> }
+                    <td data-label="Persona"><a asp-controller="Dipendenti" asp-action="Dettaglio" asp-route-id="@r.DipendenteId" asp-route-sezione="contratto" asp-route-contratto="@r.ContrattoId" class="customer-name"><span>@r.Persona</span></a></td>
                     @if (Utente.IsConsulente) { <td data-label="Azienda">@r.Azienda</td> }
                     <td data-label="Rapporto">@r.Tipo.Descrizione()</td>
                     <td data-label="Periodo" class="text-nowrap">@r.Dal.ToString("dd/MM/yyyy") – @(r.Al?.ToString("dd/MM/yyyy") ?? "in corso")</td>
@@ -46,25 +43,21 @@
                         {
                             <a asp-action="ApriContratto" asp-route-id="@r.ContrattoId" target="_blank" rel="noopener" class="link-contratto"><i class="ri-file-pdf-2-line" aria-hidden="true"></i> Apri</a>
                         }
-                        else if (gestore)
+                        else
                         {
                             <a asp-controller="Dipendenti" asp-action="Dettaglio" asp-route-id="@r.DipendenteId" asp-route-sezione="contratto" asp-route-modifica="true" asp-route-contratto="@r.ContrattoId" class="contratto-mancante"><i class="ri-upload-2-line" aria-hidden="true"></i> Da caricare</a>
                         }
-                        else { <span class="contratto-mancante">Non disponibile</span> }
                     </td>
                     <td data-label="Caricato il">@(r.CaricatoIl?.ToLocalTime().ToString("dd/MM/yyyy") ?? "—")</td>
                     @{ var stato = r.StatoIl(oggi); }
                     <td data-label="Stato"><span class="badge badge-stato" style="--colore-stato:@stato.Colore()"><span class="pallino-stato" aria-hidden="true"></span>@stato.Descrizione()</span></td>
-                    @if (gestore)
-                    {
-                        <td data-label="Azioni">
-                            <div class="customer-actions">
-                                @* Apre la scheda della persona sul contratto, con i campi già aperti in modifica. *@
-                                <a asp-controller="Dipendenti" asp-action="Dettaglio" asp-route-id="@r.DipendenteId" asp-route-sezione="contratto" asp-route-contratto="@r.ContrattoId" title="Visualizza" aria-label="Visualizza il contratto di @r.Persona"><i class="ri-eye-line" aria-hidden="true"></i></a>
-                                <a asp-controller="Dipendenti" asp-action="Dettaglio" asp-route-id="@r.DipendenteId" asp-route-sezione="contratto" asp-route-modifica="true" asp-route-contratto="@r.ContrattoId" title="Modifica" aria-label="Modifica il contratto di @r.Persona"><i class="ri-pencil-line" aria-hidden="true"></i></a>
-                            </div>
-                        </td>
-                    }
+                    <td data-label="Azioni">
+                        <div class="customer-actions">
+                            @* Apre la scheda della persona su quel contratto: in lettura o con i campi già aperti. *@
+                            <a asp-controller="Dipendenti" asp-action="Dettaglio" asp-route-id="@r.DipendenteId" asp-route-sezione="contratto" asp-route-contratto="@r.ContrattoId" title="Visualizza" aria-label="Visualizza il contratto di @r.Persona"><i class="ri-eye-line" aria-hidden="true"></i></a>
+                            <a asp-controller="Dipendenti" asp-action="Dettaglio" asp-route-id="@r.DipendenteId" asp-route-sezione="contratto" asp-route-modifica="true" asp-route-contratto="@r.ContrattoId" title="Modifica" aria-label="Modifica il contratto di @r.Persona"><i class="ri-pencil-line" aria-hidden="true"></i></a>
+                        </div>
+                    </td>
                 </tr>
             }
         </tbody>

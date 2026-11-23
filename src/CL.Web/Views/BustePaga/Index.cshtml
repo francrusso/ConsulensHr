@@ -62,8 +62,5 @@
         </div>
     </form>
 
-    @if (Utente.IsDipendente)
-    {
-    }
     <partial name="_TabellaBuste" model="(Model.Buste, gestore, Utente.IsConsulente, gestore, Utente.IsConsulente, ritorno)" />
 </section>

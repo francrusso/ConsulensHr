@@ -1,4 +1,4 @@
-@model List<CL.Web.Controllers.ConsulenteRiga>
+@model List<ConsulenteRiga>
 @{
     ViewData["Title"] = "Consulenti";
     var q = ViewBag.Ricerca as string;
@@ -7,6 +7,7 @@
     <h1 class="titolo-pagina mb-0">Consulenti</h1>
 </div>
 
+@* Si apre dal pulsante "Nuovo consulente" della barra in alto (vedi _Layout). *@
 <div class="collapse mb-3" id="nuovoConsulente">
     <section class="card radius-15 p-3 p-md-4">
         <partial name="~/Views/Utenti/_FormInvito.cshtml" model='("InvitaConsulente", (Guid?)null, "Invita")' />
@@ -46,7 +47,7 @@
             {
                 <tr class="customer-result-row">
                     <td data-label="Consulente">
-                        <a asp-action="Dettaglio" asp-route-id="@c.Id" class="customer-name"><i class="ri-user-star-line" aria-hidden="true"></i><span>@(string.IsNullOrWhiteSpace(c.Nome) ? c.Email : c.Nome)</span></a>
+                        <a asp-action="Dettaglio" asp-route-id="@c.Id" class="customer-name"><i class="ri-user-star-line" aria-hidden="true"></i><span>@c.NomeVisibile</span></a>
                         @if (c.Amministratore) { <span class="badge bg-secondary ms-1">Super amministratore</span> }
                     </td>
                     <td data-label="Email">@c.Email</td>

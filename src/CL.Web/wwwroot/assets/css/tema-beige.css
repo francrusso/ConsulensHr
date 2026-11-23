@@ -113,7 +113,6 @@
 .sidebar-wrapper .metismenu ul a { color: #6a3f4c; }
 .sidebar-wrapper .metismenu ul a.active { color: #512d38; }
 .sidebar-wrapper .sidebar-footer a { color: #84707a; }
-.sidebar-wrapper .sidebar-utility { background: #fff6eb; }
 .sidebar-wrapper .sidebar-footer .sidebar-logout { color: #7e3a3f; }
 .sidebar-wrapper .sidebar-footer a:hover { background: #fbefe2; }
 .sidebar-wrapper button:focus-visible,
@@ -127,7 +126,6 @@
 .topbar-profile .user-img { background: #f6e8e4; }
 .topbar-profile .user-name { color: #512d38; }
 .topbar-profile .designattion { color: #a07f8a; }
-.topbar-profile-chevron { color: #512d38; }
 
 /* Colori scritti direttamente in authentication.css */
 .auth-panel {

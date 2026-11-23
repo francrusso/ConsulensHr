@@ -29,7 +29,6 @@ public sealed class PersistenzaTests : IDisposable
     public void Salva_e_rilegge_dipendente_con_contratti_e_value_object()
     {
         var azienda = Fixture.Azienda();
-        azienda.ImpostaSantoPatrono(6, 29);
         var dip = Fixture.Assunto(azienda, new DateOnly(2026, 1, 1), partTime: 75);
         dip.ImpostaIban(Iban.Parse("IT60X0542811101000000123456"));
 
@@ -47,7 +46,6 @@ public sealed class PersistenzaTests : IDisposable
             var contratto = Assert.Single(letto.Contratti);
             Assert.Equal(75m, contratto.PercentualePartTime);
             Assert.Equal(6m, contratto.OreGiornaliere);
-            Assert.Equal(29, db.Aziende.Single().SantoPatronoGiorno);
         }
     }
 

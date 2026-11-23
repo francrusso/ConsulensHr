@@ -59,40 +59,38 @@ public sealed class ServizioPresenze(AppDbContext db, CodaEmail coda, ServizioAc
             .OrderBy(d => d.Cognome).ThenBy(d => d.Nome)
             .ToListAsync();
 
-        // A comunicazione inviata le assenze sono quelle fotografate all'invio; in bozza si leggono dal portale.
-        Dictionary<Guid, AssenzeDelMese> assenze;
-        if (comunicazione is { Stato: not StatoComunicazione.Bozza })
-            assenze = comunicazione.Righe.ToDictionary(r => r.DipendenteId, r => r.Assenze);
-        else
-        {
-            var ids = dipendenti.Select(d => d.Id).ToList();
-            var richieste = await db.RichiesteAssenza.AsNoTracking()
+        // Assenze approvate che toccano il mese, di chi è nel foglio.
+        var ids = dipendenti.Select(d => d.Id).ToList();
+        var approvate = (await db.RichiesteAssenza.AsNoTracking()
                 .Where(r => ids.Contains(r.DipendenteId) && r.Stato == StatoRichiesta.Approvata && r.Dal <= fine && r.Al >= inizio)
-                .ToListAsync();
-            assenze = dipendenti.ToDictionary(d => d.Id, d => ComunicazioneMensile.AssenzeDi(
-                richieste.Where(r => r.DipendenteId == d.Id), anno, mese,
+                .ToListAsync())
+            .ToLookup(r => r.DipendenteId);
+
+        // A comunicazione inviata le assenze sono quelle fotografate all'invio; in bozza si calcolano dal portale.
+        var assenze = comunicazione is { Stato: not StatoComunicazione.Bozza }
+            ? comunicazione.Righe.ToDictionary(r => r.DipendenteId, r => r.Assenze)
+            : dipendenti.ToDictionary(d => d.Id, d => ComunicazioneMensile.AssenzeDi(approvate[d.Id], anno, mese,
                 d.ContrattoAttivo(fine) ?? d.ContrattoAttivo(inizio) ?? d.Contratti.OrderByDescending(c => c.DataInizio).FirstOrDefault(),
                 azienda.SantoPatronoMese, azienda.SantoPatronoGiorno));
-        }
 
         // Giorni del mese in ufficio e da remoto, come nel calendario: servono a precompilare (es. i buoni pasto).
-        var idsMese = dipendenti.Select(d => d.Id).ToList();
-        var approvate = await db.RichiesteAssenza.AsNoTracking()
-            .Where(r => idsMese.Contains(r.DipendenteId) && r.Stato == StatoRichiesta.Approvata && !r.AOre && r.Dal <= fine && r.Al >= inizio).ToListAsync();
-        var ufficio = (await db.GiorniInUfficio.AsNoTracking().Where(g => idsMese.Contains(g.DipendenteId) && g.Giorno >= inizio && g.Giorno <= fine)
+        var ufficio = (await db.GiorniInUfficio.AsNoTracking().Where(g => ids.Contains(g.DipendenteId) && g.Giorno >= inizio && g.Giorno <= fine)
             .Select(g => new { g.DipendenteId, g.Giorno }).ToListAsync()).Select(x => (x.DipendenteId, x.Giorno)).ToHashSet();
         var smart = (await db.GiorniSmartWorking.AsNoTracking()
-            .Where(g => idsMese.Contains(g.DipendenteId) && g.Stato == StatoSmartWorking.Approvato && g.Giorno >= inizio && g.Giorno <= fine)
+            .Where(g => ids.Contains(g.DipendenteId) && g.Stato == StatoSmartWorking.Approvato && g.Giorno >= inizio && g.Giorno <= fine)
             .Select(g => new { g.DipendenteId, g.Giorno }).ToListAsync()).Select(x => (x.DipendenteId, x.Giorno)).ToHashSet();
+        // Si contano i giorni lavorativi del contratto senza un'assenza approvata di tutta la giornata: in sede chi ha
+        // segnato l'ufficio o lavora in presenza senza smart working quel giorno, da remoto tutti gli altri.
         (int Ufficio, int Remoto) Giorni(Dipendente d)
         {
             int u = 0, rem = 0;
+            var giornate = approvate[d.Id].Where(r => !r.AOre).ToList();
             for (var g = inizio; g <= fine; g = g.AddDays(1))
             {
                 var c = d.ContrattoAttivo(g);
                 var giorno = g;
                 if (c is null || !CalendarioLavorativo.IsLavorativo(g, c.GiorniLavorativiSettimana, azienda.SantoPatronoMese, azienda.SantoPatronoGiorno)) continue;
-                if (approvate.Any(r => r.DipendenteId == d.Id && r.Dal <= giorno && r.Al >= giorno)) continue;
+                if (giornate.Any(r => r.Dal <= giorno && r.Al >= giorno)) continue;
                 var inSede = ufficio.Contains((d.Id, g)) || (!ServizioUfficio.LavoraADistanza(d, g) && !smart.Contains((d.Id, g)));
                 if (inSede) u++; else rem++;
             }
@@ -100,7 +98,7 @@ public sealed class ServizioPresenze(AppDbContext db, CodaEmail coda, ServizioAc
         }
 
         var straordinari = await db.Straordinari.AsNoTracking()
-            .Where(x => idsMese.Contains(x.DipendenteId) && x.Stato == StatoRichiesta.Approvata && x.Giorno >= inizio && x.Giorno <= fine).ToListAsync();
+            .Where(x => ids.Contains(x.DipendenteId) && x.Stato == StatoRichiesta.Approvata && x.Giorno >= inizio && x.Giorno <= fine).ToListAsync();
 
         var righe = dipendenti.Select(d =>
         {
@@ -120,7 +118,10 @@ public sealed class ServizioPresenze(AppDbContext db, CodaEmail coda, ServizioAc
         return new FoglioPresenze(azienda, anno, mese, comunicazione, righe);
     }
 
-    /// <summary>Stato del mese per ogni azienda attiva, per il cruscotto del consulente.</summary>
+    /// <summary>
+    /// Stato del mese per ogni azienda attiva, per il cruscotto del consulente: stato e data d'invio della comunicazione
+    /// (null se l'azienda non l'ha ancora iniziata) e quante persone hanno un contratto nel mese, esclusi i professionisti esterni.
+    /// </summary>
     public async Task<List<StatoAziendaMese>> StatoMeseAsync(int anno, int mese)
     {
         var inizio = new DateOnly(anno, mese, 1);
@@ -157,16 +158,18 @@ public sealed class ServizioPresenze(AppDbContext db, CodaEmail coda, ServizioAc
                     N(a.Ferie), N(a.Rol), N(a.Malattia), N(a.Altre),
                     N(v.OreNonRetribuite), N(v.OreStraordinario), N(v.OreStraordinarioFestivo), v.BuoniPasto, N(v.Premi), N(v.Rimborsi), N(v.Anticipi), T(v.Note)));
             }
+        // Le note dell'azienda in fondo, solo nel file di una singola azienda.
         var f0 = fogli.Count == 1 ? fogli[0] : null;
         if (f0?.Comunicazione?.Note is { } note) sb.AppendLine().AppendLine("Note dell'azienda;" + T(note));
         return [.. Encoding.UTF8.GetPreamble(), .. Encoding.UTF8.GetBytes(sb.ToString())];
     }
 
+    /// <summary>Email ai consulenti dell'azienda (<see cref="QueryUtenti.EmailStudioAsync"/>): ha inviato le presenze del mese.</summary>
     public async Task AvvisaStudioAsync(Azienda azienda, ComunicazioneMensile c)
     {
         var link = WebUtility.HtmlEncode(accessi.ComponiUrl($"/Presenze/Foglio?aziendaId={azienda.Id}&anno={c.Anno}&mese={c.Mese}"));
         var periodo = $"{ServizioBustePaga.NomeMese(c.Mese)} {c.Anno}";
-        foreach (var email in await EmailConRuolo(Ruoli.Consulente, null))
+        foreach (var email in await db.EmailStudioAsync(azienda.Id))
             coda.Accoda(new MessaggioEmail(email, $"Presenze di {periodo.ToLower()} inviate: {azienda.RagioneSociale}",
                 $"""
                 <p>{WebUtility.HtmlEncode(azienda.RagioneSociale)} ha inviato presenze e variazioni di {periodo.ToLower()} ({c.Righe.Count} dipendenti).</p>
@@ -179,7 +182,7 @@ public sealed class ServizioPresenze(AppDbContext db, CodaEmail coda, ServizioAc
     {
         var periodo = $"{ServizioBustePaga.NomeMese(mese).ToLower()} {anno}";
         var link = WebUtility.HtmlEncode(accessi.ComponiUrl($"/Presenze/Foglio?anno={anno}&mese={mese}"));
-        var destinatari = await EmailConRuolo(Ruoli.Azienda, azienda.Id);
+        var destinatari = await db.EmailConRuoloAsync(Ruoli.Azienda, azienda.Id);
         foreach (var email in destinatari)
             coda.Accoda(new MessaggioEmail(email,
                 riaperta ? $"Presenze di {periodo} da correggere" : $"Promemoria: presenze di {periodo}",
@@ -192,11 +195,4 @@ public sealed class ServizioPresenze(AppDbContext db, CodaEmail coda, ServizioAc
                 """));
         return destinatari.Count;
     }
-
-    private async Task<List<string>> EmailConRuolo(string ruolo, Guid? aziendaId) =>
-        (await (from u in db.Users
-                join ur in db.UserRoles on u.Id equals ur.UserId
-                join r in db.Roles on ur.RoleId equals r.Id
-                where r.Name == ruolo && u.Attivo && u.EmailConfirmed && (aziendaId == null || u.AziendaId == aziendaId)
-                select u.Email).ToListAsync()).OfType<string>().ToList();
 }

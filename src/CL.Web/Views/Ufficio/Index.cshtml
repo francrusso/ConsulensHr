@@ -1,8 +1,4 @@
 @model CL.Web.Controllers.UfficioViewModel
-@using CL.Domain.Presenze
-@using CL.Web.Infrastruttura
-@using CL.Web.Controllers
-@using Microsoft.AspNetCore.Mvc.Razor
 @{
     // Calendario del dipendente: ferie, permessi e malattia (in attesa o approvati), chiusure aziendali, festività e,
     // secondo come lavora, i giorni in ufficio da segnare (chi è a distanza) o lo smart working da chiedere (chi è in presenza).
@@ -17,6 +13,7 @@
     var approvati = delMese.Count(g => g.Smart == StatoSmartWorking.Approvato);
     var inAttesaSmart = delMese.Count(g => g.Smart == StatoSmartWorking.InAttesa);
     var inAttesa = delMese.SelectMany(g => g.Richieste).Count(r => r.Stato == StatoRichiesta.InAttesa);
+    var ritornoQui = Url.Action("Index", new { anno = Model.Anno, mese = Model.Mese });
     string Giorni(int n) => n == 1 ? "giorno" : "giorni";
     // Stessi colori del calendario dell'azienda e delle card dei saldi.
     string Colore(TipoAssenza t) => t switch { TipoAssenza.Ferie => "#6096FF", TipoAssenza.Malattia => "#F08A4B", _ => "#8E6BD8" };
@@ -27,7 +24,9 @@
         TipoAssenza.Ferie => "Ferie", TipoAssenza.Rol => "ROL", TipoAssenza.Malattia => "Malattia",
         TipoAssenza.PermessoL104 => "L. 104", TipoAssenza.CongedoParentale => "Congedo", _ => t.Descrizione(),
     };
-    // Il box prende il colore della richiesta del giorno: prima quella di tutta la giornata, poi quella a ore.
+    // Il box prende il colore della richiesta del giorno: prima quella di tutta la giornata, poi quella a ore
+    // (a parità, prima l'approvata). Senza richieste: chiusura, festività, smart working o giorno in ufficio.
+    // Il filtro dice quale pillola, spenta, toglie il colore al giorno.
     (string Classi, string Stile, string? Filtro) Aspetto(GiornoUfficio g)
     {
         if (!g.DelMese) return ("", "", null);
@@ -38,37 +37,6 @@
         if (g.Smart is { } s) return (s switch { StatoSmartWorking.InAttesa => "smart-attesa", StatoSmartWorking.Approvato => "smart-ok", _ => "smart-no" }, "", "smart");
         return g.Segnato ? ("in-ufficio", "", "ufficio") : ("", "", null);
     }
-    Func<GiornoUfficio, HelperResult> Contenuto = @<text>
-        <span class="cal-numero">@item.Data.Day</span>
-        @if (item.DelMese)
-        {
-            <span class="voci-giorno">
-                @foreach (var r in item.Richieste)
-                {
-                    <span class="voce-giorno @(r.Stato == StatoRichiesta.InAttesa ? "in-attesa" : "")" data-filtro="@Filtro(r.Tipo)" style="--colore-cat:@Colore(r.Tipo)" title="@r.Note">
-                        <i class="@Icona(r.Tipo)" aria-hidden="true"></i>
-                        @Breve(r.Tipo)@(r.AOre ? $" · {r.Ore:0.##} h" : "")
-                        @if (r.Stato == StatoRichiesta.InAttesa) { <span class="voce-stato">in attesa</span> }
-                    </span>
-                }
-                @foreach (var (oreStr, statoStr) in item.Straordinari)
-                {
-                    <span class="voce-giorno voce-straordinario @(statoStr == StatoRichiesta.InAttesa ? "in-attesa" : "")" data-filtro="straordinari"><i class="ri-timer-flash-line" aria-hidden="true"></i> Straordinario · @oreStr.ToString("0.##") h
-                        @if (statoStr == StatoRichiesta.InAttesa) { <span class="voce-stato">in attesa</span> }
-                    </span>
-                }
-                @foreach (var c in item.Chiusure) { <span class="voce-giorno voce-chiusura" data-filtro="chiusure"><i class="ri-door-closed-line" aria-hidden="true"></i> @c</span> }
-                @if (item.Festa is { } festa) { <span class="voce-giorno voce-festivo"><i class="ri-flag-2-line" aria-hidden="true"></i> @festa</span> }
-                @if (item.Smart is { } s)
-                {
-                    <span class="voce-giorno voce-smart @(s == StatoSmartWorking.InAttesa ? "in-attesa" : "")" data-filtro="smart" title="@item.MotivoRifiuto"><i class="ri-home-wifi-line" aria-hidden="true"></i> Smart working
-                        @if (s != StatoSmartWorking.Approvato) { <span class="voce-stato">@s.Descrizione().ToLower()</span> }
-                    </span>
-                }
-                @if (item.Segnato) { <span class="voce-giorno voce-ufficio" data-filtro="ufficio"><i class="ri-building-line" aria-hidden="true"></i> In ufficio</span> }
-            </span>
-        }
-    </text>;
 }
 <div class="breadcrumb-titolo d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
     <h1 class="titolo-pagina mb-0">Calendario</h1>
@@ -118,11 +86,38 @@
             var (aspetto, stile, filtro) = Aspetto(g);
             var rosso = g.Festivo || g.Data.DayOfWeek == DayOfWeek.Sunday; // numeri rossi come sul calendario italiano
             var classi = $"cal-giorno {(g.DelMese ? "" : "fuori-mese")} {(g.Lavorativo ? "" : "non-lavorativo")} {(g.Data == Model.Oggi ? "oggi" : "")} {(rosso ? "giorno-rosso" : "")} {(g.Festivo ? "giorno-festa" : "")} {aspetto}";
-            var ritornoQui = Url.Action("Index", new { anno = Model.Anno, mese = Model.Mese });
             var conAzioni = g.Richiedibile || g.Modificabile;
             <div class="@classi @(conAzioni ? "con-azioni" : "")" style="@stile" data-filtro="@filtro" role="gridcell" tabindex="@(conAzioni ? "0" : null)"
                  aria-label="@g.Data.ToString("dddd d MMMM")">
-                @Contenuto(g)
+                <span class="cal-numero">@g.Data.Day</span>
+                @if (g.DelMese)
+                {
+                    <span class="voci-giorno">
+                        @foreach (var r in g.Richieste)
+                        {
+                            <span class="voce-giorno @(r.Stato == StatoRichiesta.InAttesa ? "in-attesa" : "")" data-filtro="@Filtro(r.Tipo)" style="--colore-cat:@Colore(r.Tipo)" title="@r.Note">
+                                <i class="@Icona(r.Tipo)" aria-hidden="true"></i>
+                                @Breve(r.Tipo)@(r.AOre ? $" · {r.Ore:0.##} h" : "")
+                                @if (r.Stato == StatoRichiesta.InAttesa) { <span class="voce-stato">in attesa</span> }
+                            </span>
+                        }
+                        @foreach (var (ore, stato) in g.Straordinari)
+                        {
+                            <span class="voce-giorno voce-straordinario @(stato == StatoRichiesta.InAttesa ? "in-attesa" : "")" data-filtro="straordinari"><i class="ri-timer-flash-line" aria-hidden="true"></i> Straordinario · @ore.ToString("0.##") h
+                                @if (stato == StatoRichiesta.InAttesa) { <span class="voce-stato">in attesa</span> }
+                            </span>
+                        }
+                        @foreach (var c in g.Chiusure) { <span class="voce-giorno voce-chiusura" data-filtro="chiusure"><i class="ri-door-closed-line" aria-hidden="true"></i> @c</span> }
+                        @if (g.Festa is { } festa) { <span class="voce-giorno voce-festivo"><i class="ri-flag-2-line" aria-hidden="true"></i> @festa</span> }
+                        @if (g.Smart is { } s)
+                        {
+                            <span class="voce-giorno voce-smart @(s == StatoSmartWorking.InAttesa ? "in-attesa" : "")" data-filtro="smart" title="@g.MotivoRifiuto"><i class="ri-home-wifi-line" aria-hidden="true"></i> Smart working
+                                @if (s != StatoSmartWorking.Approvato) { <span class="voce-stato">@s.Descrizione().ToLower()</span> }
+                            </span>
+                        }
+                        @if (g.Segnato) { <span class="voce-giorno voce-ufficio" data-filtro="ufficio"><i class="ri-building-line" aria-hidden="true"></i> In ufficio</span> }
+                    </span>
+                }
                 @if (conAzioni)
                 {
                     @* Al passaggio del mouse: crea subito una richiesta per quel giorno. *@
@@ -138,6 +133,7 @@
                         }
                         @if (g.Modificabile)
                         {
+                            @* Un clic segna o toglie il giorno in ufficio (chi è a distanza), chiede o ritira lo smart working (chi è in presenza). *@
                             var attivo = smart ? g.Smart is not null : g.Segnato;
                             <form asp-action="@(smart ? "Richiedi" : "Segna")" method="post" class="m-0">
                                 <input type="hidden" name="giorno" value="@g.Data.ToString("yyyy-MM-dd")" />
@@ -160,6 +156,7 @@
 @section Scripts {
     <script>
         // Pillole filtro: nascondono le voci della categoria e tolgono il colore ai giorni che lo prendevano da lì.
+        // "In attesa di approvazione", spenta, nasconde tutto ciò che è in attesa, di qualunque categoria.
         (function () {
             const cal = document.getElementById('calendarioPersonale');
             const attivi = {};

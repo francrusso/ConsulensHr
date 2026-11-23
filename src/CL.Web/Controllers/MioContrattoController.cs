@@ -28,7 +28,6 @@ public sealed class MioContrattoController(AppDbContext db, UtenteCorrente utent
         if (utente.DipendenteId is not { } id) return RedirectToAction("Index", "Home");
         var d = await db.Dipendenti.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
         if (d is null) return NotFound();
-        var azienda = await db.Aziende.AsNoTracking().FirstAsync(a => a.Id == d.AziendaId);
         var profilo = await db.ProfiliAzienda.AsNoTracking().FirstOrDefaultAsync(p => p.AziendaId == d.AziendaId);
         static string Ind(CL.Domain.Aziende.Indirizzo i) => $"{i.Via}, {i.Comune} ({i.Provincia})";
         var sede = d.Sede switch
@@ -38,14 +37,15 @@ public sealed class MioContrattoController(AppDbContext db, UtenteCorrente utent
             SedeLavoro.SedeOperativa => profilo?.SedeOperativa is { } o ? "Sede operativa · " + Ind(o) : "Sede operativa",
             _ => null,
         };
-        var approvatore = await organigramma.ApprovatoreAsync(d.Id);
+        // Responsabile: quello diretto, altrimenti chi approva le sue richieste secondo l'organigramma.
+        var responsabile = d.ResponsabileId ?? await organigramma.ApprovatoreAsync(d.Id);
         return View(new MioContrattoViewModel
         {
             Dipendente = d,
-            Azienda = azienda.RagioneSociale,
+            Azienda = await db.Aziende.Where(a => a.Id == d.AziendaId).Select(a => a.RagioneSociale).FirstAsync(),
             Contratti = d.Contratti.OrderByDescending(c => c.DataInizio).ToList(),
             Team = d.TeamId is { } t ? await db.Team.AsNoTracking().Where(x => x.Id == t).Select(x => x.Nome).FirstOrDefaultAsync() : null,
-            Responsabile = (d.ResponsabileId ?? approvatore) is { } r
+            Responsabile = responsabile is { } r
                 ? await db.Dipendenti.AsNoTracking().IgnoreAutoIncludes().Where(x => x.Id == r).Select(x => x.Cognome + " " + x.Nome).FirstOrDefaultAsync()
                 : null,
             Sede = sede,

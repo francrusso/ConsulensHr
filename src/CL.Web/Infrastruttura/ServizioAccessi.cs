@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using System.Net;
 using System.Text;
 using CL.Infrastructure.Email;
@@ -30,9 +31,46 @@ public sealed record UtenteRiga
     public StatoAccesso Stato { get; init; }
 }
 
+public static class QueryUtenti
+{
+    /// <summary>Id degli utenti con il ruolo indicato, da usare dentro altre query (diventa una sottoquery SQL).</summary>
+    public static IQueryable<string> IdConRuolo(this AppDbContext db, string ruolo) =>
+        from ur in db.UserRoles
+        join r in db.Roles on ur.RoleId equals r.Id
+        where r.Name == ruolo
+        select ur.UserId;
+
+    /// <summary>
+    /// Email degli utenti con il ruolo indicato che possono ricevere avvisi (accesso attivo, email confermata).
+    /// Con <paramref name="aziendaId"/> solo quelli collegati a quell'azienda (es. i referenti).
+    /// </summary>
+    public static async Task<List<string>> EmailConRuoloAsync(this AppDbContext db, string ruolo, Guid? aziendaId = null)
+    {
+        var conRuolo = db.IdConRuolo(ruolo);
+        return (await db.Users
+            .Where(u => conRuolo.Contains(u.Id) && u.Attivo && u.EmailConfirmed && (aziendaId == null || u.AziendaId == aziendaId))
+            .Select(u => u.Email).ToListAsync()).OfType<string>().ToList();
+    }
+
+    /// <summary>
+    /// A chi dello studio scrivere per un'azienda: i consulenti a cui è assegnata. Se non è assegnata a nessuno,
+    /// i super amministratori (vedono tutte le aziende), così l'avviso non va perso.
+    /// </summary>
+    public static async Task<List<string>> EmailStudioAsync(this AppDbContext db, Guid aziendaId)
+    {
+        var consulenti = db.IdConRuolo(Ruoli.Consulente);
+        var assegnati = db.AssegnazioniAziende.Where(a => a.AziendaId == aziendaId).Select(a => a.UserId);
+        var email = (await db.Users
+            .Where(u => consulenti.Contains(u.Id) && assegnati.Contains(u.Id) && u.Attivo && u.EmailConfirmed)
+            .Select(u => u.Email).ToListAsync()).OfType<string>().ToList();
+        return email.Count > 0 ? email : await db.EmailConRuoloAsync(Ruoli.Amministratore);
+    }
+}
+
 /// <summary>
 /// Crea gli accessi al portale (consulenti, referenti azienda, dipendenti) e gestisce inviti e attivazione.
-/// L'utente invitato non ha password: la sceglie dal link, che vale come conferma dell'email.
+/// L'utente invitato non ha password: la sceglie dal link (token di reimpostazione password di Identity, valido 3 giorni),
+/// che vale anche come conferma dell'email. Lo stesso link serve a chi ha dimenticato la password.
 /// </summary>
 public sealed class ServizioAccessi(
     UserManager<ApplicationUser> users,
@@ -42,25 +80,28 @@ public sealed class ServizioAccessi(
     IHttpContextAccessor http,
     IConfiguration config)
 {
+    /// <summary>Email confermata = ha scelto la password dal link; finché non lo fa l'invito è in attesa.</summary>
     public static StatoAccesso Stato(ApplicationUser u) =>
         !u.Attivo ? StatoAccesso.Disattivato : u.EmailConfirmed ? StatoAccesso.Attivo : StatoAccesso.InvitoInAttesa;
 
     /// <summary>Utenti con ruolo e azienda, in una sola query.</summary>
-    public IQueryable<UtenteRiga> Elenco() =>
-        from u in db.Users
-        join ur in db.UserRoles on u.Id equals ur.UserId
-        join r in db.Roles on ur.RoleId equals r.Id
-        // Il super amministratore ha anche il ruolo consulente: una sola riga, quella da amministratore.
-        where r.Name != Ruoli.Consulente
-              || !(from ur2 in db.UserRoles join r2 in db.Roles on ur2.RoleId equals r2.Id
-                   where ur2.UserId == u.Id && r2.Name == Ruoli.Amministratore select ur2).Any()
-        from a in db.Aziende.Where(a => a.Id == u.AziendaId).DefaultIfEmpty()
-        select new UtenteRiga
-        {
-            Id = u.Id, Email = u.Email!, Nome = (u.Cognome + " " + u.Nome).Trim(), Ruolo = r.Name!,
-            AziendaId = u.AziendaId, Azienda = a.RagioneSociale, DipendenteId = u.DipendenteId,
-            Stato = !u.Attivo ? StatoAccesso.Disattivato : u.EmailConfirmed ? StatoAccesso.Attivo : StatoAccesso.InvitoInAttesa,
-        };
+    public IQueryable<UtenteRiga> Elenco()
+    {
+        var amministratori = db.IdConRuolo(Ruoli.Amministratore);
+        return from u in db.Users
+               join ur in db.UserRoles on u.Id equals ur.UserId
+               join r in db.Roles on ur.RoleId equals r.Id
+               // Il super amministratore ha anche il ruolo consulente: una sola riga, quella da amministratore.
+               where r.Name != Ruoli.Consulente || !amministratori.Contains(u.Id)
+               from a in db.Aziende.Where(a => a.Id == u.AziendaId).DefaultIfEmpty()
+               select new UtenteRiga
+               {
+                   Id = u.Id, Email = u.Email!, Nome = (u.Cognome + " " + u.Nome).Trim(), Ruolo = r.Name!,
+                   AziendaId = u.AziendaId, Azienda = a.RagioneSociale, DipendenteId = u.DipendenteId,
+                   // Come Stato(), scritto per esteso perché EF lo traduca in SQL.
+                   Stato = !u.Attivo ? StatoAccesso.Disattivato : u.EmailConfirmed ? StatoAccesso.Attivo : StatoAccesso.InvitoInAttesa,
+               };
+    }
 
     public async Task<EsitoInvito> InvitaAsync(string indirizzo, string nome, string cognome, string ruolo,
         Guid? aziendaId = null, Guid? dipendenteId = null)
@@ -102,11 +143,11 @@ public sealed class ServizioAccessi(
 
     private async Task<EsitoInvito> InviaLinkAsync(ApplicationUser utente, bool invito)
     {
+        // Il token di Identity contiene caratteri non adatti a un URL: viaggia codificato in Base64 URL-safe.
         var token = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(await users.GeneratePasswordResetTokenAsync(utente)));
         var url = ComponiUrl(link.GetPathByAction("ImpostaPassword", "Account", new { uid = utente.Id, token })
                              ?? throw new InvalidOperationException("Impossibile comporre il link."));
 
-        var nome = WebUtility.HtmlEncode(string.IsNullOrWhiteSpace(utente.Nome) ? utente.Email : utente.Nome);
         var href = WebUtility.HtmlEncode(url);
         var (oggetto, testo) = invito
             ? ("Il tuo accesso a Consulens HR",
@@ -115,7 +156,7 @@ public sealed class ServizioAccessi(
                "abbiamo ricevuto una richiesta di reimpostazione della password. Se non l'hai fatta tu puoi ignorare questa email.<br>Per scegliere una nuova password");
 
         var html = $"""
-            <p>Ciao {nome},</p>
+            <p>Ciao {Saluto(utente)},</p>
             <p>{testo} da questo link (valido 3 giorni):</p>
             <p><a href="{href}">{href}</a></p>
             <p>Consulens HR</p>
@@ -142,15 +183,15 @@ public sealed class ServizioAccessi(
     public async Task<string?> CambiaEmailAsync(ApplicationUser utente, string nuova)
     {
         nuova = (nuova ?? "").Trim();
-        if (!new System.ComponentModel.DataAnnotations.EmailAddressAttribute().IsValid(nuova) || nuova.Length == 0) return "Email non valida.";
+        if (nuova.Length == 0 || !new EmailAddressAttribute().IsValid(nuova)) return "Email non valida.";
         if (string.Equals(utente.Email, nuova, StringComparison.OrdinalIgnoreCase)) return null;
         if (await users.FindByEmailAsync(nuova) is not null) return $"Esiste già un accesso con l'email {nuova}.";
 
+        // Proprietà scritte direttamente (non SetEmailAsync) così l'email resta confermata: l'indirizzo lo indica
+        // chi gestisce il personale e la persona non deve riattivare l'accesso.
         var vecchia = utente.Email;
-        var confermata = utente.EmailConfirmed;
         utente.Email = nuova;
         utente.UserName = nuova;
-        utente.EmailConfirmed = confermata; // l'indirizzo lo indica chi gestisce il personale: la persona non deve riattivarsi
         var esito = await users.UpdateAsync(utente);
         if (!esito.Succeeded) return string.Join(" ", esito.Errors.Select(e => e.Description));
         await users.UpdateSecurityStampAsync(utente);
@@ -161,9 +202,8 @@ public sealed class ServizioAccessi(
             dip.AggiornaRecapiti(nuova, dip.Telefono);
             await db.SaveChangesAsync();
         }
-        var nome = WebUtility.HtmlEncode(string.IsNullOrWhiteSpace(utente.Nome) ? nuova : utente.Nome);
         await email.InviaAsync(nuova, "La tua email di accesso a Consulens HR è cambiata",
-            $"<p>Ciao {nome},</p><p>da ora per entrare in Consulens HR usa questo indirizzo: {WebUtility.HtmlEncode(nuova)}. La password resta la stessa.</p><p>Consulens HR</p>");
+            $"<p>Ciao {Saluto(utente)},</p><p>da ora per entrare in Consulens HR usa questo indirizzo: {WebUtility.HtmlEncode(nuova)}. La password resta la stessa.</p><p>Consulens HR</p>");
         return null;
     }
 
@@ -175,4 +215,7 @@ public sealed class ServizioAccessi(
         if (esito.Succeeded && !attivo) await users.UpdateSecurityStampAsync(utente);
         return esito.Succeeded;
     }
+
+    /// <summary>Nome con cui si apre l'email (o l'indirizzo, se manca), già codificato per l'HTML.</summary>
+    private static string Saluto(ApplicationUser u) => WebUtility.HtmlEncode(string.IsNullOrWhiteSpace(u.Nome) ? u.Email ?? "" : u.Nome);
 }

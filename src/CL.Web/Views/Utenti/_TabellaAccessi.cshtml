@@ -1,4 +1,5 @@
-@model (List<CL.Web.Infrastruttura.UtenteRiga> Utenti, string Ritorno, bool MostraRuoloAzienda)
+@model (List<UtenteRiga> Utenti, string Ritorno, bool MostraRuoloAzienda)
+@* Tabella degli accessi: estesa (ruolo e azienda) nella pagina Utenti, ridotta nella scheda dell'azienda. *@
 @{ var (utenti, ritorno, esteso) = Model; }
 <div class="card radius-15 table-responsive table-actions-responsive p-1 customer-results">
     <table class="table mb-0 align-middle">

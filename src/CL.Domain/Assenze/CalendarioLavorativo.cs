@@ -3,57 +3,40 @@ namespace CL.Domain.Assenze;
 /// <summary>Festività nazionali italiane e calcolo dei giorni lavorativi.</summary>
 public static class CalendarioLavorativo
 {
-    public static IReadOnlySet<DateOnly> FestivitaNazionali(int anno)
+    /// <summary>Le festività nazionali dell'anno, ciascuna con il suo nome: è l'unico elenco delle feste.</summary>
+    public static IReadOnlyDictionary<DateOnly, string> FestivitaNazionali(int anno)
     {
-        var pasqua = Pasqua(anno);
-        var feste = new HashSet<DateOnly>
+        var feste = new Dictionary<DateOnly, string>
         {
-            new(anno, 1, 1),   // Capodanno
-            new(anno, 1, 6),   // Epifania
-            pasqua,
-            pasqua.AddDays(1), // Lunedì dell'Angelo
-            new(anno, 4, 25),  // Liberazione
-            new(anno, 5, 1),   // Festa del lavoro
-            new(anno, 6, 2),   // Festa della Repubblica
-            new(anno, 8, 15),  // Ferragosto
-            new(anno, 11, 1),  // Ognissanti
-            new(anno, 12, 8),  // Immacolata
-            new(anno, 12, 25), // Natale
-            new(anno, 12, 26), // Santo Stefano
+            [new(anno, 1, 1)] = "Capodanno",
+            [new(anno, 1, 6)] = "Epifania",
+            [new(anno, 4, 25)] = "Festa della Liberazione",
+            [new(anno, 5, 1)] = "Festa del lavoro",
+            [new(anno, 6, 2)] = "Festa della Repubblica",
+            [new(anno, 8, 15)] = "Ferragosto",
+            [new(anno, 11, 1)] = "Ognissanti",
+            [new(anno, 12, 8)] = "Immacolata",
+            [new(anno, 12, 25)] = "Natale",
+            [new(anno, 12, 26)] = "Santo Stefano",
         };
         // San Francesco d'Assisi: festività nazionale ripristinata dal 2026 (L. 151/2025)
-        if (anno >= 2026) feste.Add(new DateOnly(anno, 10, 4));
+        if (anno >= 2026) feste[new(anno, 10, 4)] = "San Francesco d'Assisi";
+        // Per ultime, così se cadono il 25 aprile prevale il loro nome.
+        var pasqua = Pasqua(anno);
+        feste[pasqua] = "Pasqua";
+        feste[pasqua.AddDays(1)] = "Lunedì dell'Angelo";
         return feste;
     }
 
     /// <summary>Nome della festività del giorno (nazionale o santo patrono), null se è un giorno qualunque.</summary>
-    public static string? NomeFestivita(DateOnly giorno, int? patronoMese = null, int? patronoGiorno = null)
-    {
-        var pasqua = Pasqua(giorno.Year);
-        if (giorno == pasqua) return "Pasqua";
-        if (giorno == pasqua.AddDays(1)) return "Lunedì dell'Angelo";
-        var nome = (giorno.Month, giorno.Day) switch
-        {
-            (1, 1) => "Capodanno",
-            (1, 6) => "Epifania",
-            (4, 25) => "Festa della Liberazione",
-            (5, 1) => "Festa del lavoro",
-            (6, 2) => "Festa della Repubblica",
-            (8, 15) => "Ferragosto",
-            (10, 4) when giorno.Year >= 2026 => "San Francesco d'Assisi",
-            (11, 1) => "Ognissanti",
-            (12, 8) => "Immacolata",
-            (12, 25) => "Natale",
-            (12, 26) => "Santo Stefano",
-            _ => null,
-        };
-        return nome ?? (patronoMese == giorno.Month && patronoGiorno == giorno.Day ? "Santo patrono" : null);
-    }
+    public static string? NomeFestivita(DateOnly giorno, int? patronoMese = null, int? patronoGiorno = null) =>
+        FestivitaNazionali(giorno.Year).GetValueOrDefault(giorno)
+        ?? (patronoMese == giorno.Month && patronoGiorno == giorno.Day ? "Santo patrono" : null);
 
     public static bool IsFestivo(DateOnly giorno, int? patronoMese = null, int? patronoGiorno = null) =>
-        FestivitaNazionali(giorno.Year).Contains(giorno)
-        || (patronoMese == giorno.Month && patronoGiorno == giorno.Day);
+        NomeFestivita(giorno, patronoMese, patronoGiorno) is not null;
 
+    /// <summary>La domenica non si lavora mai, il sabato solo con la settimana di 6 giorni; le festività mai.</summary>
     public static bool IsLavorativo(DateOnly giorno, int giorniLavorativiSettimana,
         int? patronoMese = null, int? patronoGiorno = null)
     {

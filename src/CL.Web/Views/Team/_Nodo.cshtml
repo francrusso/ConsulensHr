@@ -1,8 +1,8 @@
-@model CL.Web.Controllers.NodoGrafico
+@model NodoGrafico
 @inject UtenteCorrente Utente
 @* Un nodo dell'organigramma e, ricorsivamente, i suoi figli. Le linee sono disegnate dal CSS di .organigramma. *@
 @{
-    var testo = CL.Domain.Organizzazione.Team.TestoSu(Model.Colore);
+    var testo = CL.Domain.Organizzazione.Team.TestoSu(Model.Colore); // bianco o scuro, leggibile sul colore del team
     var linkScheda = Model.DipendenteId is { } id && !Utente.IsDipendente ? Url.Action("Dettaglio", "Dipendenti", new { id }) : null;
 }
 <li>

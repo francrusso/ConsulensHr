@@ -1,20 +1,15 @@
-@model CL.Web.Controllers.PanoramicaDipendente
 @inject UtenteCorrente Utente
+@*
+    Benvenuto per un accesso da dipendente non ancora collegato a una persona (chi è collegato va al suo calendario):
+    nessun dato da mostrare, solo le voci vuote e il pulsante per le richieste.
+*@
 @{ ViewData["Title"] = "Panoramica"; }
 <div class="breadcrumb-titolo mb-3"><h1 class="titolo-pagina mb-0">Ciao, @Utente.Nome</h1></div>
 
-@if (Model.Saldi.Count > 0)
-{
-    <partial name="~/Views/Assenze/_Saldi.cshtml" model="Model.Saldi" />
-}
 <div class="row g-3 mt-1">
-    @if (Model.RichiesteTeam is { } team)
-    {
-        <partial name="_Indicatore" model='("Richieste del team", team.ToString(), "ri-team-line", Url.Action("Index", "Assenze"), "da approvare")' />
-    }
-    <partial name="_Indicatore" model='("Dove lavoro", Model.Modalita ?? "Non inserito", "ri-building-line", Model.Modalita is null ? null : Url.Action("Index", "Ufficio"), Model.Modalita is null ? null : string.Join(" · ", new[] { Model.DettaglioLavoro, Model.SegnaUfficio ? "segna i giorni in ufficio" : "chiedi giorni di smart working" }.Where(x => x is not null)))' />
-    <partial name="_Indicatore" model='("Mie richieste in attesa", Model.RichiesteInAttesa.ToString(), "ri-calendar-event-line", Url.Action("Index", "Assenze"), "in attesa di approvazione")' />
-    <partial name="_Indicatore" model='("Ultima busta paga", Model.UltimaBusta?.Periodo ?? "—", "ri-file-list-3-line", Url.Action("Index", "BustePaga"), Model.UltimaBusta is null ? "nessuna ancora pubblicata" : Model.UltimaBusta.VisualizzataIl is null ? "da aprire" : "già aperta")' />
+    <partial name="_Indicatore" model='("Dove lavoro", "Non inserito", "ri-building-line", (string?)null, (string?)null)' />
+    <partial name="_Indicatore" model='("Mie richieste in attesa", "0", "ri-calendar-event-line", Url.Action("Index", "Assenze"), (string?)"in attesa di approvazione")' />
+    <partial name="_Indicatore" model='("Ultima busta paga", "—", "ri-file-list-3-line", Url.Action("Index", "BustePaga"), (string?)"nessuna ancora pubblicata")' />
     <div class="col-sm-6 col-xl d-flex align-items-center">
         <a asp-controller="Assenze" asp-action="Nuova" class="btn btn-primary w-100"><i class="ri-calendar-event-line" aria-hidden="true"></i> Chiedi ferie o permessi</a>
     </div>

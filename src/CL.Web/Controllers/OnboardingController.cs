@@ -9,7 +9,6 @@ using CL.Web.Infrastruttura;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
 namespace CL.Web.Controllers;
@@ -46,10 +45,6 @@ public sealed class SocietariForm
     [StringLength(30), Display(Name = "Telefono")]
     public string? Telefono { get; set; }
 
-    [Display(Name = "Logo")]
-    public IFormFile? Logo { get; set; }
-    public bool HaLogo { get; set; }
-
     public static readonly string[] Forme =
     [
         "Ditta individuale", "S.n.c.", "S.a.s.", "S.r.l.", "S.r.l. semplificata", "S.p.A.", "Società cooperativa",
@@ -78,7 +73,6 @@ public sealed class SediForm
     public string? OperativaComune { get; set; }
     [RegularExpression(@"^[A-Za-z]{2}$", ErrorMessage = "Sigla di 2 lettere (es. MI)."), Display(Name = "Provincia")]
     public string? OperativaProvincia { get; set; }
-
 }
 
 public sealed class LegaleForm
@@ -149,32 +143,38 @@ public sealed class OnboardingViewModel
 
 /// <summary>
 /// Percorso guidato con cui l'azienda fornisce al consulente i dati per gestire le pratiche di lavoro.
-/// Obbligatorio per il referente al primo accesso; il consulente può consultarlo e compilarlo per conto dell'azienda.
+/// Obbligatorio per il referente al primo accesso (vedi <see cref="FiltroOnboarding"/>); il consulente può consultarlo
+/// e compilarlo per conto dell'azienda. Passi: 1 dati societari, 2 sedi, 3 legale rappresentante, 4 contratto e
+/// posizioni INPS/INAIL, 5 paghe, 6 riepilogo e conferma. Ogni passo si salva da sé; a profilo completo i passi
+/// diventano schede modificabili, più la 7 (tipi di richiesta offerti ai dipendenti).
 /// </summary>
 [Authorize(Policy = Policy.GestionePersonale)]
 public sealed class OnboardingController(
     AppDbContext db, UtenteCorrente utente, SignInManager<ApplicationUser> signIn, CodaEmail coda,
     ServizioAccessi accessi, LoghiAziende loghi, TimeProvider clock) : AppController
 {
+    /// <summary>Scheda "Tipi di richiesta" del profilo completo.</summary>
+    public const int PassoRichieste = 7;
+
     public async Task<IActionResult> Index(Guid? aziendaId, int? passo)
     {
         var (azienda, profilo) = await Carica(aziendaId);
         if (azienda is null) return utente.IsConsulente ? RedirectToAction("Index", "Aziende") : NotFound();
 
-        // Profilo completo: sezioni a schede (si parte dai dati societari, 7 = tipi di richiesta).
+        // Profilo completo: sezioni a schede (si parte dai dati societari).
         // Durante il percorso guidato si può tornare ai passi già fatti, non saltare in avanti.
         var p = profilo.Completato ? Math.Clamp(passo ?? 1, 1, PassoRichieste) : Math.Clamp(passo ?? profilo.Passo, 1, profilo.Passo);
-        return Mostra(azienda, profilo, p, p == PassoRichieste ? null : FormDi(p, azienda, profilo));
+        return await Mostra(azienda, profilo, p, FormDi(p, azienda, profilo));
     }
 
-    [HttpPost, ValidateAntiForgeryToken, RequestSizeLimit(LoghiAziende.DimensioneMassima + 256 * 1024)]
+    [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Societari(Guid? aziendaId, SocietariForm form)
     {
         var (azienda, profilo) = await Carica(aziendaId);
         if (azienda is null) return NotFound();
         if (form.FormaGiuridica is not null && !SocietariForm.Forme.Contains(form.FormaGiuridica))
             ModelState.AddModelError(nameof(form.FormaGiuridica), "Scegli una voce dell'elenco.");
-        if (!ModelState.IsValid) return Mostra(azienda, profilo, 1, form);
+        if (!ModelState.IsValid) return await Mostra(azienda, profilo, 1, form);
 
         if (!Prova(() =>
             {
@@ -182,12 +182,7 @@ public sealed class OnboardingController(
                     string.IsNullOrWhiteSpace(form.Email) ? azienda.Email : form.Email);
                 profilo.ImpostaDatiSocietari(new DatiSocietari(form.FormaGiuridica!, form.NumeroRea, form.CodiceAteco!,
                     form.DataInizioAttivita, form.Pec!, form.Telefono));
-            })) return Mostra(azienda, profilo, 1, form);
-        if (form.Logo is { Length: > 0 } logo && await loghi.SalvaAsync(azienda, logo) is { } errore)
-        {
-            ModelState.AddModelError(nameof(form.Logo), errore);
-            return Mostra(azienda, profilo, 1, form);
-        }
+            })) return await Mostra(azienda, profilo, 1, form);
 
         return await SalvaEAvanza(azienda, profilo, 1);
     }
@@ -204,7 +199,7 @@ public sealed class OnboardingController(
             if (string.IsNullOrWhiteSpace(form.OperativaComune)) ModelState.AddModelError(nameof(form.OperativaComune), "Inserisci il comune.");
             if (string.IsNullOrWhiteSpace(form.OperativaProvincia)) ModelState.AddModelError(nameof(form.OperativaProvincia), "Inserisci la provincia.");
         }
-        if (!ModelState.IsValid) return Mostra(azienda, profilo, 2, form);
+        if (!ModelState.IsValid) return await Mostra(azienda, profilo, 2, form);
 
         var legale = new Indirizzo(form.LegaleVia!, form.LegaleCap!, form.LegaleComune!, form.LegaleProvincia!);
         var operativa = form.OperativaDiversa ? new Indirizzo(form.OperativaVia!, form.OperativaCap!, form.OperativaComune!, form.OperativaProvincia!) : null;
@@ -214,7 +209,7 @@ public sealed class OnboardingController(
                 // L'indirizzo dell'anagrafica è quello dove si lavora.
                 var dove = profilo.SedeOperativa ?? profilo.SedeLegale!;
                 azienda.AggiornaAnagrafica(azienda.RagioneSociale, azienda.CodiceFiscale, dove.Via, dove.Cap, dove.Comune, dove.Provincia, azienda.Email);
-            })) return Mostra(azienda, profilo, 2, form);
+            })) return await Mostra(azienda, profilo, 2, form);
 
         return await SalvaEAvanza(azienda, profilo, 2);
     }
@@ -224,12 +219,12 @@ public sealed class OnboardingController(
     {
         var (azienda, profilo) = await Carica(aziendaId);
         if (azienda is null) return NotFound();
-        if (!ModelState.IsValid) return Mostra(azienda, profilo, 3, form);
+        if (!ModelState.IsValid) return await Mostra(azienda, profilo, 3, form);
 
         CodiceFiscale? cf = null;
-        if (!Prova(() => cf = CL.Domain.ValueObjects.CodiceFiscale.Parse(form.CodiceFiscale!), nameof(form.CodiceFiscale))
+        if (!Prova(() => cf = CodiceFiscale.Parse(form.CodiceFiscale!), nameof(form.CodiceFiscale))
             || !Prova(() => profilo.ImpostaLegaleRappresentante(new LegaleRappresentante(form.Nome!, form.Cognome!, cf!, form.Email, form.Telefono))))
-            return Mostra(azienda, profilo, 3, form);
+            return await Mostra(azienda, profilo, 3, form);
 
         return await SalvaEAvanza(azienda, profilo, 3);
     }
@@ -247,7 +242,7 @@ public sealed class OnboardingController(
         if (!ModelState.IsValid
             || !Prova(() => profilo.ImpostaPosizioni(new PosizioniLavoro(form.Ccnl!, form.MatricolaInps!, form.InailCodiceDitta!, form.InailPat!,
                 form.CassaEdile, form.EnteBilaterale, form.FondoPensione, form.GiorniLavorativiSettimana, form.OreSettimanali))))
-            return Mostra(azienda, profilo, 4, form);
+            return await Mostra(azienda, profilo, 4, form);
 
         return await SalvaEAvanza(azienda, profilo, 4);
     }
@@ -257,12 +252,12 @@ public sealed class OnboardingController(
     {
         var (azienda, profilo) = await Carica(aziendaId);
         if (azienda is null) return NotFound();
-        if (!ModelState.IsValid) return Mostra(azienda, profilo, 5, form);
+        if (!ModelState.IsValid) return await Mostra(azienda, profilo, 5, form);
 
         Iban? iban = null;
         if ((!string.IsNullOrWhiteSpace(form.Iban) && !Prova(() => iban = Iban.Parse(form.Iban), nameof(form.Iban)))
             || !Prova(() => profilo.ImpostaPaghe(new DatiPaghe(iban, form.GiornoPagamento, form.NoteStudio))))
-            return Mostra(azienda, profilo, 5, form);
+            return await Mostra(azienda, profilo, 5, form);
 
         return await SalvaEAvanza(azienda, profilo, 5);
     }
@@ -274,7 +269,7 @@ public sealed class OnboardingController(
         if (azienda is null) return NotFound();
         var primaVolta = !profilo.Completato;
         if (!Prova(() => profilo.Completa(privacy, utente.Email, clock.GetUtcNow().UtcDateTime)))
-            return Mostra(azienda, profilo, ProfiloAzienda.UltimoPasso, null);
+            return await Mostra(azienda, profilo, ProfiloAzienda.UltimoPasso, null);
 
         await Salva(profilo);
         if (primaVolta) await AvvisaStudio(azienda, profilo);
@@ -285,9 +280,6 @@ public sealed class OnboardingController(
         return utente.IsConsulente ? RedirectToAction("Dettaglio", "Aziende", new { id = azienda.Id }) : RedirectToAction("Index", "Home");
     }
 
-    /// <summary>Scheda "Tipi di richiesta" del profilo completo.</summary>
-    public const int PassoRichieste = 7;
-
     /// <summary>Logo dall'intestazione del profilo: si salva subito.</summary>
     [HttpPost, ValidateAntiForgeryToken, RequestSizeLimit(LoghiAziende.DimensioneMassima + 256 * 1024)]
     public async Task<IActionResult> CaricaLogo(Guid? aziendaId, IFormFile? immagine, int? passo)
@@ -297,7 +289,7 @@ public sealed class OnboardingController(
         if (immagine is not { Length: > 0 }) Errore("Scegli un'immagine.");
         else if (await loghi.SalvaAsync(azienda, immagine) is { } errore) Errore(errore);
         else { await db.SaveChangesAsync(); Conferma("Logo aggiornato."); }
-        return RedirectToAction(nameof(Index), new { aziendaId = utente.IsConsulente ? azienda.Id : (Guid?)null, passo });
+        return TornaAlPasso(azienda, passo);
     }
 
     [HttpPost, ValidateAntiForgeryToken]
@@ -308,7 +300,7 @@ public sealed class OnboardingController(
         await loghi.RimuoviAsync(azienda);
         await db.SaveChangesAsync();
         Conferma("Logo rimosso.");
-        return RedirectToAction(nameof(Index), new { aziendaId = utente.IsConsulente ? azienda.Id : (Guid?)null, passo });
+        return TornaAlPasso(azienda, passo);
     }
 
     /// <summary>Tipi di richiesta offerti ai dipendenti: quelli non scelti spariscono da moduli e calendari.</summary>
@@ -320,9 +312,13 @@ public sealed class OnboardingController(
         azienda.ImpostaRichiesteAbilitate(abilitate ?? []);
         await db.SaveChangesAsync();
         Conferma("Tipi di richiesta aggiornati.");
-        return RedirectToAction(nameof(Index), new { aziendaId = utente.IsConsulente ? azienda.Id : (Guid?)null, passo = PassoRichieste });
+        return TornaAlPasso(azienda, PassoRichieste);
     }
 
+    /// <summary>
+    /// L'azienda su cui si lavora: per il referente sempre la sua, per il consulente quella indicata
+    /// (fuori dal suo perimetro non si trova). Senza profilo salvato se ne prepara uno nuovo.
+    /// </summary>
     private async Task<(Azienda? Azienda, ProfiloAzienda Profilo)> Carica(Guid? aziendaId)
     {
         var id = utente.IsAzienda ? utente.AziendaId : aziendaId;
@@ -343,27 +339,32 @@ public sealed class OnboardingController(
         await Salva(profilo);
         // Profilo completo: si resta sulla scheda appena salvata; durante il percorso si va al passo successivo.
         if (profilo.Completato) Conferma("Modifiche salvate.");
-        var prossimo = profilo.Completato ? passo : passo + 1;
-        return RedirectToAction(nameof(Index), new { aziendaId = utente.IsConsulente ? azienda.Id : (Guid?)null, passo = prossimo });
+        return TornaAlPasso(azienda, profilo.Completato ? passo : passo + 1);
     }
 
-    private ViewResult Mostra(Azienda azienda, ProfiloAzienda profilo, int passo, object? form) =>
+    /// <summary>Il consulente lavora per conto di un'azienda: l'indirizzo la indica; il referente non ne ha bisogno.</summary>
+    private RedirectToActionResult TornaAlPasso(Azienda azienda, int? passo) =>
+        RedirectToAction(nameof(Index), new { aziendaId = utente.IsConsulente ? azienda.Id : (Guid?)null, passo });
+
+    private async Task<ViewResult> Mostra(Azienda azienda, ProfiloAzienda profilo, int passo, object? form) =>
         View("Index", new OnboardingViewModel
         {
             AziendaId = azienda.Id, Azienda = azienda, Profilo = profilo, Passo = passo, Form = form,
             PerContoAzienda = utente.IsConsulente,
-            // Referente paghe: la persona segnata come tale nella sua scheda del personale.
-            ReferentePaghe = db.Dipendenti.AsNoTracking().IgnoreAutoIncludes().Where(d => d.AziendaId == azienda.Id && d.ReferentePaghe)
-                .Select(d => new ReferentePagheRiga(d.Id, d.Cognome + " " + d.Nome, d.Email, d.Telefono)).FirstOrDefault(),
+            // Referente paghe (serve alla scheda Paghe e al riepilogo): la persona segnata come tale nella sua scheda del personale.
+            ReferentePaghe = passo is 5 or ProfiloAzienda.UltimoPasso
+                ? await db.Dipendenti.AsNoTracking().IgnoreAutoIncludes().Where(d => d.AziendaId == azienda.Id && d.ReferentePaghe)
+                    .Select(d => new ReferentePagheRiga(d.Id, d.Cognome + " " + d.Nome, d.Email, d.Telefono)).FirstOrDefaultAsync()
+                : null,
         });
 
+    /// <summary>Il form del passo precompilato con i dati salvati (null per riepilogo e tipi di richiesta, che non ne hanno).</summary>
     private static object? FormDi(int passo, Azienda a, ProfiloAzienda p) => passo switch
     {
         1 => new SocietariForm
         {
             RagioneSociale = a.RagioneSociale, CodiceFiscale = a.CodiceFiscale, Email = a.Email, FormaGiuridica = p.FormaGiuridica,
             NumeroRea = p.NumeroRea, CodiceAteco = p.CodiceAteco, DataInizioAttivita = p.DataInizioAttivita, Pec = p.Pec, Telefono = p.Telefono,
-            HaLogo = a.LogoChiave is not null,
         },
         2 => new SediForm
         {
@@ -389,17 +390,13 @@ public sealed class OnboardingController(
         _ => null,
     };
 
+    /// <summary>Email ai consulenti attivi (in coda, inviate in background) con il link alla scheda dell'azienda.</summary>
     private async Task AvvisaStudio(Azienda azienda, ProfiloAzienda profilo)
     {
-        var consulenti = await (
-            from u in db.Users
-            join ur in db.UserRoles on u.Id equals ur.UserId
-            join r in db.Roles on ur.RoleId equals r.Id
-            where r.Name == Ruoli.Consulente && u.Attivo && u.EmailConfirmed
-            select u.Email).ToListAsync();
+        var consulenti = await db.EmailStudioAsync(azienda.Id);
         var link = WebUtility.HtmlEncode(accessi.ComponiUrl($"/Aziende/Dettaglio/{azienda.Id}"));
         var nome = WebUtility.HtmlEncode(azienda.RagioneSociale);
-        foreach (var email in consulenti.OfType<string>())
+        foreach (var email in consulenti)
             coda.Accoda(new MessaggioEmail(email, $"Profilo completato: {azienda.RagioneSociale}",
                 $"""
                 <p>{nome} ha completato il profilo per il consulente (compilato da {WebUtility.HtmlEncode(profilo.CompletatoDa)}).</p>

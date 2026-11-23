@@ -1,5 +1,6 @@
 // Campi che compaiono solo per certe scelte: <select data-mostra="idCampo" data-valore="Valore"> o <input type="checkbox" data-mostra="idCampo">.
-// Più campi sulla stessa select: data-mostra="campoA campoB" data-valore="ValoreA ValoreB" (a coppie).
+// Più campi sulla stessa select: data-mostra="campoA campoB" data-valore="ValoreA ValoreB" (a coppie;
+// con un solo valore, vale per tutti i campi). Caricato in ogni pagina da _Layout: basta mettere gli attributi.
 document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('[data-mostra]').forEach(function (c) {
         const bersagli = c.dataset.mostra.split(' ');

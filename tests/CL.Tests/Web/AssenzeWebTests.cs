@@ -139,7 +139,7 @@ public sealed class AssenzeWebTests : IDisposable
 
         r = await hr.InviaForm("/Assenze", $"/Assenze/Rifiuta/{richiesta.Id}", new() { ["motivo"] = "Chiusura bilancio" });
         Assert.Contains("Richiesta rifiutata", await Testo(r));
-        var html = WebUtility.HtmlDecode(await hr.GetStringAsync("/Assenze?stato=Rifiutata&tutte=true"));
+        var html = WebUtility.HtmlDecode(await hr.GetStringAsync("/Assenze?stato=Rifiutata"));
         Assert.Contains("Chiusura bilancio", html);
     }
 

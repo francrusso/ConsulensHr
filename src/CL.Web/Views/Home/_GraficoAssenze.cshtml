@@ -1,7 +1,7 @@
 @model List<MeseAssenze>
 @*
     Colonne impilate (ApexCharts): ore di assenza approvate per mese, per tipo.
-    I dati arrivano in un blocco JSON; legenda, tooltip e tabella dei valori sempre disponibili.
+    I dati vanno al grafico (wwwroot/js/grafici-panoramica.js) in un blocco JSON; l'ordine delle serie è quello dei colori nello script.
 *@
 @{
     var serie = new (string Nome, Func<AssenzeDelMese, decimal> Valore)[]

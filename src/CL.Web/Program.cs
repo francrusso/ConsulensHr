@@ -1,6 +1,6 @@
-using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
 using System.Globalization;
+using System.Text.Encodings.Web;
+using System.Text.Unicode;
 using CL.Infrastructure;
 using CL.Infrastructure.Identity;
 using CL.Infrastructure.Persistence;
@@ -8,6 +8,8 @@ using CL.Web.Infrastruttura;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc.Authorization;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.WebEncoders;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,13 +30,14 @@ builder.Services.ConfigureApplicationCookie(o =>
     o.SlidingExpiration = true;
 });
 
+// Politiche dei controller. Il super amministratore ha anche il ruolo consulente, quindi passa da entrambe;
+// le pagine solo sue (Consulenti, creazione dei consulenti) usano [Authorize(Roles = Ruoli.Amministratore)].
 builder.Services.AddAuthorizationBuilder()
     .AddPolicy(Policy.SoloConsulente, p => p.RequireRole(Ruoli.Consulente))
     .AddPolicy(Policy.GestionePersonale, p => p.RequireRole(Ruoli.Consulente, Ruoli.Azienda));
 
 // Lettere accentate scritte così come sono nell'HTML (senza &#xE0; ecc.).
-builder.Services.Configure<Microsoft.Extensions.WebEncoders.WebEncoderOptions>(o =>
-    o.TextEncoderSettings = new System.Text.Encodings.Web.TextEncoderSettings(System.Text.Unicode.UnicodeRanges.All));
+builder.Services.Configure<WebEncoderOptions>(o => o.TextEncoderSettings = new TextEncoderSettings(UnicodeRanges.All));
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddMemoryCache(o => o.SizeLimit = 5000);
@@ -57,6 +60,7 @@ builder.Services.AddControllersWithViews(o =>
 {
     // Tutto richiede login, salvo le azioni marcate [AllowAnonymous].
     o.Filters.Add(new AuthorizeFilter(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build()));
+    // Referente o dipendente con il profilo da completare: solo il percorso guidato.
     o.Filters.Add<FiltroOnboarding>();
 });
 
@@ -85,17 +89,17 @@ if (!app.Environment.IsDevelopment())
 app.UseRouting();
 
 app.UseAuthentication();
-// Perimetro del consulente: le sole aziende assegnate a lui (il super amministratore vede tutto).
-// Da qui in poi i filtri globali del database nascondono il resto in ogni query.
+// Perimetro del consulente (serve sapere già chi è l'utente, quindi dopo l'autenticazione): le sole aziende
+// assegnate a lui; il super amministratore vede tutto. Da qui in poi i filtri globali di AppDbContext
+// nascondono il resto in ogni query della richiesta.
 app.Use(async (contesto, prossimo) =>
 {
-    var u = contesto.User;
-    if (u.IsInRole(CL.Infrastructure.Identity.Ruoli.Consulente) && !u.IsInRole(CL.Infrastructure.Identity.Ruoli.Amministratore)
-        && u.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier) is { } id)
+    var utente = contesto.RequestServices.GetRequiredService<UtenteCorrente>();
+    if (utente.IsConsulente && !utente.IsAmministratore && utente.UserId is { } id)
     {
-        var db = contesto.RequestServices.GetRequiredService<CL.Infrastructure.Persistence.AppDbContext>();
-        var ids = await db.AssegnazioniAziende.AsNoTracking().Where(a => a.UserId == id).Select(a => a.AziendaId).ToListAsync();
-        contesto.RequestServices.GetRequiredService<CL.Infrastructure.Persistence.PerimetroAziende>().Consentite = ids;
+        var db = contesto.RequestServices.GetRequiredService<AppDbContext>();
+        contesto.RequestServices.GetRequiredService<PerimetroAziende>().Consentite =
+            await db.AssegnazioniAziende.AsNoTracking().Where(a => a.UserId == id).Select(a => a.AziendaId).ToListAsync();
     }
     await prossimo();
 });

@@ -2,6 +2,7 @@ using CL.Domain.Assenze;
 using CL.Domain.Aziende;
 using CL.Domain.BustePaga;
 using CL.Domain.Dipendenti;
+using CL.Domain.Documenti;
 using CL.Domain.Organizzazione;
 using CL.Domain.Presenze;
 using CL.Domain.ValueObjects;
@@ -13,12 +14,15 @@ namespace CL.Infrastructure.Persistence;
 
 public sealed class AppDbContext(DbContextOptions<AppDbContext> options, PerimetroAziende? perimetro = null) : IdentityDbContext<ApplicationUser>(options)
 {
-    /// <summary>Aziende visibili nella richiesta corrente (null = tutte). Letto a ogni query dai filtri globali.</summary>
-    private IReadOnlyCollection<Guid>? Consentite => perimetro?.Consentite;
-    public DbSet<AssegnazioneAzienda> AssegnazioniAziende => Set<AssegnazioneAzienda>();
-
     public const string Schema = "hr";
 
+    /// <summary>
+    /// Aziende visibili nella richiesta corrente (null = tutte). È un membro del contesto, non una costante:
+    /// il modello con i filtri globali è in cache una volta sola, ma EF rilegge questo valore a ogni query.
+    /// </summary>
+    private IReadOnlyCollection<Guid>? Consentite => perimetro?.Consentite;
+
+    public DbSet<AssegnazioneAzienda> AssegnazioniAziende => Set<AssegnazioneAzienda>();
     public DbSet<Azienda> Aziende => Set<Azienda>();
     public DbSet<Dipendente> Dipendenti => Set<Dipendente>();
     public DbSet<Contratto> Contratti => Set<Contratto>();
@@ -26,10 +30,10 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, Perimet
     public DbSet<SaldoIniziale> SaldiIniziali => Set<SaldoIniziale>();
     public DbSet<BustaPaga> BustePaga => Set<BustaPaga>();
     public DbSet<ChiusuraAziendale> ChiusureAziendali => Set<ChiusuraAziendale>();
-    public DbSet<CL.Domain.Presenze.GiornoInUfficio> GiorniInUfficio => Set<CL.Domain.Presenze.GiornoInUfficio>();
-    public DbSet<CL.Domain.Presenze.GiornoSmartWorking> GiorniSmartWorking => Set<CL.Domain.Presenze.GiornoSmartWorking>();
-    public DbSet<CL.Domain.Presenze.Straordinario> Straordinari => Set<CL.Domain.Presenze.Straordinario>();
-    public DbSet<CL.Domain.Documenti.CertificazioneUnica> CertificazioniUniche => Set<CL.Domain.Documenti.CertificazioneUnica>();
+    public DbSet<GiornoInUfficio> GiorniInUfficio => Set<GiornoInUfficio>();
+    public DbSet<GiornoSmartWorking> GiorniSmartWorking => Set<GiornoSmartWorking>();
+    public DbSet<Straordinario> Straordinari => Set<Straordinario>();
+    public DbSet<CertificazioneUnica> CertificazioniUniche => Set<CertificazioneUnica>();
     public DbSet<ProfiloAzienda> ProfiliAzienda => Set<ProfiloAzienda>();
     public DbSet<ComunicazioneMensile> ComunicazioniPresenze => Set<ComunicazioneMensile>();
     public DbSet<ProfiloDipendente> ProfiliDipendente => Set<ProfiloDipendente>();
@@ -58,11 +62,12 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, Perimet
         builder.Entity<Dipendente>().HasQueryFilter(d => Consentite == null || Consentite.Contains(d.AziendaId));
         builder.Entity<BustaPaga>().HasQueryFilter(x => Consentite == null || Consentite.Contains(x.AziendaId));
         builder.Entity<ChiusuraAziendale>().HasQueryFilter(x => Consentite == null || Consentite.Contains(x.AziendaId));
-        builder.Entity<CL.Domain.Documenti.CertificazioneUnica>().HasQueryFilter(x => Consentite == null || Consentite.Contains(x.AziendaId));
+        builder.Entity<CertificazioneUnica>().HasQueryFilter(x => Consentite == null || Consentite.Contains(x.AziendaId));
         builder.Entity<ComunicazioneMensile>().HasQueryFilter(x => Consentite == null || Consentite.Contains(x.AziendaId));
         builder.Entity<ProfiloAzienda>().HasQueryFilter(x => Consentite == null || Consentite.Contains(x.AziendaId));
         builder.Entity<Team>().HasQueryFilter(x => Consentite == null || Consentite.Contains(x.AziendaId));
-        // Dati della persona: visibili se lo è la persona.
+        // Dati della persona (senza AziendaId): visibili se lo è la persona. La sottoquery su Dipendenti
+        // ha a sua volta il filtro per azienda, quindi basta chiedere che il dipendente "esista".
         builder.Entity<Contratto>().HasQueryFilter(x => Consentite == null || Set<Dipendente>().Any(d => d.Id == x.DipendenteId));
         builder.Entity<RichiestaAssenza>().HasQueryFilter(x => Consentite == null || Set<Dipendente>().Any(d => d.Id == x.DipendenteId));
         builder.Entity<SaldoIniziale>().HasQueryFilter(x => Consentite == null || Set<Dipendente>().Any(d => d.Id == x.DipendenteId));
@@ -74,6 +79,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, Perimet
 
     protected override void ConfigureConventions(ModelConfigurationBuilder c)
     {
+        // Importi e ore: 2 decimali. Enum salvati come testo: leggibili nel database e indipendenti dall'ordine dei valori.
         c.Properties<decimal>().HavePrecision(12, 2);
         c.Properties<Enum>().HaveConversion<string>().HaveMaxLength(32);
 

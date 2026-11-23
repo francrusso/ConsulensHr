@@ -31,11 +31,11 @@ public sealed class CertificazioneUnica : Entity
         Sostituisci(nomeFile, chiaveArchivio, dimensioneByte, caricataDa, adesso);
     }
 
+    /// <summary>Nuovo file per la stessa persona e anno: la presa visione si azzera, il dipendente deve riaprirla.</summary>
     public void Sostituisci(string nomeFile, string chiaveArchivio, long dimensioneByte, string caricataDa, DateTime adesso)
     {
         if (dimensioneByte <= 0) throw new DomainException("Il file della CU è vuoto.");
-        var nome = Path.GetFileName(nomeFile ?? "").Trim();
-        NomeFile = string.IsNullOrEmpty(nome) ? $"CU_{AnnoImposta}.pdf" : nome.Length > 200 ? nome[..200] : nome;
+        NomeFile = Guard.NomeFile(nomeFile, $"CU_{AnnoImposta}.pdf");
         ChiaveArchivio = Guard.NotEmpty(chiaveArchivio, "Archivio");
         DimensioneByte = dimensioneByte;
         CaricataDa = Guard.NotEmpty(caricataDa, "Autore");

@@ -1,10 +1,8 @@
 @model List<CL.Web.Controllers.DipendenteRiga>
 @inject CL.Web.Infrastruttura.UtenteCorrente Utente
 @{
-    // Per il referente dell'azienda la sezione si chiama "Personale".
-    var p = true; // "Personale" per tutti (consulente e azienda)
     var consulentiAziende = ViewBag.ConsulentiAziende as Dictionary<Guid, string> ?? new();
-    ViewData["Title"] = p ? "Personale" : "Dipendenti";
+    ViewData["Title"] = "Personale";
     var aziende = ViewBag.Aziende as List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>;
     var conteggi = (Dictionary<CL.Web.Controllers.StatoPersonale, int>)ViewBag.Conteggi;
     var statoScelto = ViewBag.Stato as CL.Web.Controllers.StatoPersonale?;
@@ -36,7 +34,7 @@
             <div class="invoice-filter-client">
                 <div class="input-group">
                     <span class="input-group-text bg-transparent"><i class="ri-search-line" aria-hidden="true"></i></span>
-                    <input type="text" name="q" class="form-control" placeholder="Cerca per nome, cognome o codice fiscale" aria-label="@(p ? "Cerca nel personale" : "Cerca dipendenti")" value="@ViewBag.Ricerca" />
+                    <input type="text" name="q" class="form-control" placeholder="Cerca per nome, cognome o codice fiscale" aria-label="Cerca nel personale" value="@ViewBag.Ricerca" />
                 </div>
             </div>
             @if (aziende is not null)
@@ -74,7 +72,7 @@
         <table class="table mb-0">
             <thead>
                 <tr>
-                    <th scope="col">@(esterni ? "Professionista" : p ? "Persona" : "Dipendente")</th>
+                    <th scope="col">@(esterni ? "Professionista" : "Persona")</th>
                     <th scope="col">Profilo</th>
                     <th scope="col">Team</th>
                     <th scope="col">Codice fiscale</th>
@@ -91,12 +89,12 @@
             <tbody>
                 @if (Model.Count == 0)
                 {
-                    <tr><td colspan="@(10 + (Utente.IsConsulente ? 1 : 0) + (esterni ? 1 : 0))" class="elenco-vuoto"><span class="elenco-vuoto-icona" aria-hidden="true"><i class="ri-team-line"></i></span><div>@(esterni ? "Nessun professionista esterno" : p ? "Nessuna persona trovata" : "Nessun dipendente trovato")</div></td></tr>
+                    <tr><td colspan="@(10 + (Utente.IsConsulente ? 1 : 0) + (esterni ? 1 : 0))" class="elenco-vuoto"><span class="elenco-vuoto-icona" aria-hidden="true"><i class="ri-team-line"></i></span><div>@(esterni ? "Nessun professionista esterno" : "Nessuna persona trovata")</div></td></tr>
                 }
                 @foreach (var d in Model)
                 {
                     <tr class="customer-result-row">
-                        <td data-label="@(p ? "Persona" : "Dipendente")"><a class="customer-name" asp-action="Dettaglio" asp-route-id="@d.Id"><img class="avatar-elenco" src="@(d.HaFoto ? Url.Action("Foto", new { id = d.Id }) : Url.Content($"~/assets/images/avatar/{d.Segnaposto}.png"))" alt="" loading="lazy" /><span>@d.NomeCompleto</span></a></td>
+                        <td data-label="Persona"><a class="customer-name" asp-action="Dettaglio" asp-route-id="@d.Id"><img class="avatar-elenco" src="@(d.HaFoto ? Url.Action("Foto", new { id = d.Id }) : Url.Content($"~/assets/images/avatar/{d.Segnaposto}.png"))" alt="" loading="lazy" /><span>@d.NomeCompleto</span></a></td>
                         <td data-label="Profilo">@(d.Profilo ?? "—")</td>
                         <td data-label="Team">
                             @if (d.Team is { } tm)
@@ -112,7 +110,7 @@
                                 @if (Utente.IsAmministratore) { <div class="dettaglio-presenza"><i class="ri-user-star-line" aria-hidden="true"></i> @(consulentiAziende.GetValueOrDefault(d.AziendaId) ?? "Nessun consulente")</div> }
                             </td>
                         }
-                        @if (esterni) { <td data-label="Rapporto">@(d.Inquadramento ?? "—")</td> }
+                        @if (esterni) { <td data-label="Rapporto">@(d.Rapporto ?? "—")</td> }
                         <td data-label="@(esterni ? "Compenso annuo" : "RAL")" class="text-end text-nowrap">@(d.Ral is > 0 ? d.Ral.Value.ToString("C0", it) : "—")</td>
                         <td data-label="Mensile lordo" class="text-end text-nowrap" title="@(d.Mensilita is > 0 ? $"RAL divisa per {d.Mensilita} mensilità" : null)">@(d.MensileLordo is { } ml ? ml.ToString("C0", it) : "—")</td>
                         <td data-label="Contratto" class="text-nowrap">

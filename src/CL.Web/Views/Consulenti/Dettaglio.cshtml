@@ -1,7 +1,7 @@
-@model CL.Web.Controllers.ConsulenteViewModel
+@model ConsulenteViewModel
 @{
     var c = Model.Consulente;
-    ViewData["Title"] = string.IsNullOrWhiteSpace(c.Nome) ? c.Email : c.Nome;
+    ViewData["Title"] = c.NomeVisibile;
     ViewData["Percorso"] = new List<(string, string?)> { ("Consulenti", Url.Action("Index")) };
 }
 <div class="breadcrumb-titolo mb-3"><h1 class="titolo-pagina mb-0">@ViewData["Title"]</h1></div>
@@ -12,7 +12,7 @@
             <span class="foto-profilo logo-profilo logo-vuoto" aria-hidden="true"><i class="ri-user-star-line"></i></span>
             <div>
                 <h2 class="fs-5 mb-0 text-breadcrumb nome-profilo d-flex align-items-center gap-2 flex-wrap">
-                    @ViewData["Title"]!.ToString()!.ToUpperInvariant()
+                    @c.NomeVisibile.ToUpperInvariant()
                     <partial name="~/Views/Utenti/_StatoAccesso.cshtml" model="c.Stato" />
                 </h2>
                 <div class="azienda-profilo">@c.Email</div>

@@ -94,8 +94,8 @@ public sealed class ProfiloDipendente : Entity
         if (!Province.IsValida(prov, ammessoEstero: true)) throw new DomainException("Provincia di nascita: usa la sigla (EE se sei nato all'estero).");
         ProvinciaNascita = prov;
         Cittadinanza = Guard.NotEmpty(d.Cittadinanza, "Cittadinanza");
-        Telefono = Pulito(d.Telefono);
-        EmailPersonale = Pulito(d.EmailPersonale)?.ToLowerInvariant();
+        Telefono = Guard.Facoltativo(d.Telefono);
+        EmailPersonale = Guard.Facoltativo(d.EmailPersonale)?.ToLowerInvariant();
         Salvato(1, da, adesso);
     }
 
@@ -113,7 +113,7 @@ public sealed class ProfiloDipendente : Entity
         if (tfr == DestinazioneTfr.FondoPensione && string.IsNullOrWhiteSpace(fondoPensione))
             throw new DomainException("Indica il fondo pensione a cui destinare il TFR.");
         Iban = iban;
-        IntestatarioConto = Pulito(intestatario);
+        IntestatarioConto = Guard.Facoltativo(intestatario);
         Tfr = tfr;
         FondoPensione = tfr == DestinazioneTfr.FondoPensione ? fondoPensione!.Trim() : null;
         Salvato(3, da, adesso);
@@ -162,14 +162,13 @@ public sealed class ProfiloDipendente : Entity
         Passo = UltimoPasso;
     }
 
+    /// <summary>Data e autore di ogni salvataggio (il consulente vede chi ha cambiato cosa); il passo da cui riprendere avanza solo.</summary>
     private void Salvato(int passo, string da, DateTime adesso)
     {
         Passo = Math.Max(Passo, Math.Min(passo + 1, UltimoPasso));
         AggiornatoIl = adesso;
         AggiornatoDa = da;
     }
-
-    private static string? Pulito(string? s) => string.IsNullOrWhiteSpace(s) ? null : s.Trim();
 }
 
 public sealed class FamiliareACarico : Entity

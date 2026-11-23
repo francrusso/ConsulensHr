@@ -1,4 +1,5 @@
-@model CL.Web.Controllers.ProfiloViewModel
+@model ProfiloViewModel
+@inject UtenteCorrente Utente
 @{
     ViewData["Title"] = "Il mio profilo";
 }
@@ -10,7 +11,7 @@
     <div class="col-lg-4">
         <section class="card radius-15 p-4 h-100">
             <h2 class="h6 mb-3">Dati di accesso</h2>
-            @if (User.IsInRole(CL.Infrastructure.Identity.Ruoli.Consulente))
+            @if (Utente.IsConsulente)
             {
                 @* Il consulente cambia da sé nome, cognome ed email di accesso. *@
                 <form asp-action="DatiProfilo" method="post" class="d-grid gap-3">

@@ -11,12 +11,16 @@ using CL.Web.Infrastruttura;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
 namespace CL.Web.Controllers;
 
 #region Form dei passi
+
+// I controlli che non stanno negli attributi sono metodi dei form: li usano sia il percorso guidato sia la scheda
+// della persona (dove i campi hanno il prefisso "paghe.").
 
 public sealed class AnagraficaForm
 {
@@ -36,9 +40,12 @@ public sealed class AnagraficaForm
     [Display(Name = "Pronomi (facoltativi)")]
     public Pronomi? Pronomi { get; set; }
 
-    [Display(Name = "La tua foto (facoltativa: PNG, JPEG o WebP, massimo 2 MB)")]
-    public IFormFile? Foto { get; set; }
-    public bool HaFoto { get; set; }
+    /// <summary>Cellulare: quello già dato per le paghe, altrimenti quello dell'anagrafica.</summary>
+    public static AnagraficaForm Da(Dipendente d, ProfiloDipendente p) => new()
+    {
+        ComuneNascita = p.ComuneNascita, ProvinciaNascita = p.ProvinciaNascita, Cittadinanza = p.Cittadinanza ?? "Italiana",
+        Telefono = p.Telefono ?? d.Telefono, EmailPersonale = p.EmailPersonale, Genere = d.Genere, Pronomi = d.Pronomi,
+    };
 }
 
 public sealed class ResidenzaForm
@@ -62,6 +69,23 @@ public sealed class ResidenzaForm
     public string? DomicilioComune { get; set; }
     [RegularExpression(@"^[A-Za-z]{2}$", ErrorMessage = "Sigla di 2 lettere."), Display(Name = "Provincia")]
     public string? DomicilioProvincia { get; set; }
+
+    public static ResidenzaForm Da(ProfiloDipendente p) => new()
+    {
+        Via = p.ResidenzaVia, Cap = p.ResidenzaCap, Comune = p.ResidenzaComune, Provincia = p.ResidenzaProvincia,
+        DomicilioDiverso = p.DomicilioVia is not null, DomicilioVia = p.DomicilioVia, DomicilioCap = p.DomicilioCap,
+        DomicilioComune = p.DomicilioComune, DomicilioProvincia = p.DomicilioProvincia,
+    };
+
+    /// <summary>Con il domicilio diverso dalla residenza i suoi campi diventano obbligatori.</summary>
+    public void ControllaDomicilio(ModelStateDictionary errori, string prefisso = "")
+    {
+        if (!DomicilioDiverso) return;
+        foreach (var (campo, valore, msg) in new[] { (nameof(DomicilioVia), DomicilioVia, "Inserisci l'indirizzo."),
+                     (nameof(DomicilioCap), DomicilioCap, "Inserisci il CAP."), (nameof(DomicilioComune), DomicilioComune, "Inserisci il comune."),
+                     (nameof(DomicilioProvincia), DomicilioProvincia, "Inserisci la provincia.") })
+            if (string.IsNullOrWhiteSpace(valore)) errori.AddModelError(prefisso + campo, msg);
+    }
 }
 
 public sealed class PagamentoForm
@@ -74,6 +98,12 @@ public sealed class PagamentoForm
     public DestinazioneTfr Tfr { get; set; } = DestinazioneTfr.Azienda;
     [StringLength(150), Display(Name = "Fondo pensione")]
     public string? FondoPensione { get; set; }
+
+    /// <summary>IBAN: quello già dato per le paghe, altrimenti quello dell'anagrafica.</summary>
+    public static PagamentoForm Da(Dipendente d, ProfiloDipendente p) => new()
+    {
+        Iban = (p.Iban ?? d.Iban)?.Valore, IntestatarioConto = p.IntestatarioConto, Tfr = p.Tfr ?? DestinazioneTfr.Azienda, FondoPensione = p.FondoPensione,
+    };
 }
 
 public sealed class FamiliareForm
@@ -94,6 +124,40 @@ public sealed class FamigliaForm
     [Display(Name = "Chiedo che mi siano applicate le detrazioni per lavoro dipendente")]
     public bool RichiedeDetrazioni { get; set; } = true;
     public List<FamiliareForm> Familiari { get; set; } = [];
+
+    public static FamigliaForm Da(ProfiloDipendente p) => new()
+    {
+        RichiedeDetrazioni = p.RichiedeDetrazioni ?? true,
+        Familiari = p.Familiari.OrderBy(f => f.Relazione).ThenBy(f => f.DataNascita).Select(f => new FamiliareForm
+        {
+            Relazione = f.Relazione, Nome = f.Nome, Cognome = f.Cognome, CodiceFiscale = f.CodiceFiscale.Valore,
+            DataNascita = f.DataNascita, PercentualeCarico = f.PercentualeCarico, Disabile = f.Disabile,
+        }).ToList(),
+    };
+
+    /// <summary>
+    /// Familiari compilati, pronti per il profilo: le righe del tutto vuote si ignorano (il modulo ne ha sempre qualcuna in più),
+    /// quelle incomplete o con il codice fiscale sbagliato finiscono negli errori.
+    /// </summary>
+    public List<DatiFamiliare> Leggi(ModelStateDictionary errori, string prefisso, string erroreNascita)
+    {
+        var familiari = new List<DatiFamiliare>();
+        for (var i = 0; i < Familiari.Count; i++)
+        {
+            var f = Familiari[i];
+            if (f.Vuoto) continue;
+            var campo = $"{prefisso}Familiari[{i}].";
+            if (string.IsNullOrWhiteSpace(f.Nome) || string.IsNullOrWhiteSpace(f.Cognome))
+                errori.AddModelError(campo + nameof(f.Nome), "Nome e cognome del familiare.");
+            if (f.DataNascita is null) errori.AddModelError(campo + nameof(f.DataNascita), erroreNascita);
+            CodiceFiscale? cf = null;
+            try { cf = CodiceFiscale.Parse(f.CodiceFiscale ?? ""); }
+            catch (DomainException ex) { errori.AddModelError(campo + nameof(f.CodiceFiscale), ex.Message); }
+            if (cf is not null && f.DataNascita is { } nascita && !string.IsNullOrWhiteSpace(f.Nome) && !string.IsNullOrWhiteSpace(f.Cognome))
+                familiari.Add(new DatiFamiliare(f.Relazione, f.Nome, f.Cognome, cf, nascita, f.PercentualeCarico, f.Disabile));
+        }
+        return familiari;
+    }
 }
 
 public sealed class AltriDatiForm
@@ -110,6 +174,21 @@ public sealed class AltriDatiForm
     public DateOnly? ScadenzaPermessoSoggiorno { get; set; }
 
     public static readonly string[] Documenti = ["Carta d'identità", "Passaporto", "Patente di guida"];
+
+    public static AltriDatiForm Da(ProfiloDipendente p) => new()
+    {
+        TitoloStudio = p.TitoloStudio ?? TitoloStudio.Diploma, TipoDocumento = p.TipoDocumento ?? "Carta d'identità",
+        NumeroDocumento = p.NumeroDocumento, ScadenzaDocumento = p.ScadenzaDocumento, ScadenzaPermessoSoggiorno = p.ScadenzaPermessoSoggiorno,
+    };
+
+    /// <summary>Documento d'identità tra quelli dell'elenco e ancora valido.</summary>
+    public void ControllaDocumento(ModelStateDictionary errori, DateOnly oggi, string prefisso = "")
+    {
+        if (TipoDocumento is not null && !Documenti.Contains(TipoDocumento))
+            errori.AddModelError(prefisso + nameof(TipoDocumento), "Scegli una voce dell'elenco.");
+        if (ScadenzaDocumento is { } s && s < oggi)
+            errori.AddModelError(prefisso + nameof(ScadenzaDocumento), "Il documento è scaduto: indica quello valido.");
+    }
 }
 
 /// <summary>Tutti i dati per le paghe in un solo modulo: si modificano dalla scheda della persona.</summary>
@@ -123,11 +202,11 @@ public sealed class DatiPagheForm
 
     public static DatiPagheForm Da(Dipendente d, ProfiloDipendente p) => new()
     {
-        Anagrafica = (AnagraficaForm)DatiPersonaliController.FormDi(1, d, p)!,
-        Residenza = (ResidenzaForm)DatiPersonaliController.FormDi(2, d, p)!,
-        Pagamento = (PagamentoForm)DatiPersonaliController.FormDi(3, d, p)!,
-        Famiglia = (FamigliaForm)DatiPersonaliController.FormDi(4, d, p)!,
-        Altri = (AltriDatiForm)DatiPersonaliController.FormDi(5, d, p)!,
+        Anagrafica = AnagraficaForm.Da(d, p),
+        Residenza = ResidenzaForm.Da(p),
+        Pagamento = PagamentoForm.Da(d, p),
+        Famiglia = FamigliaForm.Da(p),
+        Altri = AltriDatiForm.Da(p),
     };
 }
 
@@ -148,6 +227,7 @@ public sealed class DatiPersonaliViewModel
 /// <summary>
 /// Dati personali del dipendente per le paghe: percorso guidato obbligatorio al primo accesso,
 /// poi consultabile e aggiornabile. Studio e referente dell'azienda li vedono e possono compilarli per conto del dipendente.
+/// Ogni passo si salva subito; residenza, IBAN e cellulare finiscono anche nell'anagrafica usata dal consulente.
 /// </summary>
 [Authorize]
 public sealed class DatiPersonaliController(
@@ -160,7 +240,7 @@ public sealed class DatiPersonaliController(
     {
         var (dip, profilo) = await Carica(dipendenteId);
         if (dip is null) return utente.IsDipendente ? NotFound() : RedirectToAction("Index", "Dipendenti");
-        // Dati completi: sezioni a schede (si parte dai dati anagrafici); durante il percorso si va per passi.
+        // Dati completi: sezioni a schede (si parte dai dati anagrafici); durante il percorso si va per passi, senza saltare avanti.
         var p = profilo.Completato ? Math.Clamp(passo ?? 1, 1, ProfiloDipendente.UltimoPasso - 1) : Math.Clamp(passo ?? profilo.Passo, 1, profilo.Passo);
         return Mostra(dip, profilo, p, FormDi(p, dip, profilo));
     }
@@ -174,7 +254,7 @@ public sealed class DatiPersonaliController(
         if (immagine is not { Length: > 0 }) Errore("Scegli un'immagine.");
         else if (await foto.SalvaAsync(dip, immagine) is { } errore) Errore(errore);
         else { await db.SaveChangesAsync(); Conferma("Foto aggiornata."); }
-        return RedirectToAction(nameof(Index), new { dipendenteId = utente.IsDipendente ? (Guid?)null : dip.Id, passo });
+        return AlPasso(dip, passo);
     }
 
     [HttpPost, ValidateAntiForgeryToken]
@@ -185,10 +265,10 @@ public sealed class DatiPersonaliController(
         await foto.RimuoviAsync(dip);
         await db.SaveChangesAsync();
         Conferma("Foto rimossa.");
-        return RedirectToAction(nameof(Index), new { dipendenteId = utente.IsDipendente ? (Guid?)null : dip.Id, passo });
+        return AlPasso(dip, passo);
     }
 
-    [HttpPost, ValidateAntiForgeryToken, RequestSizeLimit(Immagini.DimensioneMassima + 256 * 1024)]
+    [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Anagrafica(Guid? dipendenteId, AnagraficaForm form)
     {
         var (dip, profilo) = await Carica(dipendenteId);
@@ -199,11 +279,6 @@ public sealed class DatiPersonaliController(
             return Mostra(dip, profilo, 1, form);
         dip.AggiornaRecapiti(dip.Email, form.Telefono ?? dip.Telefono);
         dip.ImpostaIdentita(form.Genere, form.Pronomi);
-        if (form.Foto is { Length: > 0 } file && await foto.SalvaAsync(dip, file) is { } errore)
-        {
-            ModelState.AddModelError(nameof(form.Foto), errore);
-            return Mostra(dip, profilo, 1, form);
-        }
         return await SalvaEAvanza(dip, profilo, 1);
     }
 
@@ -212,11 +287,7 @@ public sealed class DatiPersonaliController(
     {
         var (dip, profilo) = await Carica(dipendenteId);
         if (dip is null) return NotFound();
-        if (form.DomicilioDiverso)
-            foreach (var (campo, valore, msg) in new[] { (nameof(form.DomicilioVia), form.DomicilioVia, "Inserisci l'indirizzo."),
-                         (nameof(form.DomicilioCap), form.DomicilioCap, "Inserisci il CAP."), (nameof(form.DomicilioComune), form.DomicilioComune, "Inserisci il comune."),
-                         (nameof(form.DomicilioProvincia), form.DomicilioProvincia, "Inserisci la provincia.") })
-                if (string.IsNullOrWhiteSpace(valore)) ModelState.AddModelError(campo, msg);
+        form.ControllaDomicilio(ModelState);
         if (!ModelState.IsValid) return Mostra(dip, profilo, 2, form);
 
         var residenza = new Indirizzo(form.Via!, form.Cap!, form.Comune!, form.Provincia!);
@@ -245,22 +316,7 @@ public sealed class DatiPersonaliController(
     {
         var (dip, profilo) = await Carica(dipendenteId);
         if (dip is null) return NotFound();
-
-        var familiari = new List<DatiFamiliare>();
-        for (var i = 0; i < form.Familiari.Count; i++)
-        {
-            var f = form.Familiari[i];
-            if (f.Vuoto) continue;
-            var prefisso = $"Familiari[{i}].";
-            if (string.IsNullOrWhiteSpace(f.Nome) || string.IsNullOrWhiteSpace(f.Cognome))
-                ModelState.AddModelError(prefisso + nameof(f.Nome), "Nome e cognome del familiare.");
-            if (f.DataNascita is null) ModelState.AddModelError(prefisso + nameof(f.DataNascita), "Data di nascita.");
-            CodiceFiscale? cf = null;
-            try { cf = CodiceFiscale.Parse(f.CodiceFiscale ?? ""); }
-            catch (DomainException ex) { ModelState.AddModelError(prefisso + nameof(f.CodiceFiscale), ex.Message); }
-            if (cf is not null && f.DataNascita is { } nascita && !string.IsNullOrWhiteSpace(f.Nome) && !string.IsNullOrWhiteSpace(f.Cognome))
-                familiari.Add(new DatiFamiliare(f.Relazione, f.Nome, f.Cognome, cf, nascita, f.PercentualeCarico, f.Disabile));
-        }
+        var familiari = form.Leggi(ModelState, "", "Data di nascita.");
         if (!ModelState.IsValid
             || !Prova(() => profilo.ImpostaFamiglia(form.RichiedeDetrazioni, familiari, utente.Email, Adesso)))
             return Mostra(dip, profilo, 4, form);
@@ -272,10 +328,7 @@ public sealed class DatiPersonaliController(
     {
         var (dip, profilo) = await Carica(dipendenteId);
         if (dip is null) return NotFound();
-        if (form.TipoDocumento is not null && !AltriDatiForm.Documenti.Contains(form.TipoDocumento))
-            ModelState.AddModelError(nameof(form.TipoDocumento), "Scegli una voce dell'elenco.");
-        if (form.ScadenzaDocumento is { } s && s < DateOnly.FromDateTime(clock.GetLocalNow().DateTime))
-            ModelState.AddModelError(nameof(form.ScadenzaDocumento), "Il documento è scaduto: indica quello valido.");
+        form.ControllaDocumento(ModelState, DateOnly.FromDateTime(clock.GetLocalNow().DateTime));
         if (!ModelState.IsValid
             || !Prova(() => profilo.ImpostaAltriDati(new AltriDati(form.TitoloStudio, form.TipoDocumento!, form.NumeroDocumento!,
                 form.ScadenzaDocumento!.Value, form.ScadenzaPermessoSoggiorno), utente.Email, Adesso)))
@@ -283,6 +336,7 @@ public sealed class DatiPersonaliController(
         return await SalvaEAvanza(dip, profilo, 5);
     }
 
+    /// <summary>Ultimo passo: la dichiarazione di veridicità completa il profilo e sblocca il portale del dipendente.</summary>
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Conferma(Guid? dipendenteId, bool dichiarazione)
     {
@@ -300,6 +354,10 @@ public sealed class DatiPersonaliController(
         return utente.IsDipendente ? RedirectToAction("Index", "Home") : RedirectToAction("Dettaglio", "Dipendenti", new { id = dip.Id });
     }
 
+    /// <summary>
+    /// Il dipendente lavora sempre sui propri dati (il parametro si ignora); studio e referente indicano la persona,
+    /// che deve essere nel loro perimetro. Il profilo si crea al primo salvataggio.
+    /// </summary>
     private async Task<(Dipendente? Dipendente, ProfiloDipendente Profilo)> Carica(Guid? dipendenteId)
     {
         var id = utente.IsDipendente ? utente.DipendenteId : dipendenteId;
@@ -325,60 +383,36 @@ public sealed class DatiPersonaliController(
             if (utente.IsDipendente) await Avvisa(dip, $"ha aggiornato i dati personali ({DatiPersonaliViewModel.Titoli[passo - 1].ToLower()})");
             Conferma("Modifica salvata" + (utente.IsDipendente ? ": il consulente è stato avvisato." : "."));
         }
-        var prossimo = profilo.Completato ? passo : passo + 1; // completati: si resta sulla scheda salvata
-        return RedirectToAction(nameof(Index), new { dipendenteId = utente.IsDipendente ? (Guid?)null : dip.Id, passo = prossimo });
+        return AlPasso(dip, profilo.Completato ? passo : passo + 1); // completati: si resta sulla scheda salvata
     }
+
+    /// <summary>Torna al passo indicato: per il dipendente senza <c>dipendenteId</c> nell'indirizzo.</summary>
+    private RedirectToActionResult AlPasso(Dipendente dip, int? passo) =>
+        RedirectToAction(nameof(Index), new { dipendenteId = utente.IsDipendente ? (Guid?)null : dip.Id, passo });
 
     private ViewResult Mostra(Dipendente dip, ProfiloDipendente profilo, int passo, object? form) =>
         View("Index", new DatiPersonaliViewModel { Dipendente = dip, Profilo = profilo, Passo = passo, Form = form, PerConto = !utente.IsDipendente });
 
-    internal static object? FormDi(int passo, Dipendente d, ProfiloDipendente p) => passo switch
+    /// <summary>Modulo del passo, compilato con i dati già salvati (il riepilogo non ne ha).</summary>
+    private static object? FormDi(int passo, Dipendente d, ProfiloDipendente p) => passo switch
     {
-        1 => new AnagraficaForm
-        {
-            ComuneNascita = p.ComuneNascita, ProvinciaNascita = p.ProvinciaNascita, Cittadinanza = p.Cittadinanza ?? "Italiana",
-            Telefono = p.Telefono ?? d.Telefono, EmailPersonale = p.EmailPersonale, HaFoto = d.FotoChiave is not null,
-            Genere = d.Genere, Pronomi = d.Pronomi,
-        },
-        2 => new ResidenzaForm
-        {
-            Via = p.ResidenzaVia, Cap = p.ResidenzaCap, Comune = p.ResidenzaComune, Provincia = p.ResidenzaProvincia,
-            DomicilioDiverso = p.DomicilioVia is not null, DomicilioVia = p.DomicilioVia, DomicilioCap = p.DomicilioCap,
-            DomicilioComune = p.DomicilioComune, DomicilioProvincia = p.DomicilioProvincia,
-        },
-        3 => new PagamentoForm
-        {
-            Iban = (p.Iban ?? d.Iban)?.Valore, IntestatarioConto = p.IntestatarioConto, Tfr = p.Tfr ?? DestinazioneTfr.Azienda, FondoPensione = p.FondoPensione,
-        },
-        4 => new FamigliaForm
-        {
-            RichiedeDetrazioni = p.RichiedeDetrazioni ?? true,
-            Familiari = p.Familiari.OrderBy(f => f.Relazione).ThenBy(f => f.DataNascita).Select(f => new FamiliareForm
-            {
-                Relazione = f.Relazione, Nome = f.Nome, Cognome = f.Cognome, CodiceFiscale = f.CodiceFiscale.Valore,
-                DataNascita = f.DataNascita, PercentualeCarico = f.PercentualeCarico, Disabile = f.Disabile,
-            }).ToList(),
-        },
-        5 => new AltriDatiForm
-        {
-            TitoloStudio = p.TitoloStudio ?? TitoloStudio.Diploma, TipoDocumento = p.TipoDocumento ?? "Carta d'identità",
-            NumeroDocumento = p.NumeroDocumento, ScadenzaDocumento = p.ScadenzaDocumento, ScadenzaPermessoSoggiorno = p.ScadenzaPermessoSoggiorno,
-        },
+        1 => AnagraficaForm.Da(d, p),
+        2 => ResidenzaForm.Da(p),
+        3 => PagamentoForm.Da(d, p),
+        4 => FamigliaForm.Da(p),
+        5 => AltriDatiForm.Da(p),
         _ => null,
     };
 
     /// <summary>Avviso al consulente e ai referenti dell'azienda (in background).</summary>
     private async Task Avvisa(Dipendente dip, string cosa)
     {
-        var destinatari = await (
-            from u in db.Users
-            join ur in db.UserRoles on u.Id equals ur.UserId
-            join r in db.Roles on ur.RoleId equals r.Id
-            where u.Attivo && u.EmailConfirmed && (r.Name == Ruoli.Consulente || (r.Name == Ruoli.Azienda && u.AziendaId == dip.AziendaId))
-            select u.Email).Distinct().ToListAsync();
+        // I consulenti dell'azienda e i suoi referenti.
+        var destinatari = (await db.EmailStudioAsync(dip.AziendaId))
+            .Concat(await db.EmailConRuoloAsync(Ruoli.Azienda, dip.AziendaId)).Distinct();
         var link = WebUtility.HtmlEncode(accessi.ComponiUrl($"/DatiPersonali?dipendenteId={dip.Id}"));
         var chi = WebUtility.HtmlEncode(dip.NomeCompleto);
-        foreach (var email in destinatari.OfType<string>())
+        foreach (var email in destinatari)
             coda.Accoda(new MessaggioEmail(email, $"{dip.NomeCompleto} {cosa}",
                 $"""<p>{chi} {WebUtility.HtmlEncode(cosa)}.</p><p><a href="{link}">{link}</a></p><p>Consulens HR</p>"""));
     }

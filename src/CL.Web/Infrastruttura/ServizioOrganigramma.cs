@@ -4,7 +4,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CL.Web.Infrastruttura;
 
-/// <summary>Organigramma di un'azienda e calcolo di chi approva ferie e permessi di ciascun dipendente.</summary>
+/// <summary>
+/// Organigramma di un'azienda e calcolo di chi approva ferie e permessi di ciascun dipendente.
+/// La regola sta nel dominio (<see cref="Organigramma.Approvatori"/>): qui si caricano solo team e persone dell'azienda.
+/// </summary>
 public sealed class ServizioOrganigramma(AppDbContext db)
 {
     public Task<List<Team>> TeamAsync(Guid aziendaId) =>
@@ -19,18 +22,15 @@ public sealed class ServizioOrganigramma(AppDbContext db)
         return Organigramma.Approvatori(nodi, team);
     }
 
-    public async Task<Guid?> ApprovatoreAsync(Guid dipendenteId)
-    {
-        var aziendaId = await db.Dipendenti.Where(d => d.Id == dipendenteId).Select(d => (Guid?)d.AziendaId).FirstOrDefaultAsync();
-        if (aziendaId is null) return null;
-        return (await ApprovatoriAsync(aziendaId.Value)).GetValueOrDefault(dipendenteId);
-    }
+    public async Task<Guid?> ApprovatoreAsync(Guid dipendenteId) =>
+        await AziendaDi(dipendenteId) is { } aziendaId ? (await ApprovatoriAsync(aziendaId)).GetValueOrDefault(dipendenteId) : null;
 
     /// <summary>I dipendenti di cui <paramref name="responsabileId"/> approva le richieste.</summary>
-    public async Task<List<Guid>> CollaboratoriAsync(Guid responsabileId)
-    {
-        var aziendaId = await db.Dipendenti.Where(d => d.Id == responsabileId).Select(d => (Guid?)d.AziendaId).FirstOrDefaultAsync();
-        if (aziendaId is null) return [];
-        return (await ApprovatoriAsync(aziendaId.Value)).Where(x => x.Value == responsabileId).Select(x => x.Key).ToList();
-    }
+    public async Task<List<Guid>> CollaboratoriAsync(Guid responsabileId) =>
+        await AziendaDi(responsabileId) is { } aziendaId
+            ? (await ApprovatoriAsync(aziendaId)).Where(x => x.Value == responsabileId).Select(x => x.Key).ToList()
+            : [];
+
+    private Task<Guid?> AziendaDi(Guid dipendenteId) =>
+        db.Dipendenti.Where(d => d.Id == dipendenteId).Select(d => (Guid?)d.AziendaId).FirstOrDefaultAsync();
 }

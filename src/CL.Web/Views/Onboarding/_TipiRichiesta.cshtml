@@ -1,8 +1,7 @@
-@model CL.Web.Controllers.OnboardingViewModel
+@model OnboardingViewModel
 @* Quali richieste l'azienda offre: quelle spente non compaiono a nessuno (moduli, calendari, azioni rapide). *@
-@{ var aziendaId = Model.PerContoAzienda ? Model.AziendaId : (Guid?)null; }
 <form asp-action="RichiesteAbilitate" method="post">
-    @if (aziendaId is { } idAz) { <input type="hidden" name="aziendaId" value="@idAz" /> }
+    <partial name="_AziendaId" />
     <div class="gruppi-richieste">
         @foreach (var gruppo in CL.Domain.Aziende.TipiRichiesta.Tutti.GroupBy(t => t.Gruppo))
         {

@@ -104,10 +104,6 @@ public sealed class PersonaleWebTests : IDisposable
         Assert.Contains("Commercio", html);
         Assert.Contains("Nessun documento caricato", html);
 
-        html = await Testo(await hr.InviaForm(pagina, $"/Dipendenti/Mansione/{rossi}?contrattoId={contratto}", new() { ["mansione"] = "Designer" }));
-        Assert.Contains("Mansione aggiornata", html);
-        Assert.Contains("class=\"mansione-profilo\">Designer<", html); // sotto l'azienda, nell'intestazione
-
         // Dalla scheda Contratto la foto si salva subito.
         using (var form = new MultipartFormDataContent { { new StringContent(await hr.TokenDa(pagina)), "__RequestVerificationToken" } })
         {
@@ -211,7 +207,6 @@ public sealed class PersonaleWebTests : IDisposable
         Assert.Contains("Modifiche salvate", await Testo(await hr.InviaForm(pagina, "/Dipendenti/Salva", new(campi) { ["Provincia"] = "mi" })));
         var d = await _app.ConDb(db => db.Dipendenti.SingleAsync(x => x.Id == rossi));
         Assert.Equal(("Via Roma 10", "20121", "Milano", "MI"), (d.Indirizzo, d.Cap, d.Comune, d.Provincia));
-        Assert.Equal("Via Roma 10, 20121 Milano (MI)", d.IndirizzoCompleto);
         Assert.Empty(_app.ErroriServer);
     }
 
@@ -335,12 +330,14 @@ public sealed class PersonaleWebTests : IDisposable
             ["contratto.OreFerieAnnue"] = "160", ["contratto.OreRolAnnue"] = "72"
         };
         Assert.Contains("Inserisci il CCNL", await Testo(await hr.InviaForm(pagina, $"/Dipendenti/ModificaContratto/{rossi}", new(contrattoCampi) { ["contratto.Ccnl"] = "" })));
-        Assert.Contains("Contratto aggiornato", await Testo(await hr.InviaForm(pagina, $"/Dipendenti/ModificaContratto/{rossi}", new(contrattoCampi))));
+        var html = await Testo(await hr.InviaForm(pagina, $"/Dipendenti/ModificaContratto/{rossi}", new(contrattoCampi)));
+        Assert.Contains("Contratto aggiornato", html);
+        Assert.Contains("class=\"mansione-profilo\">Responsabile vendite<", html); // sotto l'azienda, nell'intestazione
         var c = await _app.ConDb(db => db.Contratti.SingleAsync());
         Assert.Equal((32_000m, "3", "Responsabile vendite"), (c.RetribuzioneLordaAnnua, c.Livello, c.Mansione));
 
         // Team, posizione e responsabile diretto si salvano con l'anagrafica.
-        var html = await Testo(await hr.InviaForm($"/Dipendenti/Modifica/{rossi}", "/Dipendenti/Salva", new()
+        html = await Testo(await hr.InviaForm($"/Dipendenti/Modifica/{rossi}", "/Dipendenti/Salva", new()
         {
             ["Id"] = rossi.ToString(), ["AziendaId"] = azienda.ToString(), ["Nome"] = "Mario", ["Cognome"] = "Rossi",
             ["CodiceFiscale"] = "RSSMRA85T10A562S", ["DataNascita"] = "1985-01-01",
@@ -397,7 +394,7 @@ public sealed class PersonaleWebTests : IDisposable
         Assert.Throws<DomainException>(() => d.Assumi(TipoContratto.TempoIndeterminato, "Commercio", "4", new DateOnly(2026, 1, 1), null, 28_000m,
             modalita: ModalitaLavoro.Ibrido, giorniInUfficio: 5)); // 5 su 5 è in presenza
         var c = d.Assumi(TipoContratto.TempoIndeterminato, "Commercio", "4", new DateOnly(2026, 1, 1), null, 28_000m, modalita: ModalitaLavoro.Ibrido, giorniInUfficio: 3);
-        Assert.Equal((ModalitaLavoro.Ibrido, (int?)3), (c.Modalita, c.GiorniInUfficio));
+        Assert.Equal((ModalitaLavoro.Ibrido, 3), (c.Modalita, c.GiorniInUfficio));
         d.ModificaContratto(c.Id, c.Tipo, c.Ccnl, c.Livello, c.DataInizio, null, c.RetribuzioneLordaAnnua, c.MensilitaAnnue, c.OreSettimanaliFullTime,
             c.PercentualePartTime, c.GiorniLavorativiSettimana, c.OreFerieAnnue, c.OreRolAnnue, c.Mansione, ModalitaLavoro.FullRemote, 3);
         Assert.Null(c.GiorniInUfficio); // i giorni contano solo per l'ibrido

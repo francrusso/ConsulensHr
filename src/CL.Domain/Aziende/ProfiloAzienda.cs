@@ -84,9 +84,10 @@ public sealed class ProfiloAzienda : Entity
     public int? GiorniLavorativiSettimana { get; private set; }
     public decimal? OreSettimanali { get; private set; }
 
-    // 5. Paghe e referente
+    // 5. Paghe
     public Iban? IbanAddebito { get; private set; }
     public int? GiornoPagamento { get; private set; }
+    // Referente paghe: non più compilato (ora è la persona segnata come tale in Personale); le colonne restano nello schema.
     public string? ReferenteNome { get; private set; }
     public string? ReferenteEmail { get; private set; }
     public string? ReferenteTelefono { get; private set; }
@@ -103,8 +104,6 @@ public sealed class ProfiloAzienda : Entity
 
     public ProfiloAzienda(Guid aziendaId) => AziendaId = aziendaId;
 
-    public DatiSocietari? Societari => FormaGiuridica is null ? null
-        : new(FormaGiuridica, NumeroRea, CodiceAteco!, DataInizioAttivita, Pec!, Telefono);
     public Indirizzo? SedeLegale => SedeLegaleVia is null ? null
         : new(SedeLegaleVia, SedeLegaleCap!, SedeLegaleComune!, SedeLegaleProvincia!);
     public Indirizzo? SedeOperativa => SedeOperativaVia is null ? null
@@ -113,19 +112,19 @@ public sealed class ProfiloAzienda : Entity
     public void ImpostaDatiSocietari(DatiSocietari d)
     {
         FormaGiuridica = Guard.NotEmpty(d.FormaGiuridica, "Forma giuridica");
-        NumeroRea = Pulito(d.NumeroRea)?.ToUpperInvariant();
+        NumeroRea = Guard.Facoltativo(d.NumeroRea)?.ToUpperInvariant();
         CodiceAteco = Guard.NotEmpty(d.CodiceAteco, "Codice ATECO");
         DataInizioAttivita = d.DataInizioAttivita;
         Pec = Guard.NotEmpty(d.Pec, "PEC").ToLowerInvariant();
-        Telefono = Pulito(d.Telefono);
+        Telefono = Guard.Facoltativo(d.Telefono);
         Avanza(1);
     }
 
     public void ImpostaSedi(Indirizzo legale, Indirizzo? operativa)
     {
-        (SedeLegaleVia, SedeLegaleCap, SedeLegaleComune, SedeLegaleProvincia) = Valida(legale, "sede legale");
-        (SedeOperativaVia, SedeOperativaCap, SedeOperativaComune, SedeOperativaProvincia) =
-            operativa is null ? (null, null, null, null) : Valida(operativa, "sede operativa");
+        (SedeLegaleVia, SedeLegaleCap, SedeLegaleComune, SedeLegaleProvincia) = legale.Validato("della sede legale");
+        var o = operativa?.Validato("della sede operativa");
+        (SedeOperativaVia, SedeOperativaCap, SedeOperativaComune, SedeOperativaProvincia) = (o?.Via, o?.Cap, o?.Comune, o?.Provincia);
         Avanza(2);
     }
 
@@ -134,8 +133,8 @@ public sealed class ProfiloAzienda : Entity
         LegaleNome = Guard.NotEmpty(l.Nome, "Nome del legale rappresentante");
         LegaleCognome = Guard.NotEmpty(l.Cognome, "Cognome del legale rappresentante");
         LegaleCodiceFiscale = l.CodiceFiscale;
-        LegaleEmail = Pulito(l.Email)?.ToLowerInvariant();
-        LegaleTelefono = Pulito(l.Telefono);
+        LegaleEmail = Guard.Facoltativo(l.Email)?.ToLowerInvariant();
+        LegaleTelefono = Guard.Facoltativo(l.Telefono);
         Avanza(3);
     }
 
@@ -147,9 +146,9 @@ public sealed class ProfiloAzienda : Entity
         MatricolaInps = Guard.NotEmpty(p.MatricolaInps, "Matricola INPS").ToUpperInvariant();
         InailCodiceDitta = Guard.NotEmpty(p.InailCodiceDitta, "Codice ditta INAIL").ToUpperInvariant();
         InailPat = Guard.NotEmpty(p.InailPat, "PAT INAIL").ToUpperInvariant();
-        CassaEdile = Pulito(p.CassaEdile);
-        EnteBilaterale = Pulito(p.EnteBilaterale);
-        FondoPensione = Pulito(p.FondoPensione);
+        CassaEdile = Guard.Facoltativo(p.CassaEdile);
+        EnteBilaterale = Guard.Facoltativo(p.EnteBilaterale);
+        FondoPensione = Guard.Facoltativo(p.FondoPensione);
         GiorniLavorativiSettimana = p.GiorniLavorativiSettimana;
         OreSettimanali = p.OreSettimanali;
         SenzaContratti = false;
@@ -168,7 +167,7 @@ public sealed class ProfiloAzienda : Entity
         if (p.GiornoPagamento is < 1 or > 31) throw new DomainException("Giorno di pagamento non valido.");
         IbanAddebito = p.IbanAddebito;
         GiornoPagamento = p.GiornoPagamento;
-        NoteStudio = Pulito(p.NoteStudio);
+        NoteStudio = Guard.Facoltativo(p.NoteStudio);
         Avanza(5);
     }
 
@@ -194,13 +193,6 @@ public sealed class ProfiloAzienda : Entity
         Passo = UltimoPasso;
     }
 
+    /// <summary>Il passo da cui riprendere avanza solo: salvare di nuovo un passo già fatto non fa tornare indietro.</summary>
     private void Avanza(int salvato) => Passo = Math.Max(Passo, Math.Min(salvato + 1, UltimoPasso));
-
-    private static (string, string, string, string) Valida(Indirizzo i, string quale)
-    {
-        var v = i.Validato("della " + quale);
-        return (v.Via, v.Cap, v.Comune, v.Provincia);
-    }
-
-    private static string? Pulito(string? s) => string.IsNullOrWhiteSpace(s) ? null : s.Trim();
 }

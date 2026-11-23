@@ -127,10 +127,6 @@ public sealed class Dipendente : Entity
         (Indirizzo, Cap, Comune, Provincia) = (r?.Via, r?.Cap, r?.Comune, r?.Provincia);
     }
 
-    /// <summary>"Via Roma 10, 20121 Milano (MI)"; per i dati inseriti prima della scomposizione, solo la via.</summary>
-    public string? IndirizzoCompleto => Indirizzo is null ? null
-        : Comune is null ? Indirizzo : $"{Indirizzo}, {Cap} {Comune} ({Provincia})";
-
     public void ImpostaIban(Iban? iban) => Iban = iban;
     public void ImpostaSede(SedeLavoro? sede) => Sede = sede;
 
@@ -149,7 +145,7 @@ public sealed class Dipendente : Entity
         if (responsabile is not null && responsabile.AziendaId != AziendaId)
             throw new DomainException("Il responsabile deve essere un dipendente della stessa azienda.");
         if (responsabile?.Id == Id) throw new DomainException("Un dipendente non può essere responsabile di sé stesso.");
-        var p = string.IsNullOrWhiteSpace(posizione) ? null : posizione.Trim();
+        var p = Guard.Facoltativo(posizione);
         if (p?.Length > 100) throw new DomainException("Posizione troppo lunga (massimo 100 caratteri).");
         TeamId = team?.Id;
         Posizione = p;
@@ -162,13 +158,7 @@ public sealed class Dipendente : Entity
         decimal oreFerieAnnue = 160, decimal oreRolAnnue = 72, string? mansione = null,
         ModalitaLavoro modalita = ModalitaLavoro.InPresenza, int? giorniInUfficio = null)
     {
-        if (dataInizio < DataNascita.AddYears(16))
-            throw new DomainException("Il lavoratore deve avere almeno 16 anni alla data di assunzione.");
-
-        var nuovaFine = dataFine ?? DateOnly.MaxValue;
-        if (_contratti.Any(c => c.DataInizio <= nuovaFine && dataInizio <= (c.DataFine ?? DateOnly.MaxValue)))
-            throw new DomainException("Esiste già un contratto attivo nel periodo indicato.");
-
+        VerificaPeriodo(dataInizio, dataFine, escluso: null, "Esiste già un contratto attivo nel periodo indicato.");
         var contratto = new Contratto(Id, tipo, ccnl, livello, dataInizio, dataFine, oreSettimanaliFullTime,
             percentualePartTime, giorniLavorativiSettimana, retribuzioneLordaAnnua, mensilitaAnnue,
             oreFerieAnnue, oreRolAnnue, mansione, modalita, giorniInUfficio);
@@ -176,23 +166,32 @@ public sealed class Dipendente : Entity
         return contratto;
     }
 
-/// <summary>Correzione delle condizioni di un contratto già registrato (stessi controlli dell'assunzione).</summary>
+    /// <summary>Correzione delle condizioni di un contratto già registrato (stessi controlli dell'assunzione).</summary>
     public void ModificaContratto(Guid contrattoId, TipoContratto tipo, string ccnl, string livello, DateOnly dataInizio, DateOnly? dataFine,
         decimal retribuzioneLordaAnnua, int mensilitaAnnue, decimal oreSettimanaliFullTime, decimal percentualePartTime,
         int giorniLavorativiSettimana, decimal oreFerieAnnue, decimal oreRolAnnue, string? mansione,
         ModalitaLavoro modalita = ModalitaLavoro.InPresenza, int? giorniInUfficio = null)
     {
         var contratto = _contratti.FirstOrDefault(c => c.Id == contrattoId) ?? throw new DomainException("Contratto non trovato.");
-        if (dataInizio < DataNascita.AddYears(16))
-            throw new DomainException("Il lavoratore deve avere almeno 16 anni alla data di assunzione.");
-        var nuovaFine = dataFine ?? DateOnly.MaxValue;
-        if (_contratti.Any(c => c.Id != contrattoId && c.DataInizio <= nuovaFine && dataInizio <= (c.DataFine ?? DateOnly.MaxValue)))
-            throw new DomainException("Il periodo si sovrappone a un altro contratto della persona.");
+        VerificaPeriodo(dataInizio, dataFine, escluso: contrattoId, "Il periodo si sovrappone a un altro contratto della persona.");
         contratto.Imposta(tipo, ccnl, livello, dataInizio, dataFine, oreSettimanaliFullTime, percentualePartTime, giorniLavorativiSettimana,
             retribuzioneLordaAnnua, mensilitaAnnue, oreFerieAnnue, oreRolAnnue, mansione, modalita, giorniInUfficio);
     }
 
-        public void Cessa(DateOnly dataCessazione)
+    /// <summary>
+    /// Almeno 16 anni all'inizio e nessuna sovrapposizione con gli altri contratti della persona
+    /// (<paramref name="escluso"/> è quello che si sta correggendo; senza data di fine un contratto è aperto).
+    /// </summary>
+    private void VerificaPeriodo(DateOnly dataInizio, DateOnly? dataFine, Guid? escluso, string seSovrapposto)
+    {
+        if (dataInizio < DataNascita.AddYears(16))
+            throw new DomainException("Il lavoratore deve avere almeno 16 anni alla data di assunzione.");
+        var fine = dataFine ?? DateOnly.MaxValue;
+        if (_contratti.Any(c => c.Id != escluso && c.DataInizio <= fine && dataInizio <= (c.DataFine ?? DateOnly.MaxValue)))
+            throw new DomainException(seSovrapposto);
+    }
+
+    public void Cessa(DateOnly dataCessazione)
     {
         var attivo = ContrattoAttivo(dataCessazione)
             ?? throw new DomainException("Nessun contratto attivo alla data di cessazione.");

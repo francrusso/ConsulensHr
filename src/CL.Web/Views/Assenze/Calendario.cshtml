@@ -203,8 +203,9 @@
                .on('change', function () { this.form.submit(); });
         });
 
-        // Filtri del calendario: presenti, assenti (approvati) e in attesa di approvazione.
-        // Nella card degli assenti si vedono al massimo 3 persone tra quelle filtrate, poi "e altri N".
+        // Filtri del calendario: presenti, assenze, chiusure aziendali e richieste in attesa di approvazione.
+        // Nella card degli assenti si vedono al massimo 3 persone tra quelle filtrate, poi "e altri N"; il numero
+        // nel titolo conta le persone filtrate e la card sparisce se non ne resta nessuna.
         (function () {
             const cal = document.getElementById('calendarioAssenze');
             const attivi = { presenti: true, assenze: true, chiusure: true, attesa: true };
@@ -212,9 +213,8 @@
                 cal.querySelectorAll('.cal-presenti').forEach(p => p.hidden = !attivi.presenti);
                 cal.querySelectorAll('.cal-chiusura').forEach(c => c.hidden = !attivi.chiusure);
                 cal.querySelectorAll('.cal-assenti').forEach(card => {
-                    const tipo = attivi.assenze;
                     const righe = [...card.querySelectorAll('.cal-assente')]
-                        .filter(r => tipo && (!r.classList.contains('in-attesa') || attivi.attesa));
+                        .filter(r => attivi.assenze && (!r.classList.contains('in-attesa') || attivi.attesa));
                     card.querySelectorAll('.cal-assente').forEach(r => r.hidden = true);
                     righe.slice(0, 3).forEach(r => r.hidden = false);
                     card.querySelector('.cal-conteggio').textContent = righe.length;

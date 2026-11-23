@@ -36,10 +36,6 @@ public enum PeriodoSmartWorking { Settimana, Mese }
 
 public static class ModalitaLavoroExtensions
 {
-    /// <summary>Es. "1 giorno a settimana", "2 giorni al mese".</summary>
-    public static string Descrizione(int giorni, PeriodoSmartWorking periodo) =>
-        $"{giorni} {(giorni == 1 ? "giorno" : "giorni")} {(periodo == PeriodoSmartWorking.Settimana ? "a settimana" : "al mese")}";
-
     public static string Descrizione(this ModalitaLavoro m) => m switch
     {
         ModalitaLavoro.Ibrido => "Ibrido",
@@ -100,8 +96,10 @@ public sealed class Contratto : Entity
     public int? GiorniSmartWorking { get; private set; }
     public PeriodoSmartWorking? PeriodoSmartWorking { get; private set; }
 
-    /// <summary>Es. "2 giorni al mese"; null se non concesso.</summary>
-    public string? SmartWorkingConcesso => GiorniSmartWorking is { } g && PeriodoSmartWorking is { } p ? ModalitaLavoroExtensions.Descrizione(g, p) : null;
+    /// <summary>Es. "1 giorno a settimana", "2 giorni al mese"; null se non concesso.</summary>
+    public string? SmartWorkingConcesso => GiorniSmartWorking is { } g && PeriodoSmartWorking is { } p
+        ? $"{g} {(g == 1 ? "giorno" : "giorni")} {(p == Dipendenti.PeriodoSmartWorking.Settimana ? "a settimana" : "al mese")}"
+        : null;
 
     /// <summary>Contratto firmato (PDF) nell'archivio privato.</summary>
     public string? DocumentoChiave { get; private set; }
@@ -114,8 +112,7 @@ public sealed class Contratto : Entity
     internal Contratto(Guid dipendenteId, TipoContratto tipo, string ccnl, string livello,
         DateOnly dataInizio, DateOnly? dataFine, decimal oreSettimanaliFullTime, decimal percentualePartTime,
         int giorniLavorativiSettimana, decimal retribuzioneLordaAnnua, int mensilitaAnnue,
-        decimal oreFerieAnnue, decimal oreRolAnnue, string? mansione,
-        ModalitaLavoro modalita = ModalitaLavoro.InPresenza, int? giorniInUfficio = null)
+        decimal oreFerieAnnue, decimal oreRolAnnue, string? mansione, ModalitaLavoro modalita, int? giorniInUfficio)
     {
         DipendenteId = dipendenteId;
         Imposta(tipo, ccnl, livello, dataInizio, dataFine, oreSettimanaliFullTime, percentualePartTime, giorniLavorativiSettimana,
@@ -126,8 +123,7 @@ public sealed class Contratto : Entity
     internal void Imposta(TipoContratto tipo, string ccnl, string livello,
         DateOnly dataInizio, DateOnly? dataFine, decimal oreSettimanaliFullTime, decimal percentualePartTime,
         int giorniLavorativiSettimana, decimal retribuzioneLordaAnnua, int mensilitaAnnue,
-        decimal oreFerieAnnue, decimal oreRolAnnue, string? mansione,
-        ModalitaLavoro modalita = ModalitaLavoro.InPresenza, int? giorniInUfficio = null)
+        decimal oreFerieAnnue, decimal oreRolAnnue, string? mansione, ModalitaLavoro modalita, int? giorniInUfficio)
     {
         if (modalita == ModalitaLavoro.Ibrido)
         {
@@ -147,35 +143,27 @@ public sealed class Contratto : Entity
             throw new DomainException("I giorni lavorativi settimanali devono essere 5 o 6.");
         if (mensilitaAnnue is < 12 or > 16)
             throw new DomainException("Le mensilità annue devono essere comprese tra 12 e 16.");
-        // Tutti i controlli prima di cambiare qualcosa: una correzione rifiutata lascia il contratto com'era.
-        if (tipo.IsSubordinato()) { Guard.NotEmpty(ccnl, "CCNL"); Guard.NotEmpty(livello, "Livello"); }
+        // Rapporti esterni (non subordinati): CCNL e livello facoltativi, niente ferie né ROL da maturare.
+        var subordinato = tipo.IsSubordinato();
+        if (subordinato) { Guard.NotEmpty(ccnl, "CCNL"); Guard.NotEmpty(livello, "Livello"); }
         Guard.NonNegative(retribuzioneLordaAnnua, "Retribuzione lorda annua");
         Guard.NonNegative(oreFerieAnnue, "Ore ferie annue");
         Guard.NonNegative(oreRolAnnue, "Ore ROL annue");
 
+        // Da qui solo assegnazioni: se un controllo sopra fallisce, la correzione lascia il contratto com'era.
         Tipo = tipo;
-        if (tipo.IsSubordinato())
-        {
-            Ccnl = Guard.NotEmpty(ccnl, "CCNL");
-            Livello = Guard.NotEmpty(livello, "Livello");
-        }
-        else
-        {
-            // Rapporti esterni: CCNL e livello facoltativi, niente ferie né ROL da maturare.
-            Ccnl = ccnl?.Trim() ?? "";
-            Livello = livello?.Trim() ?? "";
-            (oreFerieAnnue, oreRolAnnue) = (0, 0);
-        }
+        Ccnl = ccnl?.Trim() ?? "";
+        Livello = livello?.Trim() ?? "";
         Mansione = mansione?.Trim();
         DataInizio = dataInizio;
         DataFine = dataFine;
         OreSettimanaliFullTime = oreSettimanaliFullTime;
         PercentualePartTime = percentualePartTime;
         GiorniLavorativiSettimana = giorniLavorativiSettimana;
-        RetribuzioneLordaAnnua = Guard.NonNegative(retribuzioneLordaAnnua, "Retribuzione lorda annua");
+        RetribuzioneLordaAnnua = retribuzioneLordaAnnua;
         MensilitaAnnue = mensilitaAnnue;
-        OreFerieAnnue = Guard.NonNegative(oreFerieAnnue, "Ore ferie annue");
-        OreRolAnnue = Guard.NonNegative(oreRolAnnue, "Ore ROL annue");
+        OreFerieAnnue = subordinato ? oreFerieAnnue : 0;
+        OreRolAnnue = subordinato ? oreRolAnnue : 0;
         Modalita = modalita;
         GiorniInUfficio = modalita == ModalitaLavoro.Ibrido ? giorniInUfficio : null;
         if (modalita != ModalitaLavoro.InPresenza) (GiorniSmartWorking, PeriodoSmartWorking) = (null, null);
@@ -198,11 +186,10 @@ public sealed class Contratto : Entity
         _ => 0m,
     } * PercentualePartTime / 100m, 2);
 
-public void ImpostaDocumento(string chiave, string nomeFile, DateTime adesso)
+    public void ImpostaDocumento(string chiave, string nomeFile, DateTime adesso)
     {
         DocumentoChiave = Guard.NotEmpty(chiave, "Documento");
-        var nome = Path.GetFileName(nomeFile ?? "").Trim();
-        DocumentoNome = string.IsNullOrEmpty(nome) ? "contratto.pdf" : nome.Length > 200 ? nome[..200] : nome;
+        DocumentoNome = Guard.NomeFile(nomeFile, "contratto.pdf");
         DocumentoCaricatoIl = adesso;
     }
 
@@ -216,17 +203,9 @@ public void ImpostaDocumento(string chiave, string nomeFile, DateTime adesso)
         (GiorniSmartWorking, PeriodoSmartWorking) = (giorni, periodo);
     }
 
-    /// <summary>Mansione svolta (es. "Designer"); vuota = non indicata.</summary>
-    public void ImpostaMansione(string? mansione)
-    {
-        var m = string.IsNullOrWhiteSpace(mansione) ? null : mansione.Trim();
-        if (m is { Length: > 150 }) throw new DomainException("Mansione troppo lunga (massimo 150 caratteri).");
-        Mansione = m;
-    }
-
     public void RimuoviDocumento() => (DocumentoChiave, DocumentoNome, DocumentoCaricatoIl) = (null, null, null);
 
-        public bool AttivoIl(DateOnly giorno) => giorno >= DataInizio && (DataFine is null || giorno <= DataFine);
+    public bool AttivoIl(DateOnly giorno) => giorno >= DataInizio && (DataFine is null || giorno <= DataFine);
 
     internal void Chiudi(DateOnly dataFine)
     {

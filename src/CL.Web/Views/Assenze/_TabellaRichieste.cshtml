@@ -1,8 +1,11 @@
 @model (List<CL.Web.Controllers.RichiestaRiga> Righe, bool PuoApprovare, bool MostraDipendente, bool MostraAzienda, DateOnly Oggi, string Ritorno)
 @inject UtenteCorrente Utente
+@*
+    Tabella delle richieste (assenze, smart working, straordinari) con le azioni permesse a chi guarda.
+    PuoApprovare: chi decide le richieste in elenco (il referente dell'azienda, o il responsabile per il suo team).
+*@
 @{
-    @* Approva/rifiuta: solo il referente dell'azienda. Il consulente annulla solo assenze che non richiedono approvazione. *@
-    var (righe, gestore, mostraDipendente, mostraAzienda, oggi, ritorno) = Model;
+    var (righe, puoApprovare, mostraDipendente, mostraAzienda, oggi, ritorno) = Model;
     var colonne = 5 + (mostraDipendente ? 1 : 0) + (mostraAzienda ? 1 : 0);
 }
 <div class="card radius-15 table-responsive table-actions-responsive p-1 customer-results">
@@ -25,22 +28,25 @@
             }
             @foreach (var r in righe)
             {
-                var annullabile = !r.SmartWorking && !r.Straordinario && (r.Stato == StatoRichiesta.InAttesa || (r.Stato == StatoRichiesta.Approvata && r.Dal > oggi))
-                                  && (!Utente.IsConsulente || !r.Tipo.RichiedeApprovazione());
-                // Lo smart working lo ritira solo chi l'ha chiesto, finché il giorno non è passato; lo decide solo l'azienda.
-                var ritirabile = r.SmartWorking && Utente.IsDipendente && r.DipendenteId == Utente.DipendenteId && r.Dal >= oggi && r.Stato != StatoRichiesta.Rifiutata;
-                var ritiraOre = r.Straordinario && Utente.IsDipendente && r.DipendenteId == Utente.DipendenteId && r.Stato == StatoRichiesta.InAttesa;
-                var decidibile = r.Stato == StatoRichiesta.InAttesa && gestore && (!(r.SmartWorking || r.Straordinario) || Utente.IsAzienda);
-                var tipoNome = r.SmartWorking ? "Smart working" : r.Straordinario ? "Straordinario" : r.Tipo.Descrizione();
-                var azioneDecidi = r.SmartWorking ? "DecidiSmartWorking" : r.Straordinario ? "DecidiStraordinario" : null;
+                var mia = Utente.IsDipendente && r.DipendenteId == Utente.DipendenteId;
+                var assenza = !r.SmartWorking && !r.Straordinario; // ferie, permessi, malattia...
                 // Il referente revoca qualunque richiesta attiva, anche approvata e già passata (es. registrata per errore).
                 var revocabile = Utente.IsAzienda && r.Stato is StatoRichiesta.InAttesa or StatoRichiesta.Approvata;
-                if (revocabile) annullabile = false;
-                // Il dipendente annulla da sé solo ciò che è in attesa; per una richiesta approvata chiede la cancellazione all'azienda.
-                var mia = Utente.IsDipendente && r.DipendenteId == Utente.DipendenteId;
-                if (mia && r.Stato == StatoRichiesta.Approvata) annullabile = false;
-                var chiediCancellazione = mia && !r.SmartWorking && !r.Straordinario && r.Stato == StatoRichiesta.Approvata && !r.AnnullamentoInAttesa;
-                var decidiCancellazione = r.AnnullamentoInAttesa && gestore;
+                // Annulla (se non può revocare): una richiesta in attesa, o approvata e non ancora iniziata. Il dipendente,
+                // per una richiesta approvata, chiede invece la cancellazione all'azienda; il consulente annulla solo
+                // ciò che non richiede approvazione (es. malattia).
+                var annullabile = assenza && !revocabile
+                                  && (r.Stato == StatoRichiesta.InAttesa || (r.Stato == StatoRichiesta.Approvata && r.Dal > oggi && !mia))
+                                  && (!Utente.IsConsulente || !r.Tipo.RichiedeApprovazione());
+                var chiediCancellazione = mia && assenza && r.Stato == StatoRichiesta.Approvata && !r.AnnullamentoInAttesa;
+                var decidiCancellazione = r.AnnullamentoInAttesa && puoApprovare;
+                // Smart working e straordinari li decide solo il referente; il dipendente ritira lo smart working finché il giorno
+                // non è passato (anche se già approvato) e lo straordinario finché è in attesa.
+                var decidibile = r.Stato == StatoRichiesta.InAttesa && puoApprovare && (assenza || Utente.IsAzienda);
+                var ritirabile = r.SmartWorking && mia && r.Dal >= oggi && r.Stato != StatoRichiesta.Rifiutata;
+                var ritiraOre = r.Straordinario && mia && r.Stato == StatoRichiesta.InAttesa;
+                var tipoNome = r.SmartWorking ? "Smart working" : r.Straordinario ? "Straordinario" : r.Tipo.Descrizione();
+                var azioneDecidi = r.SmartWorking ? "DecidiSmartWorking" : r.Straordinario ? "DecidiStraordinario" : null;
                 var genere = r.SmartWorking ? "smart" : r.Straordinario ? "straordinario" : "assenza";
                 var periodo = r.Dal == r.Al ? r.Dal.ToString("dddd d MMMM yyyy") : $"dal {r.Dal:dddd d MMMM} al {r.Al:dddd d MMMM yyyy}";
                 <tr class="customer-result-row">
@@ -153,7 +159,7 @@
     </table>
 </div>
 
-@if (gestore)
+@if (puoApprovare)
 {
     <div class="modal fade" id="modaleRifiuto" tabindex="-1" aria-labelledby="modaleRifiutoTitolo" aria-hidden="true">
         <div class="modal-dialog">

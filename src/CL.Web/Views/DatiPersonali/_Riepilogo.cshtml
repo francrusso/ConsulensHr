@@ -13,7 +13,7 @@
             ("Cittadinanza", V(p.Cittadinanza)), ("Cellulare", V(p.Telefono)), ("Email personale", V(p.EmailPersonale)),
             ("Genere", d.Genere?.Descrizione() ?? "—"), ("Pronomi", d.Pronomi?.Descrizione() ?? "—")]),
         (2, "Residenza", [("Residenza", Ind(p.Residenza)), ("Domicilio", p.Domicilio is null ? "come la residenza" : Ind(p.Domicilio))]),
-        (3, "Stipendio e TFR", [("IBAN", V(p.Iban?.Valore)), ("Intestatario", V(p.IntestatarioConto) == "—" ? "il dipendente" : p.IntestatarioConto!),
+        (3, "Stipendio e TFR", [("IBAN", V(p.Iban?.Valore)), ("Intestatario", string.IsNullOrWhiteSpace(p.IntestatarioConto) ? "il dipendente" : p.IntestatarioConto),
             ("TFR", p.Tfr == DestinazioneTfr.FondoPensione ? $"fondo pensione {p.FondoPensione}" : p.Tfr is null ? "—" : "in azienda")]),
         (4, "Detrazioni e familiari", [("Detrazioni lavoro dipendente", p.RichiedeDetrazioni is null ? "—" : p.RichiedeDetrazioni.Value ? "richieste" : "non richieste"), ("Familiari a carico", familiari)]),
         (5, "Altri dati", [("Titolo di studio", p.TitoloStudio?.Descrizione() ?? "—"), ("Documento", p.NumeroDocumento is null ? "—" : $"{p.TipoDocumento} n. {p.NumeroDocumento}, scade il {p.ScadenzaDocumento:dd/MM/yyyy}"),

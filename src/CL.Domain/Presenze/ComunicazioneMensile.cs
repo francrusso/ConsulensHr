@@ -60,23 +60,26 @@ public sealed class ComunicazioneMensile : Entity
         Mese = mese;
     }
 
-    public DateOnly PrimoGiorno => new(Anno, Mese, 1);
-    public DateOnly UltimoGiorno => PrimoGiorno.AddMonths(1).AddDays(-1);
-
     public RigaPresenze? RigaDi(Guid dipendenteId) => _righe.FirstOrDefault(r => r.DipendenteId == dipendenteId);
+
+    /// <summary>La riga del dipendente, creata se non c'è ancora.</summary>
+    private RigaPresenze Riga(Guid dipendenteId)
+    {
+        var riga = RigaDi(dipendenteId);
+        if (riga is null) _righe.Add(riga = new RigaPresenze(Id, dipendenteId));
+        return riga;
+    }
 
     public void ImpostaVoci(Guid dipendenteId, VociMensili voci)
     {
         RichiediBozza();
-        var riga = RigaDi(dipendenteId);
-        if (riga is null) _righe.Add(riga = new RigaPresenze(Id, dipendenteId));
-        riga.Imposta(voci);
+        Riga(dipendenteId).Imposta(voci);
     }
 
     public void ImpostaNote(string? note)
     {
         RichiediBozza();
-        Note = string.IsNullOrWhiteSpace(note) ? null : note.Trim();
+        Note = Guard.Facoltativo(note);
     }
 
     /// <summary>
@@ -87,11 +90,7 @@ public sealed class ComunicazioneMensile : Entity
         RichiediBozza();
         if (assenze.Count == 0) throw new DomainException("Nessun dipendente in forza nel mese: non c'è nulla da inviare.");
         foreach (var (dipendenteId, a) in assenze)
-        {
-            var riga = RigaDi(dipendenteId);
-            if (riga is null) _righe.Add(riga = new RigaPresenze(Id, dipendenteId));
-            riga.FotografaAssenze(a);
-        }
+            Riga(dipendenteId).FotografaAssenze(a);
         Stato = StatoComunicazione.Inviata;
         InviataIl = adesso;
         InviataDa = da;
@@ -199,7 +198,7 @@ public sealed class RigaPresenze : Entity
         Premi = Guard.NonNegative(v.Premi, "Premi");
         Rimborsi = Guard.NonNegative(v.Rimborsi, "Rimborsi");
         Anticipi = Guard.NonNegative(v.Anticipi, "Anticipi");
-        Note = string.IsNullOrWhiteSpace(v.Note) ? null : v.Note.Trim();
+        Note = Guard.Facoltativo(v.Note);
     }
 
     internal void FotografaAssenze(AssenzeDelMese a)

@@ -36,6 +36,7 @@ public sealed class BustaPaga : Entity
     public string NomeFile { get; private set; } = null!;
     /// <summary>Chiave del file nello storage (non un percorso esposto all'utente).</summary>
     public string ChiaveArchivio { get; private set; } = null!;
+    /// <summary>Impronta del PDF (unica nel database): lo stesso file non si carica due volte.</summary>
     public string HashSha256 { get; private set; } = null!;
     public long DimensioneByte { get; private set; }
 

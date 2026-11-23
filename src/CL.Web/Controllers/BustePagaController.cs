@@ -47,6 +47,7 @@ public sealed class BustePagaController(
 
     public async Task<IActionResult> Index(int? anno, int? mese, Guid? aziendaId, StatoBustaPaga? stato)
     {
+        // Il perimetro dell'utente lo applica Righe; il dipendente vede solo i cedolini pubblicati.
         var cedolini = db.BustePaga.AsNoTracking();
         if (utente.IsDipendente) cedolini = cedolini.Where(b => b.Stato == StatoBustaPaga.Pubblicata);
         else if (stato is { } s) cedolini = cedolini.Where(b => b.Stato == s);
@@ -56,24 +57,26 @@ public sealed class BustePagaController(
 
         var buste = await Righe(cedolini).OrderByDescending(b => b.Anno).ThenByDescending(b => b.Mese)
             .ThenBy(b => b.Dipendente).Take(1000).ToListAsync();
-        var oggi = DateOnly.FromDateTime(clock.GetLocalNow().DateTime);
 
         return View(new BustePagaViewModel
         {
             Buste = buste,
             Anno = anno, Mese = mese, AziendaId = aziendaId, Stato = stato,
             Aziende = utente.IsConsulente ? await ElencoAziende(aziendaId) : null,
-            Anni = Enumerable.Range(oggi.Year - 5, 6).Reverse().ToList(),
+            Anni = Enumerable.Range(clock.GetLocalNow().Year - 5, 6).Reverse().ToList(),
         });
     }
 
-    /// <summary>Caricamento dei cedolini: il consulente per qualunque azienda, il referente per la propria.</summary>
+    /// <summary>
+    /// Caricamento in blocco dei cedolini di un mese: il consulente per qualunque azienda, il referente per la propria.
+    /// Ogni PDF si abbina al dipendente dal nome del file (vedi <see cref="ServizioBustePaga.CaricaAsync"/>).
+    /// </summary>
     [Authorize(Policy = Policy.GestionePersonale)]
     public async Task<IActionResult> Carica(Guid? aziendaId)
     {
         if (utente.IsAzienda) aziendaId = utente.AziendaId;
-        var mesePrecedente = DateOnly.FromDateTime(clock.GetLocalNow().DateTime).AddMonths(-1);
-        ViewBag.Aziende = utente.IsConsulente ? await ElencoAziende(aziendaId, soloAttive: true) : new List<SelectListItem>();
+        var mesePrecedente = DateOnly.FromDateTime(clock.GetLocalNow().DateTime).AddMonths(-1); // di solito si caricano le paghe del mese chiuso
+        ViewBag.Aziende = await AziendePerCaricare(aziendaId);
         return View(new CaricaBusteForm { AziendaId = aziendaId, Anno = mesePrecedente.Year, Mese = mesePrecedente.Month });
     }
 
@@ -82,7 +85,7 @@ public sealed class BustePagaController(
     public async Task<IActionResult> Carica(CaricaBusteForm form, List<IFormFile> files)
     {
         if (utente.IsAzienda) form.AziendaId = utente.AziendaId; // il referente carica solo per la propria azienda
-        ViewBag.Aziende = utente.IsConsulente ? await ElencoAziende(form.AziendaId, soloAttive: true) : new List<SelectListItem>();
+        ViewBag.Aziende = await AziendePerCaricare(form.AziendaId);
         if (form.AziendaId is not { } aziendaId || !await db.Aziende.AnyAsync(a => a.Id == aziendaId))
             ModelState.AddModelError(nameof(form.AziendaId), "Seleziona l'azienda.");
         if (files.Count == 0) ModelState.AddModelError("files", "Seleziona almeno un PDF.");
@@ -93,11 +96,11 @@ public sealed class BustePagaController(
         return View(form);
     }
 
-    /// <summary>Un cedolino per un dipendente, dalla sua scheda.</summary>
+    /// <summary>Un cedolino per un dipendente, dalla sua scheda: il nome del file non serve all'abbinamento.</summary>
     [HttpPost, ValidateAntiForgeryToken, Authorize(Policy = Policy.SoloConsulente)]
     [RequestSizeLimit(ServizioBustePaga.DimensioneMassima + 1024 * 1024)]
     public async Task<IActionResult> CaricaPerDipendente(Guid dipendenteId, int anno, int mese, TipoCedolino tipo,
-        decimal? lordo, decimal? netto, bool pubblica, IFormFile? file)
+        decimal? netto, bool pubblica, IFormFile? file)
     {
         var ritorno = Url.Action("Dettaglio", "Dipendenti", new { id = dipendenteId, sezione = "buste" })!;
         var dip = await db.Dipendenti.AsNoTracking().IgnoreAutoIncludes().FirstOrDefaultAsync(d => d.Id == dipendenteId);
@@ -108,8 +111,7 @@ public sealed class BustePagaController(
             return LocalRedirect(ritorno);
         }
 
-        var esito = await servizio.CaricaAsync(dip.AziendaId, anno, mese, tipo, Converti([file]), pubblica,
-            soloDipendente: dip.Id, lordo: lordo ?? 0, netto: netto ?? 0);
+        var esito = await servizio.CaricaAsync(dip.AziendaId, anno, mese, tipo, Converti([file]), pubblica, soloDipendente: dip.Id, netto: netto ?? 0);
         if (esito.Caricati.Count == 1)
             Conferma(pubblica ? "Cedolino caricato e pubblicato." : "Cedolino caricato come bozza.");
         else Errore($"Cedolino non caricato: {esito.Scartati.FirstOrDefault().Motivo}.");
@@ -130,12 +132,11 @@ public sealed class BustePagaController(
     {
         var b = await db.BustePaga.FindAsync(id);
         if (b is null) return NotFound();
-        if (Prova(b.Ritira))
+        if (ProvaOAvvisa(b.Ritira))
         {
             await db.SaveChangesAsync();
             Conferma("Cedolino ritirato: il dipendente non lo vede più (resta in archivio).");
         }
-        else Errore(ModelState[""]!.Errors[0].ErrorMessage);
         return Torna(ritorno);
     }
 
@@ -157,7 +158,10 @@ public sealed class BustePagaController(
         return Torna(ritorno);
     }
 
-    /// <summary>Apre il PDF nel browser, dopo il controllo dei permessi. Mai in cache: sono dati retributivi.</summary>
+    /// <summary>
+    /// Apre il PDF nel browser, dopo il controllo del perimetro (il dipendente solo i propri, e solo pubblicati).
+    /// Mai in cache: sono dati retributivi. La prima apertura del dipendente vale come consegna.
+    /// </summary>
     public async Task<IActionResult> Apri(Guid id)
     {
         var visibili = utente.Filtra(db.Dipendenti).Select(d => d.Id);
@@ -194,11 +198,16 @@ public sealed class BustePagaController(
         };
 
     private static List<FileCaricato> Converti(IEnumerable<IFormFile> files) =>
-        files.Select(f => new FileCaricato(f.FileName, f.ContentType, f.OpenReadStream, f.Length)).ToList();
+        files.Select(f => new FileCaricato(f.FileName, f.OpenReadStream, f.Length)).ToList();
 
+    /// <summary>Aziende per il filtro dell'elenco; con <paramref name="soloAttive"/> quelle attive (più quella scelta).</summary>
     private async Task<List<SelectListItem>> ElencoAziende(Guid? selezionata, bool soloAttive = false) =>
         await db.Aziende.AsNoTracking().Where(a => !soloAttive || a.Attiva || a.Id == selezionata).OrderBy(a => a.RagioneSociale)
             .Select(a => new SelectListItem(a.RagioneSociale, a.Id.ToString(), a.Id == selezionata)).ToListAsync();
+
+    /// <summary>Per il caricamento il consulente sceglie tra le aziende attive; il referente non sceglie (è la sua).</summary>
+    private async Task<List<SelectListItem>> AziendePerCaricare(Guid? scelta) =>
+        utente.IsConsulente ? await ElencoAziende(scelta, soloAttive: true) : [];
 
     private IActionResult Torna(string? ritorno) =>
         Url.IsLocalUrl(ritorno) ? LocalRedirect(ritorno) : RedirectToAction(nameof(Index));

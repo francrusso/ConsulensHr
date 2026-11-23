@@ -1,5 +1,8 @@
+using System.ComponentModel.DataAnnotations;
+using CL.Domain.Common;
 using CL.Domain.Dipendenti;
 using CL.Domain.Documenti;
+using CL.Domain.ValueObjects;
 using CL.Infrastructure.Archivio;
 using CL.Infrastructure.Persistence;
 using CL.Web.Infrastruttura;
@@ -11,12 +14,13 @@ using Microsoft.Net.Http.Headers;
 
 namespace CL.Web.Controllers;
 
-public sealed record RigaCu(Guid DipendenteId, string Persona, string Azienda, Guid? CuId, string? NomeFile, DateTime? CaricataIl, DateTime? VisualizzataIl);
+/// <summary>Riga delle CU: una per persona, con la CU dell'anno scelto se è stata caricata.</summary>
+public sealed record RigaCu(Guid DipendenteId, string Persona, string Azienda, Guid? CuId, DateTime? CaricataIl, DateTime? VisualizzataIl);
 
 public sealed record RigaContrattoDoc(Guid DipendenteId, string Persona, string Azienda, Guid ContrattoId, TipoContratto Tipo,
-    DateOnly Dal, DateOnly? Al, bool HaDocumento, string? NomeFile, DateTime? CaricatoIl, DateOnly? DataCessazione = null)
+    DateOnly Dal, DateOnly? Al, bool HaDocumento, DateTime? CaricatoIl, DateOnly? DataCessazione)
 {
-    /// <summary>Stato del contratto, con gli stessi nomi e colori dell'elenco del personale.</summary>
+    /// <summary>Stato del singolo contratto, con gli stessi nomi e colori dell'elenco del personale.</summary>
     public StatoPersonale StatoIl(DateOnly oggi) =>
         DataCessazione is { } c && c <= oggi ? StatoPersonale.Cessato
         : Dal > oggi ? StatoPersonale.Firmato
@@ -50,42 +54,45 @@ public sealed class NuovoContrattoForm
 /// <summary>
 /// Documenti del personale: CU per anno e contratti firmati (le buste paga hanno la loro pagina).
 /// Consulente e azienda li caricano e li consultano; il dipendente vede solo i propri.
+/// I PDF stanno nell'archivio privato (cartelle <c>cu/</c> e <c>contratti/</c>) e si aprono solo da qui, dopo il controllo del perimetro.
 /// </summary>
 [Authorize]
 public sealed class DocumentiController(AppDbContext db, UtenteCorrente utente, IArchivioDocumenti archivio, TimeProvider clock) : AppController
 {
     public const long DimensioneMassima = 10 * 1024 * 1024;
     private int AnnoCorrente => clock.GetLocalNow().Year;
+    /// <summary>Anni d'imposta proposti: i sette più recenti, dal più nuovo.</summary>
+    private List<int> Anni => Enumerable.Range(AnnoCorrente - 6, 7).Reverse().ToList();
 
     public IActionResult Index() => RedirectToAction("Index", "BustePaga");
 
-    /// <summary>CU dell'anno d'imposta: una riga per persona, con la CU caricata o da caricare.</summary>
+    /// <summary>
+    /// CU dell'anno d'imposta (di default l'anno scorso: la CU si consegna l'anno dopo): una riga per persona, con la CU
+    /// caricata o da caricare. Il dipendente vede invece tutte le sue CU, di ogni anno.
+    /// </summary>
     public async Task<IActionResult> Cu(int? anno, Guid? aziendaId, string? q)
     {
         var a = anno ?? AnnoCorrente - 1;
-        var persone = Persone(aziendaId, q);
-        // Il dipendente vede tutte le sue CU, di ogni anno.
         if (utente.IsDipendente)
         {
-            var mie = await db.CertificazioniUniche.AsNoTracking().Where(c => c.DipendenteId == utente.DipendenteId)
+            ViewBag.Mie = await db.CertificazioniUniche.AsNoTracking().Where(c => c.DipendenteId == utente.DipendenteId)
                 .OrderByDescending(c => c.AnnoImposta).ToListAsync();
-            ViewBag.Mie = mie;
+            return View(new ElencoDocumentiViewModel<RigaCu> { Righe = [], Anno = a });
         }
         var righe = await (
-            from d in persone
+            from d in Persone(aziendaId, q)
             join az in db.Aziende.AsNoTracking() on d.AziendaId equals az.Id
             let cu = db.CertificazioniUniche.FirstOrDefault(c => c.DipendenteId == d.Id && c.AnnoImposta == a)
             orderby d.Cognome, d.Nome
-            select new RigaCu(d.Id, d.Cognome + " " + d.Nome, az.RagioneSociale, cu == null ? null : cu.Id, cu == null ? null : cu.NomeFile,
+            select new RigaCu(d.Id, d.Cognome + " " + d.Nome, az.RagioneSociale, cu == null ? null : cu.Id,
                 cu == null ? null : cu.CaricataIl, cu == null ? null : cu.VisualizzataIl)).ToListAsync();
         return View(new ElencoDocumentiViewModel<RigaCu>
         {
-            Righe = righe, Anno = a, Anni = Enumerable.Range(AnnoCorrente - 6, 7).Reverse().ToList(), Ricerca = q, AziendaId = aziendaId,
-            Aziende = await ElencoAziende(aziendaId),
+            Righe = righe, Anno = a, Anni = Anni, Ricerca = q, AziendaId = aziendaId, Aziende = await ElencoAziende(aziendaId),
         });
     }
 
-    /// <summary>Carica (o sostituisce) la CU di una persona per un anno d'imposta.</summary>
+    /// <summary>Carica (o sostituisce) la CU di una persona per un anno d'imposta: il file sostituito si elimina dopo il salvataggio.</summary>
     [HttpPost, ValidateAntiForgeryToken, Authorize(Policy = Policy.GestionePersonale), RequestSizeLimit(DimensioneMassima + 256 * 1024)]
     public async Task<IActionResult> CaricaCu(Guid dipendenteId, int anno, IFormFile? documento, string? ritorno)
     {
@@ -113,10 +120,10 @@ public sealed class DocumentiController(AppDbContext db, UtenteCorrente utente, 
         return Torna(ritorno, nameof(Cu), new { anno });
     }
 
+    /// <summary>PDF della CU; la prima apertura del dipendente resta registrata (consegna).</summary>
     public async Task<IActionResult> ApriCu(Guid id)
     {
-        var visibili = utente.Filtra(db.Dipendenti).Select(d => d.Id);
-        var cu = await db.CertificazioniUniche.FirstOrDefaultAsync(c => c.Id == id && visibili.Contains(c.DipendenteId));
+        var cu = await CuVisibile(id);
         if (cu is null || await archivio.ApriAsync(cu.ChiaveArchivio) is not { } file) return NotFound();
         if (utente.IsDipendente && cu.VisualizzataIl is null)
         {
@@ -129,8 +136,7 @@ public sealed class DocumentiController(AppDbContext db, UtenteCorrente utente, 
     [HttpPost, ValidateAntiForgeryToken, Authorize(Policy = Policy.GestionePersonale)]
     public async Task<IActionResult> EliminaCu(Guid id, string? ritorno)
     {
-        var visibili = utente.Filtra(db.Dipendenti).Select(d => d.Id);
-        var cu = await db.CertificazioniUniche.FirstOrDefaultAsync(c => c.Id == id && visibili.Contains(c.DipendenteId));
+        var cu = await CuVisibile(id);
         if (cu is null) return NotFound();
         db.CertificazioniUniche.Remove(cu);
         await db.SaveChangesAsync();
@@ -149,7 +155,7 @@ public sealed class DocumentiController(AppDbContext db, UtenteCorrente utente, 
             from c in db.Contratti.AsNoTracking().Where(c => c.DipendenteId == d.Id)
             orderby d.Cognome, d.Nome, c.DataInizio descending
             select new RigaContrattoDoc(d.Id, d.Cognome + " " + d.Nome, az.RagioneSociale, c.Id, c.Tipo, c.DataInizio, c.DataFine,
-                c.DocumentoChiave != null, c.DocumentoNome, c.DocumentoCaricatoIl, c.DataCessazione)).ToListAsync();
+                c.DocumentoChiave != null, c.DocumentoCaricatoIl, c.DataCessazione)).ToListAsync();
         return View(new ElencoDocumentiViewModel<RigaContrattoDoc> { Righe = righe, Ricerca = q, AziendaId = aziendaId, Aziende = await ElencoAziende(aziendaId) });
     }
 
@@ -162,9 +168,9 @@ public sealed class DocumentiController(AppDbContext db, UtenteCorrente utente, 
         return Pdf(file, c.DocumentoNome ?? "contratto.pdf");
     }
 
-    /// <summary>Persone del perimetro per le scelte dei moduli (nome e azienda).</summary>
-    private async Task<List<SelectListItem>> ScelteIn(Guid? aziendaId) =>
-        (await (from d in Persone(aziendaId, null)
+    /// <summary>Persone del perimetro per le scelte dei moduli (al consulente si mostra anche l'azienda).</summary>
+    private async Task<List<SelectListItem>> SceltePersone() =>
+        (await (from d in Persone(null, null)
                 join az in db.Aziende.AsNoTracking() on d.AziendaId equals az.Id
                 orderby d.Cognome, d.Nome
                 select new { d.Id, Nome = d.Cognome + " " + d.Nome, az.RagioneSociale }).ToListAsync())
@@ -174,9 +180,9 @@ public sealed class DocumentiController(AppDbContext db, UtenteCorrente utente, 
     [Authorize(Policy = Policy.GestionePersonale)]
     public async Task<IActionResult> NuovaCu(int? anno)
     {
-        ViewBag.Persone = await ScelteIn(null);
+        ViewBag.Persone = await SceltePersone();
         ViewBag.Anno = anno ?? AnnoCorrente - 1;
-        ViewBag.Anni = Enumerable.Range(AnnoCorrente - 6, 7).Reverse().ToList();
+        ViewBag.Anni = Anni;
         return View();
     }
 
@@ -184,6 +190,7 @@ public sealed class DocumentiController(AppDbContext db, UtenteCorrente utente, 
     [Authorize(Policy = Policy.GestionePersonale)]
     public async Task<IActionResult> NuovoContratto() => await MostraNuovoContratto(new NuovoContrattoForm());
 
+    /// <summary>Prima si sceglie (o si crea) la persona, poi il contratto si compila nella pagina "Assumi" del personale.</summary>
     [HttpPost, ValidateAntiForgeryToken, Authorize(Policy = Policy.GestionePersonale)]
     public async Task<IActionResult> NuovoContratto(NuovoContrattoForm form)
     {
@@ -197,17 +204,16 @@ public sealed class DocumentiController(AppDbContext db, UtenteCorrente utente, 
             return RedirectToAction("Assumi", "Dipendenti", new { id });
         }
 
-        var aziendaId = utente.IsAzienda ? utente.AziendaId : form.AziendaId;
+        var aziendaId = utente.IsAzienda ? utente.AziendaId : form.AziendaId; // il referente crea persone solo nella propria azienda
         if (aziendaId is null || !await db.Aziende.AnyAsync(a => a.Id == aziendaId)) ModelState.AddModelError(nameof(form.AziendaId), "Scegli l'azienda.");
         if (string.IsNullOrWhiteSpace(form.Nome)) ModelState.AddModelError(nameof(form.Nome), "Inserisci il nome.");
         if (string.IsNullOrWhiteSpace(form.Cognome)) ModelState.AddModelError(nameof(form.Cognome), "Inserisci il cognome.");
         if (form.DataNascita is null) ModelState.AddModelError(nameof(form.DataNascita), "Inserisci la data di nascita.");
         if (string.IsNullOrWhiteSpace(form.Email)) ModelState.AddModelError(nameof(form.Email), "Inserisci l'email.");
-        else if (!new System.ComponentModel.DataAnnotations.EmailAddressAttribute().IsValid(form.Email.Trim()))
-            ModelState.AddModelError(nameof(form.Email), "Email non valida.");
-        CL.Domain.ValueObjects.CodiceFiscale? cf = null;
-        try { cf = CL.Domain.ValueObjects.CodiceFiscale.Parse(form.CodiceFiscale); }
-        catch (CL.Domain.Common.DomainException ex) { ModelState.AddModelError(nameof(form.CodiceFiscale), ex.Message); }
+        else if (!new EmailAddressAttribute().IsValid(form.Email.Trim())) ModelState.AddModelError(nameof(form.Email), "Email non valida.");
+        CodiceFiscale? cf = null;
+        try { cf = CodiceFiscale.Parse(form.CodiceFiscale); }
+        catch (DomainException ex) { ModelState.AddModelError(nameof(form.CodiceFiscale), ex.Message); }
         if (cf is not null && aziendaId is { } az && await db.Dipendenti.AnyAsync(d => d.AziendaId == az && d.CodiceFiscale == cf))
             ModelState.AddModelError(nameof(form.CodiceFiscale), "Questa persona c'è già: sceglila tra le persone presenti.");
         if (!ModelState.IsValid) return await MostraNuovoContratto(form);
@@ -216,19 +222,20 @@ public sealed class DocumentiController(AppDbContext db, UtenteCorrente utente, 
         if (!Prova(() => nuova = new Dipendente(aziendaId!.Value, form.Nome!.Trim(), form.Cognome!.Trim(), cf!, form.DataNascita!.Value)))
             return await MostraNuovoContratto(form);
         nuova!.AggiornaRecapiti(form.Email!.Trim(), null);
-        db.Dipendenti.Add(nuova!);
+        db.Dipendenti.Add(nuova);
         await db.SaveChangesAsync();
-        Conferma($"{nuova!.NomeCompleto} aggiunta al personale: ora inserisci il contratto.");
+        Conferma($"{nuova.NomeCompleto} aggiunta al personale: ora inserisci il contratto.");
         return RedirectToAction("Assumi", "Dipendenti", new { id = nuova.Id });
     }
 
     private async Task<IActionResult> MostraNuovoContratto(NuovoContrattoForm form)
     {
-        ViewBag.Persone = await ScelteIn(null);
+        ViewBag.Persone = await SceltePersone();
         ViewBag.Aziende = await ElencoAziende(form.AziendaId);
         return View("NuovoContratto", form);
     }
 
+    /// <summary>Persone nel perimetro dell'utente; il filtro per azienda vale solo per il consulente.</summary>
     private IQueryable<Dipendente> Persone(Guid? aziendaId, string? q)
     {
         var query = utente.Filtra(db.Dipendenti.AsNoTracking().IgnoreAutoIncludes());
@@ -241,6 +248,14 @@ public sealed class DocumentiController(AppDbContext db, UtenteCorrente utente, 
         return query;
     }
 
+    /// <summary>La CU, solo se è di una persona nel perimetro dell'utente.</summary>
+    private Task<CertificazioneUnica?> CuVisibile(Guid id)
+    {
+        var visibili = utente.Filtra(db.Dipendenti).Select(d => d.Id);
+        return db.CertificazioniUniche.FirstOrDefaultAsync(c => c.Id == id && visibili.Contains(c.DipendenteId));
+    }
+
+    /// <summary>Elenco delle aziende per il filtro: solo per il consulente.</summary>
     private async Task<List<SelectListItem>?> ElencoAziende(Guid? scelta) => !utente.IsConsulente ? null
         : await db.Aziende.AsNoTracking().Where(a => a.Attiva || a.Id == scelta).OrderBy(a => a.RagioneSociale)
             .Select(a => new SelectListItem(a.RagioneSociale, a.Id.ToString(), a.Id == scelta)).ToListAsync();
@@ -249,11 +264,18 @@ public sealed class DocumentiController(AppDbContext db, UtenteCorrente utente, 
     {
         if (f is not { Length: > 0 }) return "Scegli il file PDF.";
         if (f.Length > DimensioneMassima) return "Il file supera 10 MB.";
-        var testa = new byte[5];
-        await using (var s = f.OpenReadStream()) _ = await s.ReadAtLeastAsync(testa, testa.Length, throwOnEndOfStream: false);
-        return testa.AsSpan().SequenceEqual("%PDF-"u8) ? null : "Il documento deve essere un file PDF.";
+        return await EPdfAsync(f) ? null : "Il documento deve essere un file PDF.";
     }
 
+    /// <summary>Un PDF si riconosce dai primi byte ("%PDF-"), non dall'estensione o dal tipo dichiarati dal browser.</summary>
+    internal static async Task<bool> EPdfAsync(IFormFile file)
+    {
+        var testa = new byte[5];
+        await using (var s = file.OpenReadStream()) _ = await s.ReadAtLeastAsync(testa, testa.Length, throwOnEndOfStream: false);
+        return testa.AsSpan().SequenceEqual("%PDF-"u8);
+    }
+
+    /// <summary>PDF aperto nel browser e mai in cache.</summary>
     private FileStreamResult Pdf(Stream file, string nome)
     {
         Response.Headers.CacheControl = "no-store, private";
@@ -262,6 +284,7 @@ public sealed class DocumentiController(AppDbContext db, UtenteCorrente utente, 
         return File(file, "application/pdf");
     }
 
+    /// <summary>Torna alla pagina di partenza (solo indirizzi locali), altrimenti all'azione indicata.</summary>
     private IActionResult Torna(string? ritorno, string azione, object valori) =>
         Url.IsLocalUrl(ritorno) ? LocalRedirect(ritorno) : RedirectToAction(azione, valori);
 }

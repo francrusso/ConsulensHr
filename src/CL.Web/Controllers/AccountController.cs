@@ -76,8 +76,12 @@ public sealed class ProfiloViewModel
     public string Conferma { get; set; } = "";
 }
 
+/// <summary>
+/// Accesso, uscita e password. Il link dell'invito e quello di "Password dimenticata?" portano entrambi a ImpostaPassword:
+/// al primo uso l'email risulta confermata (accesso attivo) e il token non vale più.
+/// </summary>
 public sealed class AccountController(SignInManager<ApplicationUser> signIn, UserManager<ApplicationUser> users,
-    ServizioAccessi accessi, UtenteCorrente corrente, ILogger<AccountController> logger) : Controller
+    ServizioAccessi accessi, UtenteCorrente corrente, ILogger<AccountController> logger) : AppController
 {
     [AllowAnonymous, HttpGet]
     public IActionResult Login(string? returnUrl = null)
@@ -154,7 +158,7 @@ public sealed class AccountController(SignInManager<ApplicationUser> signIn, Use
         await users.ResetAccessFailedCountAsync(utente);
         await users.SetLockoutEndDateAsync(utente, null);
         await signIn.SignInAsync(utente, isPersistent: false);
-        TempData["Messaggio"] = model.PrimoAccesso ? "Benvenuto in Consulens HR: il tuo accesso è attivo." : "Password aggiornata.";
+        Conferma(model.PrimoAccesso ? "Benvenuto in Consulens HR: il tuo accesso è attivo." : "Password aggiornata.");
         return RedirectToAction("Index", "Home");
     }
 
@@ -178,14 +182,14 @@ public sealed class AccountController(SignInManager<ApplicationUser> signIn, Use
     }
 
     [HttpGet]
-    public async Task<IActionResult> Profilo() => View(await ProfiloDi(new ProfiloViewModel()));
+    public async Task<IActionResult> Profilo() => View(ProfiloDi(new ProfiloViewModel(), await users.GetUserAsync(User)));
 
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Profilo(ProfiloViewModel model)
     {
         var utente = await users.GetUserAsync(User);
         if (utente is null) return Challenge();
-        if (!ModelState.IsValid) return View(await ProfiloDi(model));
+        if (!ModelState.IsValid) return View(ProfiloDi(model, utente));
 
         var esito = await users.ChangePasswordAsync(utente, model.PasswordAttuale, model.NuovaPassword);
         if (!esito.Succeeded)
@@ -193,11 +197,11 @@ public sealed class AccountController(SignInManager<ApplicationUser> signIn, Use
             foreach (var e in esito.Errors)
                 ModelState.AddModelError(e.Code == "PasswordMismatch" ? nameof(model.PasswordAttuale) : nameof(model.NuovaPassword),
                     e.Code == "PasswordMismatch" ? "La password attuale non è corretta." : e.Description);
-            return View(await ProfiloDi(model));
+            return View(ProfiloDi(model, utente));
         }
 
         await signIn.RefreshSignInAsync(utente); // il nuovo security stamp chiude le altre sessioni, non questa
-        TempData["Messaggio"] = "Password aggiornata.";
+        Conferma("Password aggiornata.");
         return RedirectToAction(nameof(Profilo));
     }
 
@@ -209,7 +213,7 @@ public sealed class AccountController(SignInManager<ApplicationUser> signIn, Use
         if (utente is null) return Challenge();
         if (string.IsNullOrWhiteSpace(nome) || string.IsNullOrWhiteSpace(cognome))
         {
-            TempData["Errore"] = "Inserisci nome e cognome.";
+            Errore("Inserisci nome e cognome.");
             return RedirectToAction(nameof(Profilo));
         }
         utente.Nome = nome.Trim();
@@ -217,17 +221,16 @@ public sealed class AccountController(SignInManager<ApplicationUser> signIn, Use
         await users.UpdateAsync(utente);
         if (!string.IsNullOrWhiteSpace(email) && await accessi.CambiaEmailAsync(utente, email) is { } errore)
         {
-            TempData["Errore"] = errore;
+            Errore(errore);
             return RedirectToAction(nameof(Profilo));
         }
         await signIn.RefreshSignInAsync(utente); // nome ed email aggiornati anche in alto a destra
-        TempData["Messaggio"] = "Dati aggiornati.";
+        Conferma("Dati aggiornati.");
         return RedirectToAction(nameof(Profilo));
     }
 
-    private async Task<ProfiloViewModel> ProfiloDi(ProfiloViewModel model)
+    private ProfiloViewModel ProfiloDi(ProfiloViewModel model, ApplicationUser? utente)
     {
-        var utente = await users.GetUserAsync(User);
         model.Email = utente?.Email ?? "";
         model.NomeProprio = utente?.Nome ?? "";
         model.Cognome = utente?.Cognome ?? "";
@@ -236,6 +239,7 @@ public sealed class AccountController(SignInManager<ApplicationUser> signIn, Use
         return model;
     }
 
+    /// <summary>L'utente del link, se è attivo e il token non è scaduto né già usato; altrimenti null.</summary>
     private async Task<ApplicationUser?> UtenteDaLink(string? uid, string? token)
     {
         if (string.IsNullOrEmpty(uid) || Decodifica(token) is not { } t) return null;
@@ -245,6 +249,7 @@ public sealed class AccountController(SignInManager<ApplicationUser> signIn, Use
             UserManager<ApplicationUser>.ResetPasswordTokenPurpose, t) ? u : null;
     }
 
+    /// <summary>Il token viaggia nel link in Base64 URL-safe (vedi ServizioAccessi); null se non è decodificabile.</summary>
     private static string? Decodifica(string? token)
     {
         if (string.IsNullOrEmpty(token)) return null;

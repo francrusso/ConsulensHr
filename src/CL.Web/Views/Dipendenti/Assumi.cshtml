@@ -101,7 +101,7 @@
     <script>
         // Campi del lavoro dipendente nascosti per i professionisti esterni.
         (function () {
-            const form = document.getElementById('formContratto'), tipo = document.getElementById('Tipo');
+            const tipo = document.getElementById('Tipo');
             const esterni = [...tipo.querySelectorAll('optgroup')].find(g => g.label === 'Professionisti esterni');
             const aggiorna = () => document.body.classList.toggle('rapporto-esterno', !!esterni && [...esterni.children].some(o => o.selected));
             tipo.addEventListener('change', aggiorna); aggiorna();

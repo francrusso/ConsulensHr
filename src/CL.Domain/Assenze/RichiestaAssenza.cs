@@ -100,7 +100,7 @@ public sealed class RichiestaAssenza : Entity
     {
         if (Stato != StatoRichiesta.Approvata) throw new DomainException("Si può chiedere di cancellare solo una richiesta approvata.");
         if (AnnullamentoRichiestoIl is not null) throw new DomainException("La cancellazione è già stata chiesta.");
-        var m = string.IsNullOrWhiteSpace(motivo) ? null : motivo.Trim();
+        var m = Guard.Facoltativo(motivo);
         if (m is { Length: > 500 }) throw new DomainException("Motivo troppo lungo (massimo 500 caratteri).");
         AnnullamentoRichiestoIl = adesso;
         MotivoAnnullamento = m;

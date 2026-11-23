@@ -1,9 +1,10 @@
+@inject UtenteCorrente Utente
 @{
     ViewData["Title"] = "Aggiungi utente";
     ViewData["Percorso"] = new List<(string, string?)> { ("Utenti", Url.Action("Index")) };
     var aziende = (List<SelectListItem>)ViewBag.Aziende;
     var persone = (List<SelectListItem>)ViewBag.Persone;
-    var admin = User.IsInRole(CL.Infrastructure.Identity.Ruoli.Amministratore);
+    var admin = Utente.IsAmministratore;
     var ritorno = Url.Action("Index");
 }
 <div class="breadcrumb-titolo mb-3"><h1 class="titolo-pagina mb-0">Aggiungi utente</h1></div>

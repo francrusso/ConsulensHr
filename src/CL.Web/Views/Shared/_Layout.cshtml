@@ -1,36 +1,37 @@
-﻿@inject CL.Web.Infrastruttura.UtenteCorrente Utente
-@inject CL.Web.Infrastruttura.ServizioAvatar Avatar
+﻿@inject UtenteCorrente Utente
+@inject ServizioAvatar Avatar
 @*
     Struttura ripresa da ConsulensNew (sidebar + topbar + page-content) per avere la stessa estetica;
     i colori beige vengono da assets/css/tema-beige.css.
+    Le pagine di accesso (login, password) impostano ViewData["AuthPanel"]: niente menù né barra in alto.
 *@
 @{
     var autenticato = User.Identity?.IsAuthenticated == true && ViewData["AuthPanel"] is not true;
     var ruolo = Utente.IsAmministratore ? "Super amministratore" : Utente.IsConsulente ? "Consulente" : Utente.IsAzienda ? "Referente azienda" : Utente.IsDipendente ? "Dipendente" : "";
     var inOnboarding = User.HasClaim(c => c.Type == CL.Infrastructure.Identity.ClaimsPersonalizzati.OnboardingDaCompletare);
 
-    // Pulsante "aggiungi" nella barra in alto, in base alla sezione (come in ConsulensNew).
-    var controller = (ViewContext.RouteData.Values["controller"] as string ?? "").ToLowerInvariant();
-    var esterniAttivi = Context.Request.Query["esterni"] == "true";
-    var aziendaQuery = Context.Request.Query["aziendaId"].FirstOrDefault();
-    (string? Url, string Etichetta, string Icona) azione = inOnboarding ? (null, "", "") : controller switch
+    // Pulsante "aggiungi" nella barra in alto: dipende dalla sezione e dalla pagina (come in ConsulensNew) e da chi guarda.
+    // Url null = nessun pulsante; "#id" apre il pannello a scomparsa della pagina invece di cambiare pagina.
+    var sezione = (ViewContext.RouteData.Values["controller"] as string ?? "").ToLowerInvariant();
+    var pagina = ViewContext.RouteData.Values["action"] as string ?? "";
+    var query = Context.Request.Query;
+    var gestisce = !Utente.IsDipendente; // consulente o referente azienda
+    (string? Url, string Etichetta, string Icona) azione = inOnboarding ? (null, "", "") : (sezione, pagina) switch
     {
-        "dipendenti" when !Utente.IsDipendente => (Url.Action("Nuovo", "Dipendenti", new { aziendaId = aziendaQuery }),
-            esterniAttivi ? "Aggiungi professionista" : "Aggiungi persona", "ri-user-add-line"),
-        "aziende" when Utente.IsConsulente => (Url.Action("Nuova", "Aziende"), "Nuova azienda", "ri-add-line"),
-        "team" when (ViewContext.RouteData.Values["action"] as string) == "Index" => ("#nuovoTeam", "Nuovo team", "ri-add-line"),
-        "utenti" when Utente.IsConsulente && (ViewContext.RouteData.Values["action"] as string) is "Index" or "Nuovo"
-            => (Url.Action("Nuovo", "Utenti"), "Aggiungi altro utente", "ri-user-add-line"),
-        "consulenti" when (ViewContext.RouteData.Values["action"] as string) == "Index" => ("#nuovoConsulente", "Nuovo consulente", "ri-user-add-line"),
-        "assenze" or "ufficio" => (Url.Action("Nuova", "Assenze"), "Nuova richiesta", "ri-calendar-event-line"),
-        "bustepaga" when !Utente.IsDipendente => (Url.Action("Carica", "BustePaga"), "Carica busta paga", "ri-upload-2-line"),
-        "documenti" when !Utente.IsDipendente && (ViewContext.RouteData.Values["action"] as string) is "Contratti" or "NuovoContratto"
-            => (Url.Action("NuovoContratto", "Documenti"), "Nuovo contratto", "ri-file-add-line"),
-        "documenti" when !Utente.IsDipendente && (ViewContext.RouteData.Values["action"] as string) is "Cu" or "NuovaCu"
-            => (Url.Action("NuovaCu", "Documenti", new { anno = Context.Request.Query["anno"].FirstOrDefault() }), "Carica CU", "ri-upload-2-line"),
-        "home" => Utente.IsConsulente ? (Url.Action("Nuova", "Aziende"), "Nuova azienda", "ri-add-line")
-            : Utente.IsAzienda ? (Url.Action("Nuovo", "Dipendenti"), "Aggiungi persona", "ri-user-add-line")
-            : (Url.Action("Nuova", "Assenze"), "Chiedi ferie o permessi", "ri-calendar-event-line"),
+        ("dipendenti", _) when gestisce => (Url.Action("Nuovo", "Dipendenti", new { aziendaId = query["aziendaId"].FirstOrDefault() }),
+            query["esterni"] == "true" ? "Aggiungi professionista" : "Aggiungi persona", "ri-user-add-line"),
+        ("aziende", _) when Utente.IsConsulente => (Url.Action("Nuova", "Aziende"), "Nuova azienda", "ri-add-line"),
+        ("team", "Index") => ("#nuovoTeam", "Nuovo team", "ri-add-line"),
+        ("utenti", "Index" or "Nuovo") when Utente.IsConsulente => (Url.Action("Nuovo", "Utenti"), "Aggiungi altro utente", "ri-user-add-line"),
+        ("consulenti", "Index") => ("#nuovoConsulente", "Nuovo consulente", "ri-user-add-line"),
+        ("assenze" or "ufficio", _) => (Url.Action("Nuova", "Assenze"), "Nuova richiesta", "ri-calendar-event-line"),
+        ("bustepaga", _) when gestisce => (Url.Action("Carica", "BustePaga"), "Carica busta paga", "ri-upload-2-line"),
+        ("documenti", "Contratti" or "NuovoContratto") when gestisce => (Url.Action("NuovoContratto", "Documenti"), "Nuovo contratto", "ri-file-add-line"),
+        ("documenti", "Cu" or "NuovaCu") when gestisce
+            => (Url.Action("NuovaCu", "Documenti", new { anno = query["anno"].FirstOrDefault() }), "Carica CU", "ri-upload-2-line"),
+        ("home", _) when Utente.IsConsulente => (Url.Action("Nuova", "Aziende"), "Nuova azienda", "ri-add-line"),
+        ("home", _) when Utente.IsAzienda => (Url.Action("Nuovo", "Dipendenti"), "Aggiungi persona", "ri-user-add-line"),
+        ("home", _) => (Url.Action("Nuova", "Assenze"), "Chiedi ferie o permessi", "ri-calendar-event-line"),
         _ => (null, "", ""),
     };
 }
@@ -45,7 +46,6 @@
     <link rel="apple-touch-icon" href="~/assets/images/apple-touch-icon.png" asp-append-version="true" />
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/assets/plugins/simplebar/css/simplebar.css" />
-    <link rel="stylesheet" href="~/assets/plugins/perfect-scrollbar/css/perfect-scrollbar.css" />
     <link rel="stylesheet" href="~/assets/plugins/metismenu/css/metisMenu.min.css" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" />
     <link rel="stylesheet" href="~/assets/plugins/select2/css/select2.min.css" />
@@ -92,131 +92,138 @@
                         }
                         else
                         {
-                        @if (Utente.IsDipendente)
-                        {
-                            <li>
-                                <a asp-controller="DatiPersonali" asp-action="Index">
-                                    <div class="parent-icon icon-color-1"><i class="ri-user-settings-line ri-xs"></i></div>
-                                    <div class="menu-title">I miei dati</div>
-                                </a>
-                            </li>
-                            <li>
-                                <a asp-controller="MioContratto" asp-action="Index">
-                                    <div class="parent-icon icon-color-1"><i class="ri-file-text-line ri-xs"></i></div>
-                                    <div class="menu-title">Il mio contratto</div>
-                                </a>
-                            </li>
-                        }
-                        @if (!Utente.IsDipendente)
-                        {
-                        <li>
-                            <a asp-controller="Home" asp-action="Index">
-                                <div class="parent-icon icon-color-1"><i class="ri-dashboard-line ri-xs"></i></div>
-                                <div class="menu-title">Panoramica</div>
-                            </a>
-                        </li>
-                        }
-                        @* Per l'azienda: subito dopo la panoramica. *@
-                        @if (Utente.IsAzienda)
-                        {
-                            <li>
-                                <a asp-controller="Onboarding" asp-action="Index">
-                                    <div class="parent-icon icon-color-1"><i class="ri-building-2-line ri-xs"></i></div>
-                                    <div class="menu-title">Profilo azienda</div>
-                                </a>
-                            </li>
-                        }
-                        @if (Utente.IsConsulente)
-                        {
-                            <li>
-                                <a asp-controller="Aziende" asp-action="Index">
-                                    <div class="parent-icon icon-color-1"><i class="ri-building-line ri-xs"></i></div>
-                                    <div class="menu-title">Aziende</div>
-                                </a>
-                            </li>
-                        }
-                        @if (Utente.IsAzienda)
-                        {
+                            @*
+                                Voci per ruolo:
+                                dipendente: I miei dati, Il mio contratto, Calendario, Richieste, Documenti (buste paga e CU);
+                                referente azienda: Panoramica, Profilo azienda, Personale (elenco, team, organigramma), Presenze e assenze, Documenti;
+                                consulente: Panoramica, Aziende, Personale, Presenze e assenze, Documenti, Consulenti (solo super amministratore), Utenti.
+                                Durante il percorso guidato (sopra) c'è solo la voce del profilo da completare.
+                            *@
+                            if (Utente.IsDipendente)
+                            {
+                                <li>
+                                    <a asp-controller="DatiPersonali" asp-action="Index">
+                                        <div class="parent-icon icon-color-1"><i class="ri-user-settings-line ri-xs"></i></div>
+                                        <div class="menu-title">I miei dati</div>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a asp-controller="MioContratto" asp-action="Index">
+                                        <div class="parent-icon icon-color-1"><i class="ri-file-text-line ri-xs"></i></div>
+                                        <div class="menu-title">Il mio contratto</div>
+                                    </a>
+                                </li>
+                            }
+                            else
+                            {
+                                <li>
+                                    <a asp-controller="Home" asp-action="Index">
+                                        <div class="parent-icon icon-color-1"><i class="ri-dashboard-line ri-xs"></i></div>
+                                        <div class="menu-title">Panoramica</div>
+                                    </a>
+                                </li>
+                            }
+                            @* Per l'azienda: subito dopo la panoramica. *@
+                            if (Utente.IsAzienda)
+                            {
+                                <li>
+                                    <a asp-controller="Onboarding" asp-action="Index">
+                                        <div class="parent-icon icon-color-1"><i class="ri-building-2-line ri-xs"></i></div>
+                                        <div class="menu-title">Profilo azienda</div>
+                                    </a>
+                                </li>
+                            }
+                            if (Utente.IsConsulente)
+                            {
+                                <li>
+                                    <a asp-controller="Aziende" asp-action="Index">
+                                        <div class="parent-icon icon-color-1"><i class="ri-building-line ri-xs"></i></div>
+                                        <div class="menu-title">Aziende</div>
+                                    </a>
+                                </li>
+                            }
+                            if (Utente.IsAzienda)
+                            {
+                                <li>
+                                    <a href="javascript:;" class="has-arrow">
+                                        <div class="parent-icon icon-color-1"><i class="ri-team-line ri-xs"></i></div>
+                                        <div class="menu-title">Personale</div>
+                                    </a>
+                                    <ul>
+                                        <li><a asp-controller="Dipendenti" asp-action="Index">Elenco personale</a></li>
+                                        <li><a asp-controller="Team" asp-action="Index">Team</a></li>
+                                        <li><a asp-controller="Team" asp-action="Organigramma">Organigramma</a></li>
+                                    </ul>
+                                </li>
+                            }
+                            else if (Utente.IsConsulente)
+                            {
+                                <li>
+                                    <a asp-controller="Dipendenti" asp-action="Index">
+                                        <div class="parent-icon icon-color-1"><i class="ri-team-line ri-xs"></i></div>
+                                        <div class="menu-title">Personale</div>
+                                    </a>
+                                </li>
+                            }
+                            if (Utente.IsDipendente)
+                            {
+                                @* Il dipendente: calendario (prima pagina) e richieste come voci singole. *@
+                                <li>
+                                    <a asp-controller="Ufficio" asp-action="Index">
+                                        <div class="parent-icon icon-color-1"><i class="ri-calendar-2-line ri-xs"></i></div>
+                                        <div class="menu-title">Calendario</div>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a asp-controller="Assenze" asp-action="Index">
+                                        <div class="parent-icon icon-color-1"><i class="ri-calendar-check-line ri-xs"></i></div>
+                                        <div class="menu-title">Richieste</div>
+                                    </a>
+                                </li>
+                            }
+                            else
+                            {
+                                <li>
+                                    <a href="javascript:;" class="has-arrow">
+                                        <div class="parent-icon icon-color-1"><i class="ri-calendar-event-line ri-xs"></i></div>
+                                        <div class="menu-title">Presenze e assenze</div>
+                                    </a>
+                                    <ul>
+                                        <li><a asp-controller="Assenze" asp-action="Calendario">Calendario</a></li>
+                                        <li><a asp-controller="Assenze" asp-action="Index">Richieste</a></li>
+                                        <li><a asp-controller="Presenze" asp-action="Index">Riepilogo presenze</a></li>
+                                    </ul>
+                                </li>
+                            }
                             <li>
                                 <a href="javascript:;" class="has-arrow">
-                                    <div class="parent-icon icon-color-1"><i class="ri-team-line ri-xs"></i></div>
-                                    <div class="menu-title">Personale</div>
+                                    <div class="parent-icon icon-color-1"><i class="ri-folder-3-line ri-xs"></i></div>
+                                    <div class="menu-title">Documenti</div>
                                 </a>
                                 <ul>
-                                    <li><a asp-controller="Dipendenti" asp-action="Index">Elenco personale</a></li>
-                                    <li><a asp-controller="Team" asp-action="Index">Team</a></li>
-                                    <li><a asp-controller="Team" asp-action="Organigramma">Organigramma</a></li>
+                                    <li><a asp-controller="BustePaga" asp-action="Index">Buste paga</a></li>
+                                    <li><a asp-controller="Documenti" asp-action="Cu">CU</a></li>
+                                    @if (!Utente.IsDipendente) { <li><a asp-controller="Documenti" asp-action="Contratti">Contratti</a></li> }
                                 </ul>
                             </li>
-                        }
-                        else if (Utente.IsConsulente)
-                        {
-                            <li>
-                                <a asp-controller="Dipendenti" asp-action="Index">
-                                    <div class="parent-icon icon-color-1"><i class="ri-team-line ri-xs"></i></div>
-                                    <div class="menu-title">Personale</div>
-                                </a>
-                            </li>
-                        }
-                        @if (Utente.IsDipendente)
-                        {
-                            @* Il dipendente: calendario (prima pagina) e richieste come voci singole. *@
-                            <li>
-                                <a asp-controller="Ufficio" asp-action="Index">
-                                    <div class="parent-icon icon-color-1"><i class="ri-calendar-2-line ri-xs"></i></div>
-                                    <div class="menu-title">Calendario</div>
-                                </a>
-                            </li>
-                            <li>
-                                <a asp-controller="Assenze" asp-action="Index">
-                                    <div class="parent-icon icon-color-1"><i class="ri-calendar-check-line ri-xs"></i></div>
-                                    <div class="menu-title">Richieste</div>
-                                </a>
-                            </li>
-                        }
-                        else
-                        {
-                            <li>
-                                <a href="javascript:;" class="has-arrow">
-                                    <div class="parent-icon icon-color-1"><i class="ri-calendar-event-line ri-xs"></i></div>
-                                    <div class="menu-title">Presenze e assenze</div>
-                                </a>
-                                <ul>
-                                    <li><a asp-controller="Assenze" asp-action="Calendario">Calendario</a></li>
-                                    <li><a asp-controller="Assenze" asp-action="Index">Richieste</a></li>
-                                    <li><a asp-controller="Presenze" asp-action="Index">Riepilogo presenze</a></li>
-                                </ul>
-                            </li>
-                        }
-                        <li>
-                            <a href="javascript:;" class="has-arrow">
-                                <div class="parent-icon icon-color-1"><i class="ri-folder-3-line ri-xs"></i></div>
-                                <div class="menu-title">Documenti</div>
-                            </a>
-                            <ul>
-                                <li><a asp-controller="BustePaga" asp-action="Index">Buste paga</a></li>
-                                <li><a asp-controller="Documenti" asp-action="Cu">CU</a></li>
-                                @if (!Utente.IsDipendente) { <li><a asp-controller="Documenti" asp-action="Contratti">Contratti</a></li> }
-                            </ul>
-                        </li>
-                        @if (Utente.IsAmministratore)
-                        {
-                            <li>
-                                <a asp-controller="Consulenti" asp-action="Index">
-                                    <div class="parent-icon icon-color-1"><i class="ri-user-star-line ri-xs"></i></div>
-                                    <div class="menu-title">Consulenti</div>
-                                </a>
-                            </li>
-                        }
-                        @if (Utente.IsConsulente)
-                        {
-                            <li>
-                                <a asp-controller="Utenti" asp-action="Index">
-                                    <div class="parent-icon icon-color-1"><i class="ri-shield-user-line ri-xs"></i></div>
-                                    <div class="menu-title">Utenti</div>
-                                </a>
-                            </li>
-                        }
+                            if (Utente.IsAmministratore)
+                            {
+                                <li>
+                                    <a asp-controller="Consulenti" asp-action="Index">
+                                        <div class="parent-icon icon-color-1"><i class="ri-user-star-line ri-xs"></i></div>
+                                        <div class="menu-title">Consulenti</div>
+                                    </a>
+                                </li>
+                            }
+                            if (Utente.IsConsulente)
+                            {
+                                <li>
+                                    <a asp-controller="Utenti" asp-action="Index">
+                                        <div class="parent-icon icon-color-1"><i class="ri-shield-user-line ri-xs"></i></div>
+                                        <div class="menu-title">Utenti</div>
+                                    </a>
+                                </li>
+                            }
                         }
                     </ul>
                 </div>
@@ -284,12 +291,12 @@
                                             var (origine, idImmagine) = await Avatar.ImmagineAsync();
                                             var srcAvatar = origine switch
                                             {
-                                                CL.Web.Infrastruttura.ServizioAvatar.Origine.Foto => Url.Action("Foto", "Dipendenti", new { id = idImmagine }),
-                                                CL.Web.Infrastruttura.ServizioAvatar.Origine.Logo => Url.Action("Logo", "Aziende", new { id = idImmagine }),
+                                                ServizioAvatar.Origine.Foto => Url.Action("Foto", "Dipendenti", new { id = idImmagine }),
+                                                ServizioAvatar.Origine.Logo => Url.Action("Logo", "Aziende", new { id = idImmagine }),
                                                 _ => Url.Content("~/assets/images/avatars/avatar-1.jpg"),
                                             };
                                         }
-                                        <img src="@srcAvatar" class="user-img @(origine == CL.Web.Infrastruttura.ServizioAvatar.Origine.Logo ? "user-img-logo" : "")" alt="" />
+                                        <img src="@srcAvatar" class="user-img @(origine == ServizioAvatar.Origine.Logo ? "user-img-logo" : "")" alt="" />
                                         <div class="user-info">
                                             <p class="user-name mb-0">@Utente.Nome</p>
                                             <p class="designattion mb-0">@ruolo</p>
@@ -328,7 +335,6 @@
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/assets/plugins/simplebar/js/simplebar.min.js"></script>
     <script src="~/assets/plugins/metismenu/js/metisMenu.min.js"></script>
-    <script src="~/assets/plugins/perfect-scrollbar/js/perfect-scrollbar.js"></script>
     <script src="~/assets/plugins/select2/js/select2.min.js"></script>
     <script src="~/js/indirizzi.js" asp-append-version="true"></script>
     <script src="~/js/moduli.js" asp-append-version="true"></script>

@@ -1,20 +1,20 @@
-@model CL.Web.Controllers.OnboardingViewModel
-@using CL.Web.Controllers
+@model OnboardingViewModel
+@*
+    Percorso guidato (profilo da completare): passi numerati, si torna solo a quelli già fatti.
+    Profilo completo: le stesse sezioni come schede, più "Tipi di richiesta".
+*@
 @{
-    ViewData["Title"] = Model.Profilo.Completato || Model.PerContoAzienda ? "Profilo azienda" : "Benvenuto in Consulens HR";
-    ViewData["Completo"] = Model.Profilo.Completato; // i pulsanti delle sezioni: "Salva" invece di "Salva e continua"
     var p = Model.Profilo;
-    var aziendaId = Model.PerContoAzienda ? Model.AziendaId : (Guid?)null;
-    if (aziendaId is not null) ViewData["AziendaIdOnboarding"] = aziendaId; // i form del consulente indicano l'azienda
-    ViewData["AziendaLogoUrl"] = Url.Action("Logo", "Aziende", new { id = Model.AziendaId });
-}
-@{
     var completo = p.Completato;
+    ViewData["Title"] = completo || Model.PerContoAzienda ? "Profilo azienda" : "Benvenuto in Consulens HR";
+    ViewData["Completo"] = completo; // i pulsanti delle sezioni: "Salva" invece di "Salva e continua"
+    var aziendaId = Model.PerContoAzienda ? Model.AziendaId : (Guid?)null;
+    if (aziendaId is not null) ViewData["AziendaIdOnboarding"] = aziendaId; // i form del consulente indicano l'azienda (_AziendaId)
     var titoliSchede = new (int Passo, string Titolo, string Icona)[]
     {
         (1, "Dati societari", "ri-building-2-line"), (2, "Sedi", "ri-map-pin-line"), (3, "Legale rappresentante", "ri-user-star-line"),
         (4, "Contratto e posizioni", "ri-file-text-line"), (5, "Paghe", "ri-bank-card-line"),
-        (CL.Web.Controllers.OnboardingController.PassoRichieste, "Tipi di richiesta", "ri-toggle-line"),
+        (OnboardingController.PassoRichieste, "Tipi di richiesta", "ri-toggle-line"),
     };
 }
 <div class="breadcrumb-titolo mb-3">
@@ -36,7 +36,7 @@
             <div class="d-flex align-items-center gap-3">
                 @if (Model.Azienda.LogoChiave is not null)
                 {
-                    <img src="@ViewData["AziendaLogoUrl"]" class="foto-profilo logo-profilo" alt="Logo di @Model.Azienda.RagioneSociale" />
+                    <img src="@Url.Action("Logo", "Aziende", new { id = Model.AziendaId })" class="foto-profilo logo-profilo" alt="Logo di @Model.Azienda.RagioneSociale" />
                 }
                 else
                 {
@@ -48,20 +48,20 @@
                         <span class="badge badge-stato" style="--colore-stato:@(completo ? "#2FBA6C" : "#F2B544")"><span class="pallino-stato" aria-hidden="true"></span>@(completo ? "Profilo completo" : "Da completare")</span>
                     </h2>
                     <div class="azienda-profilo">@string.Join(" · ", new[] { p.FormaGiuridica, "P.IVA " + Model.Azienda.PartitaIva.Valore, Model.Azienda.Comune }.Where(x => !string.IsNullOrWhiteSpace(x)))</div>
-                    @if (p.Completato && p.CompletatoIl is { } il) { <div class="mansione-profilo">Completato il @il.ToLocalTime().ToString("dd/MM/yyyy")</div> }
+                    @if (completo && p.CompletatoIl is { } il) { <div class="mansione-profilo">Completato il @il.ToLocalTime().ToString("dd/MM/yyyy")</div> }
                 </div>
             </div>
             <div class="d-flex align-items-center gap-2">
                 <form asp-action="CaricaLogo" method="post" enctype="multipart/form-data" class="m-0">
-                    @if (aziendaId is { } idL) { <input type="hidden" name="aziendaId" value="@idL" /> }
+                    <partial name="_AziendaId" />
                     <input type="hidden" name="passo" value="@Model.Passo" />
                     <label for="logoSubito" class="btn btn-outline-primary btn-sm mb-0">@(Model.Azienda.LogoChiave is null ? "Carica logo" : "Modifica logo") <i class="ri-pencil-line" aria-hidden="true"></i></label>
-                    <input type="file" id="logoSubito" name="immagine" class="d-none" accept="@CL.Web.Infrastruttura.LoghiAziende.FormatiAccettati" onchange="this.form.requestSubmit()" />
+                    <input type="file" id="logoSubito" name="immagine" class="d-none" accept="@LoghiAziende.FormatiAccettati" onchange="this.form.requestSubmit()" />
                 </form>
                 @if (Model.Azienda.LogoChiave is not null)
                 {
                     <form asp-action="TogliLogo" method="post" class="m-0" onsubmit="return confirm('Rimuovere il logo?');">
-                        @if (aziendaId is { } idT) { <input type="hidden" name="aziendaId" value="@idT" /> }
+                        <partial name="_AziendaId" />
                         <input type="hidden" name="passo" value="@Model.Passo" />
                         <button type="submit" class="btn btn-outline-danger btn-sm">Rimuovi <i class="ri-delete-bin-line" aria-hidden="true"></i></button>
                     </form>
@@ -135,7 +135,7 @@ else
             </div>
             <partial name="_Paghe" model="(PagheForm)Model.Form!" view-data="ViewData" />
             break;
-        case CL.Web.Controllers.OnboardingController.PassoRichieste: <partial name="_TipiRichiesta" model="Model" /> break;
+        case OnboardingController.PassoRichieste: <partial name="_TipiRichiesta" model="Model" /> break;
         default: <partial name="_Riepilogo" model="Model" /> break;
     }
 </section>

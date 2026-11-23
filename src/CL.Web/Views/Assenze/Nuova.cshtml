@@ -2,19 +2,14 @@
 @{
     var gestore = (bool)ViewBag.Gestore;
     ViewData["Title"] = "Nuova richiesta"; // stesso modulo per dipendente, azienda e consulente
-    var dipendenti = ViewBag.Dipendenti as List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>;
+    var dipendenti = ViewBag.Dipendenti as List<SelectListItem>;
     var saldi = ViewBag.Saldi as IReadOnlyList<SaldoAssenza>;
-    // Per il dipendente, oltre alle assenze: smart working (se lavora in presenza) o giorni in ufficio (se lavora a distanza).
-    var lavoro = ViewBag.Lavoro as string;
-    var tipi = CL.Web.Controllers.RichiestaForm.Tipi.Select(t => { t.Selected = lavoro is null && t.Value == Model.Tipo.ToString(); return t; }).ToList();
-    // Per tutti, oltre alle assenze: giorni di smart working (da approvare) e di presenza in ufficio.
-    tipi.Insert(0, new SelectListItem("Straordinario", CL.Web.Controllers.AssenzeController.SceltaStraordinario, lavoro == CL.Web.Controllers.AssenzeController.SceltaStraordinario));
-    tipi.Insert(0, new SelectListItem("Presenza in ufficio", CL.Web.Controllers.AssenzeController.SceltaUfficio, lavoro == CL.Web.Controllers.AssenzeController.SceltaUfficio));
-    tipi.Insert(0, new SelectListItem("Smart working", CL.Web.Controllers.AssenzeController.SceltaSmartWorking, lavoro == CL.Web.Controllers.AssenzeController.SceltaSmartWorking));
-    // Solo i tipi che l'azienda ha abilitato nel suo profilo.
-    var abilitata = ViewBag.Abilitata as Func<string, bool> ?? (_ => true);
-    var presenze = tipi.Take(3).Where(t => abilitata(t.Value)).ToList();
-    var assenze = tipi.Skip(3).Where(t => abilitata(t.Value)).ToList();
+    // Per tutti, oltre alle assenze, le voci di presenza: smart working (da approvare), presenza in ufficio e straordinario.
+    // Si vedono solo i tipi che l'azienda ha abilitato nel suo profilo, nei gruppi "Presenze" e "Assenze".
+    var abilitata = (Func<string, bool>)ViewBag.Abilitata;
+    var gruppi = CL.Domain.Aziende.TipiRichiesta.Tutti.Where(t => abilitata(t.Chiave)).GroupBy(t => t.Gruppo);
+    // Voce già scelta: quella di presenza (dal calendario o dopo un errore), altrimenti il tipo di assenza.
+    var scelta = ViewBag.Lavoro as string ?? Model.Tipo.ToString();
 }
 
 <h1 class="titolo-pagina mb-3">@ViewData["Title"]</h1>
@@ -50,15 +45,12 @@
         <div class="col-md-6">
             <label asp-for="Tipo" class="form-label"></label>
             <select name="Tipo" id="Tipo" class="form-select">
-                @if (presenze.Count > 0)
+                @foreach (var gruppo in gruppi)
                 {
-                    <optgroup label="Presenze">
-                        @foreach (var t in presenze) { <option value="@t.Value" selected="@t.Selected">@t.Text</option> }
+                    <optgroup label="@gruppo.Key">
+                        @foreach (var t in gruppo) { <option value="@t.Chiave" selected="@(t.Chiave == scelta)">@t.Nome</option> }
                     </optgroup>
                 }
-                <optgroup label="Assenze">
-                    @foreach (var t in assenze) { <option value="@t.Value" selected="@t.Selected">@t.Text</option> }
-                </optgroup>
             </select>
         </div>
 
@@ -123,9 +115,6 @@
             const aOre = document.getElementById('AOre');
             const tipo = document.getElementById('Tipo');
             const aggiorna = () => {
-                document.getElementById('campoAl').hidden = aOre.checked;
-                document.getElementById('campoOre').hidden = !aOre.checked;
-                document.getElementById('etichettaDal').textContent = aOre.checked ? 'Giorno' : 'Dal';
                 // Smart working e giorni in ufficio: solo le date. Straordinario: un giorno e le ore.
                 const giorni = tipo.value === 'SmartWorking' || tipo.value === 'InUfficio';
                 const straordinario = tipo.value === 'Straordinario';

@@ -19,6 +19,7 @@ public sealed record Iban
         if (iban.StartsWith("IT") && iban.Length != 27)
             throw new DomainException("Un IBAN italiano deve avere 27 caratteri.");
 
+        // Paese e cifre di controllo in fondo, ogni lettera diventa un numero (A = 10 … Z = 35): il resto della divisione per 97 deve essere 1.
         var riordinato = iban[4..] + iban[..4];
         var numerico = string.Concat(riordinato.Select(c => char.IsDigit(c) ? c.ToString() : (c - 'A' + 10).ToString()));
         if (BigInteger.Parse(numerico) % 97 != 1)

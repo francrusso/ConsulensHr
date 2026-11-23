@@ -5,11 +5,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CL.Web.Infrastruttura;
 
-/// <summary>Carica richieste e residui dal database e calcola i saldi con le regole di dominio.</summary>
+/// <summary>Carica richieste e residui dal database e calcola i saldi con le regole di dominio (<see cref="CalcoloSaldi"/>).</summary>
 public sealed class ServizioSaldi(AppDbContext db)
 {
-    // Le assenze con un conto ore: ferie e ROL.
-    public static readonly TipoAssenza[] TipiConSaldo = [TipoAssenza.Ferie, TipoAssenza.Rol];
+    /// <summary>Le assenze con un conto ore (<see cref="TipoAssenzaExtensions.HaSaldo"/>), nell'ordine in cui si mostrano.</summary>
+    private static readonly TipoAssenza[] TipiConSaldo = [TipoAssenza.Ferie, TipoAssenza.Rol];
 
     /// <summary>Richieste del dipendente che iniziano nell'anno indicato.</summary>
     public Task<List<RichiestaAssenza>> RichiesteAnno(Guid dipendenteId, int anno)
@@ -21,7 +21,8 @@ public sealed class ServizioSaldi(AppDbContext db)
     }
 
     /// <summary>
-    /// Saldi dell'anno, con il maturato fino al mese indicato.
+    /// Saldi di ferie e ROL dell'anno, con il maturato fino al mese indicato: residuo dell'anno prima più maturato,
+    /// meno godute (approvate) e prenotate (in attesa).
     /// Se il chiamante ha già caricato le richieste dell'anno (<see cref="RichiesteAnno"/>) le passa, risparmiando una query.
     /// </summary>
     public async Task<IReadOnlyList<SaldoAssenza>> Calcola(Dipendente dipendente, int anno, int finoAlMese,

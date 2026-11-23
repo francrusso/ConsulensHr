@@ -8,8 +8,10 @@ using Microsoft.Extensions.Logging;
 namespace CL.Infrastructure.Persistence;
 
 /// <summary>
-/// Applica le migrazioni, crea i ruoli e, se configurato in "Seed:Consulente", il primo utente consulente.
-/// La password del primo utente va messa negli user-secrets, mai in appsettings.
+/// All'avvio, nell'ordine: schema del database (SQLite demo: creato al volo senza migrazioni; PostgreSQL: migrazioni
+/// solo se <c>applicaMigrazioni</c>, cioè in sviluppo), ruoli mancanti, super amministratore ("Seed:Amministratore")
+/// e, se configurato in "Seed:Consulente", il primo utente consulente. È idempotente: ripetuto non duplica nulla.
+/// Le password vanno negli user-secrets, mai in appsettings.
 /// </summary>
 public static class DatabaseInitializer
 {

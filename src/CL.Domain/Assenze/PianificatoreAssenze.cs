@@ -34,16 +34,17 @@ public static class PianificatoreAssenze
         if (contratto is null || !contratto.AttivoIl(al))
             throw new DomainException("Il dipendente non ha un contratto attivo per l'intero periodo richiesto.");
 
+        // Permesso a ore: le ore indicate in un solo giorno lavorativo; altrimenti giorni lavorativi × orario giornaliero.
         var aOre = orePermesso is not null;
         decimal ore;
-        if (orePermesso is { } orePermessoRichieste)
+        if (orePermesso is { } richieste)
         {
             if (dal != al) throw new DomainException("Un permesso a ore deve riguardare un solo giorno.");
-            if (!IsLavorativo(dal, contratto, azienda))
+            if (!CalendarioLavorativo.IsLavorativo(dal, contratto.GiorniLavorativiSettimana, azienda.SantoPatronoMese, azienda.SantoPatronoGiorno))
                 throw new DomainException("Il giorno richiesto non è lavorativo.");
-            if (orePermesso <= 0 || orePermesso > contratto.OreGiornaliere)
+            if (richieste <= 0 || richieste > contratto.OreGiornaliere)
                 throw new DomainException($"Le ore di permesso devono essere comprese tra 0 e {contratto.OreGiornaliere}.");
-            ore = orePermessoRichieste;
+            ore = richieste;
         }
         else
         {
@@ -61,9 +62,6 @@ public static class PianificatoreAssenze
 
         return new RichiestaAssenza(dipendente.Id, tipo, dal, al, aOre, ore, note, protocolloCertificato, adesso);
     }
-
-    private static bool IsLavorativo(DateOnly giorno, Contratto c, Azienda a) =>
-        CalendarioLavorativo.IsLavorativo(giorno, c.GiorniLavorativiSettimana, a.SantoPatronoMese, a.SantoPatronoGiorno);
 
     private static void VerificaSovrapposizioni(Guid dipendenteId, DateOnly dal, DateOnly al, bool aOre, decimal ore,
         decimal oreGiornaliere, IEnumerable<RichiestaAssenza> esistenti)

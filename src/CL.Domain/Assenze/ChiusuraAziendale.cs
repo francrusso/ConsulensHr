@@ -23,7 +23,7 @@ public sealed class ChiusuraAziendale : Entity
         if (al < dal) throw new DomainException("La data di fine precede la data di inizio.");
         if (dal.Year != al.Year) throw new DomainException("Una chiusura a cavallo d'anno va divisa in due (una per anno).");
         if (al.DayNumber - dal.DayNumber > 62) throw new DomainException("Una chiusura può durare al massimo due mesi.");
-        var d = string.IsNullOrWhiteSpace(descrizione) ? "Chiusura aziendale" : descrizione.Trim();
+        var d = Guard.Facoltativo(descrizione) ?? "Chiusura aziendale";
         if (d.Length > 150) throw new DomainException("Descrizione troppo lunga (massimo 150 caratteri).");
         AziendaId = aziendaId;
         Dal = dal;
@@ -32,6 +32,4 @@ public sealed class ChiusuraAziendale : Entity
         CreataDa = Guard.NotEmpty(da, "Autore");
         CreataIl = adesso;
     }
-
-    public bool Comprende(DateOnly giorno) => giorno >= Dal && giorno <= Al;
 }

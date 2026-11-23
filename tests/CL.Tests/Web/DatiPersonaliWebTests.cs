@@ -116,7 +116,7 @@ public sealed class DatiPersonaliWebTests : IDisposable
         var (dip, profilo) = await _app.ConDb(async db => (await db.Dipendenti.SingleAsync(), await db.ProfiliDipendente.SingleAsync()));
         Assert.Equal("IT60X0542811101000000123456", dip.Iban!.Valore);
         Assert.Equal("333 1234567", dip.Telefono);
-        Assert.Equal("Via Toledo 10, 80134 Napoli (NA)", dip.IndirizzoCompleto);
+        Assert.Equal(("Via Toledo 10", "80134", "Napoli", "NA"), (dip.Indirizzo, dip.Cap, dip.Comune, dip.Provincia));
         Assert.Equal(2, profilo.Familiari.Count);
         Assert.Equal("NA", profilo.ProvinciaNascita);
 

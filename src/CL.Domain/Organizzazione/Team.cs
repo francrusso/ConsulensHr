@@ -9,7 +9,7 @@ namespace CL.Domain.Organizzazione;
 /// Team (reparto, ufficio, squadra) di un'azienda. I team formano un albero tramite <see cref="PadreId"/>;
 /// il responsabile del team approva ferie e permessi dei suoi componenti.
 /// </summary>
-public sealed class Team : Entity
+public sealed partial class Team : Entity
 {
     public Guid AziendaId { get; private set; }
     public string Nome { get; private set; } = null!;
@@ -30,12 +30,8 @@ public sealed class Team : Entity
         ("Rosa", "#F2C0D4"), ("Acqua", "#ADE0E2"), ("Malva", "#DDB3B6"), ("Perla", "#D3D7DD"),
     ];
 
-    /// <summary>I colori della tavolozza precedente, più intensi, e il loro corrispondente chiaro.</summary>
-    public static readonly IReadOnlyDictionary<string, string> ColoriPrecedenti = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-    {
-        ["#A47FE6"] = "#C9B6F2", ["#8CC98A"] = "#B8DDB6", ["#F4A582"] = "#F7C9B0", ["#6096FF"] = "#B5CCFB", ["#F2C14E"] = "#F5E1A0",
-        ["#EC8FB5"] = "#F2C0D4", ["#4FBFC4"] = "#ADE0E2", ["#98494E"] = "#DDB3B6", ["#9AA3AE"] = "#D3D7DD",
-    };
+    [GeneratedRegex("^#[0-9A-Fa-f]{6}$")]
+    private static partial Regex FormatoColore();
 
     private Team() { } // EF Core
 
@@ -49,11 +45,12 @@ public sealed class Team : Entity
     /// <summary>Colore #RRGGBB ed emoji (un solo simbolo, niente lettere o codice).</summary>
     public void ImpostaAspetto(string? colore, string? emoji)
     {
-        var c = string.IsNullOrWhiteSpace(colore) ? ColorePredefinito : colore.Trim();
-        if (!Regex.IsMatch(c, "^#[0-9A-Fa-f]{6}$")) throw new DomainException("Colore non valido: usa il formato #RRGGBB.");
-        var e = string.IsNullOrWhiteSpace(emoji) ? null : emoji.Trim();
+        var c = Guard.Facoltativo(colore) ?? ColorePredefinito;
+        if (!FormatoColore().IsMatch(c)) throw new DomainException("Colore non valido: usa il formato #RRGGBB.");
+        var e = Guard.Facoltativo(emoji);
         if (e is not null)
         {
+            // Si mostra nei badge dell'organigramma: pochi simboli, niente testo (lettere, cifre) né caratteri di markup HTML.
             var simboli = new StringInfo(e).LengthInTextElements;
             if (simboli > 2 || e.Length > 16 || e.Any(ch => char.IsAsciiLetterOrDigit(ch) || ch is '<' or '>' or '&' or '"' or '\''))
                 throw new DomainException("Scegli una sola emoji per il team.");
@@ -65,10 +62,11 @@ public sealed class Team : Entity
     /// <summary>
     /// Colore del testo sul badge del team: bianco sui toni medi e scuri (blu, viola, grigio, bordeaux…),
     /// scuro solo sui toni molto chiari (giallo, verdi e aranci pastello) dove il bianco non si leggerebbe.
+    /// Si calcola la luminanza relativa (formula WCAG) e il contrasto del bianco sul colore.
     /// </summary>
     public static string TestoSu(string hex)
     {
-        if (!Regex.IsMatch(hex ?? "", "^#[0-9A-Fa-f]{6}$")) return "#ffffff";
+        if (!FormatoColore().IsMatch(hex ?? "")) return "#ffffff";
         double Lin(int i)
         {
             var v = int.Parse(hex.AsSpan(i, 2), NumberStyles.HexNumber) / 255.0;
@@ -81,7 +79,7 @@ public sealed class Team : Entity
     /// <summary>Lo stesso colore più chiaro: <paramref name="quota"/> 0 = invariato, 1 = bianco.</summary>
     public static string Schiarisci(string hex, double quota)
     {
-        if (!Regex.IsMatch(hex ?? "", "^#[0-9A-Fa-f]{6}$")) return hex ?? ColorePredefinito;
+        if (!FormatoColore().IsMatch(hex ?? "")) return hex ?? ColorePredefinito;
         int C(int i)
         {
             var v = int.Parse(hex.AsSpan(i, 2), NumberStyles.HexNumber);
@@ -134,6 +132,7 @@ public static class Organigramma
     public static Guid? Approvatore(NodoDipendente d, IReadOnlyCollection<Team> team)
     {
         if (d.ResponsabileId is { } diretto && diretto != d.Id) return diretto;
+        // "visti" ferma la salita se nei dati ci fosse comunque un ciclo tra team (qui come in ColoreDi).
         var visti = new HashSet<Guid>();
         for (var t = d.TeamId is { } id ? team.FirstOrDefault(x => x.Id == id) : null;
              t is not null && visti.Add(t.Id);
@@ -148,7 +147,7 @@ public static class Organigramma
 
     /// <summary>
     /// Colore con cui si mostra un team: quello scelto per i team di primo livello; per i sotto-team lo stesso colore
-    /// del team madre, sempre più chiaro a ogni livello.
+    /// del team madre, sempre più chiaro a ogni livello (ogni livello toglie il 45% della distanza dal bianco che resta).
     /// </summary>
     public static string ColoreDi(Team team, IReadOnlyCollection<Team> tutti)
     {

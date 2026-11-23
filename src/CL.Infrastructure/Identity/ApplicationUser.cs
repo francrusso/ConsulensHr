@@ -3,8 +3,9 @@ using Microsoft.AspNetCore.Identity;
 namespace CL.Infrastructure.Identity;
 
 /// <summary>
-/// Utente della piattaforma. Il ruolo determina il perimetro:
-/// Consulente → tutto il consulente; Azienda → solo <see cref="AziendaId"/>; Dipendente → solo <see cref="DipendenteId"/>.
+/// Utente della piattaforma. Il ruolo determina il perimetro: Amministratore → tutto; Consulente → le aziende
+/// assegnate (<see cref="Persistence.AssegnazioneAzienda"/>); Azienda → solo <see cref="AziendaId"/>; Dipendente → solo <see cref="DipendenteId"/>.
+/// Un utente disattivato (<see cref="Attivo"/> = false) non accede più.
 /// </summary>
 public sealed class ApplicationUser : IdentityUser
 {

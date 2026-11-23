@@ -12,11 +12,12 @@ public sealed record Comune(string Nome, string Provincia);
 /// </summary>
 public static class Comuni
 {
+    // Letto una sola volta, al primo uso, dalla risorsa incorporata nell'assembly.
     private static readonly Lazy<(IReadOnlyList<Comune> Comuni, IReadOnlyDictionary<string, string> Province)> Dati = new(Carica);
 
-    public static IReadOnlyList<Comune> Tutti => Dati.Value.Comuni;
+    private static IReadOnlyList<Comune> Tutti => Dati.Value.Comuni;
 
-    /// <summary>Sigla → nome della provincia (es. "FR" → "Frosinone"), in ordine di sigla.</summary>
+    /// <summary>Sigla (maiuscola) → nome della provincia (es. "FR" → "Frosinone"), in ordine di sigla.</summary>
     public static IReadOnlyDictionary<string, string> Province => Dati.Value.Province;
 
     /// <summary>Il comune con il nome ufficiale, se esiste (in quella provincia, se indicata). Maiuscole, accenti e apostrofi non contano.</summary>

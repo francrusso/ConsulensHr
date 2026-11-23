@@ -11,16 +11,18 @@ public sealed class ServizioAvatar(AppDbContext db, UtenteCorrente utente)
 {
     public enum Origine { Foto, Logo, Segnaposto }
 
+    // Calcolata una volta per richiesta (il servizio è scoped).
     private (Origine, Guid?)? _calcolato;
 
-    public async Task<(Origine Origine, Guid? Id)> ImmagineAsync()
+    public async Task<(Origine Origine, Guid? Id)> ImmagineAsync() => _calcolato ??= await CalcolaAsync();
+
+    private async Task<(Origine, Guid?)> CalcolaAsync()
     {
-        if (_calcolato is { } c) return c;
         if (utente.DipendenteId is { } dip
             && await db.Dipendenti.AsNoTracking().IgnoreAutoIncludes().AnyAsync(d => d.Id == dip && d.FotoChiave != null))
-            return (_calcolato = (Origine.Foto, dip)).Value;
+            return (Origine.Foto, dip);
         if (utente.IsAzienda && utente.AziendaId is { } az && await db.Aziende.AsNoTracking().AnyAsync(a => a.Id == az && a.LogoChiave != null))
-            return (_calcolato = (Origine.Logo, az)).Value;
-        return (_calcolato = (Origine.Segnaposto, null)).Value;
+            return (Origine.Logo, az);
+        return (Origine.Segnaposto, null);
     }
 }

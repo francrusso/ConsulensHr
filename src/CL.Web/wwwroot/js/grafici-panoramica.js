@@ -1,13 +1,15 @@
 // Grafici della panoramica con ApexCharts (stessa libreria e colori di ConsulensNew).
-// I dati arrivano da blocchi <script type="application/json"> generati dal server.
+// I dati arrivano da blocchi <script type="application/json"> generati dal server (_GraficoAssenze, _GraficoFerie):
+// se un blocco manca (nessun dato: al suo posto c'è il grafico vuoto) quel grafico non si disegna.
 (function () {
     if (typeof ApexCharts === 'undefined') return;
 
-    // Colori dei grafici di ConsulensNew. Pastello: lo stacco bianco tra i segmenti, la legenda,
-    // il tooltip e la tabella dei valori garantiscono la lettura anche a chi distingue male i colori.
+    // Colori dei grafici di ConsulensNew. Pastello: lo stacco bianco tra i segmenti, la legenda
+    // e il tooltip garantiscono la lettura anche a chi distingue male i colori.
     var COLORI = { ferie: '#6096FF', malattia: '#FF8553', rol: '#56E39F', altre: '#FFC05C', disponibili: '#BAD1FF' };
     var TESTO = '#7f6670', GRIGLIA = '#f1ebe4';
     var ore = function (v) { return (Math.round(v * 10) / 10).toLocaleString('it-IT') + ' h'; };
+    // Dati del grafico dal blocco JSON con quell'id (null se manca o non è leggibile).
     var leggi = function (id) {
         var el = document.getElementById(id);
         if (!el) return null;
@@ -22,9 +24,11 @@
         stroke: { show: true, width: 2, colors: ['#fff'] }, // 2px di stacco bianco tra segmenti
         states: { hover: { filter: { type: 'darken', value: 0.9 } } },
     };
+    // Opzioni comuni più quelle del singolo grafico (anche dentro "chart", che altrimenti verrebbe sostituito per intero).
     var unisci = function (a, b) { return Object.assign({}, a, b, { chart: Object.assign({}, a.chart, b.chart) }); };
 
-    // Assenze per mese: colonne impilate.
+    // Assenze per mese: colonne impilate. Serie nell'ordine di _GraficoAssenze: ferie, malattia, ROL e permessi, altre.
+    // Il tooltip mostra il mese per esteso ("Marzo 2026") invece dell'etichetta breve dell'asse.
     var a = leggi('datiGraficoAssenze');
     if (a) {
         new ApexCharts(document.getElementById('graficoAssenze'), unisci(base, {
@@ -44,6 +48,7 @@
     }
 
     // Ferie per dipendente: barre orizzontali impilate (godute + disponibili); clic = scheda del dipendente.
+    // L'altezza cresce con il numero di persone (34 px a barra più lo spazio di legenda e asse).
     var f = leggi('datiGraficoFerie');
     if (f) {
         new ApexCharts(document.getElementById('graficoFerie'), unisci(base, {

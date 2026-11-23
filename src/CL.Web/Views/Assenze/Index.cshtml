@@ -10,10 +10,10 @@
     <h1 class="titolo-pagina mb-0">@ViewData["Title"]</h1>
     @* Anno come pulsanti affiancati: un clic e la pagina mostra quell'anno. *@
     <nav class="scelta-anno" aria-label="Anno">
-        @foreach (var a in (List<int>)ViewBag.Anni)
+        @foreach (var a in Model.Anni)
         {
             <a class="@(a == Model.Anno ? "attivo" : "")" aria-current="@(a == Model.Anno ? "page" : null)"
-               asp-action="Index" asp-route-anno="@a" asp-route-stato="@Model.Stato" asp-route-aziendaId="@Model.AziendaId" asp-route-q="@ViewBag.Ricerca">@a</a>
+               asp-action="Index" asp-route-anno="@a" asp-route-stato="@Model.Stato" asp-route-aziendaId="@Model.AziendaId" asp-route-q="@Model.Ricerca">@a</a>
         }
     </nav>
 </div>
@@ -41,7 +41,7 @@
                 <div class="invoice-filter-client">
                     <div class="input-group">
                         <span class="input-group-text bg-transparent"><i class="ri-search-line" aria-hidden="true"></i></span>
-                        <input type="text" name="q" class="form-control" placeholder="Cerca per nome o cognome" aria-label="Cerca nelle richieste" value="@ViewBag.Ricerca" />
+                        <input type="text" name="q" class="form-control" placeholder="Cerca per nome o cognome" aria-label="Cerca nelle richieste" value="@Model.Ricerca" />
                     </div>
                 </div>
                 @if (Model.Aziende is not null)
@@ -61,7 +61,6 @@
     }
 
     @{
-        var conteggi = (Dictionary<StatoRichiesta, int>)ViewBag.Conteggi;
         var stati = new (StatoRichiesta Stato, string Nome, string Colore)[]
         {
             (StatoRichiesta.InAttesa, Utente.IsConsulente ? "In attesa dell'azienda" : Utente.IsDipendente ? "In attesa" : "Da approvare", "#F2B544"),
@@ -71,12 +70,12 @@
     @* Stati come pillole, come nell'elenco del personale: di default tutte, con quelle da approvare in cima. *@
     <nav class="invoice-filter-categories filtro-stati mb-3" aria-label="Stato della richiesta">
         <a class="badge-filtro-categoria @(Model.Stato is null ? "active" : "")" aria-current="@(Model.Stato is null ? "page" : null)"
-           asp-action="Index" asp-route-anno="@Model.Anno" asp-route-aziendaId="@Model.AziendaId" asp-route-q="@ViewBag.Ricerca">Tutte <span>(@conteggi.Values.Sum())</span></a>
+           asp-action="Index" asp-route-anno="@Model.Anno" asp-route-aziendaId="@Model.AziendaId" asp-route-q="@Model.Ricerca">Tutte <span>(@Model.Conteggi.Values.Sum())</span></a>
         @foreach (var (st, nome, colore) in stati)
         {
             <a class="badge-filtro-categoria @(Model.Stato == st ? "active" : "")" aria-current="@(Model.Stato == st ? "page" : null)"
-               asp-action="Index" asp-route-stato="@st" asp-route-anno="@Model.Anno" asp-route-aziendaId="@Model.AziendaId" asp-route-q="@ViewBag.Ricerca">
-                <span class="pallino-stato" style="--colore-stato:@colore" aria-hidden="true"></span> @nome <span>(@conteggi.GetValueOrDefault(st))</span>
+               asp-action="Index" asp-route-stato="@st" asp-route-anno="@Model.Anno" asp-route-aziendaId="@Model.AziendaId" asp-route-q="@Model.Ricerca">
+                <span class="pallino-stato" style="--colore-stato:@colore" aria-hidden="true"></span> @nome <span>(@Model.Conteggi.GetValueOrDefault(st))</span>
             </a>
         }
     </nav>

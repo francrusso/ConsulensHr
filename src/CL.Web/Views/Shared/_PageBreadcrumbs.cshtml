@@ -2,14 +2,12 @@
 @{
     // Percorso sopra il titolo, come in ConsulensNew: sezione del menù › pagina.
     var controller = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
-    var action = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
     var titolo = ViewData["Title"]?.ToString();
-    var personale = "Personale";
     (string Nome, string? Link) sezione = controller switch
     {
         "Home" => ("Panoramica", Url.Action("Index", "Home")),
         "Aziende" => ("Aziende", Url.Action("Index", "Aziende")),
-        "Dipendenti" or "Team" => (personale, Url.Action("Index", "Dipendenti")),
+        "Dipendenti" or "Team" => ("Personale", Url.Action("Index", "Dipendenti")),
         "Assenze" => Utente.IsDipendente ? ("Richieste", Url.Action("Index", "Assenze")) : ("Presenze e assenze", Url.Action("Calendario", "Assenze")),
         "Presenze" => ("Presenze e assenze", Url.Action("Calendario", "Assenze")),
         "BustePaga" or "Documenti" => ("Documenti", null),

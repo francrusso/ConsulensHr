@@ -1,10 +1,11 @@
-@model (Guid DipendenteId, CL.Web.Controllers.DatiPagheForm Paghe)
-@using CL.Domain.Dipendenti
+@model DatiPagheForm
 @{
-    var (idDip, paghe) = Model;
+    // Il nome della variabile dà il prefisso dei campi ("paghe."), lo stesso di [Bind(Prefix = "paghe")] nell'azione Salva.
+    var paghe = Model;
+    // Righe dei familiari: quelle compilate più altre vuote nascoste, che "Aggiungi un familiare" mostra una alla volta.
     var righe = paghe.Famiglia.Familiari.ToList();
     var visibili = righe.Count;
-    while (righe.Count < ProfiloDipendente.MaxFamiliari) righe.Add(new CL.Web.Controllers.FamiliareForm());
+    while (righe.Count < ProfiloDipendente.MaxFamiliari) righe.Add(new FamiliareForm());
 }
 @* Campi dei dati per le paghe, aperti dentro la card della scheda (stesse regole del percorso guidato). *@
 <div class="modulo-paghe mt-4">

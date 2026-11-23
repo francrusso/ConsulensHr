@@ -29,20 +29,12 @@
   .wrapper.toggled .sidebar-wrapper .sidebar-footer button.sidebar-logout { justify-content: center; padding: 8px; }
 }
 
-/* Numeri grandi nelle card della panoramica */
-.card-numero { font-family: var(--headings-fonts); font-size: 2rem; font-weight: 600; line-height: 1; color: var(--consulens-page-title); }
+/* Etichette in grigio sopra i valori */
 .etichetta { color: var(--consulens-muted); font-size: .85rem; }
 
 /* Coppie etichetta/valore nelle schede di dettaglio */
 .scheda dt { color: var(--consulens-muted); font-weight: 400; font-size: .85rem; }
 .scheda dd { color: var(--consulens-page-title); margin-bottom: .9rem; }
-
-.icona-card { color: var(--consulens-icon) !important; }
-
-/* Card saldi ferie/permessi */
-.saldo-dettaglio > div { display: flex; justify-content: space-between; font-size: .85rem; padding: 2px 0; border-top: 1px dashed var(--consulens-divider); }
-.saldo-dettaglio dt { font-weight: 400; color: var(--consulens-muted); }
-.saldo-dettaglio dd { margin: 0; color: var(--consulens-page-title); font-variant-numeric: tabular-nums; }
 
 /* Azioni di riga: le operazioni in POST sono <button> dentro un form; stesso aspetto dei link .customer-actions a del tema. */
 .customer-actions form { display: inline-flex; margin: 0; }
@@ -86,22 +78,13 @@
 .riepilogo-onboarding .scheda dd { margin-bottom: .5rem; }
 .riepilogo-onboarding .border { border-color: var(--consulens-border) !important; }
 
-/* Foglio presenze: colonne del portale (sola lettura) distinte, input compatti */
-.foglio-presenze .gruppo-portale { background: #fbf6f0; color: var(--consulens-muted); }
-.foglio-presenze td input.form-control-sm { min-width: 76px; }
-.foglio-presenze td input.nota { min-width: 160px; }
-.foglio-presenze th[scope="row"] { white-space: nowrap; }
-
 /* Grafici della panoramica (ApexCharts, colori di ConsulensNew): solo contorno, il resto è nella configurazione JS. */
-.indicatore .card-numero { font-variant-numeric: tabular-nums; }
-.grafico .tabella-grafico summary { color: var(--consulens-nav-text); cursor: pointer; }
 .grafico .apexcharts-tooltip { box-shadow: var(--consulens-shadow); border-color: var(--consulens-border) !important; }
 #graficoFerie .apexcharts-bar-series path { cursor: pointer; } /* clic = scheda del dipendente */
 
 /* Logo dell'azienda e campi compilati dal registro */
 .logo-azienda { max-height: 40px; max-width: 120px; object-fit: contain; border-radius: 6px; background: #fff; }
 h1 .logo-azienda { max-height: 36px; }
-.topbar-logo-azienda { max-height: 34px; max-width: 110px; object-fit: contain; margin-right: 12px; }
 .campo-compilato { background-color: #fffaf4; }
 
 /* Organigramma: albero dall'alto in basso con linee arrotondate (CSS puro). */
@@ -155,7 +138,6 @@ h1 .logo-azienda { max-height: 36px; }
 .campione-colore input:checked + span { box-shadow: 0 0 0 2px var(--consulens-page-title); }
 .campione-colore input:focus-visible + span { outline: 2px solid var(--consulens-accent); outline-offset: 2px; }
 .colore-libero { width: 34px; height: 30px; padding: 2px; }
-.emoji-suggerita { min-width: 34px; padding: 2px 6px; font-size: 1rem; line-height: 1.4; background: #fbf6f0; border-color: var(--consulens-border); }
 
 .org-team-chiaro { text-shadow: 0 1px 2px rgba(0, 0, 0, .22); }
 .org-team-chiaro .org-conteggio { background: rgba(255, 255, 255, .28); }
@@ -174,8 +156,6 @@ h1 .logo-azienda { max-height: 36px; }
 .org-azienda .org-avatar { transform: none; width: 44px; height: 44px; }
 .org-nome { font-size: .95rem; margin-top: 2px; }
 .org-ruolo { margin-top: 2px; }
-.foto-dipendente { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(81,45,56,.18); }
-h1 .foto-dipendente { width: 40px; height: 40px; }
 
 /* Modulo contratto: campi del lavoro dipendente / dei professionisti esterni */
 .solo-esterno { display: none; }
@@ -191,23 +171,12 @@ body.rapporto-esterno .solo-dipendente { display: none; }
 .filtro-stati .badge-filtro-categoria { border-radius: 999px; flex: 0 1 auto; padding-inline: 16px; }
 .pallino-stato { display: inline-block; width: 9px; height: 9px; flex: 0 0 9px; border-radius: 50%; background: var(--colore-stato); box-shadow: 0 0 0 2px rgba(255,255,255,.7); }
 
-
 /* Pulsante contestuale e notifiche nella barra in alto (da navigation.css di ConsulensNew) */
-.dropdown-lg .msg-footer {
-    padding: .72rem 1.2rem;
-    color: var(--bs-primary);
-    border-top: 1px solid var(--bs-border-color);
-    font-size: 14px;
-    font-weight: 500;
-    border-bottom-left-radius: .25rem;
-    border-bottom-right-radius: .25rem;
-}
 .header-notifications-list {
     position: relative;
     height: 370px;
 }
-.topbar-create .btn,
-.btn.btn-create {
+.topbar-create .btn {
     display: flex;
     align-items: center;
     gap: 6px;
@@ -235,11 +204,6 @@ body.rapporto-esterno .solo-dipendente { display: none; }
     font-size: 18px;
     line-height: 1;
 }
-.topbar-notifications .msg-count {
-    left: auto;
-    right: -5px;
-    top: -5px;
-}
 .topbar-notifications .notifications-heading {
     display: flex;
     align-items: center;
@@ -266,40 +230,6 @@ body.rapporto-esterno .solo-dipendente { display: none; }
     max-height: min(360px, 55vh);
     overflow-y: auto;
     padding-block: 4px;
-}
-.top-header .topbar-notifications .dropdown-menu .notification-entry {
-    padding: 12px;
-    white-space: normal;
-    border-bottom: 1px solid var(--consulens-divider);
-    border-radius: 7px;
-}
-.topbar-notifications .notification-entry:last-child {
-    border-bottom: 0 !important;
-}
-.topbar-notifications .notification-entry .msg-name {
-    font-family: 'Poppins', sans-serif;
-    font-size: 13px;
-    font-weight: 500;
-    line-height: 1.6;
-    color: var(--consulens-text);
-}
-.topbar-notifications .notification-entry .msg-time {
-    font-size: 11px;
-    line-height: 1.5;
-    color: #84707a;
-}
-.topbar-notifications .notification-unread {
-    background: #fff6eb;
-}
-.topbar-notifications .notification-entry:hover {
-    background: var(--consulens-hover);
-}
-.topbar-notifications .msg-footer {
-    border-top: 1px solid var(--consulens-divider);
-    padding: 13px 8px 7px;
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--consulens-accent);
 }
 .topbar-notifications .notifications-empty {
     padding: 28px 12px;
@@ -382,8 +312,6 @@ td.elenco-vuoto { text-align: center; padding: 2.5rem 1rem !important; color: va
 .suggerimenti-indirizzo .dropdown-item { white-space: normal; font-size: 13.5px; padding: 8px 12px; color: var(--consulens-breadcrumb-active); }
 .suggerimenti-indirizzo .dropdown-item i { color: #98494E; }
 .suggerimenti-indirizzo .dropdown-item.active, .suggerimenti-indirizzo .dropdown-item:hover { background: var(--consulens-hover); color: var(--consulens-breadcrumb-active); }
-.btn-matita { border: 0; background: none; padding: 2px 4px; line-height: 1; color: var(--consulens-muted); border-radius: 6px; }
-.btn-matita:hover { color: #98494E; background: var(--consulens-hover); }
 #mansioneModifica:not(.d-none) { display: flex; }
 
 /* Scheda della persona: stessa pagina per vedere e modificare */
@@ -430,7 +358,6 @@ td.elenco-vuoto { text-align: center; padding: 2.5rem 1rem !important; color: va
 .scheda-profilo.in-modifica .scheda-paghe .modulo-paghe { display: block !important; }
 .scheda-profilo.in-modifica .scheda-paghe .solo-lettura-paghe,
 .scheda-profilo.in-modifica .scheda-paghe .azioni-paghe { display: none !important; }
-.nota-paghe { font-size: 12.5px; color: var(--consulens-muted); margin: -4px 0 8px; }
 /* Riga del familiare: "Disabile" e cestino allineati ai campi, centrati in verticale */
 .modulo-paghe .azioni-familiare { align-self: end; display: flex; align-items: center; gap: 14px; height: var(--consulens-control-height, 44px); }
 .modulo-paghe .azioni-familiare .form-check { display: flex; align-items: center; gap: 6px; padding-left: 0; }
@@ -439,19 +366,9 @@ td.elenco-vuoto { text-align: center; padding: 2.5rem 1rem !important; color: va
 .btn-togli-familiare { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; flex: 0 0 40px;
     border: 0; border-radius: 10px; background: #fbecee; color: #c0392b; font-size: 18px; transition: background-color .15s; }
 .btn-togli-familiare:hover { background: #f6d5da; color: #a93226; }
-.scheda-profilo.in-modifica .valore-campo.valore-fisso { display: flex !important; align-items: center; min-height: var(--consulens-control-height, 44px); }
 .accesso-modifica .form-label { font-family: 'Quasimoda', 'Poppins', sans-serif; text-transform: uppercase; font-size: 12.5px; letter-spacing: .03em;
     color: var(--consulens-breadcrumb-active); margin-bottom: 6px; }
 .accesso-modifica .btn { min-height: var(--consulens-control-height, 44px); display: inline-flex; align-items: center; gap: 6px; }
-
-/* Card dei saldi ferie e ROL: icona colorata e titolo in maiuscoletto */
-.saldo-icona { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 10px; font-size: 18px;
-    color: color-mix(in srgb, var(--colore-saldo) 80%, #000); background: color-mix(in srgb, var(--colore-saldo) 16%, #fff); }
-.saldo-titolo { font-family: 'Quasimoda', 'Poppins', sans-serif; text-transform: uppercase; font-size: 13.5px; font-weight: 500; letter-spacing: .04em;
-    color: var(--consulens-breadcrumb-active); }
-.saldo-anno { font-size: 12px; color: var(--consulens-breadcrumb-muted); background: var(--consulens-canvas); border: 1px solid var(--consulens-border);
-    border-radius: 50rem; padding: 2px 10px; }
-.tabella-residui input.form-control { max-width: 160px; }
 
 /* Pagina Team: elenco e scheda del team */
 .nome-team { color: var(--consulens-breadcrumb-active); font-weight: 500; }
@@ -487,7 +404,6 @@ input.tessera-emoji.altra-emoji::placeholder { font-size: 12.5px; color: var(--c
 
 /* Ferie e permessi: calendario del mese con presenti e assenti */
 .titolo-mese { font-family: 'Quasimoda', 'Poppins', sans-serif; font-size: 1.15rem; font-weight: 500; color: var(--consulens-breadcrumb-active); min-width: 150px; text-align: center; }
-.legenda-calendario { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--consulens-muted); }
 .pallino-legenda { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
 .pallino-legenda.presente { background: #2FBA6C; }
 .pallino-legenda.assente { background: #F4A582; }
@@ -563,34 +479,19 @@ input.tessera-emoji.altra-emoji::placeholder { font-size: 12.5px; color: var(--c
     background: color-mix(in srgb, #4FBFC4 16%, #fff); color: color-mix(in srgb, #4FBFC4 60%, #000); }
 .cal-ufficio[hidden] { display: none !important; }
 .calendario-ufficio .cal-giorno { min-height: 90px; text-align: left; }
-.giorno-cliccabile { cursor: pointer; transition: border-color .15s, box-shadow .15s; }
-.giorno-cliccabile:hover { border-color: #4FBFC4; }
 .cal-giorno.in-ufficio { background: color-mix(in srgb, #4FBFC4 12%, #fff); border-color: color-mix(in srgb, #4FBFC4 55%, #fff); }
-.segno-ufficio { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 500; color: color-mix(in srgb, #4FBFC4 60%, #000); }
-.segno-ufficio.vuoto { color: var(--consulens-breadcrumb-muted); font-weight: 400; opacity: 0; transition: opacity .15s; }
-.giorno-cliccabile:hover .segno-ufficio.vuoto, .giorno-cliccabile:focus-visible .segno-ufficio.vuoto { opacity: 1; }
-.segno-assenza { font-size: 11.5px; color: #B5622E; }
 
 /* Smart working chiesto da chi lavora in presenza */
-.legenda-smart { display: flex; flex-wrap: wrap; gap: 16px; font-size: 12.5px; color: var(--consulens-breadcrumb-muted); }
-.legenda-smart > span { display: inline-flex; align-items: center; gap: 6px; }
 .pallino-legenda.smart-ok { background: #7C9CD6; }
 .pallino-legenda.smart-attesa { background: transparent; border: 2px dashed #7C9CD6; }
 .pallino-legenda.smart-no { background: #D98C8C; }
-.segno-smart { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 500; }
 .cal-giorno.smart-ok { background: color-mix(in srgb, #7C9CD6 14%, #fff); border-color: color-mix(in srgb, #7C9CD6 55%, #fff); }
-.cal-giorno.smart-ok .segno-smart { color: color-mix(in srgb, #7C9CD6 55%, #000); }
 .cal-giorno.smart-attesa { border: 1.5px dashed #7C9CD6; }
-.cal-giorno.smart-attesa .segno-smart { color: color-mix(in srgb, #7C9CD6 55%, #000); }
 .cal-giorno.smart-no { background: color-mix(in srgb, #D98C8C 10%, #fff); }
-.cal-giorno.smart-no .segno-smart { color: #A04848; }
 .cal-smart { display: inline-flex; align-items: center; gap: 4px; align-self: flex-start; padding: 2px 8px; border-radius: 50rem; font-size: 11px; font-weight: 500;
     background: color-mix(in srgb, #7C9CD6 16%, #fff); color: color-mix(in srgb, #7C9CD6 55%, #000); }
 
 /* Calendario del dipendente: il box del giorno prende il colore della richiesta */
-.legenda-calendario { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 12.5px; color: var(--consulens-breadcrumb-muted); }
-.legenda-calendario > span { display: inline-flex; align-items: center; gap: 6px; }
-.pallino-legenda.tratteggiato { background: transparent; border: 2px dashed #9AA3AE; }
 .calendario-ufficio .cal-giorno { display: flex; flex-direction: column; align-items: stretch; gap: 4px; min-height: 104px; }
 .voci-giorno { display: flex; flex-direction: column; gap: 3px; align-items: flex-start; min-width: 0; }
 .voce-giorno { display: inline-flex; align-items: center; gap: 4px; max-width: 100%; padding: 2px 7px; border-radius: 6px; font-size: 11.5px; font-weight: 500; line-height: 1.35;
@@ -602,8 +503,6 @@ input.tessera-emoji.altra-emoji::placeholder { font-size: 12.5px; color: var(--c
 .voce-festivo { --colore-cat: #98494E; }
 .voce-smart { --colore-cat: #7C9CD6; }
 .voce-ufficio { --colore-cat: #4FBFC4; }
-.voce-aggiungi { font-size: 11.5px; color: var(--consulens-breadcrumb-muted); opacity: 0; transition: opacity .15s; display: inline-flex; align-items: center; gap: 3px; }
-.giorno-cliccabile:hover .voce-aggiungi, .giorno-cliccabile:focus-visible .voce-aggiungi { opacity: 1; }
 .cal-giorno.con-richiesta { background: color-mix(in srgb, var(--colore-cat) 9%, #fff); border-color: color-mix(in srgb, var(--colore-cat) 50%, #fff); }
 .cal-giorno.con-richiesta.richiesta-ore { background: color-mix(in srgb, var(--colore-cat) 5%, #fff); }
 .cal-giorno.con-richiesta.richiesta-attesa { background: #fff; border-style: dashed; }
@@ -643,8 +542,6 @@ input.tessera-emoji.altra-emoji::placeholder { font-size: 12.5px; color: var(--c
 .elenco-panoramica .min-w-0 { min-width: 0; }
 .nome-panoramica { font-weight: 500; font-size: 13.5px; color: var(--consulens-breadcrumb-active); text-decoration: none; }
 .nome-panoramica:hover { color: #98494E; }
-.vuoto-panoramica { display: flex; align-items: center; gap: 8px; color: var(--consulens-breadcrumb-muted); font-size: 13.5px; padding: 12px 0; }
-.vuoto-panoramica i { color: #2FBA6C; font-size: 1.2rem; }
 .giorni-scadenza { flex: 0 0 auto; font-size: 12px; font-weight: 500; padding: 3px 10px; border-radius: 50rem; background: color-mix(in srgb, #F2B544 18%, #fff); color: #8A6512; }
 .giorni-scadenza.vicina { background: color-mix(in srgb, #D9534F 14%, #fff); color: #A33B37; }
 

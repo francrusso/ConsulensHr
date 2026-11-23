@@ -6,11 +6,14 @@ using Microsoft.AspNetCore.Mvc.Filters;
 namespace CL.Web.Infrastruttura;
 
 /// <summary>
-/// Finché il profilo dell'azienda non è completo, il referente può usare solo il percorso guidato (e l'account).
+/// Finché il profilo non è completo, il referente può usare solo il percorso guidato dell'azienda (e l'account),
+/// il dipendente solo quello dei propri dati. Il claim lo mette ClaimsFactory al login e sparisce quando il percorso
+/// si conclude e la sessione viene rinnovata.
 /// </summary>
 public sealed class FiltroOnboarding : IActionFilter
 {
-    private static readonly HashSet<string> Consentiti = new(StringComparer.OrdinalIgnoreCase) { "Onboarding", "DatiPersonali", "Account" };
+    // Indirizzi: i suggerimenti di comune e via servono proprio ai passi delle sedi e della residenza.
+    private static readonly HashSet<string> Consentiti = new(StringComparer.OrdinalIgnoreCase) { "Onboarding", "DatiPersonali", "Account", "Indirizzi" };
 
     public void OnActionExecuting(ActionExecutingContext context)
     {

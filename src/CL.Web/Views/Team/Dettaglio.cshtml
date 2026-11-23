@@ -1,15 +1,15 @@
-@model CL.Web.Controllers.OrganigrammaViewModel
+@model OrganigrammaViewModel
 @{
     var idTeam = (Guid)ViewBag.TeamId;
     var team = Model.Team.First(t => t.Id == idTeam);
-    var modifica = (bool)ViewBag.Modifica;
+    var modifica = (bool)ViewBag.Modifica; // dal badge dell'organigramma: si apre già con i dati in modifica
     ViewData["Title"] = team.Nome;
     ViewData["Percorso"] = new List<(string, string?)>
     {
         (Model.PerConto ? "Dipendenti" : "Personale", Url.Action("Index", "Dipendenti")),
         ("Team", Url.Action("Index", "Team", new { aziendaId = Model.PerConto ? Model.AziendaId : (Guid?)null })),
     };
-    if (Model.HaLogo) ViewData["LogoAzienda"] = Url.Action("Logo", "Aziende", new { id = Model.AziendaId });
+    // Prima il responsabile, poi gli altri in ordine alfabetico.
     var membri = Model.Dipendenti.Where(d => d.TeamId == team.Id).OrderBy(d => d.Id == team.ResponsabileId ? 0 : 1).ThenBy(d => d.Nome).ToList();
     var aggiungibili = Model.Dipendenti.Where(d => d.TeamId != team.Id && d.InForza).ToList();
     var padre = team.PadreId is { } p ? Model.Team.FirstOrDefault(x => x.Id == p) : null;

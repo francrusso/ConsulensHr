@@ -1,6 +1,7 @@
 using CL.Infrastructure.Archivio;
 using CL.Infrastructure.Email;
 using CL.Infrastructure.Identity;
+using CL.Infrastructure.Indirizzi;
 using CL.Infrastructure.Persistence;
 using CL.Infrastructure.Registro;
 using Microsoft.AspNetCore.Identity;
@@ -14,6 +15,7 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
+        // Uno per richiesta: per un consulente l'app lo riempie con le aziende assegnate, AppDbContext lo legge nei filtri globali.
         services.AddScoped<PerimetroAziende>();
         var connectionString = configuration.GetConnectionString("Default")
             ?? throw new InvalidOperationException("Connection string 'Default' non configurata.");
@@ -63,9 +65,9 @@ public static class DependencyInjection
             c.DefaultRequestHeaders.UserAgent.ParseAdd("ConsulensHR/1.0");
         });
 
-        services.AddHttpClient<CL.Infrastructure.Indirizzi.IRicercaIndirizzi, CL.Infrastructure.Indirizzi.RicercaPhoton>(c =>
+        services.AddHttpClient<IRicercaIndirizzi, RicercaPhoton>(c =>
         {
-            c.BaseAddress = new Uri(CL.Infrastructure.Indirizzi.RicercaPhoton.IndirizzoServizio);
+            c.BaseAddress = new Uri(RicercaPhoton.IndirizzoServizio);
             c.Timeout = TimeSpan.FromSeconds(6);
             c.DefaultRequestHeaders.UserAgent.ParseAdd("ConsulensHR/1.0");
         });
@@ -89,6 +91,6 @@ public static class DependencyInjection
         return b.ConnectionString;
     }
 
-    public static bool UsaSqliteDemo(string connectionString) =>
+    private static bool UsaSqliteDemo(string connectionString) =>
         connectionString.TrimStart().StartsWith("Data Source=", StringComparison.OrdinalIgnoreCase);
 }

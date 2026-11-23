@@ -2,6 +2,7 @@ using CL.Domain.Assenze;
 using CL.Domain.Aziende;
 using CL.Domain.BustePaga;
 using CL.Domain.Dipendenti;
+using CL.Domain.Documenti;
 using CL.Domain.Organizzazione;
 using CL.Domain.Presenze;
 using CL.Infrastructure.Identity;
@@ -9,6 +10,12 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace CL.Infrastructure.Persistence;
+
+// Mapping delle entità sulle tabelle dello schema "hr". Convenzioni comuni in AppDbContext.ConfigureConventions.
+// Gli Id nascono nel dominio (Guid.NewGuid in Entity): con ValueGeneratedNever EF inserisce le entità nuove aggiunte
+// a una collezione già caricata (es. un contratto), invece di scambiarle per esistenti perché hanno già un Id.
+// Le proprietà calcolate (Ignore) non hanno colonna. Tra entità diverse solo chiavi esterne, senza navigazioni (il dominio
+// lavora per Id); le collezioni interne a un'entità (contratti, righe presenze, familiari) si caricano sempre con AutoInclude.
 
 internal sealed class AziendaConfig : IEntityTypeConfiguration<Azienda>
 {
@@ -38,7 +45,6 @@ internal sealed class ProfiloAziendaConfig : IEntityTypeConfiguration<ProfiloAzi
         b.Property(x => x.Id).ValueGeneratedNever();
         b.HasOne<Azienda>().WithOne().HasForeignKey<ProfiloAzienda>(x => x.AziendaId).OnDelete(DeleteBehavior.Cascade);
         b.HasIndex(x => x.AziendaId).IsUnique();
-        b.Ignore(x => x.Societari);
         b.Ignore(x => x.SedeLegale);
         b.Ignore(x => x.SedeOperativa);
         b.Ignore(x => x.Completato);
@@ -75,8 +81,6 @@ internal sealed class ComunicazioneMensileConfig : IEntityTypeConfiguration<Comu
         b.Property(x => x.Note).HasMaxLength(2000);
         b.Property(x => x.InviataDa).HasMaxLength(256);
         b.Property(x => x.ElaborataDa).HasMaxLength(256);
-        b.Ignore(x => x.PrimoGiorno);
-        b.Ignore(x => x.UltimoGiorno);
         b.HasOne<Azienda>().WithMany().HasForeignKey(x => x.AziendaId).OnDelete(DeleteBehavior.Restrict);
         b.HasIndex(x => new { x.AziendaId, x.Anno, x.Mese }).IsUnique();
         b.HasIndex(x => new { x.Anno, x.Mese, x.Stato });
@@ -171,7 +175,6 @@ internal sealed class DipendenteConfig : IEntityTypeConfiguration<Dipendente>
         b.Property(x => x.Cap).HasMaxLength(5);
         b.Property(x => x.Comune).HasMaxLength(100);
         b.Property(x => x.Provincia).HasMaxLength(2);
-        b.Ignore(x => x.IndirizzoCompleto);
         b.Property(x => x.Matricola).HasMaxLength(30);
         b.Property(x => x.UserId).HasMaxLength(450);
         b.Ignore(x => x.NomeCompleto);
@@ -212,9 +215,9 @@ internal sealed class ContrattoConfig : IEntityTypeConfiguration<Contratto>
     }
 }
 
-internal sealed class GiornoInUfficioConfig : IEntityTypeConfiguration<CL.Domain.Presenze.GiornoInUfficio>
+internal sealed class GiornoInUfficioConfig : IEntityTypeConfiguration<GiornoInUfficio>
 {
-    public void Configure(EntityTypeBuilder<CL.Domain.Presenze.GiornoInUfficio> b)
+    public void Configure(EntityTypeBuilder<GiornoInUfficio> b)
     {
         b.ToTable("GiorniInUfficio");
         b.Property(x => x.Id).ValueGeneratedNever();
@@ -224,13 +227,12 @@ internal sealed class GiornoInUfficioConfig : IEntityTypeConfiguration<CL.Domain
     }
 }
 
-internal sealed class GiornoSmartWorkingConfig : IEntityTypeConfiguration<CL.Domain.Presenze.GiornoSmartWorking>
+internal sealed class GiornoSmartWorkingConfig : IEntityTypeConfiguration<GiornoSmartWorking>
 {
-    public void Configure(EntityTypeBuilder<CL.Domain.Presenze.GiornoSmartWorking> b)
+    public void Configure(EntityTypeBuilder<GiornoSmartWorking> b)
     {
         b.ToTable("GiorniSmartWorking");
         b.Property(x => x.Id).ValueGeneratedNever();
-        b.Property(x => x.Stato).HasConversion<string>().HasMaxLength(32);
         b.Property(x => x.DecisoDa).HasMaxLength(256);
         b.Property(x => x.MotivoRifiuto).HasMaxLength(500);
         b.HasOne<Dipendente>().WithMany().HasForeignKey(x => x.DipendenteId).OnDelete(DeleteBehavior.Cascade);
@@ -239,9 +241,9 @@ internal sealed class GiornoSmartWorkingConfig : IEntityTypeConfiguration<CL.Dom
     }
 }
 
-internal sealed class StraordinarioConfig : IEntityTypeConfiguration<CL.Domain.Presenze.Straordinario>
+internal sealed class StraordinarioConfig : IEntityTypeConfiguration<Straordinario>
 {
-    public void Configure(EntityTypeBuilder<CL.Domain.Presenze.Straordinario> b)
+    public void Configure(EntityTypeBuilder<Straordinario> b)
     {
         b.ToTable("Straordinari");
         b.Property(x => x.Id).ValueGeneratedNever();
@@ -300,9 +302,9 @@ internal sealed class SaldoInizialeConfig : IEntityTypeConfiguration<SaldoInizia
     }
 }
 
-internal sealed class CertificazioneUnicaConfig : IEntityTypeConfiguration<CL.Domain.Documenti.CertificazioneUnica>
+internal sealed class CertificazioneUnicaConfig : IEntityTypeConfiguration<CertificazioneUnica>
 {
-    public void Configure(EntityTypeBuilder<CL.Domain.Documenti.CertificazioneUnica> b)
+    public void Configure(EntityTypeBuilder<CertificazioneUnica> b)
     {
         b.ToTable("CertificazioniUniche");
         b.Property(x => x.Id).ValueGeneratedNever();

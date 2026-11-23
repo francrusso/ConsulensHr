@@ -160,4 +160,14 @@ public sealed class OnboardingWebTests : IDisposable
         Assert.Throws<DomainException>(() => p.ImpostaPosizioni(new("CCNL", "1", "2", "3", null, null, null, 7, 40)));
         Assert.Equal(2, p.Passo);
     }
+
+    [Fact]
+    public async Task Durante_il_percorso_guidato_funziona_la_ricerca_dei_comuni()
+    {
+        // I passi delle sedi (e della residenza del dipendente) cercano comune e via su /Indirizzi.
+        var c = await ReferenteNuovo();
+        var r = await c.GetAsync("/Indirizzi/Comuni?q=Milano");
+        Assert.Equal("application/json", r.Content.Headers.ContentType?.MediaType);
+        Assert.Contains("Milano (MI)", await r.Content.ReadAsStringAsync());
+    }
 }
