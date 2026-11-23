@@ -621,3 +621,29 @@ input.tessera-emoji.altra-emoji::placeholder { font-size: 12.5px; color: var(--c
     border: 1px solid color-mix(in srgb, var(--colore-cat) 45%, #fff); background: #fff; color: color-mix(in srgb, var(--colore-cat) 60%, #000); text-decoration: none; cursor: pointer; }
 .azione-giorno:hover, .azione-giorno:focus-visible { background: color-mix(in srgb, var(--colore-cat) 16%, #fff); color: color-mix(in srgb, var(--colore-cat) 70%, #000); }
 .cal-giorno.con-azioni:hover { border-color: color-mix(in srgb, #98494E 40%, #fff); }
+
+/* Panoramica dell'azienda: oggi, richieste da approvare, contratti in scadenza */
+.titolo-card-panoramica { font-family: 'Quasimoda', 'Poppins', sans-serif; text-transform: uppercase; font-size: .95rem; font-weight: 500; letter-spacing: .03em;
+    color: var(--consulens-breadcrumb-active); display: inline-flex; align-items: center; gap: 8px; }
+.titolo-card-panoramica i { color: #98494E; font-size: 1.1rem; }
+.numero-gruppo { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 22px; padding: 0 7px; border-radius: 50rem;
+    background: var(--consulens-canvas); font-size: 12px; font-weight: 600; color: var(--consulens-breadcrumb-active); font-family: 'Poppins', sans-serif; }
+.gruppi-oggi { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 767.98px) { .gruppi-oggi { grid-template-columns: 1fr; } }
+.gruppo-oggi { border-top: 3px solid var(--colore-gruppo); padding-top: 10px; min-width: 0; }
+.intestazione-gruppo { display: flex; align-items: center; gap: 6px; font-weight: 500; font-size: 13.5px; margin-bottom: 8px; color: var(--consulens-breadcrumb-active); }
+.intestazione-gruppo i { color: var(--colore-gruppo); }
+.persone-oggi { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.persone-oggi li { display: flex; flex-direction: column; min-width: 0; }
+.persone-oggi .customer-name { min-width: 0; font-size: 13px; }
+.dettaglio-oggi { margin-left: 38px; font-size: 11.5px; color: var(--consulens-breadcrumb-muted); }
+.elenco-panoramica { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; }
+.elenco-panoramica li { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--consulens-border); }
+.elenco-panoramica li:last-child { border-bottom: 0; }
+.elenco-panoramica .min-w-0 { min-width: 0; }
+.nome-panoramica { font-weight: 500; font-size: 13.5px; color: var(--consulens-breadcrumb-active); text-decoration: none; }
+.nome-panoramica:hover { color: #98494E; }
+.vuoto-panoramica { display: flex; align-items: center; gap: 8px; color: var(--consulens-breadcrumb-muted); font-size: 13.5px; padding: 12px 0; }
+.vuoto-panoramica i { color: #2FBA6C; font-size: 1.2rem; }
+.giorni-scadenza { flex: 0 0 auto; font-size: 12px; font-weight: 500; padding: 3px 10px; border-radius: 50rem; background: color-mix(in srgb, #F2B544 18%, #fff); color: #8A6512; }
+.giorni-scadenza.vicina { background: color-mix(in srgb, #D9534F 14%, #fff); color: #A33B37; }

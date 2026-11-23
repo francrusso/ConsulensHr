@@ -249,4 +249,24 @@ public sealed class OrganigrammaWebTests : IDisposable
         var anna = await Dipendente("anna@acme.test", _verdi);
         Assert.Equal(HttpStatusCode.NotFound, (await anna.GetAsync($"/Dipendenti/Foto/{_rossi}")).StatusCode); // non quella dei colleghi
     }
+
+    [Fact]
+    public async Task La_tabella_dei_team_conta_chi_lavora_in_presenza_e_chi_da_remoto()
+    {
+        await Dati();
+        await _app.ConDb(async db =>
+        {
+            var t = new Team(_azienda, "Vendite");
+            db.Add(t);
+            foreach (var d in await db.Dipendenti.ToListAsync()) d.ImpostaOrganizzazione(t, null, null);
+            (await db.Dipendenti.SingleAsync(d => d.Id == _verdi)).ImpostaSede(SedeLavoro.SmartWorking);
+            return await db.SaveChangesAsync();
+        });
+        await _app.CreaUtente("hr@acme.test", Ruoli.Azienda, _azienda);
+        var hr = _app.CreateClient();
+        await hr.Accedi("hr@acme.test");
+        var html = WebUtility.HtmlDecode(await hr.GetStringAsync("/Team"));
+        Assert.Matches(@"data-label=""In presenza"">[\s\S]*?<span class=""numero-membri"">2</span>", html);
+        Assert.Matches(@"data-label=""Da remoto"">[\s\S]*?title=""Verdi Anna""[\s\S]*?<span class=""numero-membri"">1</span>", html);
+    }
 }

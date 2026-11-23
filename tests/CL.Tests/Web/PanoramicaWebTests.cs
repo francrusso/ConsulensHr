@@ -80,4 +80,39 @@ public sealed class PanoramicaWebTests : IDisposable
         Assert.Contains("Nessuna assenza approvata negli ultimi 12 mesi", html);
         Assert.Empty(_app.ErroriServer);
     }
+
+    [Fact]
+    public async Task Panoramica_azienda_mostra_oggi_richieste_in_attesa_e_contratti_in_scadenza()
+    {
+        var oggi = DateOnly.FromDateTime(DateTime.Today);
+        var giorno = oggi;
+        while (!CalendarioLavorativo.IsLavorativo(giorno, 5)) giorno = giorno.AddDays(1);
+        if (giorno.Year != oggi.Year) return;
+        var acme = await _app.ConDb(async db =>
+        {
+            var a = new Azienda("Acme S.r.l.", PartitaIva.Parse("01234567897"));
+            var rossi = new Dipendente(a.Id, "Mario", "Rossi", CodiceFiscale.Parse("RSSMRA85T10A562S"), new DateOnly(1985, 12, 10));
+            var verdi = new Dipendente(a.Id, "Luigi", "Verdi", CodiceFiscale.Parse("VRDNNA88C41F839V"), new DateOnly(1988, 3, 1));
+            rossi.Assumi(TipoContratto.TempoIndeterminato, "Commercio", "4", new DateOnly(oggi.Year, 1, 1), null, 28_000m);
+            verdi.Assumi(TipoContratto.TempoDeterminato, "Commercio", "4", new DateOnly(oggi.Year, 1, 1), giorno.AddDays(20), 28_000m);
+            var ferie = PianificatoreAssenze.Crea(rossi, a, TipoAssenza.Ferie, giorno, giorno, [], DateTime.UtcNow);
+            ferie.Approva("hr", DateTime.UtcNow);
+            db.AddRange(a, rossi, verdi, ferie, new CL.Domain.Presenze.GiornoSmartWorking(verdi.Id, giorno.AddDays(7), DateTime.UtcNow));
+            await db.SaveChangesAsync();
+            return a.Id;
+        });
+        await _app.CreaUtente("hr@acme.test", Ruoli.Azienda, acme);
+        var hr = _app.CreateClient();
+        await hr.Accedi("hr@acme.test");
+
+        var html = WebUtility.HtmlDecode(await hr.GetStringAsync("/"));
+        Assert.Contains("Assenti", html);
+        Assert.Matches("Rossi Mario</span>\\s*</a>\\s*<span class=\"dettaglio-oggi\">Ferie</span>", html);
+        Assert.Contains("Da approvare", html);
+        Assert.Contains("Smart working ·", html);              // richiesta di smart working in attesa
+        Assert.Contains("DecidiSmartWorking", html);             // il referente approva da qui
+        Assert.Contains("Contratti in scadenza", html);
+        Assert.Matches("tra (19|20|21|2\\d) giorni", html);    // contratto a termine di Verdi
+        Assert.Empty(_app.ErroriServer);
+    }
 }

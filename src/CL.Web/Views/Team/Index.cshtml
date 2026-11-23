@@ -45,13 +45,15 @@
                 <th scope="col">Dentro il team</th>
                 <th scope="col">Responsabile</th>
                 <th scope="col">Membri</th>
+                <th scope="col">In presenza</th>
+                <th scope="col">Da remoto</th>
                 <th scope="col" class="text-end">Azioni</th>
             </tr>
         </thead>
         <tbody>
             @if (elenco.Count == 0)
             {
-                <tr><td colspan="5" class="elenco-vuoto"><span class="elenco-vuoto-icona" aria-hidden="true"><i class="ri-team-line"></i></span><div>@(Model.Team.Count == 0 ? "Nessun team: crea il primo con \"Nuovo team\"" : "Nessun team trovato")</div></td></tr>
+                <tr><td colspan="7" class="elenco-vuoto"><span class="elenco-vuoto-icona" aria-hidden="true"><i class="ri-team-line"></i></span><div>@(Model.Team.Count == 0 ? "Nessun team: crea il primo con \"Nuovo team\"" : "Nessun team trovato")</div></td></tr>
             }
             @foreach (var (t, livello) in elenco)
             {
@@ -93,6 +95,25 @@
                             <span class="numero-membri">@membri.Count</span>
                         </div>
                     </td>
+                    @foreach (var (etichetta, gruppo) in new[] { ("In presenza", membri.Where(m => m.InForza && !m.Remoto).ToList()), ("Da remoto", membri.Where(m => m.InForza && m.Remoto).ToList()) })
+                    {
+                        <td data-label="@etichetta">
+                            @* Chi lavora in sede e chi in smart working, ibrido o full-remote (dal contratto): numero e foto. *@
+                            <div class="membri-team" title="@string.Join(", ", gruppo.Select(m => m.Nome))">
+                                @if (gruppo.Count > 0)
+                                {
+                                    <div class="avatar-sovrapposti" aria-hidden="true">
+                                        @foreach (var m in gruppo.Take(4))
+                                        {
+                                            <img src="@(m.HaFoto ? Url.Action("Foto", "Dipendenti", new { id = m.Id }) : Url.Content($"~/assets/images/avatar/{m.Segnaposto}.png"))" alt="" loading="lazy" />
+                                        }
+                                        @if (gruppo.Count > 4) { <span class="avatar-altri">+@(gruppo.Count - 4)</span> }
+                                    </div>
+                                }
+                                <span class="numero-membri">@gruppo.Count</span>
+                            </div>
+                        </td>
+                    }
                     <td data-label="Azioni">
                         <div class="customer-actions">
                             <a asp-action="Dettaglio" asp-route-id="@t.Id" title="Apri" aria-label="Apri il team @t.Nome"><i class="ri-eye-line" aria-hidden="true"></i></a>

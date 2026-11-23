@@ -14,6 +14,17 @@ public sealed record MeseAssenze(int Anno, int Mese, AssenzeDelMese Ore)
     public string Periodo => $"{ServizioBustePaga.NomeMese(Mese)} {Anno}";
 }
 
+/// <summary>Persona nella panoramica, con l'eventuale dettaglio (es. "Ferie", "ROL · 2 h").</summary>
+public sealed record PersonaOggi(Guid Id, string Nome, bool HaFoto, string Segnaposto, string? Dettaglio = null);
+
+/// <summary>Chi lavora e chi è assente nel giorno lavorativo mostrato (oggi, o il prossimo se oggi è festa).</summary>
+public sealed record GiornataOggi(DateOnly Giorno, bool EOggi, List<PersonaOggi> InUfficio, List<PersonaOggi> DaRemoto, List<PersonaOggi> Assenti);
+
+/// <summary>Richiesta in attesa da mostrare in panoramica (ferie, permessi o smart working).</summary>
+public sealed record RichiestaInAttesa(Guid Id, PersonaOggi Persona, string Tipo, DateOnly Dal, DateOnly Al, bool AOre, decimal Ore, bool SmartWorking);
+
+public sealed record ScadenzaContratto(PersonaOggi Persona, string Tipo, DateOnly DataFine, int Giorni);
+
 public sealed record FerieDipendente(Guid DipendenteId, string Nome, string Azienda, decimal Godute, decimal Disponibili, decimal InAttesa);
 
 public sealed class DatiPanoramica
@@ -32,6 +43,11 @@ public sealed class DatiPanoramica
     public Guid? AziendaId { get; init; }
     public List<SelectListItem>? Aziende { get; init; }
     public int Anno { get; init; }
+    public GiornataOggi? Oggi { get; init; }
+    /// <summary>Le prime richieste in attesa, dalla più vicina.</summary>
+    public List<RichiestaInAttesa> DaApprovare { get; init; } = [];
+    /// <summary>Contratti a termine che scadono nei prossimi 60 giorni senza un rinnovo già registrato.</summary>
+    public List<ScadenzaContratto> Scadenze { get; init; } = [];
 }
 
 /// <summary>
@@ -101,7 +117,52 @@ public sealed class ServizioPanoramica(AppDbContext db, UtenteCorrente utente, T
             .ToList();
 
         var idsInPerimetro = perimetro.Select(d => d.Id);
-        var inAttesa = await db.RichiesteAssenza.CountAsync(r => idsInPerimetro.Contains(r.DipendenteId) && r.Stato == StatoRichiesta.InAttesa);
+        var inAttesa = await db.RichiesteAssenza.CountAsync(r => idsInPerimetro.Contains(r.DipendenteId) && r.Stato == StatoRichiesta.InAttesa)
+                       + await db.GiorniSmartWorking.CountAsync(g => idsInPerimetro.Contains(g.DipendenteId) && g.Stato == StatoSmartWorking.InAttesa);
+        var persone = dipendenti.ToDictionary(d => d.Id);
+        PersonaOggi P(Dipendente d, string? dettaglio = null) => new(d.Id, d.NomeCompleto, d.FotoChiave is not null, d.Segnaposto, dettaglio);
+
+        // Giornata di lavoro: oggi, o il prossimo giorno lavorativo se oggi è festa o fine settimana.
+        var giorno = oggi;
+        while (!CalendarioLavorativo.IsLavorativo(giorno, 5)) giorno = giorno.AddDays(1);
+        var inForza = dipendenti.Where(d => d.InForzaIl(giorno)
+            && CalendarioLavorativo.IsLavorativo(giorno, d.ContrattoAttivo(giorno)!.GiorniLavorativiSettimana,
+                aziende[d.AziendaId].SantoPatronoMese, aziende[d.AziendaId].SantoPatronoGiorno)).ToList();
+        var richiesteGiorno = await db.RichiesteAssenza.AsNoTracking()
+            .Where(r => ids.Contains(r.DipendenteId) && r.Stato == StatoRichiesta.Approvata && r.Dal <= giorno && r.Al >= giorno).ToListAsync();
+        var segnatiUfficio = (await db.GiorniInUfficio.AsNoTracking().Where(g => ids.Contains(g.DipendenteId) && g.Giorno == giorno).Select(g => g.DipendenteId).ToListAsync()).ToHashSet();
+        var smartOggi = (await db.GiorniSmartWorking.AsNoTracking().Where(g => ids.Contains(g.DipendenteId) && g.Giorno == giorno && g.Stato == StatoSmartWorking.Approvato)
+            .Select(g => g.DipendenteId).ToListAsync()).ToHashSet();
+        var assenti = new List<PersonaOggi>();
+        var fuori = new HashSet<Guid>();
+        foreach (var d in inForza.OrderBy(x => x.Cognome).ThenBy(x => x.Nome))
+        {
+            if (richiesteGiorno.Where(r => r.DipendenteId == d.Id).OrderBy(r => r.AOre).FirstOrDefault() is not { } ass) continue;
+            assenti.Add(P(d, ass.AOre ? $"{ass.Tipo.Descrizione()} · {ass.Ore:0.##} h" : ass.Tipo.Descrizione()));
+            if (!ass.AOre) fuori.Add(d.Id);
+        }
+        var alLavoro = inForza.Where(d => !fuori.Contains(d.Id)).OrderBy(d => d.Cognome).ThenBy(d => d.Nome).ToList();
+        bool InSede(Dipendente d) => segnatiUfficio.Contains(d.Id) || (!ServizioUfficio.LavoraADistanza(d, giorno) && !smartOggi.Contains(d.Id));
+        var giornata = new GiornataOggi(giorno, giorno == oggi,
+            alLavoro.Where(InSede).Select(d => P(d)).ToList(),
+            alLavoro.Where(d => !InSede(d)).Select(d => P(d, smartOggi.Contains(d.Id) ? "Smart working" : null)).ToList(),
+            assenti);
+
+        // Richieste in attesa: ferie e permessi più lo smart working, dalla più vicina.
+        var attesa = (await db.RichiesteAssenza.AsNoTracking().Where(r => ids.Contains(r.DipendenteId) && r.Stato == StatoRichiesta.InAttesa)
+                .OrderBy(r => r.Dal).Take(8).ToListAsync())
+            .Select(r => new RichiestaInAttesa(r.Id, P(persone[r.DipendenteId]), r.Tipo.Descrizione(), r.Dal, r.Al, r.AOre, r.Ore, false))
+            .Concat((await db.GiorniSmartWorking.AsNoTracking().Where(g => ids.Contains(g.DipendenteId) && g.Stato == StatoSmartWorking.InAttesa)
+                    .OrderBy(g => g.Giorno).Take(8).ToListAsync())
+                .Select(g => new RichiestaInAttesa(g.Id, P(persone[g.DipendenteId]), "Smart working", g.Giorno, g.Giorno, false, 0, true)))
+            .OrderBy(x => x.Dal).ThenBy(x => x.Persona.Nome).Take(6).ToList();
+
+        // Contratti a termine in scadenza entro 60 giorni, se non c'è già un contratto successivo.
+        var scadenze = dipendenti
+            .SelectMany(d => d.Contratti.Where(c => c.DataFine is { } f && f >= oggi && f <= oggi.AddDays(60)
+                                                    && !d.Contratti.Any(x => x.DataInizio > f))
+                .Select(c => new ScadenzaContratto(P(d), c.Tipo.Descrizione(), c.DataFine!.Value, c.DataFine!.Value.DayNumber - oggi.DayNumber)))
+            .OrderBy(x => x.DataFine).ToList();
         var tre = new DateOnly(oggi.Year, oggi.Month, 1).AddMonths(-2);
         var recenti = db.BustePaga.Where(b => idsInPerimetro.Contains(b.DipendenteId) && b.Stato == StatoBustaPaga.Pubblicata
                                               && (b.Anno > tre.Year || (b.Anno == tre.Year && b.Mese >= tre.Month)));
@@ -136,6 +197,9 @@ public sealed class ServizioPanoramica(AppDbContext db, UtenteCorrente utente, T
                     .Select(a => new SelectListItem(a.RagioneSociale, a.Id.ToString(), a.Id == aziendaId)).ToListAsync()
                 : null,
             Anno = oggi.Year,
+            Oggi = giornata,
+            DaApprovare = attesa,
+            Scadenze = scadenze,
         };
     }
 }

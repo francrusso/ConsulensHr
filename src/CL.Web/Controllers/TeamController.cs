@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore;
 namespace CL.Web.Controllers;
 
 public sealed record MembroTeam(Guid Id, string Nome, string? Posizione, Guid? TeamId, Guid? ResponsabileDirettoId, Guid? ApprovatoreId, bool InForza,
-    bool HaFoto = false, string Segnaposto = "neutro");
+    bool HaFoto = false, string Segnaposto = "neutro", bool Remoto = false);
 
 /// <summary>Nodo del grafico: l'azienda in cima, i team come badge colorati, le persone come card.</summary>
 public sealed record NodoGrafico(string Tipo, string Titolo, string? Sottotitolo, string Colore, string? Emoji, int? Conteggio,
@@ -148,7 +148,7 @@ public sealed class TeamController(AppDbContext db, UtenteCorrente utente, Servi
         var dipendenti = (await db.Dipendenti.AsNoTracking().Where(d => d.AziendaId == id).OrderBy(d => d.Cognome).ThenBy(d => d.Nome).ToListAsync())
             .Where(d => d.InForzaIl(oggi) || d.TeamId is not null)
             .Select(d => new MembroTeam(d.Id, d.NomeCompleto, d.Posizione, d.TeamId, d.ResponsabileId, approvatori.GetValueOrDefault(d.Id), d.InForzaIl(oggi),
-                d.FotoChiave is not null, d.Segnaposto))
+                d.FotoChiave is not null, d.Segnaposto, ServizioUfficio.LavoraADistanza(d, oggi)))
             .ToList();
 
         return View(vista, new OrganigrammaViewModel
