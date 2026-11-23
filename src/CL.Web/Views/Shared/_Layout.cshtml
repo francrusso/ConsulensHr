@@ -97,6 +97,12 @@
                                     <div class="menu-title">I miei dati</div>
                                 </a>
                             </li>
+                            <li>
+                                <a asp-controller="MioContratto" asp-action="Index">
+                                    <div class="parent-icon icon-color-1"><i class="ri-file-text-line ri-xs"></i></div>
+                                    <div class="menu-title">Il mio contratto</div>
+                                </a>
+                            </li>
                         }
                         @if (!Utente.IsDipendente)
                         {
@@ -187,7 +193,7 @@
                             <ul>
                                 <li><a asp-controller="BustePaga" asp-action="Index">Buste paga</a></li>
                                 <li><a asp-controller="Documenti" asp-action="Cu">CU</a></li>
-                                <li><a asp-controller="Documenti" asp-action="Contratti">Contratti</a></li>
+                                @if (!Utente.IsDipendente) { <li><a asp-controller="Documenti" asp-action="Contratti">Contratti</a></li> }
                             </ul>
                         </li>
                         @if (Utente.IsConsulente)

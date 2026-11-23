@@ -1,0 +1,106 @@
+@model CL.Web.Controllers.MioContrattoViewModel
+@using CL.Domain.Dipendenti
+@using CL.Web.Controllers
+@{
+    ViewData["Title"] = "Il mio contratto";
+    var d = Model.Dipendente;
+    var oggi = Model.Oggi;
+    var it = System.Globalization.CultureInfo.GetCultureInfo("it-IT");
+    var corrente = Model.Contratti.FirstOrDefault(c => c.AttivoIl(oggi)) ?? Model.Contratti.FirstOrDefault();
+    var storico = Model.Contratti.Where(c => c != corrente).ToList();
+    string E(decimal v) => v.ToString("C0", it);
+    string Ore(decimal v) => v.ToString("0.##", it) + " h";
+    string V(string? s) => string.IsNullOrWhiteSpace(s) ? "Non inserito" : s;
+    var stato = corrente is null ? StatoPersonale.SenzaContratto : corrente.AttivoIl(oggi) ? StatoPersonale.Attivo
+        : corrente.DataInizio > oggi ? StatoPersonale.Firmato : corrente.DataCessazione is not null ? StatoPersonale.Cessato : StatoPersonale.Scaduto;
+}
+<div class="breadcrumb-titolo mb-3"><h1 class="titolo-pagina mb-0">Il mio contratto</h1></div>
+
+<div class="scheda-profilo">
+    @* Intestazione come nella scheda della persona. *@
+    <div class="card radius-15 p-3 p-md-4 mb-3">
+        <div class="d-flex align-items-center gap-3">
+            <img src="@(d.FotoChiave is not null ? Url.Action("Foto", "Dipendenti", new { id = d.Id }) : Url.Content($"~/assets/images/avatar/{d.Segnaposto}.png"))" class="foto-profilo" alt="" />
+            <div>
+                <h2 class="fs-5 mb-0 text-breadcrumb nome-profilo d-flex align-items-center gap-2 flex-wrap">
+                    @d.NomeCompleto.ToUpperInvariant()
+                    <span class="badge badge-stato" style="--colore-stato:@stato.Colore()"><span class="pallino-stato" aria-hidden="true"></span>@stato.Descrizione()</span>
+                </h2>
+                <div class="azienda-profilo">@Model.Azienda</div>
+                @if (corrente?.Mansione is { } mansione) { <div class="mansione-profilo">@mansione</div> }
+            </div>
+        </div>
+    </div>
+
+    @if (corrente is null)
+    {
+        <section class="card radius-15 p-4"><partial name="~/Views/Home/_CardVuota.cshtml" model='"Nessun contratto registrato"' /></section>
+    }
+    else
+    {
+        var subordinato = corrente.Tipo.IsSubordinato();
+        <section class="card radius-15 p-3 p-md-4 mb-3 sezione-profilo" aria-labelledby="titoloContratto">
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+                <h2 class="titolo-sezione-profilo mb-0" id="titoloContratto"><i class="ri-file-text-line" aria-hidden="true"></i> @(corrente.AttivoIl(oggi) ? "Contratto in corso" : corrente.DataInizio > oggi ? "Contratto firmato" : "Ultimo contratto")</h2>
+                @if (corrente.DocumentoChiave is not null)
+                {
+                    <a asp-controller="Documenti" asp-action="ApriContratto" asp-route-id="@corrente.Id" target="_blank" rel="noopener" class="btn btn-outline-primary btn-sm"><i class="ri-file-pdf-2-line" aria-hidden="true"></i> Apri il contratto firmato</a>
+                }
+                else { <span class="dettaglio-presenza">PDF del contratto non ancora caricato</span> }
+            </div>
+            <dl class="campi-profilo valori-profilo mb-0">
+                <div><dt>Tipo di rapporto</dt><dd>@corrente.Tipo.Descrizione()</dd></div>
+                <div><dt>CCNL</dt><dd>@V(corrente.Ccnl)</dd></div>
+                <div><dt>Livello</dt><dd>@V(corrente.Livello)</dd></div>
+                <div><dt>Mansione</dt><dd>@V(corrente.Mansione)</dd></div>
+                <div><dt>Data di inizio</dt><dd>@corrente.DataInizio.ToString("dd/MM/yyyy")</dd></div>
+                <div><dt>Scadenza</dt><dd>@(corrente.DataFine?.ToString("dd/MM/yyyy") ?? "Indeterminato")</dd></div>
+                <div><dt>Orario settimanale</dt><dd>@Ore(corrente.OreSettimanali)@(corrente.PercentualePartTime < 100 ? $" · part-time {corrente.PercentualePartTime.ToString("0.##", it)}%" : "")</dd></div>
+                <div><dt>Giorni lavorativi</dt><dd>@corrente.GiorniLavorativiSettimana a settimana</dd></div>
+                <div><dt>Modalità di lavoro</dt><dd>@corrente.Modalita.Descrizione()@(corrente.GiorniInUfficio is { } gu ? $" · {gu} {(gu == 1 ? "giorno" : "giorni")} in ufficio" : "")</dd></div>
+                @if (corrente.Modalita == ModalitaLavoro.InPresenza) { <div><dt>Smart working</dt><dd>@(corrente.SmartWorkingConcesso ?? "Non previsto")</dd></div> }
+                <div><dt>@(subordinato ? "RAL" : "Compenso annuo")</dt><dd>@E(corrente.RetribuzioneLordaAnnua)</dd></div>
+                <div><dt>Mensilità</dt><dd>@corrente.MensilitaAnnue</dd></div>
+                <div><dt>Mensile lordo</dt><dd>@E(corrente.RetribuzioneMensileLorda)</dd></div>
+                @if (subordinato)
+                {
+                    <div><dt>Ferie annue</dt><dd>@Ore(corrente.SpettanzaAnnua(CL.Domain.Assenze.TipoAssenza.Ferie))</dd></div>
+                    <div><dt>ROL annui</dt><dd>@Ore(corrente.SpettanzaAnnua(CL.Domain.Assenze.TipoAssenza.Rol))</dd></div>
+                }
+            </dl>
+        </section>
+
+        <section class="card radius-15 p-3 p-md-4 mb-3 sezione-profilo" aria-labelledby="titoloOrganizzazione">
+            <h2 class="titolo-sezione-profilo mb-3" id="titoloOrganizzazione"><i class="ri-organization-chart" aria-hidden="true"></i> Dove e con chi lavori</h2>
+            <dl class="campi-profilo valori-profilo mb-0">
+                <div><dt>Sede di lavoro</dt><dd>@V(Model.Sede)</dd></div>
+                <div><dt>Team</dt><dd>@V(Model.Team)</dd></div>
+                <div><dt>Posizione</dt><dd>@V(d.Posizione)</dd></div>
+                <div><dt>Responsabile</dt><dd>@(Model.Responsabile ?? "Referente dell'azienda")</dd></div>
+            </dl>
+        </section>
+
+        @if (storico.Count > 0)
+        {
+            <section class="card radius-15 p-3 p-md-4 sezione-profilo" aria-labelledby="titoloStorico">
+                <h2 class="titolo-sezione-profilo mb-3" id="titoloStorico"><i class="ri-history-line" aria-hidden="true"></i> Contratti precedenti</h2>
+                <div class="table-responsive">
+                    <table class="table mb-0 align-middle">
+                        <thead><tr><th scope="col">Rapporto</th><th scope="col">Periodo</th><th scope="col">Mansione</th><th scope="col">Contratto</th></tr></thead>
+                        <tbody>
+                            @foreach (var c in storico)
+                            {
+                                <tr>
+                                    <td>@c.Tipo.Descrizione()</td>
+                                    <td class="text-nowrap">@c.DataInizio.ToString("dd/MM/yyyy") – @(c.DataFine?.ToString("dd/MM/yyyy") ?? "—")</td>
+                                    <td>@V(c.Mansione)</td>
+                                    <td>@if (c.DocumentoChiave is not null) { <a asp-controller="Documenti" asp-action="ApriContratto" asp-route-id="@c.Id" target="_blank" rel="noopener" class="link-contratto"><i class="ri-file-pdf-2-line" aria-hidden="true"></i> Apri</a> } else { <span class="text-body-secondary">—</span> }</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        }
+    }
+</div>

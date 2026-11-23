@@ -512,6 +512,20 @@ public sealed class UfficioWebTests : IDisposable
     }
 
     [Fact]
+    public async Task Il_dipendente_vede_il_proprio_contratto_in_una_pagina_dedicata()
+    {
+        var dip = await PreparaDipendente(SedeLavoro.SedeLegale);
+        var home = WebUtility.HtmlDecode(await dip.GetStringAsync("/"));
+        Assert.Contains(">Il mio contratto</div>", home);
+        Assert.DoesNotContain(">Contratti</a>", home);
+        var html = WebUtility.HtmlDecode(await dip.GetStringAsync("/MioContratto"));
+        Assert.Contains("Contratto in corso", html);
+        Assert.Contains("Tempo indeterminato", html);
+        Assert.Contains("Commercio", html);
+        Assert.Contains("Il mio contratto", WebUtility.HtmlDecode(await dip.GetStringAsync("/Documenti/Contratti"))); // reindirizza
+    }
+
+    [Fact]
     public async Task Senza_contratto_il_calendario_si_vede_ma_non_si_segna_nulla()
     {
         var dip = await PreparaDipendente(SedeLavoro.SedeLegale);

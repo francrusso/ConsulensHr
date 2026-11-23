@@ -84,7 +84,7 @@ public sealed class DocumentiWebTests : IDisposable
         Assert.Contains($"CU {anno + 1}", WebUtility.HtmlDecode(await mario.GetStringAsync("/Documenti/Cu")));
         Assert.Equal(Pdf, await mario.GetByteArrayAsync($"/Documenti/ApriCu/{cu.Id}"));
         Assert.NotNull((await _app.ConDb(db => db.CertificazioniUniche.SingleAsync())).VisualizzataIl);
-        Assert.Contains("I miei contratti", WebUtility.HtmlDecode(await mario.GetStringAsync("/Documenti/Contratti")));
+        Assert.Contains("Il mio contratto", WebUtility.HtmlDecode(await mario.GetStringAsync("/Documenti/Contratti"))); // ora è "Il mio contratto"
         // Il dipendente non può eliminarla.
         await mario.PostAsync("/Documenti/EliminaCu", new FormUrlEncodedContent([new("id", cu.Id.ToString())]));
         Assert.Equal(1, await _app.ConDb(db => db.CertificazioniUniche.CountAsync()));

@@ -142,6 +142,7 @@ public sealed class DocumentiController(AppDbContext db, UtenteCorrente utente, 
     /// <summary>Contratti di tutto il personale, con il PDF firmato o da caricare.</summary>
     public async Task<IActionResult> Contratti(Guid? aziendaId, string? q)
     {
+        if (utente.IsDipendente) return RedirectToAction("Index", "MioContratto"); // il dipendente ha "Il mio contratto"
         var righe = await (
             from d in Persone(aziendaId, q)
             join az in db.Aziende.AsNoTracking() on d.AziendaId equals az.Id
