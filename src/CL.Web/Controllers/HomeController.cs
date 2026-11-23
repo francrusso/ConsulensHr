@@ -31,6 +31,8 @@ public sealed class HomeController(AppDbContext db, UtenteCorrente utente, Servi
     public async Task<IActionResult> Index(Guid? aziendaId)
     {
         if (!utente.IsDipendente) return View(await panoramica.CalcolaAsync(aziendaId));
+        // Il dipendente non ha la panoramica: la sua prima pagina è il calendario.
+        if (utente.DipendenteId is not null) return RedirectToAction("Index", "Ufficio");
 
         // Dipendente: i propri saldi, le richieste in attesa e l'ultima busta paga.
         var oggi = DateOnly.FromDateTime(clock.GetLocalNow().DateTime);

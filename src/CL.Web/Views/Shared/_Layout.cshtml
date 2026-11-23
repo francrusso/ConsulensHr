@@ -1,4 +1,5 @@
 ﻿@inject CL.Web.Infrastruttura.UtenteCorrente Utente
+@inject CL.Web.Infrastruttura.ServizioAvatar Avatar
 @*
     Struttura ripresa da ConsulensNew (sidebar + topbar + page-content) per avere la stessa estetica;
     i colori beige vengono da assets/css/tema-beige.css.
@@ -15,10 +16,10 @@
     (string? Url, string Etichetta, string Icona) azione = inOnboarding ? (null, "", "") : controller switch
     {
         "dipendenti" when !Utente.IsDipendente => (Url.Action("Nuovo", "Dipendenti", new { aziendaId = aziendaQuery }),
-            esterniAttivi ? "Aggiungi professionista" : Utente.IsAzienda ? "Aggiungi persona" : "Nuovo dipendente", "ri-user-add-line"),
+            esterniAttivi ? "Aggiungi professionista" : "Aggiungi persona", "ri-user-add-line"),
         "aziende" when Utente.IsConsulente => (Url.Action("Nuova", "Aziende"), "Nuova azienda", "ri-add-line"),
         "team" when (ViewContext.RouteData.Values["action"] as string) == "Index" => ("#nuovoTeam", "Nuovo team", "ri-add-line"),
-        "assenze" => (Url.Action("Nuova", "Assenze"), "Nuova richiesta", "ri-calendar-event-line"),
+        "assenze" or "ufficio" => (Url.Action("Nuova", "Assenze"), "Nuova richiesta", "ri-calendar-event-line"),
         "bustepaga" when !Utente.IsDipendente => (Url.Action("Carica", "BustePaga"), "Carica busta paga", "ri-upload-2-line"),
         "documenti" when !Utente.IsDipendente && (ViewContext.RouteData.Values["action"] as string) is "Contratti" or "NuovoContratto"
             => (Url.Action("NuovoContratto", "Documenti"), "Nuovo contratto", "ri-file-add-line"),
@@ -88,12 +89,24 @@
                         }
                         else
                         {
+                        @if (Utente.IsDipendente)
+                        {
+                            <li>
+                                <a asp-controller="DatiPersonali" asp-action="Index">
+                                    <div class="parent-icon icon-color-1"><i class="ri-user-settings-line ri-xs"></i></div>
+                                    <div class="menu-title">I miei dati</div>
+                                </a>
+                            </li>
+                        }
+                        @if (!Utente.IsDipendente)
+                        {
                         <li>
                             <a asp-controller="Home" asp-action="Index">
                                 <div class="parent-icon icon-color-1"><i class="ri-dashboard-line ri-xs"></i></div>
                                 <div class="menu-title">Panoramica</div>
                             </a>
                         </li>
+                        }
                         @* Per l'azienda: subito dopo la panoramica. *@
                         @if (Utente.IsAzienda)
                         {
@@ -132,21 +145,24 @@
                             <li>
                                 <a asp-controller="Dipendenti" asp-action="Index">
                                     <div class="parent-icon icon-color-1"><i class="ri-team-line ri-xs"></i></div>
-                                    <div class="menu-title">Dipendenti</div>
+                                    <div class="menu-title">Personale</div>
                                 </a>
                             </li>
                         }
                         @if (Utente.IsDipendente)
                         {
+                            @* Il dipendente: calendario (prima pagina) e richieste come voci singole. *@
                             <li>
-                                <a href="javascript:;" class="has-arrow">
-                                    <div class="parent-icon icon-color-1"><i class="ri-calendar-event-line ri-xs"></i></div>
-                                    <div class="menu-title">Presenze e assenze</div>
+                                <a asp-controller="Ufficio" asp-action="Index">
+                                    <div class="parent-icon icon-color-1"><i class="ri-calendar-2-line ri-xs"></i></div>
+                                    <div class="menu-title">Calendario</div>
                                 </a>
-                                <ul>
-                                    <li><a asp-controller="Ufficio" asp-action="Index">Calendario</a></li>
-                                    <li><a asp-controller="Assenze" asp-action="Index">Richieste</a></li>
-                                </ul>
+                            </li>
+                            <li>
+                                <a asp-controller="Assenze" asp-action="Index">
+                                    <div class="parent-icon icon-color-1"><i class="ri-calendar-check-line ri-xs"></i></div>
+                                    <div class="menu-title">Richieste</div>
+                                </a>
                             </li>
                         }
                         else
@@ -160,7 +176,6 @@
                                     <li><a asp-controller="Assenze" asp-action="Calendario">Calendario</a></li>
                                     <li><a asp-controller="Assenze" asp-action="Index">Richieste</a></li>
                                     <li><a asp-controller="Presenze" asp-action="Index">Riepilogo presenze</a></li>
-                                    <li><a asp-controller="Assenze" asp-action="Residui">Residui anno precedente</a></li>
                                 </ul>
                             </li>
                         }
@@ -181,15 +196,6 @@
                                 <a asp-controller="Utenti" asp-action="Index">
                                     <div class="parent-icon icon-color-1"><i class="ri-shield-user-line ri-xs"></i></div>
                                     <div class="menu-title">Utenti</div>
-                                </a>
-                            </li>
-                        }
-                        @if (Utente.IsDipendente)
-                        {
-                            <li>
-                                <a asp-controller="DatiPersonali" asp-action="Index">
-                                    <div class="parent-icon icon-color-1"><i class="ri-user-settings-line ri-xs"></i></div>
-                                    <div class="menu-title">I miei dati</div>
                                 </a>
                             </li>
                         }
@@ -224,11 +230,6 @@
                     </div>
 
                     <div class="right-topbar ms-auto d-flex align-items-center">
-                        @if (!Utente.IsConsulente && Utente.AziendaId is { } aziendaLogo)
-                        {
-                            @* Logo dell'azienda per referenti e dipendenti; se non c'è, l'immagine si toglie da sola. *@
-                            <img src="@Url.Action("Logo", "Aziende", new { id = aziendaLogo })" alt="" class="topbar-logo-azienda d-none d-md-block" onerror="this.remove()" />
-                        }
                         <ul class="navbar-nav">
                             @if (azione.Url is not null)
                             {
@@ -260,7 +261,17 @@
                             <li class="nav-item topbar-profile">
                                 <a class="nav-link" asp-controller="Account" asp-action="Profilo" title="Il mio profilo">
                                     <div class="d-flex user-box align-items-center">
-                                        <img src="~/assets/images/avatars/avatar-1.jpg" class="user-img" alt="" />
+                                        @{
+                                            // Foto della persona; per l'azienda il logo (se il referente non ha una foto); altrimenti il segnaposto.
+                                            var (origine, idImmagine) = await Avatar.ImmagineAsync();
+                                            var srcAvatar = origine switch
+                                            {
+                                                CL.Web.Infrastruttura.ServizioAvatar.Origine.Foto => Url.Action("Foto", "Dipendenti", new { id = idImmagine }),
+                                                CL.Web.Infrastruttura.ServizioAvatar.Origine.Logo => Url.Action("Logo", "Aziende", new { id = idImmagine }),
+                                                _ => Url.Content("~/assets/images/avatars/avatar-1.jpg"),
+                                            };
+                                        }
+                                        <img src="@srcAvatar" class="user-img @(origine == CL.Web.Infrastruttura.ServizioAvatar.Origine.Logo ? "user-img-logo" : "")" alt="" />
                                         <div class="user-info">
                                             <p class="user-name mb-0">@Utente.Nome</p>
                                             <p class="designattion mb-0">@ruolo</p>

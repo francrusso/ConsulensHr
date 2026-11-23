@@ -2,85 +2,143 @@
 @using CL.Web.Controllers
 @{
     ViewData["Title"] = Model.Profilo.Completato || Model.PerContoAzienda ? "Profilo azienda" : "Benvenuto in Consulens HR";
+    ViewData["Completo"] = Model.Profilo.Completato; // i pulsanti delle sezioni: "Salva" invece di "Salva e continua"
     var p = Model.Profilo;
     var aziendaId = Model.PerContoAzienda ? Model.AziendaId : (Guid?)null;
     if (aziendaId is not null) ViewData["AziendaIdOnboarding"] = aziendaId; // i form del consulente indicano l'azienda
     ViewData["AziendaLogoUrl"] = Url.Action("Logo", "Aziende", new { id = Model.AziendaId });
 }
+@{
+    var completo = p.Completato;
+    var titoliSchede = new (int Passo, string Titolo, string Icona)[]
+    {
+        (1, "Dati societari", "ri-building-2-line"), (2, "Sedi", "ri-map-pin-line"), (3, "Legale rappresentante", "ri-user-star-line"),
+        (4, "Contratto e posizioni", "ri-file-text-line"), (5, "Paghe", "ri-bank-card-line"),
+        (CL.Web.Controllers.OnboardingController.PassoRichieste, "Tipi di richiesta", "ri-toggle-line"),
+    };
+}
 <div class="breadcrumb-titolo mb-3">
-    <div>
-        @if (Model.PerContoAzienda)
-        {
-            <a asp-controller="Aziende" asp-action="Dettaglio" asp-route-id="@Model.AziendaId" class="small text-body-secondary"><i class="ri-arrow-left-s-line" aria-hidden="true"></i> @Model.Azienda.RagioneSociale</a>
-        }
-        <h1 class="titolo-pagina mb-0">@(Model.PerContoAzienda ? "Profilo di " + Model.Azienda.RagioneSociale : ViewData["Title"])</h1>
-        @if (!p.Completato && !Model.PerContoAzienda)
-        {
-            <p class="text-body-secondary mb-0">Prima di iniziare servono alcune informazioni sull'azienda: il consulente le usa per gestire assunzioni, paghe e adempimenti. Ci vogliono circa 10 minuti e puoi interrompere quando vuoi: i dati di ogni passo restano salvati.</p>
-        }
-    </div>
+    @if (Model.PerContoAzienda)
+    {
+        <a asp-controller="Aziende" asp-action="Dettaglio" asp-route-id="@Model.AziendaId" class="small text-body-secondary"><i class="ri-arrow-left-s-line" aria-hidden="true"></i> @Model.Azienda.RagioneSociale</a>
+    }
+    <h1 class="titolo-pagina mb-0">@(Model.PerContoAzienda ? "Profilo di " + Model.Azienda.RagioneSociale : ViewData["Title"])</h1>
+    @if (!completo && !Model.PerContoAzienda)
+    {
+        <p class="text-body-secondary mb-0">Prima di iniziare servono alcune informazioni sull'azienda: il consulente le usa per gestire assunzioni, paghe e adempimenti. Ci vogliono circa 10 minuti e puoi interrompere quando vuoi: i dati di ogni passo restano salvati.</p>
+    }
 </div>
 
-<nav aria-label="Passi del profilo" class="mb-4">
-    <ol class="passi-onboarding">
-        @for (var i = 1; i <= OnboardingViewModel.Titoli.Length; i++)
-        {
-            var stato = i == Model.Passo ? "corrente" : i < p.Passo || p.Completato ? "fatto" : "da-fare";
-            <li class="passo-@stato">
-                @if (stato != "da-fare" && i != Model.Passo)
+@* Intestazione come nella scheda della persona: logo (si cambia subito), nome e stato del profilo. *@
+<div class="scheda-profilo">
+    <div class="card radius-15 p-3 p-md-4 mb-3">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+            <div class="d-flex align-items-center gap-3">
+                @if (Model.Azienda.LogoChiave is not null)
                 {
-                    <a asp-action="Index" asp-route-aziendaId="@aziendaId" asp-route-passo="@i"><span class="numero">@(stato == "fatto" ? "✓" : i.ToString())</span><span class="titolo">@OnboardingViewModel.Titoli[i - 1]</span></a>
+                    <img src="@ViewData["AziendaLogoUrl"]" class="foto-profilo logo-profilo" alt="Logo di @Model.Azienda.RagioneSociale" />
                 }
                 else
                 {
-                    <span aria-current="@(i == Model.Passo ? "step" : null)"><span class="numero">@i</span><span class="titolo">@OnboardingViewModel.Titoli[i - 1]</span></span>
+                    <span class="foto-profilo logo-profilo logo-vuoto" aria-hidden="true"><i class="ri-building-2-line"></i></span>
                 }
-            </li>
-        }
-    </ol>
-</nav>
+                <div>
+                    <h2 class="fs-5 mb-0 text-breadcrumb nome-profilo d-flex align-items-center gap-2 flex-wrap">
+                        @Model.Azienda.RagioneSociale.ToUpperInvariant()
+                        <span class="badge badge-stato" style="--colore-stato:@(completo ? "#2FBA6C" : "#F2B544")"><span class="pallino-stato" aria-hidden="true"></span>@(completo ? "Profilo completo" : "Da completare")</span>
+                    </h2>
+                    <div class="azienda-profilo">@string.Join(" · ", new[] { p.FormaGiuridica, "P.IVA " + Model.Azienda.PartitaIva.Valore, Model.Azienda.Comune }.Where(x => !string.IsNullOrWhiteSpace(x)))</div>
+                    @if (p.Completato && p.CompletatoIl is { } il) { <div class="mansione-profilo">Completato il @il.ToLocalTime().ToString("dd/MM/yyyy")</div> }
+                </div>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <form asp-action="CaricaLogo" method="post" enctype="multipart/form-data" class="m-0">
+                    @if (aziendaId is { } idL) { <input type="hidden" name="aziendaId" value="@idL" /> }
+                    <input type="hidden" name="passo" value="@Model.Passo" />
+                    <label for="logoSubito" class="btn btn-outline-primary btn-sm mb-0">@(Model.Azienda.LogoChiave is null ? "Carica logo" : "Modifica logo") <i class="ri-pencil-line" aria-hidden="true"></i></label>
+                    <input type="file" id="logoSubito" name="immagine" class="d-none" accept="@CL.Web.Infrastruttura.LoghiAziende.FormatiAccettati" onchange="this.form.requestSubmit()" />
+                </form>
+                @if (Model.Azienda.LogoChiave is not null)
+                {
+                    <form asp-action="TogliLogo" method="post" class="m-0" onsubmit="return confirm('Rimuovere il logo?');">
+                        @if (aziendaId is { } idT) { <input type="hidden" name="aziendaId" value="@idT" /> }
+                        <input type="hidden" name="passo" value="@Model.Passo" />
+                        <button type="submit" class="btn btn-outline-danger btn-sm">Rimuovi <i class="ri-delete-bin-line" aria-hidden="true"></i></button>
+                    </form>
+                }
+            </div>
+        </div>
+    </div>
+</div>
 
-<section class="card radius-15 p-4" aria-labelledby="titoloPasso">
-    <h2 class="h5 mb-1" id="titoloPasso">@Model.Passo. @OnboardingViewModel.Titoli[Model.Passo - 1]</h2>
+@if (completo)
+{
+    @* Profilo completo: sezioni come schede, con le stesse pillole della scheda della persona. *@
+    <nav class="invoice-filter-categories mb-3 schede-profilo-azienda" aria-label="Sezioni del profilo">
+        @foreach (var (passo, titolo, icona) in titoliSchede)
+        {
+            <a class="badge-filtro-categoria @(Model.Passo == passo ? "active" : "")" aria-current="@(Model.Passo == passo ? "page" : null)"
+               asp-action="Index" asp-route-aziendaId="@aziendaId" asp-route-passo="@passo"><i class="@icona" aria-hidden="true"></i> @titolo</a>
+        }
+    </nav>
+}
+else
+{
+    <nav aria-label="Passi del profilo" class="mb-4">
+        <ol class="passi-onboarding">
+            @for (var i = 1; i <= OnboardingViewModel.Titoli.Length; i++)
+            {
+                var stato = i == Model.Passo ? "corrente" : i < p.Passo ? "fatto" : "da-fare";
+                <li class="passo-@stato">
+                    @if (stato != "da-fare" && i != Model.Passo)
+                    {
+                        <a asp-action="Index" asp-route-aziendaId="@aziendaId" asp-route-passo="@i"><span class="numero">@(stato == "fatto" ? "✓" : i.ToString())</span><span class="titolo">@OnboardingViewModel.Titoli[i - 1]</span></a>
+                    }
+                    else
+                    {
+                        <span aria-current="@(i == Model.Passo ? "step" : null)"><span class="numero">@i</span><span class="titolo">@OnboardingViewModel.Titoli[i - 1]</span></span>
+                    }
+                </li>
+            }
+        </ol>
+    </nav>
+}
+
+@{
+    var titoloSezione = titoliSchede.FirstOrDefault(t => t.Passo == Model.Passo);
+}
+<section class="card radius-15 p-3 p-md-4 modulo-profilo-azienda" aria-labelledby="titoloPasso">
+    <h2 class="titolo-sezione-profilo d-flex align-items-center gap-2" id="titoloPasso">
+        @if (completo && titoloSezione.Titolo is not null) { <i class="@titoloSezione.Icona" aria-hidden="true"></i> @titoloSezione.Titolo }
+        else { @($"{Model.Passo}. {OnboardingViewModel.Titoli[Model.Passo - 1]}") }
+    </h2>
     @switch (Model.Passo)
     {
         case 1: <partial name="_Societari" model="(SocietariForm)Model.Form!" view-data="ViewData" /> break;
         case 2: <partial name="_Sedi" model="(SediForm)Model.Form!" view-data="ViewData" /> break;
         case 3: <partial name="_Legale" model="(LegaleForm)Model.Form!" view-data="ViewData" /> break;
         case 4: <partial name="_Posizioni" model="(PosizioniForm)Model.Form!" view-data="ViewData" /> break;
-        case 5: <partial name="_Paghe" model="(PagheForm)Model.Form!" view-data="ViewData" /> break;
+        case 5:
+            @* Il referente paghe si sceglie nella scheda della persona (dipendente o professionista). *@
+            <div class="referente-paghe mb-3">
+                <i class="ri-user-star-line" aria-hidden="true"></i>
+                @if (Model.ReferentePaghe is { } rp)
+                {
+                    <div><div class="sottotitolo-presenza mb-0">Referente paghe</div>
+                        <a asp-controller="Dipendenti" asp-action="Dettaglio" asp-route-id="@rp.Id" class="nome-panoramica">@rp.Nome</a>
+                        <span class="dettaglio-presenza">@string.Join(" · ", new[] { rp.Email, rp.Telefono }.Where(x => !string.IsNullOrWhiteSpace(x)))</span></div>
+                }
+                else
+                {
+                    <div><div class="sottotitolo-presenza mb-0">Referente paghe</div><span class="dettaglio-presenza">Non indicato: sceglilo nella scheda della persona (Organizzazione › Referente paghe).</span></div>
+                }
+            </div>
+            <partial name="_Paghe" model="(PagheForm)Model.Form!" view-data="ViewData" />
+            break;
+        case CL.Web.Controllers.OnboardingController.PassoRichieste: <partial name="_TipiRichiesta" model="Model" /> break;
         default: <partial name="_Riepilogo" model="Model" /> break;
     }
 </section>
-
-@if (p.Completato || Model.PerContoAzienda)
-{
-    @* Quali richieste l'azienda offre: quelle spente non compaiono a nessuno (moduli, calendari, azioni rapide). *@
-    <section class="card radius-15 p-4 mt-3 card-panoramica" id="richiesteAbilitate" aria-labelledby="titoloRichieste">
-        <h2 class="titolo-card-panoramica mb-3" id="titoloRichieste"><i class="ri-toggle-line" aria-hidden="true"></i> Tipi di richiesta</h2>
-        <form asp-action="RichiesteAbilitate" method="post">
-            @if (aziendaId is { } idAz) { <input type="hidden" name="aziendaId" value="@idAz" /> }
-            <div class="gruppi-richieste">
-                @foreach (var gruppo in CL.Domain.Aziende.TipiRichiesta.Tutti.GroupBy(t => t.Gruppo))
-                {
-                    <fieldset>
-                        <legend class="sottotitolo-presenza">@gruppo.Key</legend>
-                        @foreach (var t in gruppo)
-                        {
-                            var attivo = Model.Azienda.Abilitata(t.Chiave);
-                            <div class="form-check form-switch voce-richiesta">
-                                <input class="form-check-input" type="checkbox" role="switch" id="tipo-@t.Chiave" name="abilitate" value="@t.Chiave"
-                                       checked="@(attivo || t.Obbligatorio)" disabled="@t.Obbligatorio" />
-                                <label class="form-check-label" for="tipo-@t.Chiave">@t.Nome @if (t.Obbligatorio) { <span class="nota-campo d-inline">sempre attiva</span> }</label>
-                            </div>
-                        }
-                    </fieldset>
-                }
-            </div>
-            <div class="d-flex justify-content-end mt-3"><button type="submit" class="btn btn-primary">Salva</button></div>
-        </form>
-    </section>
-}
 
 @section Scripts {
     <script>

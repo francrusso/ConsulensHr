@@ -16,3 +16,16 @@ public sealed class CalendarioLavorativoNomiTests
         Assert.Null(CalendarioLavorativo.NomeFestivita(new DateOnly(2026, 11, 23)));
     }
 }
+
+public sealed class ProfiloSenzaContrattiTests
+{
+    [Fact]
+    public void Senza_contratti_attivi_le_posizioni_non_mancano()
+    {
+        var p = new CL.Domain.Aziende.ProfiloAzienda(Guid.NewGuid());
+        Assert.Contains("contratto e posizioni INPS/INAIL", p.Mancanti());
+        p.ImpostaSenzaContratti();
+        Assert.True(p.SenzaContratti);
+        Assert.DoesNotContain("contratto e posizioni INPS/INAIL", p.Mancanti());
+    }
+}

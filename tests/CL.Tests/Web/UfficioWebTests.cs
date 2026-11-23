@@ -59,9 +59,8 @@ public sealed class UfficioWebTests : IDisposable
         if (giorno.Year != DateTime.Today.Year) return; // fine anno: fuori dal contratto di prova
 
         var home = WebUtility.HtmlDecode(await dip.GetStringAsync("/"));
-        Assert.Contains("href=\"/Ufficio\"", home); // Presenze e assenze › Calendario
-        Assert.Contains("Dove lavoro", home); // la persona vede dove lavora nella sua panoramica
-        Assert.Contains("Smart working", home);
+        Assert.Contains("href=\"/Ufficio\"", home); // il calendario è la prima pagina del dipendente
+        Assert.Contains("Calendario", home);
 
         var pagina = $"/Ufficio?anno={giorno.Year}&mese={giorno.Month}";
         var r = await dip.InviaForm(pagina, "/Ufficio/Segna", new() { ["giorno"] = giorno.ToString("yyyy-MM-dd") });
@@ -165,8 +164,8 @@ public sealed class UfficioWebTests : IDisposable
         Assert.Contains("richiesta-attesa", html);         // box del giorno di ferie: in attesa
         Assert.Contains("in attesa</span>", html);
         Assert.Contains("ROL · 2 h", html);                 // permesso a ore approvato
-        Assert.Contains("Chiedi ferie o permessi", html);
-        Assert.Matches("Presenze e assenze", html);         // breadcrumb
+        Assert.Contains("Nuova richiesta", html);
+        Assert.Contains(">Calendario</div>", html);          // voce di menù del dipendente
 
         // Dal giorno si crea subito la richiesta: il modulo arriva con data e tipo già scelti.
         var dopodomani = dopo.ToString("yyyy-MM-dd");
@@ -203,7 +202,7 @@ public sealed class UfficioWebTests : IDisposable
 
         var pagina = $"/Ufficio?anno={primo.Year}&mese={primo.Month}";
         Assert.Contains("1 giorno a settimana", WebUtility.HtmlDecode(await dip.GetStringAsync(pagina)));
-        Assert.Contains("Smart working 1 giorno a settimana", WebUtility.HtmlDecode(await dip.GetStringAsync("/")));
+        Assert.Contains("Concesso dal contratto: 1 giorno a settimana", WebUtility.HtmlDecode(await dip.GetStringAsync("/")));
         await dip.InviaForm(pagina, "/Ufficio/Richiedi", new() { ["giorno"] = primo.ToString("yyyy-MM-dd") });
         var r = await dip.InviaForm(pagina, "/Ufficio/Richiedi", new() { ["giorno"] = secondo.ToString("yyyy-MM-dd") });
         Assert.Contains("smart working concesso dal contratto", WebUtility.HtmlDecode(await r.Content.ReadAsStringAsync()));
@@ -267,7 +266,7 @@ public sealed class UfficioWebTests : IDisposable
         await hr.Accedi("hr@test.it");
         var html = WebUtility.HtmlDecode(await hr.GetStringAsync($"/Dipendenti/Dettaglio/{_dipId}?sezione=ferie"));
         Assert.Contains("Assenze e presenze", html);
-        Assert.Matches(@"Giorni da remoto</div>\s*<div class=""card-numero"">1</div>", html);
+        Assert.Matches(@"Giorni da remoto</div>\s*<div class=""valore-indicatore"">1</div>", html);
         Assert.Contains("Giorni in ufficio", html);
         Assert.Contains(giorno.ToString("ddd d"), html);   // dettaglio del mese
         Assert.Contains("Smart working", html);
@@ -412,6 +411,9 @@ public sealed class UfficioWebTests : IDisposable
         await hr.Accedi("hr@test.it");
         var html = WebUtility.HtmlDecode(await hr.GetStringAsync("/Assenze"));
         Assert.Contains("modaleDettaglioRichiesta", html);
+        Assert.Contains("Cerca per nome o cognome", html);                                     // ricerca nelle richieste
+        Assert.Contains("Rossi Mario", WebUtility.HtmlDecode(await hr.GetStringAsync("/Assenze?q=mario rossi")));
+        Assert.DoesNotContain("Rossi Mario</span>", WebUtility.HtmlDecode(await hr.GetStringAsync("/Assenze?q=bianchi")));
         Assert.Contains($"/Assenze/Revoca/{id}?genere=assenza", html);
         await hr.InviaForm("/Assenze", $"/Assenze/Revoca/{id}?genere=assenza", new());
         Assert.Equal(StatoRichiesta.Annullata, (await _app.ConDb(db => db.RichiesteAssenza.SingleAsync())).Stato);
@@ -492,6 +494,21 @@ public sealed class UfficioWebTests : IDisposable
             Assert.Equal(_aziendaId, u!.AziendaId);
         }
         Assert.Contains("Azienda: gestisce il portale", WebUtility.HtmlDecode(await hr.GetStringAsync($"/Dipendenti/Dettaglio/{_dipId}")));
+    }
+
+    [Fact]
+    public async Task Il_consulente_cambia_da_se_nome_ed_email()
+    {
+        await _app.CreaUtente("studio@test.it", Ruoli.Consulente);
+        var c = _app.CreateClient();
+        await c.Accedi("studio@test.it");
+        var profilo = WebUtility.HtmlDecode(await c.GetStringAsync("/Account/Profilo"));
+        Assert.DoesNotContain("rivolgiti al consulente", profilo);
+        await c.InviaForm("/Account/Profilo", "/Account/DatiProfilo", new() { ["nome"] = "Giulia", ["cognome"] = "Neri", ["email"] = "giulia@test.it" });
+        using var scope = _app.Services.CreateScope();
+        var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        var u = await users.FindByEmailAsync("giulia@test.it");
+        Assert.Equal(("Giulia", "Neri"), (u!.Nome, u.Cognome));
     }
 
     [Fact]

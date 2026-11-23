@@ -1,5 +1,4 @@
 @model CL.Web.Controllers.SocietariForm
-<p class="small text-body-secondary">Come risultano dalla visura camerale.</p>
 <form asp-action="Societari" method="post" enctype="multipart/form-data" novalidate>
     <partial name="_AziendaId" />
     <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
@@ -47,14 +46,6 @@
         <div class="col-md-4">
             <label asp-for="Telefono" class="form-label"></label>
             <input asp-for="Telefono" type="tel" class="form-control" />
-        </div>
-        <div class="col-md-8">
-            <label asp-for="Logo" class="form-label"></label>
-            <div class="d-flex align-items-center gap-3">
-                @if (Model.HaLogo && ViewData["AziendaLogoUrl"] is string url) { <img src="@url" alt="Logo attuale" class="logo-azienda" /> }
-                <input asp-for="Logo" type="file" class="form-control" accept="@CL.Web.Infrastruttura.LoghiAziende.FormatiAccettati" />
-            </div>
-            <span asp-validation-for="Logo" class="text-danger"></span>
         </div>
     </div>
     <partial name="_Pulsanti" model="1" />

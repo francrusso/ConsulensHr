@@ -160,8 +160,32 @@ public sealed class DatiPersonaliController(
     {
         var (dip, profilo) = await Carica(dipendenteId);
         if (dip is null) return utente.IsDipendente ? NotFound() : RedirectToAction("Index", "Dipendenti");
-        var p = Math.Clamp(passo ?? profilo.Passo, 1, profilo.Passo);
+        // Dati completi: sezioni a schede (si parte dai dati anagrafici); durante il percorso si va per passi.
+        var p = profilo.Completato ? Math.Clamp(passo ?? 1, 1, ProfiloDipendente.UltimoPasso - 1) : Math.Clamp(passo ?? profilo.Passo, 1, profilo.Passo);
         return Mostra(dip, profilo, p, FormDi(p, dip, profilo));
+    }
+
+    /// <summary>Foto dall'intestazione: si salva subito.</summary>
+    [HttpPost, ValidateAntiForgeryToken, RequestSizeLimit(Immagini.DimensioneMassima + 256 * 1024)]
+    public async Task<IActionResult> CaricaFoto(Guid? dipendenteId, IFormFile? immagine, int? passo)
+    {
+        var (dip, _) = await Carica(dipendenteId);
+        if (dip is null) return NotFound();
+        if (immagine is not { Length: > 0 }) Errore("Scegli un'immagine.");
+        else if (await foto.SalvaAsync(dip, immagine) is { } errore) Errore(errore);
+        else { await db.SaveChangesAsync(); Conferma("Foto aggiornata."); }
+        return RedirectToAction(nameof(Index), new { dipendenteId = utente.IsDipendente ? (Guid?)null : dip.Id, passo });
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> TogliFoto(Guid? dipendenteId, int? passo)
+    {
+        var (dip, _) = await Carica(dipendenteId);
+        if (dip is null) return NotFound();
+        await foto.RimuoviAsync(dip);
+        await db.SaveChangesAsync();
+        Conferma("Foto rimossa.");
+        return RedirectToAction(nameof(Index), new { dipendenteId = utente.IsDipendente ? (Guid?)null : dip.Id, passo });
     }
 
     [HttpPost, ValidateAntiForgeryToken, RequestSizeLimit(Immagini.DimensioneMassima + 256 * 1024)]
@@ -301,7 +325,7 @@ public sealed class DatiPersonaliController(
             if (utente.IsDipendente) await Avvisa(dip, $"ha aggiornato i dati personali ({DatiPersonaliViewModel.Titoli[passo - 1].ToLower()})");
             Conferma("Modifica salvata" + (utente.IsDipendente ? ": il consulente è stato avvisato." : "."));
         }
-        var prossimo = profilo.Completato ? ProfiloDipendente.UltimoPasso : passo + 1;
+        var prossimo = profilo.Completato ? passo : passo + 1; // completati: si resta sulla scheda salvata
         return RedirectToAction(nameof(Index), new { dipendenteId = utente.IsDipendente ? (Guid?)null : dip.Id, passo = prossimo });
     }
 

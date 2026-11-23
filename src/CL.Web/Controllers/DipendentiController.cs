@@ -61,6 +61,9 @@ public sealed class DipendenteForm
     /// <summary>Team di cui la persona è referente (responsabile del team).</summary>
     [Display(Name = "Referente dei team")]
     public List<Guid> TeamReferente { get; set; } = [];
+    /// <summary>La persona a cui il consulente chiede ogni mese presenze, variazioni e documenti.</summary>
+    [Display(Name = "Referente paghe")]
+    public bool ReferentePaghe { get; set; }
     [Display(Name = "Sede di lavoro")]
     public SedeLavoro? Sede { get; set; }
 
@@ -98,6 +101,7 @@ public sealed class DipendenteForm
         Posizione = d.Posizione,
         ResponsabileId = d.ResponsabileId,
         Sede = d.Sede,
+        ReferentePaghe = d.ReferentePaghe,
     };
 }
 
@@ -604,6 +608,11 @@ public sealed class DipendentiController(AppDbContext db, UtenteCorrente utente,
         var team = form.TeamId is { } tid ? await db.Team.FirstOrDefaultAsync(t => t.Id == tid && t.AziendaId == dip.AziendaId) : null;
         var resp = form.ResponsabileId is { } rid ? await db.Dipendenti.FirstOrDefaultAsync(x => x.Id == rid && x.AziendaId == dip.AziendaId) : null;
         if (!Prova(() => dip.ImpostaOrganizzazione(team, form.Posizione, resp), nameof(form.ResponsabileId))) return await MostraForm(form);
+        // Referente paghe: uno per azienda, quindi chi lo era prima smette di esserlo.
+        if (form.ReferentePaghe && !dip.ReferentePaghe)
+            foreach (var altro in await db.Dipendenti.Where(x => x.AziendaId == dip.AziendaId && x.ReferentePaghe && x.Id != dip.Id).ToListAsync())
+                altro.ImpostaReferentePaghe(false);
+        dip.ImpostaReferentePaghe(form.ReferentePaghe);
         // Referente dei team scelti; dagli altri team dell'azienda, se lo era, non lo è più.
         foreach (var t in await db.Team.Where(t => t.AziendaId == dip.AziendaId).ToListAsync())
         {

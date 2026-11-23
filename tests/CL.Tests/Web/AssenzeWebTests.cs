@@ -220,22 +220,20 @@ public sealed class AssenzeWebTests : IDisposable
     }
 
     [Fact]
-    public async Task Residui_di_tutto_il_personale_dalla_pagina_ferie_e_permessi()
+    public async Task I_residui_si_inseriscono_dalla_scheda_della_persona()
     {
         var hr = await Prepara(Ruoli.Azienda);
-        Assert.Contains("href=\"/Assenze/Residui\"", await hr.GetStringAsync("/Assenze")); // sottovoce di "Ferie e permessi"
         var anno = DateTime.Today.Year;
-        var pagina = WebUtility.HtmlDecode(await hr.GetStringAsync($"/Assenze/Residui?anno={anno}"));
-        Assert.Contains("righe[0].Ferie", pagina);
-
-        var r = await hr.InviaForm($"/Assenze/Residui?anno={anno}", "/Assenze/Residui", new()
+        Assert.DoesNotContain("Residui anno precedente</a>", await hr.GetStringAsync("/Assenze")); // niente più pagina nel menù
+        var scheda = WebUtility.HtmlDecode(await hr.GetStringAsync($"/Dipendenti/Dettaglio/{_dipId}?sezione=ferie"));
+        Assert.Contains("Residui anno precedente", scheda);
+        var r = await hr.InviaForm($"/Dipendenti/Dettaglio/{_dipId}", "/Assenze/ImpostaResidui", new()
         {
-            ["anno"] = anno.ToString(), ["righe[0].DipendenteId"] = _dipId.ToString(), ["righe[0].Ferie"] = "12,5", ["righe[0].Rol"] = "-4",
+            ["dipendenteId"] = _dipId.ToString(), ["anno"] = anno.ToString(), ["ferie"] = "12", ["rol"] = "4",
         });
-        Assert.Contains($"Residui al 1° gennaio {anno} salvati", WebUtility.HtmlDecode(await r.Content.ReadAsStringAsync()));
-        var saldi = await _app.ConDb(db => db.SaldiIniziali.Where(s => s.DipendenteId == _dipId && s.Anno == anno).ToListAsync());
-        Assert.Equal(12.5m, saldi.Single(s => s.Tipo == TipoAssenza.Ferie).Ore);
-        Assert.Equal(-4m, saldi.Single(s => s.Tipo == TipoAssenza.Rol).Ore);
+        Assert.Contains($"Residui di inizio {anno} salvati", WebUtility.HtmlDecode(await r.Content.ReadAsStringAsync()));
+        var saldi = await _app.ConDb(db => db.SaldiIniziali.Where(x => x.DipendenteId == _dipId).ToListAsync());
+        Assert.Equal(12m, saldi.Single(x => x.Tipo == TipoAssenza.Ferie).Ore);
     }
 
     [Fact]

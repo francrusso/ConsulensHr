@@ -57,6 +57,9 @@ public sealed class ProfiloViewModel
     public string Email { get; set; } = "";
     public string Nome { get; set; } = "";
     public string Ruolo { get; set; } = "";
+    /// <summary>Per il consulente: nome e cognome separati, modificabili.</summary>
+    public string NomeProprio { get; set; } = "";
+    public string Cognome { get; set; } = "";
 
     [Required(ErrorMessage = "Inserisci la password attuale."), DataType(DataType.Password)]
     [Display(Name = "Password attuale")]
@@ -198,10 +201,36 @@ public sealed class AccountController(SignInManager<ApplicationUser> signIn, Use
         return RedirectToAction(nameof(Profilo));
     }
 
+    /// <summary>Il consulente cambia da sé nome, cognome ed email di accesso (gli altri li chiedono al consulente).</summary>
+    [HttpPost, ValidateAntiForgeryToken, Authorize(Roles = Ruoli.Consulente)]
+    public async Task<IActionResult> DatiProfilo(string? nome, string? cognome, string? email)
+    {
+        var utente = await users.GetUserAsync(User);
+        if (utente is null) return Challenge();
+        if (string.IsNullOrWhiteSpace(nome) || string.IsNullOrWhiteSpace(cognome))
+        {
+            TempData["Errore"] = "Inserisci nome e cognome.";
+            return RedirectToAction(nameof(Profilo));
+        }
+        utente.Nome = nome.Trim();
+        utente.Cognome = cognome.Trim();
+        await users.UpdateAsync(utente);
+        if (!string.IsNullOrWhiteSpace(email) && await accessi.CambiaEmailAsync(utente, email) is { } errore)
+        {
+            TempData["Errore"] = errore;
+            return RedirectToAction(nameof(Profilo));
+        }
+        await signIn.RefreshSignInAsync(utente); // nome ed email aggiornati anche in alto a destra
+        TempData["Messaggio"] = "Dati aggiornati.";
+        return RedirectToAction(nameof(Profilo));
+    }
+
     private async Task<ProfiloViewModel> ProfiloDi(ProfiloViewModel model)
     {
         var utente = await users.GetUserAsync(User);
         model.Email = utente?.Email ?? "";
+        model.NomeProprio = utente?.Nome ?? "";
+        model.Cognome = utente?.Cognome ?? "";
         model.Nome = corrente.Nome;
         model.Ruolo = corrente.IsConsulente ? "Consulente" : corrente.IsAzienda ? "Referente azienda" : "Dipendente";
         return model;

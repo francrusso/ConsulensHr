@@ -1,10 +1,18 @@
 @model int
+@* Dati completi: solo "Salva" (si resta sulla scheda). Durante il percorso: indietro e salva/prosegui. *@
 @{ var dipendenteId = ViewData["DipendenteIdDati"] as Guid?; }
-<div class="d-flex flex-wrap justify-content-between gap-2 border-top pt-3 mt-4">
-    @if (Model > 1)
-    {
-        <a asp-action="Index" asp-route-dipendenteId="@dipendenteId" asp-route-passo="@(Model - 1)" class="btn btn-outline-secondary"><i class="ri-arrow-left-line" aria-hidden="true"></i> Indietro</a>
-    }
-    else { <span></span> }
-    <button type="submit" class="btn btn-primary">Salva e continua <i class="ri-arrow-right-line" aria-hidden="true"></i></button>
-</div>
+@if (ViewData["Completo"] is true)
+{
+    <div class="d-flex justify-content-end gap-2 mt-4"><button type="submit" class="btn btn-primary">Salva</button></div>
+}
+else
+{
+    <div class="d-flex flex-wrap justify-content-between gap-2 mt-4">
+        @if (Model > 1)
+        {
+            <a asp-action="Index" asp-route-dipendenteId="@dipendenteId" asp-route-passo="@(Model - 1)" class="btn btn-outline-secondary"><i class="ri-arrow-left-line" aria-hidden="true"></i> Indietro</a>
+        }
+        else { <span></span> }
+        <button type="submit" class="btn btn-primary">Salva e continua <i class="ri-arrow-right-line" aria-hidden="true"></i></button>
+    </div>
+}

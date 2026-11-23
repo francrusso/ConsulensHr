@@ -1,0 +1,9 @@
+@model string[]
+@* Grafico senza dati: linee e asse sfocati, con un'etichetta al centro (come nella dashboard). *@
+<div class="grafico-vuoto" role="img" aria-label="Ancora nessun dato disponibile">
+    <div class="sfondo-grafico-vuoto" aria-hidden="true">
+        @for (var i = 0; i < 5; i++) { <span class="linea-vuota"></span> }
+        <div class="asse-vuoto">@foreach (var e in Model) { <span>@e</span> }</div>
+    </div>
+    <span class="etichetta-vuota">Ancora nessun dato disponibile</span>
+</div>

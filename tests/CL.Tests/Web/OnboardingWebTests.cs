@@ -78,7 +78,7 @@ public sealed class OnboardingWebTests : IDisposable
         Assert.Contains("2. Sedi", await Testo(await Passo(hr, "Societari", new(Societari))));
         Assert.Contains("3. Legale rappresentante", await Testo(await Passo(hr, "Sedi", new(Sedi))));
         Assert.Contains("4. Contratto e posizioni", await Testo(await Passo(hr, "Legale", new(Legale))));
-        Assert.Contains("5. Paghe e referente", await Testo(await Passo(hr, "Posizioni", new(Posizioni))));
+        Assert.Contains("5. Paghe", await Testo(await Passo(hr, "Posizioni", new(Posizioni))));
         html = await Testo(await Passo(hr, "Paghe", new(Paghe)));
         Assert.Contains("6. Riepilogo", html);
         Assert.Contains("Via Po 5, 10123 Torino (TO)", html);

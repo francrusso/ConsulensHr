@@ -20,12 +20,14 @@
     }
 </div>
 
+@if (Model.DaFare.Count > 0) { <partial name="_DaFare" model="Model.DaFare" /> }
+
 <div class="row g-3 mb-3">
     @if (Utente.IsConsulente && Model.AziendaId is null)
     {
         <partial name="_Indicatore" model='("Aziende attive", Model.AziendeAttive.ToString(), "ri-building-line", Url.Action("Index", "Aziende"), (string?)null)' />
     }
-    <partial name="_Indicatore" model='(Utente.IsAzienda ? "Personale in forza" : "Dipendenti in forza", Model.DipendentiInForza.ToString(), "ri-team-line", Url.Action("Index", "Dipendenti"), (string?)null)' />
+    <partial name="_Indicatore" model='("Personale in forza", Model.DipendentiInForza.ToString(), "ri-team-line", Url.Action("Index", "Dipendenti"), (string?)null)' />
     <partial name="_Indicatore" model='(Utente.IsConsulente ? "Richieste in attesa delle aziende" : "Richieste da approvare", Model.RichiesteInAttesa.ToString(), "ri-calendar-check-line", Url.Action("Index", "Assenze"), (string?)null)' />
     @if (Model.Presenze is { } p)
     {
@@ -81,14 +83,14 @@
 
         @* Richieste in attesa: il referente approva da qui, il resto nella pagina Richieste. *@
         <section class="col-xl-5" aria-labelledby="titoloAttesa">
-            <div class="card radius-15 p-4 h-100 card-panoramica">
+            <div class="card radius-15 p-4 h-100 card-panoramica @(Model.RichiesteInAttesa > 0 ? "card-avviso" : "card-ok")">
                 <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
                     <h2 class="titolo-card-panoramica mb-0" id="titoloAttesa"><i class="ri-calendar-check-line" aria-hidden="true"></i> @(Utente.IsConsulente ? "In attesa delle aziende" : "Da approvare") <span class="numero-gruppo">@Model.RichiesteInAttesa</span></h2>
                     <a asp-controller="Assenze" asp-action="Index" asp-route-stato="InAttesa" asp-route-aziendaId="@Model.AziendaId" class="small">Tutte le richieste <i class="ri-arrow-right-s-line" aria-hidden="true"></i></a>
                 </div>
                 @if (Model.DaApprovare.Count == 0)
                 {
-                    <div class="vuoto-panoramica"><i class="ri-checkbox-circle-line" aria-hidden="true"></i> Nessuna richiesta in attesa</div>
+                    <partial name="_CardVuota" model='"Nessuna richiesta in attesa"' />
                 }
                 <ul class="elenco-panoramica">
                     @foreach (var r in Model.DaApprovare)
@@ -119,7 +121,11 @@
 }
 
 <div class="row g-3 mb-3">
-    <div class="col-xl-7"><partial name="_GraficoAssenze" model="Model.AssenzePerMese" /></div>
+    <div class="col-12"><partial name="_GraficoAssenze" model="Model.AssenzePerMese" /></div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-xl-7"><partial name="_GraficoFerie" model="(Model.FeriePerDipendente, Model.Anno, Utente.IsConsulente && Model.AziendaId is null)" /></div>
     @* Contratti a termine in scadenza nei prossimi 60 giorni. *@
     <section class="col-xl-5" aria-labelledby="titoloScadenze">
         <div class="card radius-15 p-4 h-100 card-panoramica">
@@ -129,7 +135,7 @@
             </div>
             @if (Model.Scadenze.Count == 0)
             {
-                <div class="vuoto-panoramica"><i class="ri-checkbox-circle-line" aria-hidden="true"></i> Nessun contratto in scadenza</div>
+                <partial name="_CardVuota" model='"Nessun contratto in scadenza"' />
             }
             <ul class="elenco-panoramica">
                 @foreach (var sc in Model.Scadenze.Take(8))
@@ -148,9 +154,7 @@
     </section>
 </div>
 
-<div class="row g-3">
-    <div class="col-12"><partial name="_GraficoFerie" model="(Model.FeriePerDipendente, Model.Anno, Utente.IsConsulente && Model.AziendaId is null)" /></div>
-</div>
+<partial name="_CalendarioScadenze" model="(Model.Eventi, Model.DataOggi)" />
 
 @section Scripts {
     <script src="~/lib/apexcharts/apexcharts.min.js"></script>

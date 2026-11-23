@@ -133,6 +133,10 @@ public sealed class Dipendente : Entity
 
     public void ImpostaIban(Iban? iban) => Iban = iban;
     public void ImpostaSede(SedeLavoro? sede) => Sede = sede;
+
+    /// <summary>La persona (dipendente o professionista) a cui il consulente chiede presenze, variazioni e documenti ogni mese.</summary>
+    public bool ReferentePaghe { get; private set; }
+    public void ImpostaReferentePaghe(bool si) => ReferentePaghe = si;
     public void ImpostaMatricola(string? matricola) => Matricola = matricola?.Trim();
     public void CollegaUtente(string? userId) => UserId = userId;
     public void ImpostaFoto(string chiave) => FotoChiave = Guard.NotEmpty(chiave, "Foto");

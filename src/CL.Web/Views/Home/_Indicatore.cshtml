@@ -1,13 +1,14 @@
 @model (string Etichetta, string Valore, string Icona, string? Link, string? Nota)
+@* Indicatore come nella dashboard: icona in un riquadro, etichetta in maiuscolo, valore grande. *@
 @{ var (etichetta, valore, icona, link, nota) = Model; }
 <div class="col-sm-6 col-xl">
     <a href="@(link ?? "#")" class="card radius-15 h-100 text-decoration-none indicatore @(link is null ? "pe-none" : "")">
         <div class="card-body d-flex align-items-center gap-3">
-            <i class="@icona ri-2x icona-card" aria-hidden="true"></i>
-            <div>
-                <div class="etichetta mb-1">@etichetta</div>
-                <div class="card-numero">@valore</div>
-                @if (nota is not null) { <div class="small text-body-secondary mt-1">@nota</div> }
+            <span class="icona-indicatore" aria-hidden="true"><i class="@icona"></i></span>
+            <div class="min-w-0">
+                <div class="etichetta-indicatore">@etichetta</div>
+                <div class="valore-indicatore">@valore</div>
+                @if (nota is not null) { <div class="nota-indicatore">@nota</div> }
             </div>
         </div>
     </a>

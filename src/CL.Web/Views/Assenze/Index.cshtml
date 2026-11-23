@@ -13,7 +13,7 @@
         @foreach (var a in (List<int>)ViewBag.Anni)
         {
             <a class="@(a == Model.Anno ? "attivo" : "")" aria-current="@(a == Model.Anno ? "page" : null)"
-               asp-action="Index" asp-route-anno="@a" asp-route-stato="@Model.Stato" asp-route-aziendaId="@Model.AziendaId">@a</a>
+               asp-action="Index" asp-route-anno="@a" asp-route-stato="@Model.Stato" asp-route-aziendaId="@Model.AziendaId" asp-route-q="@ViewBag.Ricerca">@a</a>
         }
     </nav>
 </div>
@@ -33,15 +33,31 @@
 }
 
 <section class="customer-directory">
-    @if (Model.Aziende is not null)
+    @if (gestore)
     {
-        <form asp-action="Index" method="get" class="mb-3">
-            <input type="hidden" name="anno" value="@Model.Anno" />
-            @if (Model.Stato is { } statoScelto) { <input type="hidden" name="stato" value="@statoScelto" /> }
-            <select name="aziendaId" class="form-select w-auto" aria-label="Filtra per azienda" asp-items="Model.Aziende" onchange="this.form.submit()">
-                <option value="">Tutte le aziende</option>
-            </select>
+        @* Ricerca a tutta larghezza, come nell'elenco del personale (con il filtro azienda per il consulente). *@
+        <form asp-action="Index" method="get" class="invoice-filter-bar customer-filter-form">
+            <div class="invoice-filter-toolbar">
+                <div class="invoice-filter-client">
+                    <div class="input-group">
+                        <span class="input-group-text bg-transparent"><i class="ri-search-line" aria-hidden="true"></i></span>
+                        <input type="text" name="q" class="form-control" placeholder="Cerca per nome o cognome" aria-label="Cerca nelle richieste" value="@ViewBag.Ricerca" />
+                    </div>
+                </div>
+                @if (Model.Aziende is not null)
+                {
+                    <div>
+                        <select name="aziendaId" class="form-select" aria-label="Filtra per azienda" asp-items="Model.Aziende">
+                            <option value="">Tutte le aziende</option>
+                        </select>
+                    </div>
+                }
+                <input type="hidden" name="anno" value="@Model.Anno" />
+                @if (Model.Stato is { } statoScelto) { <input type="hidden" name="stato" value="@statoScelto" /> }
+                <div class="invoice-filter-actions"><button class="btn invoice-filter-submit" type="submit">Cerca <i class="ri-search-line" aria-hidden="true"></i></button></div>
+            </div>
         </form>
+        <partial name="_ChipRicerca" />
     }
 
     @{
@@ -55,11 +71,11 @@
     @* Stati come pillole, come nell'elenco del personale: di default tutte, con quelle da approvare in cima. *@
     <nav class="invoice-filter-categories filtro-stati mb-3" aria-label="Stato della richiesta">
         <a class="badge-filtro-categoria @(Model.Stato is null ? "active" : "")" aria-current="@(Model.Stato is null ? "page" : null)"
-           asp-action="Index" asp-route-anno="@Model.Anno" asp-route-aziendaId="@Model.AziendaId">Tutte <span>(@conteggi.Values.Sum())</span></a>
+           asp-action="Index" asp-route-anno="@Model.Anno" asp-route-aziendaId="@Model.AziendaId" asp-route-q="@ViewBag.Ricerca">Tutte <span>(@conteggi.Values.Sum())</span></a>
         @foreach (var (st, nome, colore) in stati)
         {
             <a class="badge-filtro-categoria @(Model.Stato == st ? "active" : "")" aria-current="@(Model.Stato == st ? "page" : null)"
-               asp-action="Index" asp-route-stato="@st" asp-route-anno="@Model.Anno" asp-route-aziendaId="@Model.AziendaId">
+               asp-action="Index" asp-route-stato="@st" asp-route-anno="@Model.Anno" asp-route-aziendaId="@Model.AziendaId" asp-route-q="@ViewBag.Ricerca">
                 <span class="pallino-stato" style="--colore-stato:@colore" aria-hidden="true"></span> @nome <span>(@conteggi.GetValueOrDefault(st))</span>
             </a>
         }

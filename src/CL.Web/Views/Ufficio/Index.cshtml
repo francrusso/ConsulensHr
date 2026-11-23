@@ -86,7 +86,6 @@
             <span class="avanzamento-data"><i class="ri-building-line" aria-hidden="true"></i> In ufficio: @inUfficio @Giorni(inUfficio)@(Model.GiorniPrevisti is { } previsti ? $" · previsti {previsti} a settimana" : "")</span>
         }
         @if (inAttesa > 0) { <span class="avanzamento-data"><i class="ri-time-line" aria-hidden="true"></i> @inAttesa @(inAttesa == 1 ? "richiesta" : "richieste") in attesa</span> }
-        <a asp-controller="Assenze" asp-action="Nuova" class="btn btn-primary"><i class="ri-calendar-event-line" aria-hidden="true"></i> Chiedi ferie o permessi</a>
     </div>
 </div>
 

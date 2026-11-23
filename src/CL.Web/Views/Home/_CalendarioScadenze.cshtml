@@ -1,0 +1,50 @@
+@model (List<CL.Web.Infrastruttura.EventoScadenza> Eventi, DateOnly Oggi)
+@* Calendario del mese con i giorni di scadenza evidenziati e, accanto, l'elenco delle prossime scadenze. *@
+@{
+    var (eventi, oggi) = Model;
+    var primo = new DateOnly(oggi.Year, oggi.Month, 1);
+    var inizio = primo.AddDays(-(((int)primo.DayOfWeek + 6) % 7));
+    var ultimo = primo.AddMonths(1).AddDays(-1);
+    var giorniEvento = eventi.Select(e => e.Data).ToHashSet();
+    string Colore(string tipo) => tipo switch { "contratto" => "#F2B544", "chiusura" => "#512D38", "cu" => "#D9534F", _ => "#98494E" };
+}
+<section class="card radius-15 p-3 p-md-4 card-panoramica" aria-labelledby="titoloCalendarioScadenze">
+    <h2 class="titolo-card-panoramica mb-3" id="titoloCalendarioScadenze"><i class="ri-calendar-2-line" aria-hidden="true"></i> Calendario</h2>
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="mini-calendario">
+                <div class="mese-mini">@ServizioBustePaga.NomeMese(oggi.Month).ToUpperInvariant()</div>
+                @foreach (var n in new[] { "Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom" }) { <div class="intestazione-mini">@n</div> }
+                @for (var g = inizio; g <= ultimo || g.DayOfWeek != DayOfWeek.Monday; g = g.AddDays(1))
+                {
+                    var delMese = g.Month == oggi.Month;
+                    var conEvento = delMese && giorniEvento.Contains(g);
+                    var rosso = CL.Domain.Assenze.CalendarioLavorativo.NomeFestivita(g) is not null || g.DayOfWeek == DayOfWeek.Sunday;
+                    <div class="giorno-mini @(delMese ? "" : "fuori") @(g == oggi ? "oggi" : "") @(conEvento ? "evento" : "") @(rosso && delMese ? "rosso" : "")">
+                        @if (conEvento) { <span><i class="ri-calendar-event-line" aria-hidden="true"></i> @g.Day</span> } else if (delMese) { @g.Day }
+                    </div>
+                }
+            </div>
+        </div>
+        <div class="col-lg-6">
+            @if (eventi.Count == 0)
+            {
+                <partial name="_CardVuota" model='"Nessuna scadenza nei prossimi due mesi"' />
+            }
+            <ul class="elenco-scadenze">
+                @foreach (var e in eventi.Take(8))
+                {
+                    <li style="--colore-evento:@Colore(e.Tipo)">
+                        <a href="@(e.Link ?? "#")">
+                            <span class="data-evento"><i class="ri-calendar-line" aria-hidden="true"></i> @e.Data.ToString("d MMM").ToUpperInvariant()</span>
+                            <span class="min-w-0">
+                                <span class="titolo-evento">@e.Titolo</span>
+                                <span class="dettaglio-presenza d-block text-truncate">@e.Dettaglio</span>
+                            </span>
+                        </a>
+                    </li>
+                }
+            </ul>
+        </div>
+    </div>
+</section>

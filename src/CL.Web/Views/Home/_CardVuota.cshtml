@@ -1,0 +1,8 @@
+@model string
+@* Card senza dati: righe finte sfocate con l'etichetta al centro, come i grafici vuoti. *@
+<div class="card-vuota" role="status">
+    <div class="sfondo-card-vuota" aria-hidden="true">
+        @for (var i = 0; i < 3; i++) { <div class="riga-vuota"><span class="cerchio"></span><span class="testo"></span><span class="breve"></span></div> }
+    </div>
+    <span class="etichetta-vuota">@Model</span>
+</div>

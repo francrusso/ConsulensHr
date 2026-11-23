@@ -77,7 +77,7 @@ public sealed class PanoramicaWebTests : IDisposable
         html = WebUtility.HtmlDecode(await consulente.GetStringAsync($"/?aziendaId={altra}"));
         Assert.Contains("Verdi Luigi", html);
         Assert.DoesNotContain("Rossi Mario", html);
-        Assert.Contains("Nessuna assenza approvata negli ultimi 12 mesi", html);
+        Assert.Contains("Ancora nessun dato disponibile", html);
         Assert.Empty(_app.ErroriServer);
     }
 
@@ -112,6 +112,9 @@ public sealed class PanoramicaWebTests : IDisposable
         Assert.Contains("Smart working ·", html);              // richiesta di smart working in attesa
         Assert.Contains("DecidiSmartWorking", html);             // il referente approva da qui
         Assert.Contains("Contratti in scadenza", html);
+        // Da fare: solo ciò che c'è da fare (richiesta in attesa, contratto in scadenza), non le voci già a posto.
+        Assert.Contains("Approva le richieste in attesa", html);
+        Assert.Contains("Rinnova o chiudi i contratti in scadenza", html);
         Assert.Matches("tra (19|20|21|2\\d) giorni", html);    // contratto a termine di Verdi
         Assert.Empty(_app.ErroriServer);
     }

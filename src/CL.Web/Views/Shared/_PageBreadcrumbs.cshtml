@@ -4,20 +4,20 @@
     var controller = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
     var action = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
     var titolo = ViewData["Title"]?.ToString();
-    var personale = Utente.IsAzienda ? "Personale" : "Dipendenti";
+    var personale = "Personale";
     (string Nome, string? Link) sezione = controller switch
     {
         "Home" => ("Panoramica", Url.Action("Index", "Home")),
         "Aziende" => ("Aziende", Url.Action("Index", "Aziende")),
         "Dipendenti" or "Team" => (personale, Url.Action("Index", "Dipendenti")),
-        "Assenze" => ("Presenze e assenze", Utente.IsDipendente ? Url.Action("Index", "Ufficio") : Url.Action("Calendario", "Assenze")),
+        "Assenze" => Utente.IsDipendente ? ("Richieste", Url.Action("Index", "Assenze")) : ("Presenze e assenze", Url.Action("Calendario", "Assenze")),
         "Presenze" => ("Presenze e assenze", Url.Action("Calendario", "Assenze")),
         "BustePaga" or "Documenti" => ("Documenti", null),
         "Utenti" when Utente.IsAzienda => ("Personale", Url.Action("Index", "Dipendenti")),
         "Utenti" => ("Utenti", null),
         "Onboarding" => ("Profilo azienda", null),
         "DatiPersonali" => ("I miei dati", null),
-        "Ufficio" => ("Presenze e assenze", Url.Action("Index", "Ufficio")),
+        "Ufficio" => ("Calendario", Url.Action("Index", "Ufficio")),
         "Account" => ("Profilo", null),
         _ => (controller, null),
     };

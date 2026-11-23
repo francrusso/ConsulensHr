@@ -93,24 +93,6 @@ public sealed class CalendarioAssenzeViewModel
     public List<TeamFiltro> Team { get; init; } = [];
 }
 
-public sealed record RigaResidui(Guid DipendenteId, string Persona, string Azienda, decimal Ferie, decimal Rol);
-
-public sealed class ResiduoForm
-{
-    public Guid DipendenteId { get; set; }
-    public decimal? Ferie { get; set; }
-    public decimal? Rol { get; set; }
-}
-
-public sealed class ResiduiViewModel
-{
-    public required List<RigaResidui> Righe { get; init; }
-    public int Anno { get; init; }
-    public string? Ricerca { get; init; }
-    public Guid? AziendaId { get; init; }
-    public List<SelectListItem>? Aziende { get; init; }
-}
-
 public sealed class AssenzeViewModel
 {
     public required List<RichiestaRiga> Richieste { get; init; }
@@ -133,14 +115,22 @@ public sealed class AssenzeController(AppDbContext db, UtenteCorrente utente, Se
     private DateTime AdessoUtc => clock.GetUtcNow().UtcDateTime;
     private bool Gestore => utente.IsConsulente || utente.IsAzienda;
 
-    public async Task<IActionResult> Index(StatoRichiesta? stato, int? anno, Guid? aziendaId, bool tutte = false)
+    public async Task<IActionResult> Index(StatoRichiesta? stato, int? anno, Guid? aziendaId, string? q = null, bool tutte = false)
     {
+        ViewBag.Ricerca = q;
         var annoScelto = anno ?? Oggi.Year;
         // Di default tutte le richieste dell'anno, con quelle da approvare in cima (anche se riguardano un altro anno).
         var filtroStato = stato;
 
         var dipendenti = utente.Filtra(db.Dipendenti.AsNoTracking());
         if (aziendaId is { } az) dipendenti = dipendenti.Where(d => d.AziendaId == az);
+        // Ricerca per nome o cognome della persona (vale per tutti i tipi di richiesta).
+        if (!string.IsNullOrWhiteSpace(q))
+        {
+            var t = q.Trim().ToLower();
+            dipendenti = dipendenti.Where(d => d.Cognome.ToLower().Contains(t) || d.Nome.ToLower().Contains(t)
+                                               || (d.Cognome + " " + d.Nome).ToLower().Contains(t) || (d.Nome + " " + d.Cognome).ToLower().Contains(t));
+        }
 
         var query = from r in db.RichiesteAssenza.AsNoTracking()
                     join d in dipendenti on r.DipendenteId equals d.Id
@@ -676,56 +666,6 @@ public sealed class AssenzeController(AppDbContext db, UtenteCorrente utente, Se
         await db.SaveChangesAsync();
         Conferma($"Chiusura \"{chiusura.Descrizione}\" eliminata, con le ferie che aveva registrato.");
         return RedirectToAction(nameof(Calendario), new { anno = chiusura.Dal.Year, mese = chiusura.Dal.Month });
-    }
-
-    /// <summary>Residui di ferie e ROL al 1° gennaio per tutto il personale dipendente (dal cedolino di dicembre o dal gestionale paghe).</summary>
-    [Authorize(Policy = Policy.GestionePersonale)]
-    public async Task<IActionResult> Residui(int? anno, Guid? aziendaId, string? q)
-    {
-        var a = anno ?? Oggi.Year;
-        var (inizio, fine) = Filtri.Anno(a);
-        var esterni = TipoContrattoExtensions.Esterni.ToList();
-        var persone = utente.Filtra(db.Dipendenti.AsNoTracking().IgnoreAutoIncludes())
-            .Where(d => db.Contratti.Any(c => c.DipendenteId == d.Id && !esterni.Contains(c.Tipo) && c.DataInizio <= fine && (c.DataFine == null || c.DataFine >= inizio)));
-        if (utente.IsConsulente && aziendaId is { } az) persone = persone.Where(d => d.AziendaId == az);
-        if (!string.IsNullOrWhiteSpace(q))
-        {
-            var t = q.Trim().ToLower();
-            persone = persone.Where(d => d.Cognome.ToLower().Contains(t) || d.Nome.ToLower().Contains(t));
-        }
-        var righe = await (
-            from d in persone
-            join az2 in db.Aziende.AsNoTracking() on d.AziendaId equals az2.Id
-            orderby d.Cognome, d.Nome
-            select new RigaResidui(d.Id, d.Cognome + " " + d.Nome, az2.RagioneSociale,
-                db.SaldiIniziali.Where(s => s.DipendenteId == d.Id && s.Anno == a && s.Tipo == TipoAssenza.Ferie).Select(s => s.Ore).FirstOrDefault(),
-                db.SaldiIniziali.Where(s => s.DipendenteId == d.Id && s.Anno == a && s.Tipo == TipoAssenza.Rol).Select(s => s.Ore).FirstOrDefault()))
-            .ToListAsync();
-        return View(new ResiduiViewModel
-        {
-            Righe = righe, Anno = a, Ricerca = q, AziendaId = aziendaId,
-            Aziende = utente.IsConsulente
-                ? await db.Aziende.AsNoTracking().OrderBy(x => x.RagioneSociale).Select(x => new SelectListItem(x.RagioneSociale, x.Id.ToString(), x.Id == aziendaId)).ToListAsync()
-                : null,
-        });
-    }
-
-    [HttpPost, ValidateAntiForgeryToken, Authorize(Policy = Policy.GestionePersonale)]
-    public async Task<IActionResult> Residui(int anno, List<ResiduoForm> righe, string? ritorno)
-    {
-        var ids = righe.Select(r => r.DipendenteId).ToList();
-        var visibili = await utente.Filtra(db.Dipendenti).Where(d => ids.Contains(d.Id)).Select(d => d.Id).ToListAsync();
-        var esistenti = await db.SaldiIniziali.Where(s => visibili.Contains(s.DipendenteId) && s.Anno == anno).ToListAsync();
-        foreach (var r in righe.Where(r => visibili.Contains(r.DipendenteId)))
-            foreach (var (tipo, ore) in new[] { (TipoAssenza.Ferie, r.Ferie), (TipoAssenza.Rol, r.Rol) })
-            {
-                var s = esistenti.FirstOrDefault(x => x.DipendenteId == r.DipendenteId && x.Tipo == tipo);
-                if (s is null) { if (ore is { } o && o != 0) db.SaldiIniziali.Add(new SaldoIniziale(r.DipendenteId, anno, tipo, o)); }
-                else s.Rettifica(ore ?? 0);
-            }
-        await db.SaveChangesAsync();
-        Conferma($"Residui al 1° gennaio {anno} salvati.");
-        return Url.IsLocalUrl(ritorno) ? LocalRedirect(ritorno) : RedirectToAction(nameof(Residui), new { anno });
     }
 
     /// <summary>Residuo dell'anno precedente (o saldo di partenza dal gestionale paghe).</summary>

@@ -2,7 +2,7 @@
 @inject CL.Web.Infrastruttura.UtenteCorrente Utente
 @{
     // Per il referente dell'azienda la sezione si chiama "Personale".
-    var p = Utente.IsAzienda;
+    var p = true; // "Personale" per tutti (consulente e azienda)
     ViewData["Title"] = p ? "Personale" : "Dipendenti";
     var aziende = ViewBag.Aziende as List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>;
     var conteggi = (Dictionary<CL.Web.Controllers.StatoPersonale, int>)ViewBag.Conteggi;

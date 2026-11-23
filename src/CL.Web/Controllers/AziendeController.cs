@@ -44,7 +44,7 @@ public sealed class AziendaForm
     [EmailAddress(ErrorMessage = "Email non valida."), StringLength(256), Display(Name = "Email")]
     public string? Email { get; set; }
 
-    [Display(Name = "Logo (PNG, JPEG o WebP, massimo 1 MB)")]
+    [Display(Name = "Logo")]
     public IFormFile? Logo { get; set; }
 
     [Display(Name = "Togli il logo attuale")]

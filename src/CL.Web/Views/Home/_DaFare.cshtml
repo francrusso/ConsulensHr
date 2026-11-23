@@ -1,0 +1,46 @@
+@model List<CL.Web.Infrastruttura.CosaDaFare>
+@inject UtenteCorrente Utente
+@*
+    Lista "da fare" in cima alla panoramica. Lo stato arriva dai dati (es. nessuna richiesta in attesa = fatto),
+    ma la casella si può spuntare o togliere a mano: la scelta resta in questo browser, per quel periodo.
+*@
+<section class="card radius-15 p-3 p-md-4 mb-3 card-da-fare" aria-labelledby="titoloDaFare" id="daFare" data-utente="@Utente.Email">
+    <h2 class="titolo-card-panoramica mb-3" id="titoloDaFare">Da fare</h2>
+    <ul class="elenco-da-fare">
+        @foreach (var c in Model)
+        {
+            <li class="@(c.Fatto ? "fatto" : "")" data-chiave="@c.Chiave" data-automatico="@(c.Fatto ? "true" : "false")">
+                <div class="voce-da-fare">
+                    <button type="button" class="spunta-da-fare" role="checkbox" aria-checked="@(c.Fatto ? "true" : "false")" aria-label="Segna come fatto: @c.Testo">
+                        <i class="ri-check-line" aria-hidden="true"></i>
+                    </button>
+                    <a href="@(c.Link ?? "#")" class="flex-grow-1 testo-da-fare">@c.Testo</a>
+                    @if (c.Numero is > 0) { <span class="numero-gruppo numero-da-fare">@c.Numero</span> }
+                    <a href="@(c.Link ?? "#")" class="freccia-da-fare" aria-hidden="true" tabindex="-1"><i class="ri-arrow-right-s-line"></i></a>
+                </div>
+            </li>
+        }
+    </ul>
+</section>
+<script>
+    (function () {
+        const box = document.getElementById('daFare');
+        const chiave = 'consulens-da-fare:' + box.dataset.utente;
+        let scelte = {};
+        try { scelte = JSON.parse(localStorage.getItem(chiave) || '{}'); } catch { }
+        const imposta = (li, fatto) => {
+            li.classList.toggle('fatto', fatto);
+            li.querySelector('.spunta-da-fare').setAttribute('aria-checked', String(fatto));
+        };
+        box.querySelectorAll('li[data-chiave]').forEach(li => {
+            if (li.dataset.chiave in scelte) imposta(li, scelte[li.dataset.chiave]);
+            li.querySelector('.spunta-da-fare').addEventListener('click', () => {
+                const fatto = !li.classList.contains('fatto');
+                imposta(li, fatto);
+                // Se torna come lo dicono i dati, la scelta manuale non serve più.
+                if (String(fatto) === li.dataset.automatico) delete scelte[li.dataset.chiave]; else scelte[li.dataset.chiave] = fatto;
+                try { localStorage.setItem(chiave, JSON.stringify(scelte)); } catch { }
+            });
+        });
+    })();
+</script>

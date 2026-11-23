@@ -6,6 +6,7 @@
     Guid? dipendenteId = Model.PerConto ? Model.Dipendente.Id : null;
     if (dipendenteId is not null) ViewData["DipendenteIdDati"] = dipendenteId;
     ViewData["FotoUrl"] = Url.Action("Foto", "Dipendenti", new { id = Model.Dipendente.Id });
+    ViewData["Completo"] = p.Completato; // i pulsanti delle sezioni: "Salva" invece di "Salva e continua"
 }
 <div class="breadcrumb-titolo mb-3">
     <div>
@@ -25,27 +26,84 @@
     </div>
 </div>
 
-<nav aria-label="Passi" class="mb-4">
-    <ol class="passi-onboarding">
-        @for (var i = 1; i <= DatiPersonaliViewModel.Titoli.Length; i++)
-        {
-            var stato = i == Model.Passo ? "corrente" : i < p.Passo || p.Completato ? "fatto" : "da-fare";
-            <li class="passo-@stato">
-                @if (stato != "da-fare" && i != Model.Passo)
+@{
+    var completo = p.Completato;
+    var d = Model.Dipendente;
+    var icone = new[] { "ri-user-line", "ri-home-4-line", "ri-bank-card-line", "ri-parent-line", "ri-file-list-3-line" };
+}
+@* Intestazione come nella scheda della persona: foto (si cambia subito), nome e stato dei dati. *@
+<div class="scheda-profilo">
+    <div class="card radius-15 p-3 p-md-4 mb-3">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+            <div class="d-flex align-items-center gap-3">
+                <img src="@(d.FotoChiave is not null ? Url.Action("Foto", "Dipendenti", new { id = d.Id }) : Url.Content($"~/assets/images/avatar/{d.Segnaposto}.png"))" class="foto-profilo" alt="Foto di @d.NomeCompleto" />
+                <div>
+                    <h2 class="fs-5 mb-0 text-breadcrumb nome-profilo d-flex align-items-center gap-2 flex-wrap">
+                        @d.NomeCompleto.ToUpperInvariant()
+                        <span class="badge badge-stato" style="--colore-stato:@(completo ? "#2FBA6C" : "#F2B544")"><span class="pallino-stato" aria-hidden="true"></span>@(completo ? "Dati completi" : "Da completare")</span>
+                    </h2>
+                    <div class="azienda-profilo">@d.CodiceFiscale.Valore</div>
+                    @if (completo && p.CompletatoIl is { } il) { <div class="mansione-profilo">Completati il @il.ToLocalTime().ToString("dd/MM/yyyy")</div> }
+                </div>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <form asp-action="CaricaFoto" method="post" enctype="multipart/form-data" class="m-0">
+                    @if (dipendenteId is { } idF) { <input type="hidden" name="dipendenteId" value="@idF" /> }
+                    <input type="hidden" name="passo" value="@Model.Passo" />
+                    <label for="fotoSubito" class="btn btn-outline-primary btn-sm mb-0">@(d.FotoChiave is null ? "Carica foto" : "Modifica foto") <i class="ri-pencil-line" aria-hidden="true"></i></label>
+                    <input type="file" id="fotoSubito" name="immagine" class="d-none" accept="@CL.Web.Infrastruttura.Immagini.FormatiAccettati" onchange="this.form.requestSubmit()" />
+                </form>
+                @if (d.FotoChiave is not null)
                 {
-                    <a asp-action="Index" asp-route-dipendenteId="@dipendenteId" asp-route-passo="@i"><span class="numero">@(stato == "fatto" ? "✓" : i.ToString())</span><span class="titolo">@DatiPersonaliViewModel.Titoli[i - 1]</span></a>
+                    <form asp-action="TogliFoto" method="post" class="m-0" onsubmit="return confirm('Rimuovere la foto?');">
+                        @if (dipendenteId is { } idT) { <input type="hidden" name="dipendenteId" value="@idT" /> }
+                        <input type="hidden" name="passo" value="@Model.Passo" />
+                        <button type="submit" class="btn btn-outline-danger btn-sm">Rimuovi <i class="ri-delete-bin-line" aria-hidden="true"></i></button>
+                    </form>
                 }
-                else
-                {
-                    <span aria-current="@(i == Model.Passo ? "step" : null)"><span class="numero">@i</span><span class="titolo">@DatiPersonaliViewModel.Titoli[i - 1]</span></span>
-                }
-            </li>
-        }
-    </ol>
-</nav>
+            </div>
+        </div>
+    </div>
+</div>
 
-<section class="card radius-15 p-4" aria-labelledby="titoloPasso">
-    <h2 class="h5 mb-1" id="titoloPasso">@Model.Passo. @DatiPersonaliViewModel.Titoli[Model.Passo - 1]</h2>
+@if (completo)
+{
+    @* Dati completi: sezioni come schede, con le pillole della scheda della persona. *@
+    <nav class="invoice-filter-categories mb-3 schede-profilo-azienda" aria-label="Sezioni dei dati">
+        @for (var i = 1; i < DatiPersonaliViewModel.Titoli.Length; i++)
+        {
+            <a class="badge-filtro-categoria @(Model.Passo == i ? "active" : "")" aria-current="@(Model.Passo == i ? "page" : null)"
+               asp-action="Index" asp-route-dipendenteId="@dipendenteId" asp-route-passo="@i"><i class="@icone[i - 1]" aria-hidden="true"></i> @DatiPersonaliViewModel.Titoli[i - 1]</a>
+        }
+    </nav>
+}
+else
+{
+    <nav aria-label="Passi" class="mb-4">
+        <ol class="passi-onboarding">
+            @for (var i = 1; i <= DatiPersonaliViewModel.Titoli.Length; i++)
+            {
+                var stato = i == Model.Passo ? "corrente" : i < p.Passo ? "fatto" : "da-fare";
+                <li class="passo-@stato">
+                    @if (stato != "da-fare" && i != Model.Passo)
+                    {
+                        <a asp-action="Index" asp-route-dipendenteId="@dipendenteId" asp-route-passo="@i"><span class="numero">@(stato == "fatto" ? "✓" : i.ToString())</span><span class="titolo">@DatiPersonaliViewModel.Titoli[i - 1]</span></a>
+                    }
+                    else
+                    {
+                        <span aria-current="@(i == Model.Passo ? "step" : null)"><span class="numero">@i</span><span class="titolo">@DatiPersonaliViewModel.Titoli[i - 1]</span></span>
+                    }
+                </li>
+            }
+        </ol>
+    </nav>
+}
+
+<section class="card radius-15 p-3 p-md-4 modulo-profilo-azienda" aria-labelledby="titoloPasso">
+    <h2 class="titolo-sezione-profilo d-flex align-items-center gap-2" id="titoloPasso">
+        @if (completo && Model.Passo < DatiPersonaliViewModel.Titoli.Length) { <i class="@icone[Model.Passo - 1]" aria-hidden="true"></i> @DatiPersonaliViewModel.Titoli[Model.Passo - 1] }
+        else { @($"{Model.Passo}. {DatiPersonaliViewModel.Titoli[Model.Passo - 1]}") }
+    </h2>
     @switch (Model.Passo)
     {
         case 1: <partial name="_Anagrafica" model="(AnagraficaForm)Model.Form!" view-data="ViewData" /> break;

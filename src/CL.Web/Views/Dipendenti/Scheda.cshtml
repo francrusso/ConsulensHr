@@ -3,7 +3,7 @@
 @{
     // Una sola scheda per vedere e modificare: con "in-modifica" i valori lasciano il posto ai campi.
     var nuovo = Model.Id is null;
-    var persona = Utente.IsAzienda;
+    var persona = true; // "persona" e "Personale" per tutti
     var modifica = (bool)ViewBag.Modifica;
     var sezione = (string)ViewBag.Sezione;
     var d = ViewBag.Dipendente as Dipendente;
@@ -257,7 +257,6 @@
         @{
             var teamAzienda = (List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>)ViewBag.TeamAzienda;
             var colleghi = (List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>)ViewBag.Colleghi;
-            dynamic? orgLettura = ViewBag.Organizzazione;
             var sedi = (Dictionary<CL.Domain.Dipendenti.SedeLavoro, string>)ViewBag.Sedi;
         }
         <section class="card radius-15 p-3 p-md-4 mb-3 sezione-profilo" aria-labelledby="titoloOrganizzazione">
@@ -294,6 +293,15 @@
                     <span asp-validation-for="ResponsabileId" class="text-danger"></span>
                 </div>
                 <div class="campo-largo">
+                    <label class="form-label" for="ReferentePaghe">Referente paghe</label>
+                    @* Uno per azienda: il consulente gli chiede presenze, variazioni e documenti ogni mese. *@
+                    <div class="valore-campo">@(Model.ReferentePaghe ? "Sì" : "No")</div>
+                    <div class="campo-modifica form-check form-switch">
+                        <input asp-for="ReferentePaghe" class="form-check-input" role="switch" />
+                        <label asp-for="ReferentePaghe" class="form-check-label">È il referente paghe dell'azienda</label>
+                    </div>
+                </div>
+                <div class="campo-largo">
                     <label for="TeamReferente" class="form-label">Referente dei team</label>
                     @* Chi è referente di un team ne approva le richieste (come responsabile del team nell'organigramma). *@
                     <div class="valore-campo">@V(string.Join(", ", teamAzienda.Where(t => Model.TeamReferente.Contains(Guid.Parse(t.Value))).Select(t => t.Text)) is { Length: > 0 } guidati ? guidati : null)</div>
@@ -303,12 +311,7 @@
                         </select>
                     </div>
                 </div>
-                <div class="campo-largo">
-                    <label class="form-label">Approva ferie e permessi</label>
-                    @* Calcolato dall'organigramma: si vede anche a campi aperti, non si modifica qui. *@
-                    <div class="valore-campo valore-fisso">@(nuovo ? "Referente dell'azienda" : (string?)orgLettura?.Approvatore ?? "Referente dell'azienda")</div>
-                    <div class="form-text solo-modifica">Dipende da team e responsabile diretto.</div>
-                </div>
+
             </div>
         </section>
 
@@ -429,6 +432,30 @@
     </div>
 
     <partial name="~/Views/Assenze/_Saldi.cshtml" model="saldi" />
+
+    @if (Utente.IsConsulente || Utente.IsAzienda)
+    {
+        var residuoFerie = saldi.FirstOrDefault(x => x.Tipo == CL.Domain.Assenze.TipoAssenza.Ferie)?.ResiduoPrecedente ?? 0;
+        var residuoRol = saldi.FirstOrDefault(x => x.Tipo == CL.Domain.Assenze.TipoAssenza.Rol)?.ResiduoPrecedente ?? 0;
+        string Ore(decimal v) => v.ToString("0.##") + " h";
+        @* Residui al 1° gennaio (dal cedolino di dicembre o dal gestionale paghe): si leggono qui e si cambiano con "Modifica dati". *@
+        <section class="card radius-15 p-3 p-md-4 mt-3 sezione-profilo" aria-labelledby="titoloResidui">
+            <h2 class="titolo-sezione-profilo mb-3" id="titoloResidui">Residui anno precedente</h2>
+            <dl class="valori-profilo residui-lettura solo-lettura mb-0">
+                <div><dt>Ferie al 1° gennaio @oggi.Year</dt><dd>@Ore(residuoFerie)</dd></div>
+                <div><dt>ROL al 1° gennaio @oggi.Year</dt><dd>@Ore(residuoRol)</dd></div>
+            </dl>
+            <form asp-controller="Assenze" asp-action="ImpostaResidui" method="post" class="solo-modifica">
+                <input type="hidden" name="dipendenteId" value="@d.Id" />
+                <input type="hidden" name="anno" value="@oggi.Year" />
+                <div class="campi-profilo">
+                    <div><label for="residuoFerie" class="form-label">Ferie al 1° gennaio @oggi.Year (ore)</label><input id="residuoFerie" name="ferie" value="@residuoFerie.ToString("0.##")" inputmode="decimal" class="form-control" /></div>
+                    <div><label for="residuoRol" class="form-label">ROL al 1° gennaio @oggi.Year (ore)</label><input id="residuoRol" name="rol" value="@residuoRol.ToString("0.##")" inputmode="decimal" class="form-control" /></div>
+                    <div class="d-flex align-items-end"><button type="submit" class="btn btn-primary">Salva residui</button></div>
+                </div>
+            </form>
+        </section>
+    }
 
     @{
         var presenze = (List<CL.Web.Controllers.PresenzeMese>)ViewBag.Presenze;

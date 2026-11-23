@@ -28,7 +28,7 @@
                     <th scope="col">Azienda</th>
                     <th scope="col">Partita IVA</th>
                     <th scope="col">Comune</th>
-                    <th scope="col" class="text-end">Dipendenti</th>
+                    <th scope="col" class="text-end">Personale</th>
                     <th scope="col" class="text-end">Azioni</th>
                 </tr>
             </thead>
@@ -47,7 +47,7 @@
                         </td>
                         <td data-label="Partita IVA">@a.PartitaIva</td>
                         <td data-label="Comune">@(string.IsNullOrWhiteSpace(a.Comune) ? "—" : a.Comune)</td>
-                        <td data-label="Dipendenti" class="text-end">@a.Dipendenti</td>
+                        <td data-label="Personale" class="text-end">@a.Dipendenti</td>
                         <td data-label="Azioni">
                             <div class="customer-actions">
                                 <a asp-action="Dettaglio" asp-route-id="@a.Id" aria-label="Visualizza azienda" title="Visualizza azienda"><i class="ri-eye-line" aria-hidden="true"></i></a>

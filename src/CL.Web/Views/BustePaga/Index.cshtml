@@ -64,7 +64,6 @@
 
     @if (Utente.IsDipendente)
     {
-        <p class="small text-body-secondary">Apri il PDF per consultarlo o salvarlo. La prima apertura viene registrata come consegna del cedolino.</p>
     }
     <partial name="_TabellaBuste" model="(Model.Buste, gestore, Utente.IsConsulente, gestore, Utente.IsConsulente, ritorno)" />
 </section>

@@ -142,7 +142,7 @@ public sealed class DatiPersonaliWebTests : IDisposable
         await _app.CreaUtente("hr@acme.test", Ruoli.Azienda, _aziendaId);
         var hr = _app.CreateClient();
         await hr.Accedi("hr@acme.test");
-        var html = WebUtility.HtmlDecode(await hr.GetStringAsync($"/DatiPersonali?dipendenteId={_dipId}"));
+        var html = WebUtility.HtmlDecode(await hr.GetStringAsync($"/DatiPersonali?dipendenteId={_dipId}&passo=3")); // scheda "Stipendio e TFR"
         Assert.Contains("Dati personali di Rossi Mario", html);
         Assert.Contains("IT60X0542811101000000123456", html);
         Assert.Contains("Completi", WebUtility.HtmlDecode(await hr.GetStringAsync($"/Dipendenti/Dettaglio/{_dipId}")));

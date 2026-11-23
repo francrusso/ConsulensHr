@@ -10,12 +10,25 @@
     <div class="col-lg-4">
         <section class="card radius-15 p-4 h-100">
             <h2 class="h6 mb-3">Dati di accesso</h2>
-            <dl class="scheda mb-0">
-                <dt>Nome</dt><dd>@Model.Nome</dd>
-                <dt>Email</dt><dd>@Model.Email</dd>
-                <dt>Ruolo</dt><dd>@Model.Ruolo</dd>
-            </dl>
-            <p class="small text-body-secondary mb-0">Per correggere nome o email rivolgiti al consulente.</p>
+            @if (User.IsInRole(CL.Infrastructure.Identity.Ruoli.Consulente))
+            {
+                @* Il consulente cambia da sé nome, cognome ed email di accesso. *@
+                <form asp-action="DatiProfilo" method="post" class="d-grid gap-3">
+                    <div><label for="nome" class="form-label">Nome</label><input id="nome" name="nome" value="@Model.NomeProprio" class="form-control" required maxlength="100" /></div>
+                    <div><label for="cognome" class="form-label">Cognome</label><input id="cognome" name="cognome" value="@Model.Cognome" class="form-control" required maxlength="100" /></div>
+                    <div><label for="email" class="form-label">Email di accesso</label><input id="email" name="email" type="email" value="@Model.Email" class="form-control" required /></div>
+                    <div><button type="submit" class="btn btn-primary">Salva</button></div>
+                </form>
+            }
+            else
+            {
+                <dl class="scheda mb-0">
+                    <dt>Nome</dt><dd>@Model.Nome</dd>
+                    <dt>Email</dt><dd>@Model.Email</dd>
+                    <dt>Ruolo</dt><dd>@Model.Ruolo</dd>
+                </dl>
+                <p class="small text-body-secondary mb-0">Per correggere nome o email rivolgiti al consulente.</p>
+            }
         </section>
     </div>
     <div class="col-lg-8">

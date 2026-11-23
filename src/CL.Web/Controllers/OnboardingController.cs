@@ -46,7 +46,7 @@ public sealed class SocietariForm
     [StringLength(30), Display(Name = "Telefono")]
     public string? Telefono { get; set; }
 
-    [Display(Name = "Logo dell'azienda (facoltativo: PNG, JPEG o WebP, massimo 1 MB)")]
+    [Display(Name = "Logo")]
     public IFormFile? Logo { get; set; }
     public bool HaLogo { get; set; }
 
@@ -97,6 +97,8 @@ public sealed class LegaleForm
 
 public sealed class PosizioniForm
 {
+    [Display(Name = "L'azienda non ha ancora contratti attivi")]
+    public bool NessunContratto { get; set; }
     [Required(ErrorMessage = "Indica il CCNL applicato."), StringLength(150), Display(Name = "CCNL applicato")]
     public string? Ccnl { get; set; }
     [Required(ErrorMessage = "Inserisci la matricola INPS."), StringLength(30), Display(Name = "Matricola aziendale INPS")]
@@ -123,17 +125,13 @@ public sealed class PagheForm
     public string? Iban { get; set; }
     [Range(1, 31, ErrorMessage = "Giorno tra 1 e 31."), Display(Name = "Giorno del mese in cui paghi gli stipendi")]
     public int? GiornoPagamento { get; set; }
-    [Required(ErrorMessage = "Indica chi seguirà le paghe."), StringLength(150), Display(Name = "Nome e cognome")]
-    public string? ReferenteNome { get; set; }
-    [Required(ErrorMessage = "Inserisci l'email."), EmailAddress(ErrorMessage = "Email non valida."), StringLength(256), Display(Name = "Email")]
-    public string? ReferenteEmail { get; set; }
-    [StringLength(30), Display(Name = "Telefono")]
-    public string? ReferenteTelefono { get; set; }
     [StringLength(2000), Display(Name = "Note per il consulente")]
     public string? NoteStudio { get; set; }
 }
 
 #endregion
+
+public sealed record ReferentePagheRiga(Guid Id, string Nome, string? Email, string? Telefono);
 
 public sealed class OnboardingViewModel
 {
@@ -144,8 +142,9 @@ public sealed class OnboardingViewModel
     public object? Form { get; init; }
     /// <summary>Il consulente che compila per conto dell'azienda (link e testi diversi).</summary>
     public bool PerContoAzienda { get; init; }
+    public ReferentePagheRiga? ReferentePaghe { get; init; }
 
-    public static readonly string[] Titoli = ["Dati societari", "Sedi", "Legale rappresentante", "Contratto e posizioni", "Paghe e referente", "Riepilogo"];
+    public static readonly string[] Titoli = ["Dati societari", "Sedi", "Legale rappresentante", "Contratto e posizioni", "Paghe", "Riepilogo"];
 }
 
 /// <summary>
@@ -162,9 +161,10 @@ public sealed class OnboardingController(
         var (azienda, profilo) = await Carica(aziendaId);
         if (azienda is null) return utente.IsConsulente ? RedirectToAction("Index", "Aziende") : NotFound();
 
-        // Si può tornare ai passi già fatti, non saltare in avanti.
-        var p = Math.Clamp(passo ?? profilo.Passo, 1, profilo.Passo);
-        return Mostra(azienda, profilo, p, FormDi(p, azienda, profilo));
+        // Profilo completo: sezioni a schede (si parte dai dati societari, 7 = tipi di richiesta).
+        // Durante il percorso guidato si può tornare ai passi già fatti, non saltare in avanti.
+        var p = profilo.Completato ? Math.Clamp(passo ?? 1, 1, PassoRichieste) : Math.Clamp(passo ?? profilo.Passo, 1, profilo.Passo);
+        return Mostra(azienda, profilo, p, p == PassoRichieste ? null : FormDi(p, azienda, profilo));
     }
 
     [HttpPost, ValidateAntiForgeryToken, RequestSizeLimit(LoghiAziende.DimensioneMassima + 256 * 1024)]
@@ -239,6 +239,11 @@ public sealed class OnboardingController(
     {
         var (azienda, profilo) = await Carica(aziendaId);
         if (azienda is null) return NotFound();
+        if (form.NessunContratto)
+        {
+            profilo.ImpostaSenzaContratti();
+            return await SalvaEAvanza(azienda, profilo, 4);
+        }
         if (!ModelState.IsValid
             || !Prova(() => profilo.ImpostaPosizioni(new PosizioniLavoro(form.Ccnl!, form.MatricolaInps!, form.InailCodiceDitta!, form.InailPat!,
                 form.CassaEdile, form.EnteBilaterale, form.FondoPensione, form.GiorniLavorativiSettimana, form.OreSettimanali))))
@@ -256,8 +261,7 @@ public sealed class OnboardingController(
 
         Iban? iban = null;
         if ((!string.IsNullOrWhiteSpace(form.Iban) && !Prova(() => iban = Iban.Parse(form.Iban), nameof(form.Iban)))
-            || !Prova(() => profilo.ImpostaPaghe(new DatiPaghe(iban, form.GiornoPagamento, form.ReferenteNome!, form.ReferenteEmail!,
-                form.ReferenteTelefono, form.NoteStudio))))
+            || !Prova(() => profilo.ImpostaPaghe(new DatiPaghe(iban, form.GiornoPagamento, form.NoteStudio))))
             return Mostra(azienda, profilo, 5, form);
 
         return await SalvaEAvanza(azienda, profilo, 5);
@@ -281,6 +285,32 @@ public sealed class OnboardingController(
         return utente.IsConsulente ? RedirectToAction("Dettaglio", "Aziende", new { id = azienda.Id }) : RedirectToAction("Index", "Home");
     }
 
+    /// <summary>Scheda "Tipi di richiesta" del profilo completo.</summary>
+    public const int PassoRichieste = 7;
+
+    /// <summary>Logo dall'intestazione del profilo: si salva subito.</summary>
+    [HttpPost, ValidateAntiForgeryToken, RequestSizeLimit(LoghiAziende.DimensioneMassima + 256 * 1024)]
+    public async Task<IActionResult> CaricaLogo(Guid? aziendaId, IFormFile? immagine, int? passo)
+    {
+        var (azienda, _) = await Carica(aziendaId);
+        if (azienda is null) return NotFound();
+        if (immagine is not { Length: > 0 }) Errore("Scegli un'immagine.");
+        else if (await loghi.SalvaAsync(azienda, immagine) is { } errore) Errore(errore);
+        else { await db.SaveChangesAsync(); Conferma("Logo aggiornato."); }
+        return RedirectToAction(nameof(Index), new { aziendaId = utente.IsConsulente ? azienda.Id : (Guid?)null, passo });
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> TogliLogo(Guid? aziendaId, int? passo)
+    {
+        var (azienda, _) = await Carica(aziendaId);
+        if (azienda is null) return NotFound();
+        await loghi.RimuoviAsync(azienda);
+        await db.SaveChangesAsync();
+        Conferma("Logo rimosso.");
+        return RedirectToAction(nameof(Index), new { aziendaId = utente.IsConsulente ? azienda.Id : (Guid?)null, passo });
+    }
+
     /// <summary>Tipi di richiesta offerti ai dipendenti: quelli non scelti spariscono da moduli e calendari.</summary>
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> RichiesteAbilitate(Guid? aziendaId, List<string>? abilitate)
@@ -290,7 +320,7 @@ public sealed class OnboardingController(
         azienda.ImpostaRichiesteAbilitate(abilitate ?? []);
         await db.SaveChangesAsync();
         Conferma("Tipi di richiesta aggiornati.");
-        return Redirect(Url.Action(nameof(Index), new { aziendaId = utente.IsConsulente ? azienda.Id : (Guid?)null })! + "#richiesteAbilitate");
+        return RedirectToAction(nameof(Index), new { aziendaId = utente.IsConsulente ? azienda.Id : (Guid?)null, passo = PassoRichieste });
     }
 
     private async Task<(Azienda? Azienda, ProfiloAzienda Profilo)> Carica(Guid? aziendaId)
@@ -311,8 +341,9 @@ public sealed class OnboardingController(
     private async Task<IActionResult> SalvaEAvanza(Azienda azienda, ProfiloAzienda profilo, int passo)
     {
         await Salva(profilo);
-        // Dopo il completamento una modifica riporta al riepilogo; durante il percorso si va al passo successivo.
-        var prossimo = profilo.Completato ? ProfiloAzienda.UltimoPasso : passo + 1;
+        // Profilo completo: si resta sulla scheda appena salvata; durante il percorso si va al passo successivo.
+        if (profilo.Completato) Conferma("Modifiche salvate.");
+        var prossimo = profilo.Completato ? passo : passo + 1;
         return RedirectToAction(nameof(Index), new { aziendaId = utente.IsConsulente ? azienda.Id : (Guid?)null, passo = prossimo });
     }
 
@@ -321,6 +352,9 @@ public sealed class OnboardingController(
         {
             AziendaId = azienda.Id, Azienda = azienda, Profilo = profilo, Passo = passo, Form = form,
             PerContoAzienda = utente.IsConsulente,
+            // Referente paghe: la persona segnata come tale nella sua scheda del personale.
+            ReferentePaghe = db.Dipendenti.AsNoTracking().IgnoreAutoIncludes().Where(d => d.AziendaId == azienda.Id && d.ReferentePaghe)
+                .Select(d => new ReferentePagheRiga(d.Id, d.Cognome + " " + d.Nome, d.Email, d.Telefono)).FirstOrDefault(),
         });
 
     private static object? FormDi(int passo, Azienda a, ProfiloAzienda p) => passo switch
@@ -346,11 +380,11 @@ public sealed class OnboardingController(
             Ccnl = p.Ccnl, MatricolaInps = p.MatricolaInps, InailCodiceDitta = p.InailCodiceDitta, InailPat = p.InailPat,
             CassaEdile = p.CassaEdile, EnteBilaterale = p.EnteBilaterale, FondoPensione = p.FondoPensione,
             GiorniLavorativiSettimana = p.GiorniLavorativiSettimana ?? 5, OreSettimanali = p.OreSettimanali ?? 40,
+            NessunContratto = p.SenzaContratti,
         },
         5 => new PagheForm
         {
-            Iban = p.IbanAddebito?.Valore, GiornoPagamento = p.GiornoPagamento, ReferenteNome = p.ReferenteNome,
-            ReferenteEmail = p.ReferenteEmail, ReferenteTelefono = p.ReferenteTelefono, NoteStudio = p.NoteStudio,
+            Iban = p.IbanAddebito?.Valore, GiornoPagamento = p.GiornoPagamento, NoteStudio = p.NoteStudio,
         },
         _ => null,
     };

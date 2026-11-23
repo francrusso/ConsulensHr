@@ -18,34 +18,19 @@
         periodi = Model.Select(m => m.Periodo).ToArray(),
         serie = serie.Select(s => new { name = s.Nome, data = Model.Select(m => (double)Math.Round(s.Valore(m.Ore), 1)).ToArray() }).ToArray(),
     };
-    string H(decimal v) => v.ToString("0.#");
 }
 <figure class="card radius-15 p-4 h-100 grafico mb-0">
     <figcaption class="mb-2">
-        <h2 class="h6 mb-1">Assenze negli ultimi 12 mesi</h2>
-        <p class="small text-body-secondary mb-0">Ore di assenza approvate per mese; le assenze a cavallo di due mesi sono ripartite sui giorni lavorativi.</p>
+        <h2 class="titolo-card-panoramica mb-0 d-flex align-items-center justify-content-between w-100"><span>Assenze negli ultimi 12 mesi</span>
+            <i class="ri-information-line info-grafico" tabindex="0" title="Ore di assenza approvate per mese; le assenze a cavallo di due mesi sono ripartite sui giorni lavorativi." aria-label="Ore di assenza approvate per mese; le assenze a cavallo di due mesi sono ripartite sui giorni lavorativi."></i></h2>
     </figcaption>
     @if (vuoto)
     {
-        <p class="text-body-secondary small mb-0 py-4 text-center">Nessuna assenza approvata negli ultimi 12 mesi.</p>
+        <partial name="_GraficoVuoto" model="Model.Select(m => m.Etichetta).ToArray()" />
     }
     else
     {
-        <div id="graficoAssenze" role="img" aria-label="Grafico a colonne delle ore di assenza per mese; i valori sono nella tabella sotto"></div>
+        <div id="graficoAssenze" role="img" aria-label="Grafico a colonne delle ore di assenza per mese"></div>
         <script type="application/json" id="datiGraficoAssenze">@Json.Serialize(dati)</script>
     }
-    <details class="mt-2 tabella-grafico">
-        <summary class="small">Mostra i dati in tabella</summary>
-        <div class="table-responsive mt-2">
-            <table class="table table-sm mb-0">
-                <thead><tr><th scope="col">Mese</th>@foreach (var s in serie) { <th scope="col" class="text-end">@s.Nome (h)</th> }<th scope="col" class="text-end">Totale (h)</th></tr></thead>
-                <tbody>
-                    @foreach (var m in Model)
-                    {
-                        <tr><th scope="row" class="fw-normal">@m.Periodo</th>@foreach (var s in serie) { <td class="text-end">@H(s.Valore(m.Ore))</td> }<td class="text-end">@H(m.Ore.Totale)</td></tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-    </details>
 </figure>

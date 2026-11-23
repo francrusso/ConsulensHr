@@ -30,8 +30,8 @@ public sealed record LegaleRappresentante(string Nome, string Cognome, CodiceFis
 public sealed record PosizioniLavoro(string Ccnl, string MatricolaInps, string InailCodiceDitta, string InailPat,
     string? CassaEdile, string? EnteBilaterale, string? FondoPensione, int GiorniLavorativiSettimana, decimal OreSettimanali);
 
-public sealed record DatiPaghe(Iban? IbanAddebito, int? GiornoPagamento, string ReferenteNome, string ReferenteEmail,
-    string? ReferenteTelefono, string? NoteStudio);
+/// <summary>Dati per le paghe. Il referente paghe non è più qui: è la persona del personale segnata come tale nella sua scheda.</summary>
+public sealed record DatiPaghe(Iban? IbanAddebito, int? GiornoPagamento, string? NoteStudio);
 
 /// <summary>
 /// Le informazioni che l'azienda fornisce al consulente per la gestione delle pratiche di lavoro,
@@ -74,6 +74,8 @@ public sealed class ProfiloAzienda : Entity
     // 4. Contratto e posizioni previdenziali/assicurative
     public string? Ccnl { get; private set; }
     public string? MatricolaInps { get; private set; }
+    /// <summary>L'azienda non ha ancora contratti di lavoro attivi: le posizioni INPS/INAIL si apriranno con la prima assunzione.</summary>
+    public bool SenzaContratti { get; private set; }
     public string? InailCodiceDitta { get; private set; }
     public string? InailPat { get; private set; }
     public string? CassaEdile { get; private set; }
@@ -150,6 +152,14 @@ public sealed class ProfiloAzienda : Entity
         FondoPensione = Pulito(p.FondoPensione);
         GiorniLavorativiSettimana = p.GiorniLavorativiSettimana;
         OreSettimanali = p.OreSettimanali;
+        SenzaContratti = false;
+        Avanza(4);
+    }
+
+    /// <summary>Nessun contratto attivo per ora: il passo è fatto, le posizioni restano da indicare (le aprirà il consulente).</summary>
+    public void ImpostaSenzaContratti()
+    {
+        SenzaContratti = true;
         Avanza(4);
     }
 
@@ -158,9 +168,6 @@ public sealed class ProfiloAzienda : Entity
         if (p.GiornoPagamento is < 1 or > 31) throw new DomainException("Giorno di pagamento non valido.");
         IbanAddebito = p.IbanAddebito;
         GiornoPagamento = p.GiornoPagamento;
-        ReferenteNome = Guard.NotEmpty(p.ReferenteNome, "Referente per le paghe");
-        ReferenteEmail = Guard.NotEmpty(p.ReferenteEmail, "Email del referente").ToLowerInvariant();
-        ReferenteTelefono = Pulito(p.ReferenteTelefono);
         NoteStudio = Pulito(p.NoteStudio);
         Avanza(5);
     }
@@ -172,8 +179,8 @@ public sealed class ProfiloAzienda : Entity
         if (FormaGiuridica is null) m.Add("dati societari");
         if (SedeLegaleVia is null) m.Add("sede legale");
         if (LegaleCodiceFiscale is null) m.Add("legale rappresentante");
-        if (MatricolaInps is null) m.Add("contratto e posizioni INPS/INAIL");
-        if (ReferenteEmail is null) m.Add("paghe e referente");
+        if (MatricolaInps is null && !SenzaContratti) m.Add("contratto e posizioni INPS/INAIL");
+        if (Passo <= 5 && CompletatoIl is null) m.Add("paghe");
         return m;
     }
 

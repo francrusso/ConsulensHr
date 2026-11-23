@@ -85,7 +85,7 @@ public sealed class PresenzeWebTests : IDisposable
 
         // Il consulente la vede nel cruscotto, scarica il CSV, la elabora e la riapre.
         var consulente = await Accedi("consulente@test.it", Ruoli.Consulente);
-        Assert.Contains("Ricevute da 1 aziende su 1", WebUtility.HtmlDecode(await consulente.GetStringAsync($"/Presenze?anno={_anno}&mese={_mese}")));
+        Assert.Contains("Ricevute da 1 azienda su 1", WebUtility.HtmlDecode(await consulente.GetStringAsync($"/Presenze?anno={_anno}&mese={_mese}")));
 
         var csv = await consulente.GetAsync($"/Presenze/Esporta?aziendaId={_aziendaId}&anno={_anno}&mese={_mese}");
         Assert.Equal("text/csv", csv.Content.Headers.ContentType!.MediaType);

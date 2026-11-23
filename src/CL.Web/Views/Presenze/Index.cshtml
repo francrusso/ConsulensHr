@@ -7,7 +7,6 @@
 <div class="breadcrumb-titolo d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
     <div>
         <h1 class="titolo-pagina mb-0">Riepilogo presenze</h1>
-        <p class="text-body-secondary mb-0">@periodo · Ricevute da @inviate aziende su @Model.Aziende.Count.</p>
     </div>
     <div class="d-flex flex-wrap gap-2 align-items-center">
         <partial name="_Periodo" model='(Model.Anno, Model.Mese, (Guid?)null, "Index")' />
@@ -15,12 +14,28 @@
     </div>
 </div>
 
+@{
+    var totale = Model.Aziende.Count;
+    var mancanti = totale - inviate;
+    var tutte = totale > 0 && mancanti == 0;
+    string Aziende(int n) => n == 1 ? "1 azienda" : $"{n} aziende";
+}
+@* Quante aziende hanno inviato il mese: rosso finché ne manca qualcuna, verde quando ci sono tutte. *@
+<div class="avviso-cu @(tutte ? "completo" : mancanti > 0 ? "mancanti" : "")" role="status">
+    <i class="@(tutte ? "ri-checkbox-circle-fill" : "ri-error-warning-fill") icona-avviso-cu" aria-hidden="true"></i>
+    <div class="flex-grow-1">
+        <div class="titolo-avviso-cu">@(tutte ? $"Tutte le aziende hanno inviato {periodo.ToLower()}" : mancanti > 0 ? $"{(mancanti == 1 ? "Manca" : "Mancano")} {Aziende(mancanti)} per {periodo.ToLower()}" : "Nessuna azienda attiva")</div>
+        <div class="small">Ricevute da @inviate @(inviate == 1 ? "azienda" : "aziende") su @totale</div>
+    </div>
+    @if (totale > 0) { <div class="progresso-cu" aria-hidden="true"><span style="width:@(inviate * 100 / totale)%"></span></div> }
+</div>
+
 <div class="card radius-15 table-responsive table-actions-responsive p-1 customer-results">
     <table class="table mb-0 align-middle">
         <thead>
             <tr>
                 <th scope="col">Azienda</th>
-                <th scope="col" class="text-end">Dipendenti in forza</th>
+                <th scope="col" class="text-end">Personale in forza</th>
                 <th scope="col">Stato</th>
                 <th scope="col">Inviata il</th>
                 <th scope="col" class="text-end">Azioni</th>
@@ -35,7 +50,7 @@
             {
                 <tr class="customer-result-row">
                     <td data-label="Azienda"><a class="customer-name" asp-action="Foglio" asp-route-aziendaId="@a.AziendaId" asp-route-anno="@Model.Anno" asp-route-mese="@Model.Mese"><i class="ri-building-line" aria-hidden="true"></i><span>@a.RagioneSociale</span></a></td>
-                    <td data-label="Dipendenti" class="text-end">@a.Dipendenti</td>
+                    <td data-label="Personale in forza" class="text-end">@a.Dipendenti</td>
                     <td data-label="Stato"><partial name="_StatoComunicazione" model="a.Stato" /></td>
                     <td data-label="Inviata il">@(a.InviataIl?.ToLocalTime().ToString("dd/MM/yyyy") ?? "—")</td>
                     <td data-label="Azioni">

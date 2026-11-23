@@ -23,6 +23,16 @@ public sealed record GiornataOggi(DateOnly Giorno, bool EOggi, List<PersonaOggi>
 /// <summary>Richiesta in attesa da mostrare in panoramica (ferie, permessi o smart working).</summary>
 public sealed record RichiestaInAttesa(Guid Id, PersonaOggi Persona, string Tipo, DateOnly Dal, DateOnly Al, bool AOre, decimal Ore, bool SmartWorking, bool Straordinario = false);
 
+/// <summary>Cosa resta da fare: completato o no, con il numero di elementi e dove farlo.</summary>
+public sealed record CosaDaFare(string Testo, bool Fatto, string? Link, int? Numero = null)
+{
+    /// <summary>Chiave stabile (con il periodo) per ricordare la spunta messa o tolta a mano.</summary>
+    public string Chiave { get; init; } = Testo;
+}
+
+/// <summary>Una scadenza nel calendario della panoramica.</summary>
+public sealed record EventoScadenza(DateOnly Data, string Titolo, string Dettaglio, string Tipo, string? Link = null);
+
 public sealed record ScadenzaContratto(PersonaOggi Persona, string Tipo, DateOnly DataFine, int Giorni);
 
 public sealed record FerieDipendente(Guid DipendenteId, string Nome, string Azienda, decimal Godute, decimal Disponibili, decimal InAttesa);
@@ -48,6 +58,10 @@ public sealed class DatiPanoramica
     public List<RichiestaInAttesa> DaApprovare { get; init; } = [];
     /// <summary>Contratti a termine che scadono nei prossimi 60 giorni senza un rinnovo già registrato.</summary>
     public List<ScadenzaContratto> Scadenze { get; init; } = [];
+    public List<CosaDaFare> DaFare { get; init; } = [];
+    /// <summary>Scadenze dei prossimi due mesi (contratti, chiusure aziendali, CU) per il calendario.</summary>
+    public List<EventoScadenza> Eventi { get; init; } = [];
+    public DateOnly DataOggi { get; init; }
 }
 
 /// <summary>
@@ -184,8 +198,51 @@ public sealed class ServizioPanoramica(AppDbContext db, UtenteCorrente utente, T
             presenze = (ricevute, await attive.CountAsync(), mesePresenze.Year, mesePresenze.Month);
         }
 
+        // Cose da fare, come nella lista in cima alla dashboard.
+        var annoCu = oggi.Year - 1;
+        var personeCu = dipendenti.Where(d => d.Contratti.Any(c => c.Tipo.IsSubordinato() && c.DataInizio <= new DateOnly(annoCu, 12, 31)
+                                                                   && (c.DataFine == null || c.DataFine >= new DateOnly(annoCu, 1, 1)))).Select(d => d.Id).ToList();
+        var cuCaricate = await db.CertificazioniUniche.CountAsync(c => personeCu.Contains(c.DipendenteId) && c.AnnoImposta == annoCu);
+        var cuMancanti = personeCu.Count - cuCaricate;
+        var daFare = new List<CosaDaFare>
+        {
+            new(utente.IsConsulente ? "Richieste in attesa delle aziende" : "Approva le richieste in attesa", inAttesa == 0, "/Assenze?stato=InAttesa", inAttesa) { Chiave = $"richieste-{oggi:yyyy-MM-dd}" },
+            new($"Carica le CU {annoCu + 1} sui redditi {annoCu}", cuMancanti == 0, $"/Documenti/Cu?anno={annoCu}", cuMancanti) { Chiave = $"cu-{annoCu}" },
+            new("Rinnova o chiudi i contratti in scadenza", scadenze.Count == 0, "/Documenti/Contratti", scadenze.Count) { Chiave = $"contratti-{oggi:yyyy-MM}" },
+        };
+        if (utente.IsAzienda && utente.AziendaId is { } mia)
+        {
+            var mesePresenze = oggi.Day <= 10 ? oggi.AddMonths(-1) : oggi;
+            var inviata = await db.ComunicazioniPresenze.AnyAsync(c => c.AziendaId == mia && c.Anno == mesePresenze.Year && c.Mese == mesePresenze.Month
+                                                                       && c.Stato != StatoComunicazione.Bozza);
+            daFare.Add(new($"Invia il riepilogo presenze di {ServizioBustePaga.NomeMese(mesePresenze.Month).ToLower()}", inviata,
+                $"/Presenze/Foglio?anno={mesePresenze.Year}&mese={mesePresenze.Month}") { Chiave = $"presenze-{mesePresenze:yyyy-MM}" });
+            daFare.Add(new("Indica il referente paghe nella scheda della persona", await db.Dipendenti.AnyAsync(d => d.AziendaId == mia && d.ReferentePaghe), "/Dipendenti") { Chiave = "referente-paghe" });
+        }
+
+        // Solo ciò che c'è davvero da fare, in base ai dati: le voci già a posto non si mostrano.
+        daFare = daFare.Where(c => !c.Fatto).ToList();
+
+        // Calendario: contratti che scadono, chiusure aziendali e la consegna delle CU (16 marzo), nei prossimi due mesi.
+        var finoA = new DateOnly(oggi.Year, oggi.Month, 1).AddMonths(2).AddDays(-1);
+        var eventi = scadenze.Where(x => x.DataFine <= finoA)
+            .Select(x => new EventoScadenza(x.DataFine, "Scadenza contratto", $"{x.Persona.Nome} · {x.Tipo}", "contratto", $"/Dipendenti/Dettaglio/{x.Persona.Id}?sezione=contratto"))
+            .ToList();
+        var aziendeChiusure = utente.IsAzienda ? [utente.AziendaId!.Value] : aziendaId is { } azc2 ? [azc2] : aziendeIds;
+        eventi.AddRange((await db.ChiusureAziendali.AsNoTracking()
+                .Where(c => aziendeChiusure.Contains(c.AziendaId) && c.Al >= oggi && c.Dal <= finoA).ToListAsync())
+            .Select(c => new EventoScadenza(c.Dal < oggi ? oggi : c.Dal, "Chiusura aziendale",
+                c.Dal == c.Al ? c.Descrizione : $"{c.Descrizione} · fino al {c.Al:dd/MM}", "chiusura", "/Assenze/Calendario")));
+        var consegnaCu = new DateOnly(oggi.Year, 3, 16);
+        if (consegnaCu >= oggi && consegnaCu <= finoA)
+            eventi.Add(new EventoScadenza(consegnaCu, "Consegna CU", $"CU {oggi.Year} ai dipendenti", "cu", $"/Documenti/Cu?anno={oggi.Year - 1}"));
+        eventi = eventi.OrderBy(e => e.Data).ToList();
+
         return new DatiPanoramica
         {
+            DaFare = daFare,
+            Eventi = eventi,
+            DataOggi = oggi,
             AziendeAttive = aziendeAttive,
             DipendentiInForza = dipendenti.Count(d => d.InForzaIl(oggi)),
             RichiesteInAttesa = inAttesa,

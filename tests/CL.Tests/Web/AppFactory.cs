@@ -83,7 +83,7 @@ public sealed class AppFactory : WebApplicationFactory<Program>
         p.ImpostaSedi(new("Via Roma 1", "20100", "Milano", "MI"), null);
         p.ImpostaLegaleRappresentante(new("Mario", "Rossi", CL.Domain.ValueObjects.CodiceFiscale.Parse("RSSMRA85T10A562S"), null, null));
         p.ImpostaPosizioni(new("Commercio", "1234567890", "12345678", "87654321", null, null, null, 5, 40));
-        p.ImpostaPaghe(new(null, 27, "Laura Bianchi", "paghe@test.it", null, null));
+        p.ImpostaPaghe(new(null, 27, null));
         p.Completa(true, "test", DateTime.UtcNow);
         db.ProfiliAzienda.Add(p);
         return await db.SaveChangesAsync();

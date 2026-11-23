@@ -108,7 +108,6 @@ public sealed class OrganigrammaWebTests : IDisposable
         Assert.Contains("/Account/AccessoNegato", r.RequestMessage!.RequestUri!.AbsolutePath);
 
         var rossi = await Dipendente("mario@acme.test", _rossi);
-        Assert.Contains("Richieste del team", WebUtility.HtmlDecode(await rossi.GetStringAsync("/")));
         html = WebUtility.HtmlDecode(await rossi.GetStringAsync("/Assenze"));
         Assert.Contains("Da approvare per il tuo team", html);
         Assert.Contains("Bianchi Laura", html);
@@ -147,10 +146,9 @@ public sealed class OrganigrammaWebTests : IDisposable
         html = await Testo(await consulente.InviaForm(pagina, "/Team/Elimina", new() { ["aziendaId"] = _azienda.ToString(), ["id"] = team.Id.ToString() }));
         Assert.Contains("ha dei componenti", html);
 
-        // Nella scheda del dipendente si vede chi approva.
+        // Nella scheda del dipendente non c'è più il campo "Approva ferie e permessi" (si ricava da team e responsabile).
         var scheda = WebUtility.HtmlDecode(await consulente.GetStringAsync($"/Dipendenti/Dettaglio/{_rossi}"));
-        Assert.Contains("Approva ferie e permessi", scheda);
-        Assert.Contains("Verdi Anna", scheda);
+        Assert.DoesNotContain("Approva ferie e permessi", scheda);
     }
 
     [Fact]

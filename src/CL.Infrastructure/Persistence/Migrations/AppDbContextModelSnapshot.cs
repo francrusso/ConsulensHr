@@ -364,6 +364,9 @@ namespace CL.Infrastructure.Persistence.Migrations
                         .HasMaxLength(300)
                         .HasColumnType("character varying(300)");
 
+                    b.Property<bool>("SenzaContratti")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("Telefono")
                         .HasMaxLength(30)
                         .HasColumnType("character varying(30)");
@@ -614,6 +617,9 @@ namespace CL.Infrastructure.Persistence.Migrations
                     b.Property<string>("Provincia")
                         .HasMaxLength(2)
                         .HasColumnType("character varying(2)");
+
+                    b.Property<bool>("ReferentePaghe")
+                        .HasColumnType("boolean");
 
                     b.Property<Guid?>("ResponsabileId")
                         .HasColumnType("uuid");
