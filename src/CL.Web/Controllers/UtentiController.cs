@@ -77,23 +77,39 @@ public sealed class UtentiController(
 
     /// <summary>Solo il super amministratore crea i consulenti.</summary>
     [HttpPost, ValidateAntiForgeryToken, Authorize(Roles = Ruoli.Amministratore)]
-    public async Task<IActionResult> InvitaConsulente(InvitoForm form) =>
-        await Invita(form, Ruoli.Consulente, null, null, Url.Action("Index", "Consulenti")!);
+    public async Task<IActionResult> InvitaConsulente(InvitoForm form, string? ritorno = null) =>
+        await Invita(form, Ruoli.Consulente, null, null, Url.IsLocalUrl(ritorno) ? ritorno! : Url.Action("Index", "Consulenti")!);
+
+    /// <summary>"Aggiungi altro utente": referente di un'azienda, persona del personale o (super amministratore) consulente.</summary>
+    [Authorize(Policy = Policy.SoloConsulente)]
+    public async Task<IActionResult> Nuovo()
+    {
+        ViewBag.Aziende = await db.Aziende.AsNoTracking().Where(a => a.Attiva).OrderBy(a => a.RagioneSociale)
+            .Select(a => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem(a.RagioneSociale, a.Id.ToString())).ToListAsync();
+        // Persone con email e ancora senza accesso al portale.
+        ViewBag.Persone = (await (from d in db.Dipendenti.AsNoTracking().IgnoreAutoIncludes()
+                                  join a in db.Aziende.AsNoTracking() on d.AziendaId equals a.Id
+                                  where d.Email != null && d.Email != "" && !db.Users.Any(u => u.DipendenteId == d.Id)
+                                  orderby d.Cognome, d.Nome
+                                  select new { d.Id, Nome = d.Cognome + " " + d.Nome, d.Email, a.RagioneSociale }).ToListAsync())
+            .Select(x => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem($"{x.Nome} · {x.RagioneSociale} · {x.Email}", x.Id.ToString())).ToList();
+        return View();
+    }
 
     [HttpPost, ValidateAntiForgeryToken]
-    public async Task<IActionResult> InvitaReferente(Guid aziendaId, InvitoForm form)
+    public async Task<IActionResult> InvitaReferente(Guid aziendaId, InvitoForm form, string? ritorno = null)
     {
         if (!utente.PuoGestireAzienda(aziendaId) || !await db.Aziende.AnyAsync(a => a.Id == aziendaId)) return Forbid();
-        var ritorno = utente.IsConsulente ? Url.Action("Dettaglio", "Aziende", new { id = aziendaId })! : Url.Action(nameof(Azienda))!;
+        ritorno = Url.IsLocalUrl(ritorno) ? ritorno : utente.IsConsulente ? Url.Action("Dettaglio", "Aziende", new { id = aziendaId })! : Url.Action(nameof(Azienda))!;
         return await Invita(form, Ruoli.Azienda, aziendaId, null, ritorno);
     }
 
     [HttpPost, ValidateAntiForgeryToken]
-    public async Task<IActionResult> InvitaDipendente(Guid dipendenteId, bool comeAzienda = false)
+    public async Task<IActionResult> InvitaDipendente(Guid dipendenteId, bool comeAzienda = false, string? ritorno = null)
     {
         var dip = await utente.Filtra(db.Dipendenti.AsNoTracking()).FirstOrDefaultAsync(d => d.Id == dipendenteId);
         if (dip is null) return NotFound();
-        var ritorno = Url.Action("Dettaglio", "Dipendenti", new { id = dipendenteId })!;
+        ritorno = Url.IsLocalUrl(ritorno) ? ritorno! : Url.Action("Dettaglio", "Dipendenti", new { id = dipendenteId })!;
 
         if (string.IsNullOrWhiteSpace(dip.Email))
         {

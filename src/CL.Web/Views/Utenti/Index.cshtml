@@ -7,22 +7,7 @@
     <h1 class="titolo-pagina mb-0">@ViewData["Title"]</h1>
 </div>
 
-<section class="card radius-15 p-3 mb-3 d-flex flex-row flex-wrap align-items-center justify-content-between gap-2">
-    <div>
-        <h2 class="h6 mb-1">Invio delle email</h2>
-        @if (ViewBag.EmailConfigurata == true)
-        {
-            <p class="small mb-0"><span class="badge bg-success">Attivo</span> Inviti e link per la password partono in automatico.</p>
-        }
-        else
-        {
-            <p class="small mb-0"><span class="badge bg-secondary">Non configurato</span> Dopo ogni invito il link compare a schermo e lo mandi tu.</p>
-        }
-    </div>
-    <form asp-action="EmailProva" method="post" class="m-0">
-        <button type="submit" class="btn btn-outline-secondary"><i class="ri-mail-check-line" aria-hidden="true"></i> Invia un'email di prova a me</button>
-    </form>
-</section>
+
 
 
 <section class="customer-directory">

@@ -1,0 +1,83 @@
+@{
+    ViewData["Title"] = "Aggiungi utente";
+    ViewData["Percorso"] = new List<(string, string?)> { ("Utenti", Url.Action("Index")) };
+    var aziende = (List<SelectListItem>)ViewBag.Aziende;
+    var persone = (List<SelectListItem>)ViewBag.Persone;
+    var admin = User.IsInRole(CL.Infrastructure.Identity.Ruoli.Amministratore);
+    var ritorno = Url.Action("Index");
+}
+<div class="breadcrumb-titolo mb-3"><h1 class="titolo-pagina mb-0">Aggiungi utente</h1></div>
+
+@* Chi si aggiunge: un referente di un'azienda, una persona del personale (con la sua email) o un consulente. *@
+<div class="card radius-15 p-3 p-md-4 modulo-profilo-azienda">
+    <div class="invoice-filter-categories filtro-stati scelta-persona mb-4" role="radiogroup" aria-label="Che utente aggiungi">
+        <input type="radio" class="btn-check" name="tipoUtente" id="tipoReferente" value="referente" checked />
+        <label class="badge-filtro-categoria" for="tipoReferente"><i class="ri-building-line" aria-hidden="true"></i> Referente di un'azienda</label>
+        <input type="radio" class="btn-check" name="tipoUtente" id="tipoPersona" value="persona" />
+        <label class="badge-filtro-categoria" for="tipoPersona"><i class="ri-team-line" aria-hidden="true"></i> Persona del personale</label>
+        @if (admin)
+        {
+            <input type="radio" class="btn-check" name="tipoUtente" id="tipoConsulente" value="consulente" />
+            <label class="badge-filtro-categoria" for="tipoConsulente"><i class="ri-user-star-line" aria-hidden="true"></i> Consulente</label>
+        }
+    </div>
+
+    <form asp-action="InvitaReferente" method="post" data-tipo="referente" class="modulo-utente">
+        <input type="hidden" name="ritorno" value="@ritorno" />
+        <div class="campi-presenza">
+            <div class="campo-note"><label for="aziendaReferente" class="form-label">Azienda</label>
+                <select id="aziendaReferente" name="aziendaId" class="form-select" required asp-items="aziende"><option value="">Scegli l'azienda</option></select></div>
+            <div><label for="nomeReferente" class="form-label">Nome</label><input id="nomeReferente" name="Nome" class="form-control" required maxlength="100" /></div>
+            <div><label for="cognomeReferente" class="form-label">Cognome</label><input id="cognomeReferente" name="Cognome" class="form-control" required maxlength="100" /></div>
+            <div class="campo-note"><label for="emailReferente" class="form-label">Email</label><input id="emailReferente" name="Email" type="email" class="form-control" required maxlength="256" /></div>
+        </div>
+        <div class="d-flex justify-content-end mt-4"><button type="submit" class="btn btn-primary">Invia l'invito</button></div>
+    </form>
+
+    <form asp-action="InvitaDipendente" method="post" data-tipo="persona" class="modulo-utente" hidden>
+        <input type="hidden" name="ritorno" value="@ritorno" />
+        @if (persone.Count == 0)
+        {
+            <partial name="~/Views/Home/_CardVuota.cshtml" model='"Tutte le persone con email hanno già un accesso"' />
+        }
+        else
+        {
+            <div class="campi-presenza">
+                <div class="campo-note"><label for="personaInvito" class="form-label">Persona</label>
+                    <select id="personaInvito" name="dipendenteId" class="form-select select-persona" required asp-items="persone"><option value="">Cerca per nome</option></select></div>
+            </div>
+            <div class="form-check form-switch mt-3">
+                <input class="form-check-input" type="checkbox" role="switch" id="comeAzienda" name="comeAzienda" value="true" />
+                <label class="form-check-label" for="comeAzienda">Gestisce il portale per conto dell'azienda</label>
+            </div>
+            <div class="d-flex justify-content-end mt-4"><button type="submit" class="btn btn-primary">Invia l'invito</button></div>
+        }
+    </form>
+
+    @if (admin)
+    {
+        <form asp-action="InvitaConsulente" method="post" data-tipo="consulente" class="modulo-utente" hidden>
+            <input type="hidden" name="ritorno" value="@ritorno" />
+            <div class="campi-presenza">
+                <div><label for="nomeConsulente" class="form-label">Nome</label><input id="nomeConsulente" name="Nome" class="form-control" required maxlength="100" /></div>
+                <div><label for="cognomeConsulente" class="form-label">Cognome</label><input id="cognomeConsulente" name="Cognome" class="form-control" required maxlength="100" /></div>
+                <div class="campo-note"><label for="emailConsulente" class="form-label">Email</label><input id="emailConsulente" name="Email" type="email" class="form-control" required maxlength="256" /></div>
+            </div>
+            <div class="d-flex justify-content-end mt-4"><button type="submit" class="btn btn-primary">Invia l'invito</button></div>
+        </form>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        $(function () {
+            const mostra = () => {
+                const t = document.querySelector('input[name="tipoUtente"]:checked').value;
+                document.querySelectorAll('.modulo-utente').forEach(f => f.hidden = f.dataset.tipo !== t);
+            };
+            document.querySelectorAll('input[name="tipoUtente"]').forEach(r => r.addEventListener('change', mostra));
+            mostra();
+            if ($.fn.select2) $('.select-persona').select2({ width: '100%', placeholder: 'Cerca per nome' });
+        });
+    </script>
+}

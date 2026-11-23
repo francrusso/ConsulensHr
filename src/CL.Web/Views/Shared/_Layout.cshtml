@@ -19,7 +19,8 @@
             esterniAttivi ? "Aggiungi professionista" : "Aggiungi persona", "ri-user-add-line"),
         "aziende" when Utente.IsConsulente => (Url.Action("Nuova", "Aziende"), "Nuova azienda", "ri-add-line"),
         "team" when (ViewContext.RouteData.Values["action"] as string) == "Index" => ("#nuovoTeam", "Nuovo team", "ri-add-line"),
-        "utenti" when Utente.IsAmministratore => (Url.Action("Index", "Consulenti"), "Gestisci i consulenti", "ri-user-star-line"),
+        "utenti" when Utente.IsConsulente && (ViewContext.RouteData.Values["action"] as string) is "Index" or "Nuovo"
+            => (Url.Action("Nuovo", "Utenti"), "Aggiungi altro utente", "ri-user-add-line"),
         "consulenti" when (ViewContext.RouteData.Values["action"] as string) == "Index" => ("#nuovoConsulente", "Nuovo consulente", "ri-user-add-line"),
         "assenze" or "ufficio" => (Url.Action("Nuova", "Assenze"), "Nuova richiesta", "ri-calendar-event-line"),
         "bustepaga" when !Utente.IsDipendente => (Url.Action("Carica", "BustePaga"), "Carica busta paga", "ri-upload-2-line"),

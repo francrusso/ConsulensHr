@@ -1,0 +1,18 @@
+@* Super amministratore: in cima alla pagina, il filtro per consulente (mantiene gli altri filtri della pagina). *@
+@{
+    var consulenti = ViewBag.Consulenti as List<SelectListItem>;
+}
+@if (consulenti is not null)
+{
+    <form method="get" class="m-0 filtro-consulente">
+        @foreach (var kv in Context.Request.Query.Where(kv => kv.Key != "consulenteId" && !string.IsNullOrEmpty(kv.Value)))
+        {
+            <input type="hidden" name="@kv.Key" value="@kv.Value" />
+        }
+        <label for="filtroConsulente" class="visually-hidden">Consulente</label>
+        <select id="filtroConsulente" name="consulenteId" class="form-select" onchange="this.form.submit()">
+            <option value="">Tutti i consulenti</option>
+            @foreach (var c in consulenti) { <option value="@c.Value" selected="@c.Selected">@c.Text</option> }
+        </select>
+    </form>
+}

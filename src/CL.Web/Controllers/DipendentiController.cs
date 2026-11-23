@@ -262,10 +262,19 @@ public sealed class DipendentiController(AppDbContext db, UtenteCorrente utente,
 {
     private DateOnly Oggi => DateOnly.FromDateTime(clock.GetLocalNow().DateTime);
 
-    public async Task<IActionResult> Index(string? q, Guid? aziendaId, bool esterni = false, string? stato = null)
+    public async Task<IActionResult> Index(string? q, Guid? aziendaId, bool esterni = false, string? stato = null, string? consulenteId = null)
     {
         var oggi = Oggi;
         var query = utente.Filtra(db.Dipendenti.AsNoTracking());
+        var servizioConsulenti = HttpContext.RequestServices.GetRequiredService<ServizioConsulentiAziende>();
+        // Super amministratore: filtro per consulente (le persone delle aziende a lui assegnate).
+        if (utente.IsAmministratore && !string.IsNullOrEmpty(consulenteId))
+        {
+            var sue = await servizioConsulenti.AziendeDiAsync(consulenteId);
+            query = query.Where(d => sue.Contains(d.AziendaId));
+        }
+        ViewBag.Consulenti = await servizioConsulenti.ElencoAsync(consulenteId);
+        ViewBag.ConsulenteId = consulenteId;
         if (aziendaId is { } az) query = query.Where(d => d.AziendaId == az);
         if (!string.IsNullOrWhiteSpace(q))
         {

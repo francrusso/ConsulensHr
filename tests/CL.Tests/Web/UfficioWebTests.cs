@@ -592,9 +592,34 @@ public sealed class UfficioWebTests : IDisposable
         Assert.Contains("Beta", WebUtility.HtmlDecode(await admin.GetStringAsync("/Aziende"))); // il super amministratore vede tutto
         // Il super amministratore vede a quale consulente è legata ogni azienda e ogni persona.
         Assert.Contains("<th scope=\"col\">Consulente</th>", await admin.GetStringAsync("/Aziende"));
-        Assert.Contains("<th scope=\"col\">Consulente</th>", await admin.GetStringAsync("/Dipendenti"));
+        var personale = WebUtility.HtmlDecode(await admin.GetStringAsync("/Dipendenti"));
+        Assert.Contains("Tutti i consulenti", personale);                       // filtro in cima
+        Assert.Contains("ri-user-star-line", personale);                         // consulente sotto l'azienda
+        var filtrato = WebUtility.HtmlDecode(await admin.GetStringAsync($"/Dipendenti?consulenteId={mio.Id}"));
+        Assert.Contains("Rossi Mario", filtrato);
+        Assert.DoesNotContain("Rossi Mario", WebUtility.HtmlDecode(await admin.GetStringAsync("/Dipendenti?consulenteId=nessuno")));
         Assert.Contains("Super amministratore", WebUtility.HtmlDecode(await admin.GetStringAsync("/Aziende"))); // ruolo nella card in alto
         Assert.DoesNotContain("<th scope=\"col\">Consulente</th>", await c1.GetStringAsync("/Aziende"));
+    }
+
+    [Fact]
+    public async Task Da_utenti_si_aggiunge_un_referente_o_una_persona()
+    {
+        await PreparaDipendente(SedeLavoro.SedeLegale);
+        await _app.CreaUtente("admin@test.it", Ruoli.Consulente);
+        var admin = _app.CreateClient(); await admin.Accedi("admin@test.it");
+        var utenti = WebUtility.HtmlDecode(await admin.GetStringAsync("/Utenti"));
+        Assert.Contains("Aggiungi altro utente", utenti);
+        Assert.DoesNotContain("Invio delle email", utenti);
+        var modulo = WebUtility.HtmlDecode(await admin.GetStringAsync("/Utenti/Nuovo"));
+        Assert.Contains("Referente di un'azienda", modulo);
+        Assert.Contains("Consulente", modulo);
+        var r = await admin.InviaForm("/Utenti/Nuovo", "/Utenti/InvitaReferente", new()
+        {
+            ["aziendaId"] = _aziendaId.ToString(), ["Nome"] = "Laura", ["Cognome"] = "Neri", ["Email"] = "laura@acme.test", ["ritorno"] = "/Utenti",
+        });
+        Assert.Equal("/Utenti", r.RequestMessage!.RequestUri!.AbsolutePath);
+        Assert.Contains("laura@acme.test", WebUtility.HtmlDecode(await r.Content.ReadAsStringAsync()));
     }
 
     [Fact]

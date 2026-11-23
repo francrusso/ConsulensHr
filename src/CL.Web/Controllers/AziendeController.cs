@@ -73,9 +73,18 @@ public sealed record AziendaRiga(Guid Id, string RagioneSociale, string PartitaI
 public sealed class AziendeController(AppDbContext db, ServizioAccessi accessi, LoghiAziende loghi, IArchivioDocumenti archivio,
     IRicercaPartitaIva registro, UtenteCorrente utente) : AppController
 {
-    public async Task<IActionResult> Index(string? q)
+    public async Task<IActionResult> Index(string? q, string? consulenteId)
     {
         var query = db.Aziende.AsNoTracking();
+        var servizio = HttpContext.RequestServices.GetRequiredService<ServizioConsulentiAziende>();
+        // Super amministratore: filtro per consulente.
+        if (utente.IsAmministratore && !string.IsNullOrEmpty(consulenteId))
+        {
+            var sue = await servizio.AziendeDiAsync(consulenteId);
+            query = query.Where(a => sue.Contains(a.Id));
+        }
+        ViewBag.Consulenti = await servizio.ElencoAsync(consulenteId);
+        ViewBag.ConsulenteId = consulenteId;
         if (!string.IsNullOrWhiteSpace(q))
         {
             var testo = q.Trim().ToLower();
