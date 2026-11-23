@@ -783,7 +783,7 @@ public sealed class DipendentiController(AppDbContext db, UtenteCorrente utente,
             .Select(g => g.Giorno).ToListAsync()).ToHashSet();
         ViewBag.Richieste = richieste
             .Select(r => new RichiestaRiga(r.Id, r.DipendenteId, d.NomeCompleto, "", r.Tipo, r.Dal, r.Al, r.AOre, r.Ore,
-                r.Stato, r.RichiestaIl, r.Note, r.DecisaDa, r.MotivoRifiuto))
+                r.Stato, r.RichiestaIl, r.Note, r.DecisaDa, r.MotivoRifiuto) { AnnullamentoInAttesa = r.AnnullamentoInAttesa, MotivoAnnullamento = r.MotivoAnnullamento })
             .Concat(smart.Select(g => new RichiestaRiga(g.Id, d.Id, d.NomeCompleto, "", CL.Domain.Assenze.TipoAssenza.Ferie, g.Giorno, g.Giorno, false, 0,
                 g.Stato switch
                 {

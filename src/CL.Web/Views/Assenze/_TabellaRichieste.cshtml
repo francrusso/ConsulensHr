@@ -36,6 +36,11 @@
                 // Il referente revoca qualunque richiesta attiva, anche approvata e già passata (es. registrata per errore).
                 var revocabile = Utente.IsAzienda && r.Stato is StatoRichiesta.InAttesa or StatoRichiesta.Approvata;
                 if (revocabile) annullabile = false;
+                // Il dipendente annulla da sé solo ciò che è in attesa; per una richiesta approvata chiede la cancellazione all'azienda.
+                var mia = Utente.IsDipendente && r.DipendenteId == Utente.DipendenteId;
+                if (mia && r.Stato == StatoRichiesta.Approvata) annullabile = false;
+                var chiediCancellazione = mia && !r.SmartWorking && !r.Straordinario && r.Stato == StatoRichiesta.Approvata && !r.AnnullamentoInAttesa;
+                var decidiCancellazione = r.AnnullamentoInAttesa && gestore;
                 var genere = r.SmartWorking ? "smart" : r.Straordinario ? "straordinario" : "assenza";
                 var periodo = r.Dal == r.Al ? r.Dal.ToString("dddd d MMMM yyyy") : $"dal {r.Dal:dddd d MMMM} al {r.Al:dddd d MMMM yyyy}";
                 <tr class="customer-result-row">
@@ -64,6 +69,11 @@
                     <td data-label="Ore" class="text-end">@(r.SmartWorking ? "—" : r.Ore.ToString("0.##"))</td>
                     <td data-label="Stato">
                         <partial name="~/Views/Assenze/_StatoRichiesta.cshtml" model="r.Stato" />
+                        @if (r.AnnullamentoInAttesa)
+                        {
+                            <span class="badge bg-warning text-dark ms-1" title="@r.MotivoAnnullamento">Cancellazione chiesta</span>
+                            @if (r.MotivoAnnullamento is not null) { <div class="small text-body-secondary">@r.MotivoAnnullamento</div> }
+                        }
                         @if (r.Stato == StatoRichiesta.Rifiutata && r.MotivoRifiuto is not null)
                         {
                             <div class="small text-body-secondary">@r.MotivoRifiuto</div>
@@ -100,7 +110,26 @@
                                     <button type="submit" aria-label="Ritira richiesta" title="Ritira richiesta"><i class="ri-close-circle-line" aria-hidden="true"></i></button>
                                 </form>
                             }
-                            @if (revocabile)
+                            @if (decidiCancellazione)
+                            {
+                                <form asp-controller="Assenze" asp-action="DecidiAnnullamento" asp-route-id="@r.Id" asp-route-conferma="true" method="post" class="d-inline">
+                                    <input type="hidden" name="ritorno" value="@ritorno" />
+                                    <button type="submit" class="btn btn-sm btn-primary">Conferma cancellazione</button>
+                                </form>
+                                <form asp-controller="Assenze" asp-action="DecidiAnnullamento" asp-route-id="@r.Id" asp-route-conferma="false" method="post" class="d-inline">
+                                    <input type="hidden" name="ritorno" value="@ritorno" />
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Respingi</button>
+                                </form>
+                            }
+                            @if (chiediCancellazione)
+                            {
+                                <form asp-controller="Assenze" asp-action="ChiediAnnullamento" asp-route-id="@r.Id" method="post" class="d-inline"
+                                      onsubmit="const m = prompt('Perché vuoi cancellarla? (facoltativo)'); if (m === null) return false; this.motivo.value = m; return true;">
+                                    <input type="hidden" name="motivo" /><input type="hidden" name="ritorno" value="@ritorno" />
+                                    <button type="submit" aria-label="Chiedi la cancellazione" title="Chiedi la cancellazione"><i class="ri-close-circle-line" aria-hidden="true"></i></button>
+                                </form>
+                            }
+                            @if (revocabile && !decidiCancellazione)
                             {
                                 <form asp-controller="Assenze" asp-action="Revoca" asp-route-id="@r.Id" asp-route-genere="@genere" method="post" class="d-inline"
                                       onsubmit="return confirm('Revocare questa richiesta? Non conterà più (saldi, calendario, riepilogo presenze).');">

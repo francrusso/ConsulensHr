@@ -1332,3 +1332,28 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261123150200_AnnullamentoRichiesto') THEN
+    ALTER TABLE hr."RichiesteAssenza" ADD "AnnullamentoRichiestoIl" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261123150200_AnnullamentoRichiesto') THEN
+    ALTER TABLE hr."RichiesteAssenza" ADD "MotivoAnnullamento" character varying(500);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261123150200_AnnullamentoRichiesto') THEN
+    INSERT INTO hr."__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261123150200_AnnullamentoRichiesto', '10.0.15');
+    END IF;
+END $EF$;
+COMMIT;
+

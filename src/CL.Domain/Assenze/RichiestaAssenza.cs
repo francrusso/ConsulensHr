@@ -34,6 +34,10 @@ public sealed class RichiestaAssenza : Entity
     public string? MotivoRifiuto { get; private set; }
     /// <summary>Ferie generate da una chiusura aziendale (si tolgono insieme alla chiusura).</summary>
     public Guid? ChiusuraId { get; private set; }
+    /// <summary>Il dipendente ha chiesto di cancellare una richiesta già approvata: decide l'azienda.</summary>
+    public DateTime? AnnullamentoRichiestoIl { get; private set; }
+    public string? MotivoAnnullamento { get; private set; }
+    public bool AnnullamentoInAttesa => AnnullamentoRichiestoIl is not null && Stato == StatoRichiesta.Approvata;
 
     private RichiestaAssenza() { } // EF Core
 
@@ -89,6 +93,25 @@ public sealed class RichiestaAssenza : Entity
         if (Stato == StatoRichiesta.Approvata && Dal <= oggi)
             throw new DomainException("Non è possibile annullare un'assenza già iniziata: contattare l'ufficio del personale.");
         Stato = StatoRichiesta.Annullata;
+    }
+
+    /// <summary>Il dipendente chiede di cancellare una richiesta già approvata (anche iniziata o passata).</summary>
+    public void ChiediAnnullamento(string? motivo, DateTime adesso)
+    {
+        if (Stato != StatoRichiesta.Approvata) throw new DomainException("Si può chiedere di cancellare solo una richiesta approvata.");
+        if (AnnullamentoRichiestoIl is not null) throw new DomainException("La cancellazione è già stata chiesta.");
+        var m = string.IsNullOrWhiteSpace(motivo) ? null : motivo.Trim();
+        if (m is { Length: > 500 }) throw new DomainException("Motivo troppo lungo (massimo 500 caratteri).");
+        AnnullamentoRichiestoIl = adesso;
+        MotivoAnnullamento = m;
+    }
+
+    /// <summary>L'azienda non accetta la cancellazione: la richiesta resta approvata.</summary>
+    public void RespingiAnnullamento()
+    {
+        if (!AnnullamentoInAttesa) throw new DomainException("Non c'è una cancellazione da decidere.");
+        AnnullamentoRichiestoIl = null;
+        MotivoAnnullamento = null;
     }
 
     /// <summary>L'azienda revoca una richiesta (anche approvata e già passata, es. registrata per errore): non conta più nei saldi.</summary>

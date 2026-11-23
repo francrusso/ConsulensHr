@@ -204,12 +204,15 @@ public sealed class ServizioPanoramica(AppDbContext db, UtenteCorrente utente, T
                                                                    && (c.DataFine == null || c.DataFine >= new DateOnly(annoCu, 1, 1)))).Select(d => d.Id).ToList();
         var cuCaricate = await db.CertificazioniUniche.CountAsync(c => personeCu.Contains(c.DipendenteId) && c.AnnoImposta == annoCu);
         var cuMancanti = personeCu.Count - cuCaricate;
+        var cancellazioni = await db.RichiesteAssenza.CountAsync(r => idsInPerimetro.Contains(r.DipendenteId)
+                                                                     && r.Stato == StatoRichiesta.Approvata && r.AnnullamentoRichiestoIl != null);
         var daFare = new List<CosaDaFare>
         {
             new(utente.IsConsulente ? "Richieste in attesa delle aziende" : "Approva le richieste in attesa", inAttesa == 0, "/Assenze?stato=InAttesa", inAttesa) { Chiave = $"richieste-{oggi:yyyy-MM-dd}" },
             new($"Carica le CU {annoCu + 1} sui redditi {annoCu}", cuMancanti == 0, $"/Documenti/Cu?anno={annoCu}", cuMancanti) { Chiave = $"cu-{annoCu}" },
             new("Rinnova o chiudi i contratti in scadenza", scadenze.Count == 0, "/Documenti/Contratti", scadenze.Count) { Chiave = $"contratti-{oggi:yyyy-MM}" },
         };
+        daFare.Add(new("Conferma o respingi le cancellazioni chieste", cancellazioni == 0, "/Assenze", cancellazioni) { Chiave = $"cancellazioni-{oggi:yyyy-MM-dd}" });
         if (utente.IsAzienda && utente.AziendaId is { } mia)
         {
             var mesePresenze = oggi.Day <= 10 ? oggi.AddMonths(-1) : oggi;

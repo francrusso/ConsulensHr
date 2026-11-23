@@ -53,6 +53,9 @@ public sealed record RichiestaRiga(
     public bool SmartWorking { get; init; }
     /// <summary>Ore di straordinario di un giorno (in <see cref="Ore"/>), da approvare come le ferie.</summary>
     public bool Straordinario { get; init; }
+    /// <summary>Il dipendente ha chiesto di cancellare questa richiesta approvata: l'azienda conferma o respinge.</summary>
+    public bool AnnullamentoInAttesa { get; init; }
+    public string? MotivoAnnullamento { get; init; }
 }
 
 /// <summary>Persona nel calendario; <paramref name="ColoreTeam"/> fa da bordo alla foto (null senza team).</summary>
@@ -182,9 +185,12 @@ public sealed class AssenzeController(AppDbContext db, UtenteCorrente utente, Se
             .ThenByDescending(x => x.r.Dal).ThenBy(x => x.Cognome).ToListAsync();
         var righe = risultati
             .Select(x => new RichiestaRiga(x.r.Id, x.r.DipendenteId, $"{x.Cognome} {x.Nome}", x.RagioneSociale, x.r.Tipo,
-                x.r.Dal, x.r.Al, x.r.AOre, x.r.Ore, x.r.Stato, x.r.RichiestaIl, x.r.Note, x.r.DecisaDa, x.r.MotivoRifiuto))
+                x.r.Dal, x.r.Al, x.r.AOre, x.r.Ore, x.r.Stato, x.r.RichiestaIl, x.r.Note, x.r.DecisaDa, x.r.MotivoRifiuto)
+            {
+                AnnullamentoInAttesa = x.r.AnnullamentoRichiestoIl != null && x.r.Stato == StatoRichiesta.Approvata, MotivoAnnullamento = x.r.MotivoAnnullamento,
+            })
             .Concat(righeSmart)
-            .OrderBy(x => x.Stato == StatoRichiesta.InAttesa ? 0 : 1).ThenByDescending(x => x.Dal).ThenBy(x => x.Dipendente)
+            .OrderBy(x => x.Stato == StatoRichiesta.InAttesa || x.AnnullamentoInAttesa ? 0 : 1).ThenByDescending(x => x.Dal).ThenBy(x => x.Dipendente)
             .ToList();
 
         // Il dipendente responsabile di qualcuno vede anche le richieste del suo team da decidere.
@@ -384,6 +390,36 @@ public sealed class AssenzeController(AppDbContext db, UtenteCorrente utente, Se
         }
         await db.SaveChangesAsync();
         Conferma("Richiesta revocata.");
+        return Torna(ritorno);
+    }
+
+    /// <summary>Il dipendente chiede di cancellare una richiesta già approvata (anche iniziata): decide l'azienda.</summary>
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> ChiediAnnullamento(Guid id, string? motivo, string? ritorno)
+    {
+        var r = await db.RichiesteAssenza.FirstOrDefaultAsync(x => x.Id == id && x.DipendenteId == utente.DipendenteId);
+        if (r is null) return NotFound();
+        if (Prova(() => r.ChiediAnnullamento(motivo, AdessoUtc)))
+        {
+            await db.SaveChangesAsync();
+            Conferma("Cancellazione chiesta: l'azienda deve confermarla.");
+        }
+        else Errore(PrimoErrore());
+        return Torna(ritorno);
+    }
+
+    /// <summary>L'azienda (o il responsabile che decide) conferma la cancellazione chiesta: la richiesta è annullata.</summary>
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> DecidiAnnullamento(Guid id, bool conferma, string? ritorno)
+    {
+        var r = await DaDecidere(id);
+        if (r is null) return utente.IsAzienda ? NotFound() : Forbid();
+        if (Prova(() => { if (!r.AnnullamentoInAttesa) throw new CL.Domain.Common.DomainException("Non c'è una cancellazione da decidere."); if (conferma) r.Revoca(); else r.RespingiAnnullamento(); }))
+        {
+            await db.SaveChangesAsync();
+            Conferma(conferma ? "Cancellazione confermata: la richiesta è annullata." : "Cancellazione respinta: la richiesta resta approvata.");
+        }
+        else Errore(PrimoErrore());
         return Torna(ritorno);
     }
 

@@ -278,7 +278,9 @@ internal sealed class RichiestaAssenzaConfig : IEntityTypeConfiguration<Richiest
         b.Property(x => x.ProtocolloCertificato).HasMaxLength(50);
         b.Property(x => x.DecisaDa).HasMaxLength(256);
         b.Property(x => x.MotivoRifiuto).HasMaxLength(1000);
+        b.Property(x => x.MotivoAnnullamento).HasMaxLength(500);
         b.Ignore(x => x.Attiva);
+        b.Ignore(x => x.AnnullamentoInAttesa);
 
         b.HasOne<Dipendente>().WithMany().HasForeignKey(x => x.DipendenteId).OnDelete(DeleteBehavior.Cascade);
         b.HasIndex(x => new { x.DipendenteId, x.Dal, x.Al });

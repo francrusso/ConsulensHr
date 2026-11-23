@@ -526,6 +526,40 @@ public sealed class UfficioWebTests : IDisposable
     }
 
     [Fact]
+    public async Task Il_dipendente_chiede_di_cancellare_una_richiesta_approvata_e_l_azienda_conferma()
+    {
+        var dip = await PreparaDipendente(SedeLavoro.SedeLegale);
+        var giorno = new DateOnly(DateTime.Today.Year, 1, 12);
+        while (!CalendarioLavorativo.IsLavorativo(giorno, 5)) giorno = giorno.AddDays(1);
+        if (giorno >= DateOnly.FromDateTime(DateTime.Today)) return;
+        var id = await _app.ConDb(async db =>
+        {
+            var d = await db.Dipendenti.SingleAsync();
+            var a = await db.Aziende.SingleAsync();
+            var ferie = PianificatoreAssenze.Crea(d, a, TipoAssenza.Ferie, giorno, giorno, [], DateTime.UtcNow);
+            ferie.Approva("hr", DateTime.UtcNow);
+            db.Add(ferie);
+            await db.SaveChangesAsync();
+            return ferie.Id;
+        });
+        // Anche se già passata, il dipendente può chiederne la cancellazione.
+        var mie = WebUtility.HtmlDecode(await dip.GetStringAsync("/Assenze"));
+        Assert.Contains($"/Assenze/ChiediAnnullamento/{id}", mie);
+        await dip.InviaForm("/Assenze", $"/Assenze/ChiediAnnullamento/{id}", new() { ["motivo"] = "Ero in malattia" });
+        Assert.NotNull((await _app.ConDb(db => db.RichiesteAssenza.SingleAsync())).AnnullamentoRichiestoIl);
+
+        await _app.CreaUtente("hr@test.it", Ruoli.Azienda, _aziendaId);
+        var hr = _app.CreateClient();
+        await hr.Accedi("hr@test.it");
+        var html = WebUtility.HtmlDecode(await hr.GetStringAsync("/Assenze"));
+        Assert.Contains("Cancellazione chiesta", html);
+        Assert.Contains("Ero in malattia", html);
+        Assert.Contains("Conferma o respingi le cancellazioni chieste", WebUtility.HtmlDecode(await hr.GetStringAsync("/")));
+        await hr.InviaForm("/Assenze", $"/Assenze/DecidiAnnullamento/{id}?conferma=true", new());
+        Assert.Equal(StatoRichiesta.Annullata, (await _app.ConDb(db => db.RichiesteAssenza.SingleAsync())).Stato);
+    }
+
+    [Fact]
     public async Task Senza_contratto_il_calendario_si_vede_ma_non_si_segna_nulla()
     {
         var dip = await PreparaDipendente(SedeLavoro.SedeLegale);

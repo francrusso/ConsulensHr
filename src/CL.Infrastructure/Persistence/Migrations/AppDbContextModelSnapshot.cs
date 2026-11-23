@@ -68,6 +68,9 @@ namespace CL.Infrastructure.Persistence.Migrations
                     b.Property<DateOnly>("Al")
                         .HasColumnType("date");
 
+                    b.Property<DateTime?>("AnnullamentoRichiestoIl")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<Guid?>("ChiusuraId")
                         .HasColumnType("uuid");
 
@@ -83,6 +86,10 @@ namespace CL.Infrastructure.Persistence.Migrations
 
                     b.Property<Guid>("DipendenteId")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("MotivoAnnullamento")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
 
                     b.Property<string>("MotivoRifiuto")
                         .HasMaxLength(1000)

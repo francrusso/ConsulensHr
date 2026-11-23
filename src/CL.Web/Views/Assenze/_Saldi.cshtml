@@ -1,36 +1,41 @@
 @model IReadOnlyList<SaldoAssenza>
-@* Card dei saldi ferie e ROL (ore). *@
+@*
+    Saldi di ferie e ROL nello stile della panoramica: icona in un riquadro colorato, etichetta in maiuscolo,
+    ore disponibili in grande, barra del goduto e i quattro numeri che le compongono.
+*@
+@{
+    var it = System.Globalization.CultureInfo.GetCultureInfo("it-IT");
+    string H(decimal v) => v.ToString("0.##", it);
+}
 <div class="row g-3">
     @foreach (var s in Model)
     {
+        // Stessi colori del calendario: ferie azzurro, permessi viola.
+        var (icona, colore, nome) = s.Tipo switch
+        {
+            TipoAssenza.Ferie => ("ri-sun-line", "#6096FF", "Ferie"),
+            TipoAssenza.Rol => ("ri-time-line", "#8E6BD8", "Permessi ROL"),
+            _ => ("ri-calendar-event-line", "#E8A33D", s.Tipo.Descrizione()),
+        };
+        var spettanza = s.ResiduoPrecedente + s.Maturato;
+        var percentuale = spettanza <= 0 ? 0 : (int)Math.Clamp(Math.Round((s.Goduto + s.Prenotato) * 100 / spettanza), 0, 100);
         <div class="col-md-6">
-            <section class="card radius-15 h-100 saldo-card">
-                <div class="card-body">
-                    @{
-                        // Stessi colori del grafico delle assenze nella panoramica.
-                        var (icona, colore) = s.Tipo switch
-                        {
-                            TipoAssenza.Ferie => ("ri-sun-line", "#6096FF"),
-                            TipoAssenza.Rol => ("ri-time-line", "#2FBA6C"),
-                            _ => ("ri-calendar-event-line", "#E8A33D"),
-                        };
-                    }
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <div class="d-flex align-items-center gap-2">
-                            <span class="saldo-icona" style="--colore-saldo:@colore" aria-hidden="true"><i class="@icona"></i></span>
-                            <h3 class="saldo-titolo mb-0">@s.Tipo.Descrizione()</h3>
+            <section class="card radius-15 h-100 card-saldo" style="--colore-saldo:@colore" aria-label="@nome @s.Anno">
+                <div class="card-body p-3 p-md-4">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <span class="icona-indicatore" aria-hidden="true"><i class="@icona"></i></span>
+                        <div>
+                            <div class="etichetta-indicatore">@nome</div>
+                            <div class="valore-indicatore @(s.Disponibile < 0 ? "text-danger" : "")">@H(s.Disponibile) h <span class="unita-saldo">disponibili</span></div>
                         </div>
-                        <span class="saldo-anno">@s.Anno</span>
                     </div>
-                    <div class="card-numero @(s.Disponibile < 0 ? "text-danger" : "")">@s.Disponibile.ToString("0.##") <small class="fs-6 fw-normal">ore disponibili</small></div>
-                    <dl class="saldo-dettaglio mt-3 mb-0">
-                        <div><dt>Residuo anno precedente</dt><dd>@s.ResiduoPrecedente.ToString("0.##")</dd></div>
-                        <div><dt>Maturato</dt><dd>@(s.Maturato > 0 ? "+" : "")@s.Maturato.ToString("0.##")</dd></div>
-                        <div><dt>Goduto</dt><dd>@(s.Goduto > 0 ? "−" : "")@s.Goduto.ToString("0.##")</dd></div>
-                        @if (s.Prenotato > 0)
-                        {
-                            <div><dt>In attesa di approvazione</dt><dd>−@s.Prenotato.ToString("0.##")</dd></div>
-                        }
+                    <div class="barra-saldo" role="img" aria-label="Usate @H(s.Goduto + s.Prenotato) ore su @H(spettanza)"><span style="width:@percentuale%"></span></div>
+                    <div class="nota-indicatore mt-1">@H(s.Goduto) h godute@(s.Prenotato > 0 ? $" · {H(s.Prenotato)} h in attesa" : "") su @H(spettanza) h</div>
+                    <dl class="numeri-saldo mt-3 mb-0">
+                        <div><dt>Residuo anno prec.</dt><dd>@H(s.ResiduoPrecedente) h</dd></div>
+                        <div><dt>Maturato</dt><dd>@H(s.Maturato) h</dd></div>
+                        <div><dt>Goduto</dt><dd>@H(s.Goduto) h</dd></div>
+                        <div><dt>In attesa</dt><dd>@H(s.Prenotato) h</dd></div>
                     </dl>
                 </div>
             </section>
