@@ -216,7 +216,7 @@ public sealed class UfficioWebTests : IDisposable
         var dip = await PreparaDipendente(SedeLavoro.SedeLegale);
         var modulo = WebUtility.HtmlDecode(await dip.GetStringAsync("/Assenze/Nuova"));
         Assert.Contains("value=\"SmartWorking\"", modulo);
-        Assert.DoesNotContain("value=\"InUfficio\"", modulo);
+        Assert.Contains("value=\"InUfficio\"", modulo); // tutte e due le voci, per tutti
 
         var dal = DateOnly.FromDateTime(DateTime.Today).AddDays(7);
         while (dal.DayOfWeek != DayOfWeek.Monday) dal = dal.AddDays(1);
@@ -241,9 +241,85 @@ public sealed class UfficioWebTests : IDisposable
         var giorno = ProssimoLavorativo();
         await dip.InviaForm("/Assenze/Nuova", "/Assenze/Nuova", new() { ["Tipo"] = "InUfficio", ["Dal"] = giorno.ToString("yyyy-MM-dd") });
         Assert.Equal(1, await _app.ConDb(db => db.GiorniInUfficio.CountAsync()));
-        // Chi lavora a distanza non può chiedere smart working.
-        await dip.InviaForm("/Assenze/Nuova", "/Assenze/Nuova", new() { ["Tipo"] = "SmartWorking", ["Dal"] = giorno.ToString("yyyy-MM-dd") });
-        Assert.Equal(0, await _app.ConDb(db => db.GiorniSmartWorking.CountAsync()));
+        // Chi lavora già a distanza: lo smart working non va approvato.
+        var settimanaDopo = giorno.AddDays(7);
+        await dip.InviaForm("/Assenze/Nuova", "/Assenze/Nuova", new() { ["Tipo"] = "SmartWorking", ["Dal"] = settimanaDopo.ToString("yyyy-MM-dd") });
+        Assert.All(await _app.ConDb(db => db.GiorniSmartWorking.ToListAsync()), g => Assert.Equal(CL.Domain.Presenze.StatoSmartWorking.Approvato, g.Stato));
+    }
+
+    [Fact]
+    public async Task La_scheda_del_dipendente_conta_i_giorni_in_ufficio_e_da_remoto()
+    {
+        await PreparaDipendente(SedeLavoro.SedeLegale);
+        var oggi = DateOnly.FromDateTime(DateTime.Today);
+        var giorno = new DateOnly(oggi.Year, 1, 10);
+        while (!CalendarioLavorativo.IsLavorativo(giorno, 5)) giorno = giorno.AddDays(1);
+        if (giorno >= oggi) return;
+        await _app.ConDb(async db =>
+        {
+            var g = new CL.Domain.Presenze.GiornoSmartWorking(_dipId, giorno, DateTime.UtcNow);
+            g.Approva("hr", DateTime.UtcNow);
+            db.Add(g);
+            return await db.SaveChangesAsync();
+        });
+        await _app.CreaUtente("hr@test.it", Ruoli.Azienda, _aziendaId);
+        var hr = _app.CreateClient();
+        await hr.Accedi("hr@test.it");
+        var html = WebUtility.HtmlDecode(await hr.GetStringAsync($"/Dipendenti/Dettaglio/{_dipId}?sezione=ferie"));
+        Assert.Contains("Assenze e presenze", html);
+        Assert.Matches(@"Giorni da remoto</div>\s*<div class=""card-numero"">1</div>", html);
+        Assert.Contains("Giorni in ufficio", html);
+        Assert.Contains(giorno.ToString("ddd d"), html);   // dettaglio del mese
+        Assert.Contains("Smart working", html);
+        Assert.Empty(_app.ErroriServer);
+    }
+
+    [Fact]
+    public async Task L_azienda_registra_e_approva_subito_lo_smart_working_dal_modulo()
+    {
+        await PreparaDipendente(SedeLavoro.SedeLegale);
+        await _app.CreaUtente("hr@test.it", Ruoli.Azienda, _aziendaId);
+        var hr = _app.CreateClient();
+        await hr.Accedi("hr@test.it");
+        var modulo = WebUtility.HtmlDecode(await hr.GetStringAsync("/Assenze/Nuova"));
+        Assert.Contains("Nuova richiesta", modulo);
+        Assert.Contains(">Smart working</option>", modulo);
+        Assert.Contains(">Presenza in ufficio</option>", modulo);
+
+        var giorno = ProssimoLavorativo();
+        await hr.InviaForm("/Assenze/Nuova", "/Assenze/Nuova", new()
+        {
+            ["DipendenteId"] = _dipId.ToString(), ["Tipo"] = "SmartWorking", ["Dal"] = giorno.ToString("yyyy-MM-dd"), ["ApprovaSubito"] = "true",
+        });
+        var g = await _app.ConDb(db => db.GiorniSmartWorking.SingleAsync());
+        Assert.Equal(CL.Domain.Presenze.StatoSmartWorking.Approvato, g.Stato);
+
+        // Anche la presenza in ufficio si registra per chiunque.
+        var altro = giorno.AddDays(1);
+        while (!CalendarioLavorativo.IsLavorativo(altro, 5)) altro = altro.AddDays(1);
+        await hr.InviaForm("/Assenze/Nuova", "/Assenze/Nuova", new()
+        {
+            ["DipendenteId"] = _dipId.ToString(), ["Tipo"] = "InUfficio", ["Dal"] = altro.ToString("yyyy-MM-dd"),
+        });
+        Assert.Equal(1, await _app.ConDb(db => db.GiorniInUfficio.CountAsync()));
+    }
+
+    [Fact]
+    public async Task Nei_calendari_le_festivita_sono_in_rosso_con_il_nome()
+    {
+        var dip = await PreparaDipendente(SedeLavoro.SedeLegale);
+        var anno = DateTime.Today.Year;
+        var mio = WebUtility.HtmlDecode(await dip.GetStringAsync($"/Ufficio?anno={anno}&mese=12"));
+        Assert.Contains("giorno-festa", mio);
+        Assert.Contains("Santo Stefano", mio);
+
+        await _app.CreaUtente("hr@test.it", Ruoli.Azienda, _aziendaId);
+        var hr = _app.CreateClient();
+        await hr.Accedi("hr@test.it");
+        var cal = WebUtility.HtmlDecode(await hr.GetStringAsync($"/Assenze/Calendario?anno={anno}&mese=12"));
+        Assert.Contains("cal-festa", cal);
+        Assert.Contains("Natale", cal);
+        Assert.Contains("Tipo di richiesta", WebUtility.HtmlDecode(await hr.GetStringAsync("/Assenze/Nuova")));
     }
 
     [Fact]

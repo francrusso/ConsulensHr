@@ -52,7 +52,7 @@
                     </span>
                 }
                 @foreach (var c in item.Chiusure) { <span class="voce-giorno voce-chiusura" data-filtro="chiusure"><i class="ri-door-closed-line" aria-hidden="true"></i> @c</span> }
-                @if (item.Festivo) { <span class="voce-giorno voce-festivo"><i class="ri-flag-line" aria-hidden="true"></i> Festivo</span> }
+                @if (item.Festa is { } festa) { <span class="voce-giorno voce-festivo"><i class="ri-flag-2-line" aria-hidden="true"></i> @festa</span> }
                 @if (item.Smart is { } s)
                 {
                     <span class="voce-giorno voce-smart @(s == StatoSmartWorking.InAttesa ? "in-attesa" : "")" data-filtro="smart" title="@item.MotivoRifiuto"><i class="ri-home-wifi-line" aria-hidden="true"></i> Smart working
@@ -107,7 +107,8 @@
         @foreach (var g in Model.Giorni)
         {
             var (aspetto, stile, filtro) = Aspetto(g);
-            var classi = $"cal-giorno {(g.DelMese ? "" : "fuori-mese")} {(g.Lavorativo ? "" : "non-lavorativo")} {(g.Data == Model.Oggi ? "oggi" : "")} {aspetto}";
+            var rosso = g.Festivo || g.Data.DayOfWeek == DayOfWeek.Sunday; // numeri rossi come sul calendario italiano
+            var classi = $"cal-giorno {(g.DelMese ? "" : "fuori-mese")} {(g.Lavorativo ? "" : "non-lavorativo")} {(g.Data == Model.Oggi ? "oggi" : "")} {(rosso ? "giorno-rosso" : "")} {(g.Festivo ? "giorno-festa" : "")} {aspetto}";
             var ritornoQui = Url.Action("Index", new { anno = Model.Anno, mese = Model.Mese });
             var conAzioni = g.Richiedibile || g.Modificabile;
             <div class="@classi @(conAzioni ? "con-azioni" : "")" style="@stile" data-filtro="@filtro" role="gridcell" tabindex="@(conAzioni ? "0" : null)"

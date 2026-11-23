@@ -20,7 +20,7 @@
         ? new Microsoft.AspNetCore.Html.HtmlString("<span class=\"non-inserito\">Non inserito</span>")
         : new Microsoft.AspNetCore.Html.HtmlString(System.Text.Encodings.Web.HtmlEncoder.Default.Encode(v));
     var schede = new[] { ("anagrafica", "Anagrafica", "ri-user-line"), ("contratto", "Contratto", "ri-file-text-line"),
-                         ("ferie", "Ferie e permessi", "ri-calendar-event-line"), ("buste", "Buste paga", "ri-file-list-3-line") };
+                         ("ferie", "Assenze e presenze", "ri-calendar-event-line"), ("buste", "Buste paga", "ri-file-list-3-line") };
 }
 
 <div class="breadcrumb-titolo d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
@@ -397,10 +397,57 @@
     <div id="scheda-ferie" role="tabpanel" class="pannello-scheda" hidden="@(sezione != "ferie")">
     <section aria-labelledby="titoloAssenze">
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
-        <h2 class="h5 mb-0" id="titoloAssenze">Ferie e permessi @oggi.Year</h2>
+        <h2 class="h5 mb-0" id="titoloAssenze">Assenze e presenze @oggi.Year</h2>
     </div>
 
     <partial name="~/Views/Assenze/_Saldi.cshtml" model="saldi" />
+
+    @{
+        var presenze = (List<CL.Web.Controllers.PresenzeMese>)ViewBag.Presenze;
+        var totUfficio = presenze.Sum(x => x.InUfficio);
+        var totRemoto = presenze.Sum(x => x.Remoto);
+        var totAssente = presenze.Sum(x => x.Assente);
+        string Date(List<DateOnly> g) => string.Join(", ", g.Select(x => x.ToString("ddd d")));
+    }
+    @* Giorni lavorati da inizio anno: in ufficio o da remoto, con il dettaglio mese per mese. *@
+    <div class="row g-3 mt-1">
+        <partial name="~/Views/Home/_Indicatore.cshtml" model='("Giorni in ufficio", totUfficio.ToString(), "ri-building-line", (string?)null, $"da inizio {oggi.Year}")' />
+        <partial name="~/Views/Home/_Indicatore.cshtml" model='("Giorni da remoto", totRemoto.ToString(), "ri-home-wifi-line", (string?)null, $"da inizio {oggi.Year}")' />
+        <partial name="~/Views/Home/_Indicatore.cshtml" model='("Giorni di assenza", totAssente.ToString(), "ri-user-unfollow-line", (string?)null, "giornate intere approvate")' />
+    </div>
+    <div class="card radius-15 table-responsive p-1 mt-3 customer-results">
+        <table class="table mb-0 align-middle tabella-presenze">
+            <thead>
+                <tr>
+                    <th scope="col">Mese</th>
+                    <th scope="col" class="text-end">In ufficio</th>
+                    <th scope="col" class="text-end">Da remoto</th>
+                    <th scope="col" class="text-end">Assenze</th>
+                    <th scope="col">Dettaglio</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (presenze.Count == 0)
+                {
+                    <tr><td colspan="5" class="elenco-vuoto"><span class="elenco-vuoto-icona" aria-hidden="true"><i class="ri-calendar-line"></i></span><div>Nessun giorno lavorato quest'anno</div></td></tr>
+                }
+                @foreach (var p in presenze.OrderByDescending(x => x.Mese))
+                {
+                    <tr>
+                        <td data-label="Mese">@ServizioBustePaga.NomeMese(p.Mese)</td>
+                        <td data-label="In ufficio" class="text-end">@p.InUfficio</td>
+                        <td data-label="Da remoto" class="text-end">@p.Remoto</td>
+                        <td data-label="Assenze" class="text-end">@p.Assente</td>
+                        <td data-label="Dettaglio" class="small">
+                            @if (p.SmartWorking.Count > 0) { <div><span class="voce-giorno voce-smart"><i class="ri-home-wifi-line" aria-hidden="true"></i> Smart working</span> @Date(p.SmartWorking)</div> }
+                            @if (p.SegnatiUfficio.Count > 0) { <div><span class="voce-giorno voce-ufficio"><i class="ri-building-line" aria-hidden="true"></i> In ufficio</span> @Date(p.SegnatiUfficio)</div> }
+                            @if (p.SmartWorking.Count == 0 && p.SegnatiUfficio.Count == 0) { <span class="text-body-secondary">—</span> }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
 
     <div class="mt-3">
         <partial name="~/Views/Assenze/_TabellaRichieste.cshtml" model="(richieste, Utente.IsAzienda, false, false, oggi, ritornoFerie)" />

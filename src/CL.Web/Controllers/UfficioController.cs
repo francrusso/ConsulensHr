@@ -17,8 +17,9 @@ public sealed record GiornoUfficio(DateOnly Data, bool DelMese, bool Lavorativo,
     /// <summary>Ferie, permessi, malattia... in attesa o approvati che toccano il giorno.</summary>
     public List<RichiestaDelGiorno> Richieste { get; init; } = [];
     public List<string> Chiusure { get; init; } = [];
-    /// <summary>Festività (nazionale o santo patrono) in un giorno feriale.</summary>
-    public bool Festivo { get; init; }
+    /// <summary>Festività del giorno (nazionale o santo patrono), anche di domenica.</summary>
+    public string? Festa { get; init; }
+    public bool Festivo => Festa is not null;
     /// <summary>Si possono chiedere ferie o permessi (giorno lavorativo da oggi in poi, senza assenze di tutta la giornata).</summary>
     public bool Richiedibile { get; init; }
 }
@@ -93,8 +94,7 @@ public sealed class UfficioController(AppDbContext db, UtenteCorrente utente, Se
                 Richieste = delGiorno.Select(r => new RichiestaDelGiorno(r.Tipo, r.Stato, r.AOre, r.AOre ? r.Ore : 0, r.Note)).ToList(),
                 Chiusure = chiusure.Where(c => c.Dal <= giorno && c.Al >= giorno).Select(c => c.Descrizione).ToList(),
                 Richiedibile = g.Month == primo.Month && lavorativo && assenza is null && g >= oggi && d.InForzaIl(g),
-                Festivo = g.DayOfWeek is not (DayOfWeek.Saturday or DayOfWeek.Sunday)
-                          && CalendarioLavorativo.IsFestivo(g, azienda.SantoPatronoMese, azienda.SantoPatronoGiorno),
+                Festa = CalendarioLavorativo.NomeFestivita(g, azienda.SantoPatronoMese, azienda.SantoPatronoGiorno),
             });
         }
         return View(new UfficioViewModel

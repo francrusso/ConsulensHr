@@ -647,3 +647,23 @@ input.tessera-emoji.altra-emoji::placeholder { font-size: 12.5px; color: var(--c
 .vuoto-panoramica i { color: #2FBA6C; font-size: 1.2rem; }
 .giorni-scadenza { flex: 0 0 auto; font-size: 12px; font-weight: 500; padding: 3px 10px; border-radius: 50rem; background: color-mix(in srgb, #F2B544 18%, #fff); color: #8A6512; }
 .giorni-scadenza.vicina { background: color-mix(in srgb, #D9534F 14%, #fff); color: #A33B37; }
+
+/* Festività: numeri rossi come sul calendario italiano, con il nome della festa */
+.cal-giorno.giorno-rosso .cal-numero { color: #C0392B !important; font-weight: 600; }
+.cal-giorno.giorno-festa { background: color-mix(in srgb, #C0392B 5%, #fff); }
+.cal-giorno.giorno-festa.fuori-mese { background: transparent; }
+.cal-festa { display: inline-flex; align-items: center; gap: 4px; align-self: flex-start; font-size: 11.5px; font-weight: 500; color: #C0392B; }
+.voce-giorno.voce-festivo { --colore-cat: #C0392B; }
+
+/* Chiusure aziendali del mese */
+.elenco-chiusure { list-style: none; padding: 0; margin: 0; }
+.elenco-chiusure li { display: flex; align-items: center; gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--consulens-border); }
+.elenco-chiusure li:last-child { border-bottom: 0; padding-bottom: 0; }
+.data-chiusura { flex: 0 0 64px; height: 60px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    background: color-mix(in srgb, #512D38 8%, #fff); border: 1px solid color-mix(in srgb, #512D38 18%, #fff); color: #512D38; }
+.giorni-chiusura { font-family: 'Quasimoda', 'Poppins', sans-serif; font-size: 1.05rem; font-weight: 600; line-height: 1.1; white-space: nowrap; }
+.mese-chiusura { font-family: 'Quasimoda', 'Poppins', sans-serif; text-transform: uppercase; font-size: 11px; letter-spacing: .06em; opacity: .75; }
+.etichetta-chiusura { display: inline-block; margin-top: 4px; padding: 2px 9px; border-radius: 50rem; font-size: 11.5px; font-weight: 500;
+    background: color-mix(in srgb, #6096FF 14%, #fff); color: color-mix(in srgb, #6096FF 55%, #000); }
+.btn-elimina-chiusura { border: 0; background: transparent; width: 34px; height: 34px; border-radius: 50%; color: var(--consulens-breadcrumb-muted); transition: background .15s, color .15s; }
+.btn-elimina-chiusura:hover, .btn-elimina-chiusura:focus-visible { background: color-mix(in srgb, #D9534F 12%, #fff); color: #A33B37; }

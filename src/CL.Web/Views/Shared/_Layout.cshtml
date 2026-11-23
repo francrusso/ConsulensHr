@@ -18,7 +18,7 @@
             esterniAttivi ? "Aggiungi professionista" : Utente.IsAzienda ? "Aggiungi persona" : "Nuovo dipendente", "ri-user-add-line"),
         "aziende" when Utente.IsConsulente => (Url.Action("Nuova", "Aziende"), "Nuova azienda", "ri-add-line"),
         "team" when (ViewContext.RouteData.Values["action"] as string) == "Index" => ("#nuovoTeam", "Nuovo team", "ri-add-line"),
-        "assenze" => (Url.Action("Nuova", "Assenze"), Utente.IsDipendente ? "Nuova richiesta" : "Registra assenza", "ri-calendar-event-line"),
+        "assenze" => (Url.Action("Nuova", "Assenze"), "Nuova richiesta", "ri-calendar-event-line"),
         "bustepaga" when Utente.IsConsulente => (Url.Action("Carica", "BustePaga"), "Carica cedolini", "ri-upload-2-line"),
         "home" => Utente.IsConsulente ? (Url.Action("Nuova", "Aziende"), "Nuova azienda", "ri-add-line")
             : Utente.IsAzienda ? (Url.Action("Nuovo", "Dipendenti"), "Aggiungi persona", "ri-user-add-line")

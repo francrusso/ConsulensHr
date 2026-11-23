@@ -1,19 +1,15 @@
 @model CL.Web.Controllers.RichiestaForm
 @{
     var gestore = (bool)ViewBag.Gestore;
-    ViewData["Title"] = gestore ? "Registra assenza" : "Nuova richiesta";
+    ViewData["Title"] = "Nuova richiesta"; // stesso modulo per dipendente, azienda e consulente
     var dipendenti = ViewBag.Dipendenti as List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>;
     var saldi = ViewBag.Saldi as IReadOnlyList<SaldoAssenza>;
     // Per il dipendente, oltre alle assenze: smart working (se lavora in presenza) o giorni in ufficio (se lavora a distanza).
     var lavoro = ViewBag.Lavoro as string;
     var tipi = CL.Web.Controllers.RichiestaForm.Tipi.Select(t => { t.Selected = lavoro is null && t.Value == Model.Tipo.ToString(); return t; }).ToList();
-    if (ViewBag.Modo is CL.Web.Infrastruttura.ModoLavoro modo)
-    {
-        var (valore, nome) = modo == CL.Web.Infrastruttura.ModoLavoro.Presenza
-            ? (CL.Web.Controllers.AssenzeController.SceltaSmartWorking, "Smart working")
-            : (CL.Web.Controllers.AssenzeController.SceltaUfficio, "Presenza in ufficio");
-        tipi.Insert(0, new SelectListItem(nome, valore, lavoro == valore));
-    }
+    // Per tutti, oltre alle assenze: giorni di smart working (da approvare) e di presenza in ufficio.
+    tipi.Insert(0, new SelectListItem("Presenza in ufficio", CL.Web.Controllers.AssenzeController.SceltaUfficio, lavoro == CL.Web.Controllers.AssenzeController.SceltaUfficio));
+    tipi.Insert(0, new SelectListItem("Smart working", CL.Web.Controllers.AssenzeController.SceltaSmartWorking, lavoro == CL.Web.Controllers.AssenzeController.SceltaSmartWorking));
 }
 
 <h1 class="titolo-pagina mb-3">@ViewData["Title"]</h1>
@@ -37,15 +33,24 @@
         {
             <div class="col-md-6">
                 <label asp-for="DipendenteId" class="form-label"></label>
-                <select asp-for="DipendenteId" asp-items="dipendenti" class="form-select" aria-required="true">
+                <select asp-for="DipendenteId" class="form-select" aria-required="true">
                     <option value="">Seleziona…</option>
+                    @foreach (var d in dipendenti)
+                    {
+                        <option value="@d.Value" selected="@d.Selected">@d.Text</option>
+                    }
                 </select>
             </div>
         }
         <div class="col-md-6">
             <label asp-for="Tipo" class="form-label"></label>
             <select name="Tipo" id="Tipo" class="form-select">
-                @foreach (var t in tipi) { <option value="@t.Value" selected="@t.Selected">@t.Text</option> }
+                <optgroup label="Presenze">
+                    @foreach (var t in tipi.Take(2)) { <option value="@t.Value" selected="@t.Selected">@t.Text</option> }
+                </optgroup>
+                <optgroup label="Assenze">
+                    @foreach (var t in tipi.Skip(2)) { <option value="@t.Value" selected="@t.Selected">@t.Text</option> }
+                </optgroup>
             </select>
         </div>
 
@@ -99,7 +104,7 @@
 
         <div class="col-12 d-flex justify-content-end gap-2 mt-3">
             <a href="@(ViewBag.Ritorno as string ?? Url.Action("Index"))" class="btn btn-outline-secondary">Annulla</a>
-            <button type="submit" class="btn btn-primary">@(gestore ? "Registra" : "Invia richiesta")</button>
+            <button type="submit" class="btn btn-primary">@(gestore ? "Salva richiesta" : "Invia richiesta")</button>
         </div>
     </form>
 </div>

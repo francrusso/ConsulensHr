@@ -26,6 +26,30 @@ public static class CalendarioLavorativo
         return feste;
     }
 
+    /// <summary>Nome della festività del giorno (nazionale o santo patrono), null se è un giorno qualunque.</summary>
+    public static string? NomeFestivita(DateOnly giorno, int? patronoMese = null, int? patronoGiorno = null)
+    {
+        var pasqua = Pasqua(giorno.Year);
+        if (giorno == pasqua) return "Pasqua";
+        if (giorno == pasqua.AddDays(1)) return "Lunedì dell'Angelo";
+        var nome = (giorno.Month, giorno.Day) switch
+        {
+            (1, 1) => "Capodanno",
+            (1, 6) => "Epifania",
+            (4, 25) => "Festa della Liberazione",
+            (5, 1) => "Festa del lavoro",
+            (6, 2) => "Festa della Repubblica",
+            (8, 15) => "Ferragosto",
+            (10, 4) when giorno.Year >= 2026 => "San Francesco d'Assisi",
+            (11, 1) => "Ognissanti",
+            (12, 8) => "Immacolata",
+            (12, 25) => "Natale",
+            (12, 26) => "Santo Stefano",
+            _ => null,
+        };
+        return nome ?? (patronoMese == giorno.Month && patronoGiorno == giorno.Day ? "Santo patrono" : null);
+    }
+
     public static bool IsFestivo(DateOnly giorno, int? patronoMese = null, int? patronoGiorno = null) =>
         FestivitaNazionali(giorno.Year).Contains(giorno)
         || (patronoMese == giorno.Month && patronoGiorno == giorno.Day);

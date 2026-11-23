@@ -195,7 +195,7 @@ public sealed class PersonaleWebTests : IDisposable
         var lettura = WebUtility.HtmlDecode(await hr.GetStringAsync($"/Dipendenti/Dettaglio/{rossi}"));
         Assert.Contains("class=\"scheda-profilo \" id=\"scheda\"", lettura);
         Assert.Contains("Modifica dati", lettura);
-        Assert.Contains("Ferie e permessi", lettura);
+        Assert.Contains("Assenze e presenze", lettura);
         Assert.Contains("aria-current=\"page\">Rossi Mario</li>", lettura); // breadcrumb: Personale › persona
         var aperta = WebUtility.HtmlDecode(await hr.GetStringAsync($"/Dipendenti/Modifica/{rossi}"));
         Assert.Contains("class=\"scheda-profilo in-modifica\" id=\"scheda\"", aperta);

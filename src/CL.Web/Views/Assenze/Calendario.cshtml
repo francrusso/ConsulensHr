@@ -102,8 +102,10 @@
         @foreach (var g in Model.Giorni)
         {
             var oggi = g.Data == Model.Oggi;
-            <div class="cal-giorno @(g.DelMese ? "" : "fuori-mese") @(g.Lavorativo ? "" : "non-lavorativo") @(oggi ? "oggi" : "")" role="gridcell" aria-label="@g.Data.ToString("dddd d MMMM")">
+            var rosso = g.Festa is not null || g.Data.DayOfWeek == DayOfWeek.Sunday; // come sul calendario italiano
+            <div class="cal-giorno @(g.DelMese ? "" : "fuori-mese") @(g.Lavorativo ? "" : "non-lavorativo") @(oggi ? "oggi" : "") @(rosso ? "giorno-rosso" : "") @(g.Festa is not null ? "giorno-festa" : "")" role="gridcell" aria-label="@g.Data.ToString("dddd d MMMM")@(g.Festa is { } f0 ? $", {f0}" : "")">
                 <div class="cal-numero">@g.Data.Day</div>
+                @if (g.Festa is { } festa && g.DelMese) { <div class="cal-festa"><i class="ri-flag-2-line" aria-hidden="true"></i> @festa</div> }
                 @foreach (var ch in g.Chiusure) { <div class="cal-chiusura" title="Chiusura aziendale: @ch"><i class="ri-door-closed-line" aria-hidden="true"></i> @ch</div> }
                 @if (g.DelMese && g.Lavorativo)
                 {
@@ -151,17 +153,32 @@
 
 @if (Model.Chiusure.Count > 0)
 {
-    <section class="card radius-15 p-3 p-md-4 mt-3 elenco-chiusure" aria-labelledby="titoloChiusure">
-        <h2 class="titolo-sezione-profilo" id="titoloChiusure">Chiusure aziendali del mese</h2>
-        <ul class="list-unstyled mb-0">
+    @* Chiusure aziendali del mese: data in evidenza, giorni lavorativi che valgono come ferie, eliminazione discreta. *@
+    <section class="card radius-15 p-4 mt-3 card-panoramica" aria-labelledby="titoloChiusure">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+            <h2 class="titolo-card-panoramica mb-0" id="titoloChiusure"><i class="ri-door-closed-line" aria-hidden="true"></i> Chiusure aziendali del mese <span class="numero-gruppo">@Model.Chiusure.Count</span></h2>
+        </div>
+        <ul class="elenco-chiusure">
             @foreach (var c in Model.Chiusure)
             {
-                <li class="d-flex flex-wrap align-items-center justify-content-between gap-2 py-2">
-                    <div><span class="pallino-legenda chiusura me-2" aria-hidden="true"></span><strong>@c.Descrizione</strong>
-                        <span class="text-body-secondary small">· dal @c.Dal.ToString("dd/MM/yyyy") al @c.Al.ToString("dd/MM/yyyy")@(Model.Aziende is not null ? $" · {c.Azienda}" : "")</span></div>
+                var lavorativi = CL.Domain.Assenze.CalendarioLavorativo.GiorniLavorativi(c.Dal, c.Al, 5).Count();
+                var stessoMese = c.Dal.Month == c.Al.Month && c.Dal.Year == c.Al.Year;
+                <li>
+                    <div class="data-chiusura" aria-hidden="true">
+                        <span class="giorni-chiusura">@(c.Dal == c.Al ? c.Dal.Day.ToString() : stessoMese ? $"{c.Dal.Day}–{c.Al.Day}" : $"{c.Dal.Day}/{c.Dal.Month}–{c.Al.Day}/{c.Al.Month}")</span>
+                        <span class="mese-chiusura">@ServizioBustePaga.NomeMese(c.Al.Month)[..3]</span>
+                    </div>
+                    <div class="flex-grow-1 min-w-0">
+                        <div class="nome-panoramica">@c.Descrizione</div>
+                        <div class="small text-body-secondary">
+                            @(c.Dal == c.Al ? c.Dal.ToString("dddd d MMMM yyyy") : $"dal {c.Dal:dddd d MMMM} al {c.Al:dddd d MMMM yyyy}")
+                            @if (Model.Aziende is not null) { <span>· @c.Azienda</span> }
+                        </div>
+                        <span class="etichetta-chiusura">@(lavorativi == 0 ? "Solo giorni festivi: nessuna ferie scalata" : lavorativi == 1 ? "1 giorno lavorativo in ferie" : $"{lavorativi} giorni lavorativi in ferie")</span>
+                    </div>
                     <form asp-action="EliminaChiusura" method="post" class="m-0" onsubmit="return confirm('Eliminare la chiusura e le ferie che ha registrato?');">
                         <input type="hidden" name="id" value="@c.Id" />
-                        <button type="submit" class="btn btn-outline-danger btn-sm"><i class="ri-delete-bin-line" aria-hidden="true"></i> Elimina</button>
+                        <button type="submit" class="btn-elimina-chiusura" title="Elimina la chiusura" aria-label="Elimina la chiusura @c.Descrizione"><i class="ri-delete-bin-line" aria-hidden="true"></i></button>
                     </form>
                 </li>
             }

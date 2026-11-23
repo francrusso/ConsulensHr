@@ -98,6 +98,9 @@ public sealed class DipendenteForm
     };
 }
 
+/// <summary>Giorni del mese: in ufficio, da remoto, assente; con i giorni di smart working e quelli segnati in ufficio.</summary>
+public sealed record PresenzeMese(int Mese, int InUfficio, int Remoto, int Assente, List<DateOnly> SmartWorking, List<DateOnly> SegnatiUfficio);
+
 public sealed class ContrattoForm
 {
     public Guid DipendenteId { get; set; }
@@ -753,15 +756,63 @@ public sealed class DipendentiController(AppDbContext db, UtenteCorrente utente,
             })
             .ToListAsync();
         ViewBag.Saldi = await saldi.Calcola(d, oggi.Year, oggi.Month, richieste);
+        // Smart working e giorni in ufficio dell'anno: righe tra le richieste e conteggi per mese.
+        var (inizioAnno, fineAnno) = (new DateOnly(oggi.Year, 1, 1), new DateOnly(oggi.Year, 12, 31));
+        var smart = await db.GiorniSmartWorking.AsNoTracking().Where(g => g.DipendenteId == d.Id && g.Giorno >= inizioAnno && g.Giorno <= fineAnno).ToListAsync();
+        var ufficio = (await db.GiorniInUfficio.AsNoTracking().Where(g => g.DipendenteId == d.Id && g.Giorno >= inizioAnno && g.Giorno <= fineAnno)
+            .Select(g => g.Giorno).ToListAsync()).ToHashSet();
         ViewBag.Richieste = richieste
-            .OrderByDescending(r => r.Dal)
             .Select(r => new RichiestaRiga(r.Id, r.DipendenteId, d.NomeCompleto, "", r.Tipo, r.Dal, r.Al, r.AOre, r.Ore,
                 r.Stato, r.RichiestaIl, r.Note, r.DecisaDa, r.MotivoRifiuto))
+            .Concat(smart.Select(g => new RichiestaRiga(g.Id, d.Id, d.NomeCompleto, "", CL.Domain.Assenze.TipoAssenza.Ferie, g.Giorno, g.Giorno, false, 0,
+                g.Stato switch
+                {
+                    CL.Domain.Presenze.StatoSmartWorking.Approvato => CL.Domain.Assenze.StatoRichiesta.Approvata,
+                    CL.Domain.Presenze.StatoSmartWorking.Rifiutato => CL.Domain.Assenze.StatoRichiesta.Rifiutata,
+                    _ => CL.Domain.Assenze.StatoRichiesta.InAttesa,
+                }, g.RichiestoIl, null, g.DecisoDa, g.MotivoRifiuto) { SmartWorking = true }))
+            .OrderBy(r => r.Stato == CL.Domain.Assenze.StatoRichiesta.InAttesa ? 0 : 1).ThenByDescending(r => r.Dal)
             .ToList();
+        ViewBag.Presenze = await PresenzeAnno(d, oggi, richieste, smart.Where(g => g.Stato == CL.Domain.Presenze.StatoSmartWorking.Approvato).Select(g => g.Giorno).ToHashSet(), ufficio);
         return View("Scheda", form);
     }
 
     /// <summary>Sedi censite nel profilo dell'azienda (legale e operativa) più lo smart working.</summary>
+    /// <summary>
+    /// Giorni lavorati nell'anno fino a oggi, mese per mese: in ufficio o da remoto (stessa regola del calendario: chi lavora
+    /// a distanza è da remoto salvo i giorni segnati in ufficio, chi lavora in presenza è in ufficio salvo lo smart working
+    /// approvato), più i giorni di assenza di tutta la giornata. Il dettaglio elenca i giorni "fuori dalla regola".
+    /// </summary>
+    private async Task<List<PresenzeMese>> PresenzeAnno(Dipendente d, DateOnly oggi, IEnumerable<CL.Domain.Assenze.RichiestaAssenza> richieste,
+        HashSet<DateOnly> smart, HashSet<DateOnly> ufficio)
+    {
+        var azienda = await db.Aziende.AsNoTracking().FirstAsync(a => a.Id == d.AziendaId);
+        var assenze = richieste.Where(r => r.Stato == CL.Domain.Assenze.StatoRichiesta.Approvata && !r.AOre).ToList();
+        var mesi = new List<PresenzeMese>();
+        for (var m = 1; m <= oggi.Month; m++)
+        {
+            int inUfficio = 0, remoto = 0, assente = 0;
+            var smartMese = new List<DateOnly>();
+            var ufficioMese = new List<DateOnly>();
+            var primo = new DateOnly(oggi.Year, m, 1);
+            for (var g = primo; g.Month == m && g <= oggi; g = g.AddDays(1))
+            {
+                var c = d.ContrattoAttivo(g);
+                var giorno = g;
+                if (c is null || !CL.Domain.Assenze.CalendarioLavorativo.IsLavorativo(g, c.GiorniLavorativiSettimana, azienda.SantoPatronoMese, azienda.SantoPatronoGiorno)) continue;
+                if (assenze.Any(r => r.Dal <= giorno && r.Al >= giorno)) { assente++; continue; }
+                var distanza = ServizioUfficio.LavoraADistanza(d, g);
+                var inSede = ufficio.Contains(g) || (!distanza && !smart.Contains(g));
+                if (inSede) inUfficio++; else remoto++;
+                if (distanza && ufficio.Contains(g)) ufficioMese.Add(g);
+                if (!distanza && smart.Contains(g)) smartMese.Add(g);
+            }
+            if (inUfficio + remoto + assente > 0)
+                mesi.Add(new PresenzeMese(m, inUfficio, remoto, assente, smartMese, ufficioMese));
+        }
+        return mesi;
+    }
+
     private async Task<Dictionary<SedeLavoro, string>> SediAzienda(Guid aziendaId)
     {
         var p = await db.ProfiliAzienda.AsNoTracking().FirstOrDefaultAsync(x => x.AziendaId == aziendaId);

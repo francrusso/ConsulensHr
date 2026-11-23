@@ -156,7 +156,7 @@ public sealed class AssenzeWebTests : IDisposable
         });
         var html = await Testo(r);
         Assert.Contains("Malattia registrata: 24 ore", html); // redirect al dettaglio dipendente
-        Assert.Contains("Ferie e permessi", html);
+        Assert.Contains("Assenze e presenze", html);
 
         r = await consulente.InviaForm($"/Dipendenti/Dettaglio/{_dipId}", "/Assenze/ImpostaResidui", new()
         {

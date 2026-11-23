@@ -17,7 +17,7 @@ public sealed class RichiestaForm
     [Required(ErrorMessage = "Seleziona il dipendente."), Display(Name = "Dipendente")]
     public Guid? DipendenteId { get; set; }
 
-    [Display(Name = "Tipo di assenza")]
+    [Display(Name = "Tipo di richiesta")]
     public TipoAssenza Tipo { get; set; } = TipoAssenza.Ferie;
 
     [Required(ErrorMessage = "Indica la data di inizio."), Display(Name = "Dal")]
@@ -64,6 +64,8 @@ public sealed record GiornoCalendario(DateOnly Data, bool DelMese, bool Lavorati
     public List<string> Chiusure { get; init; } = [];
     /// <summary>Chi lavora a distanza e ha segnato di essere in ufficio.</summary>
     public List<PersonaCalendario> InUfficio { get; init; } = [];
+    /// <summary>Festività del giorno (nazionale, o santo patrono se si guarda una sola azienda).</summary>
+    public string? Festa { get; init; }
     /// <summary>Chi lavora in presenza e ha lo smart working approvato quel giorno.</summary>
     public List<PersonaCalendario> InSmartWorking { get; init; } = [];
 }
@@ -246,8 +248,8 @@ public sealed class AssenzeController(AppDbContext db, UtenteCorrente utente, Se
             ModelState.Remove(nameof(form.DipendenteId));
         }
         // Smart working (chi lavora in presenza) o giorni in ufficio (chi lavora a distanza): stesso modulo, regole del calendario.
-        if (utente.IsDipendente && Request.Form["Tipo"].ToString() is SceltaSmartWorking or SceltaUfficio && utente.DipendenteId is { } mio)
-            return await NuovaGiorniLavoro(form, Request.Form["Tipo"].ToString(), mio, ritorno);
+        if (Request.Form["Tipo"].ToString() is SceltaSmartWorking or SceltaUfficio && form.DipendenteId is { } perChi)
+            return await NuovaGiorniLavoro(form, Request.Form["Tipo"].ToString(), perChi, ritorno);
         if (form.AOre && form.Ore is null)
             ModelState.AddModelError(nameof(form.Ore), "Indica quante ore di permesso.");
         if (form.Tipo == TipoAssenza.Malattia && string.IsNullOrWhiteSpace(form.ProtocolloCertificato))
@@ -296,7 +298,14 @@ public sealed class AssenzeController(AppDbContext db, UtenteCorrente utente, Se
     {
         ViewBag.Lavoro = scelta;
         var modo = scelta == SceltaSmartWorking ? ModoLavoro.Presenza : ModoLavoro.Distanza;
-        if (await ufficio.ModoAsync() != modo) return Forbid();
+        // Il dipendente per sé; azienda e consulente per una persona del proprio perimetro. Valgono per tutti,
+        // qualunque sia la modalità di lavoro del contratto.
+        var dip = await utente.Filtra(db.Dipendenti.AsNoTracking()).FirstOrDefaultAsync(d => d.Id == id);
+        if (dip is null) return Forbid();
+        // La presenza in ufficio non si approva mai. Lo smart working va approvato solo per chi lavora in presenza:
+        // per chi lavora già a distanza è approvato subito; per gli altri lo approva subito il referente, se lo sceglie.
+        var aDistanza = ServizioUfficio.LavoraADistanza(dip, form.Dal ?? Oggi);
+        var approvaSubito = aDistanza || (utente.IsAzienda && form.ApprovaSubito);
         ModelState.Clear(); // il tipo non è un'assenza: valgono solo le date
         if (form.Dal is not { } dal)
         {
@@ -309,12 +318,19 @@ public sealed class AssenzeController(AppDbContext db, UtenteCorrente utente, Se
             ModelState.AddModelError("", errore ?? "Nessun giorno da aggiungere.");
             return await MostraForm(form);
         }
+        // Il referente può approvare subito lo smart working che registra.
+        if (approvaSubito)
+            foreach (var g in db.ChangeTracker.Entries<CL.Domain.Presenze.GiornoSmartWorking>().Where(e => e.State == EntityState.Added))
+                g.Entity.Approva(utente.Email, AdessoUtc);
         await db.SaveChangesAsync();
         var giorni = aggiunti == 1 ? "1 giorno" : $"{aggiunti} giorni";
         Conferma((modo == ModoLavoro.Presenza
-            ? $"Smart working chiesto per {giorni}: in attesa di approvazione dell'azienda."
+            ? approvaSubito ? $"Smart working registrato per {giorni}." : $"Smart working chiesto per {giorni}: in attesa di approvazione dell'azienda."
             : $"{giorni} in ufficio segnat{(aggiunti == 1 ? "o" : "i")}.") + (errore is null ? "" : " " + errore));
-        return Url.IsLocalUrl(ritorno) ? LocalRedirect(ritorno) : RedirectToAction("Index", "Ufficio", new { anno = dal.Year, mese = dal.Month });
+        if (Url.IsLocalUrl(ritorno)) return LocalRedirect(ritorno);
+        return utente.IsDipendente
+            ? RedirectToAction("Index", "Ufficio", new { anno = dal.Year, mese = dal.Month })
+            : RedirectToAction("Dettaglio", "Dipendenti", new { id, sezione = "ferie" });
     }
 
     [HttpPost, ValidateAntiForgeryToken]
@@ -439,16 +455,18 @@ public sealed class AssenzeController(AppDbContext db, UtenteCorrente utente, Se
                 .Select(u => new { u.DipendenteId, u.Giorno }).ToListAsync())
             .ToLookup(u => u.Giorno, u => u.DipendenteId);
 
+        var unica = aziendeVisibili.Count == 1 ? await db.Aziende.AsNoTracking().FirstOrDefaultAsync(a => a.Id == aziendeVisibili[0]) : null;
         var giorni = new List<GiornoCalendario>();
         for (var g = inizio; g <= fine; g = g.AddDays(1))
         {
+            var festa = CalendarioLavorativo.NomeFestivita(g, unica?.SantoPatronoMese, unica?.SantoPatronoGiorno);
             var delMese = g.Month == mese;
-            var lavorativo = CalendarioLavorativo.IsLavorativo(g, 5);
+            var lavorativo = CalendarioLavorativo.IsLavorativo(g, 5, unica?.SantoPatronoMese, unica?.SantoPatronoGiorno);
             var giorno = g;
             var chiuso = delMese
                 ? chiusure.Where(c => c.Dal <= giorno && c.Al >= giorno).Select(c => piuAziende ? $"{c.Descrizione} · {c.Azienda}" : c.Descrizione).ToList()
                 : [];
-            if (!delMese || !lavorativo) { giorni.Add(new GiornoCalendario(g, delMese, lavorativo, [], []) { Chiusure = chiuso }); continue; }
+            if (!delMese || !lavorativo) { giorni.Add(new GiornoCalendario(g, delMese, lavorativo, [], []) { Chiusure = chiuso, Festa = festa }); continue; }
             var inForza = persone.Values.Where(d => d.InForzaIl(giorno)).ToList();
             var assenti = richieste.Where(r => r.Dal <= giorno && r.Al >= giorno && persone.ContainsKey(r.DipendenteId) && persone[r.DipendenteId].InForzaIl(giorno))
                 .OrderBy(r => r.Stato).ThenBy(r => persone[r.DipendenteId].Cognome)
@@ -463,6 +481,7 @@ public sealed class AssenzeController(AppDbContext db, UtenteCorrente utente, Se
             giorni.Add(new GiornoCalendario(g, true, true, presenti.Select(P).ToList(), assenti)
             {
                 Chiusure = chiuso,
+                Festa = festa,
                 InUfficio = luogo == "remoto" ? [] : presenti.Where(d => segnati.Contains(d.Id)).Select(P).OrderBy(p => p.Nome).ToList(),
                 InSmartWorking = luogo == "ufficio" ? [] : presenti.Where(d => aCasa.Contains(d.Id)).Select(P).OrderBy(p => p.Nome).ToList(),
             });
@@ -643,7 +662,6 @@ public sealed class AssenzeController(AppDbContext db, UtenteCorrente utente, Se
     {
         ViewBag.Gestore = Gestore;
         ViewBag.PuoApprovare = utente.IsAzienda;
-        ViewBag.Modo = utente.IsDipendente ? await ufficio.ModoAsync() : null;
         var scelto = form.DipendenteId;
         var attivo = Filtri.ContrattoAttivoIl(Oggi);
         // Filtro e proiezione nel database: solo id e nome dei dipendenti in forza (più quello già scelto).
