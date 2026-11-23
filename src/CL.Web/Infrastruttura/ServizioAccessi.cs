@@ -50,6 +50,10 @@ public sealed class ServizioAccessi(
         from u in db.Users
         join ur in db.UserRoles on u.Id equals ur.UserId
         join r in db.Roles on ur.RoleId equals r.Id
+        // Il super amministratore ha anche il ruolo consulente: una sola riga, quella da amministratore.
+        where r.Name != Ruoli.Consulente
+              || !(from ur2 in db.UserRoles join r2 in db.Roles on ur2.RoleId equals r2.Id
+                   where ur2.UserId == u.Id && r2.Name == Ruoli.Amministratore select ur2).Any()
         from a in db.Aziende.Where(a => a.Id == u.AziendaId).DefaultIfEmpty()
         select new UtenteRiga
         {

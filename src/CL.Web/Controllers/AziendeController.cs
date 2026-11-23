@@ -90,6 +90,7 @@ public sealed class AziendeController(AppDbContext db, ServizioAccessi accessi, 
             .ToListAsync();
 
         ViewBag.Ricerca = q;
+        ViewBag.ConsulentiAziende = await HttpContext.RequestServices.GetRequiredService<ServizioConsulentiAziende>().NomiAsync();
         return View(righe);
     }
 
@@ -214,6 +215,7 @@ public sealed class AziendeController(AppDbContext db, ServizioAccessi accessi, 
         ViewBag.Profilo = await db.ProfiliAzienda.AsNoTracking().FirstOrDefaultAsync(p => p.AziendaId == id);
         ViewBag.Referenti = await accessi.Elenco().Where(u => u.AziendaId == id && u.Ruolo == Ruoli.Azienda)
             .OrderBy(u => u.Nome).ToListAsync();
+        ViewBag.ConsulentiAziende = await HttpContext.RequestServices.GetRequiredService<ServizioConsulentiAziende>().NomiAsync();
         return View(azienda);
     }
 

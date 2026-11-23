@@ -42,6 +42,7 @@ builder.Services.AddScoped<UtenteCorrente>();
 builder.Services.AddScoped<ServizioSaldi>();
 builder.Services.AddScoped<ServizioUfficio>();
 builder.Services.AddScoped<ServizioAvatar>();
+builder.Services.AddScoped<ServizioConsulentiAziende>();
 builder.Services.AddScoped<ServizioAccessi>();
 builder.Services.AddScoped<ServizioBustePaga>();
 builder.Services.AddScoped<NotificheAssenze>();

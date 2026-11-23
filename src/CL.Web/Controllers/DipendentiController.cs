@@ -237,6 +237,7 @@ public static class StatoPersonaleExtensions
 public sealed record DipendenteRiga(Guid Id, string NomeCompleto, string CodiceFiscale, string Azienda, string? Inquadramento, StatoPersonale Stato,
     bool HaFoto = false, string Segnaposto = "neutro")
 {
+    public Guid AziendaId { get; init; }
     /// <summary>Posizione nell'organigramma o, in mancanza, mansione del contratto.</summary>
     public string? Profilo { get; init; }
     public TeamRiga? Team { get; init; }
@@ -306,7 +307,7 @@ public sealed class DipendentiController(AppDbContext db, UtenteCorrente utente,
         var righeDb = (await query.OrderBy(d => d.Cognome).ThenBy(d => d.Nome)
                 .Select(d => new
                 {
-                    d.Id, d.Cognome, d.Nome, d.CodiceFiscale,
+                    d.Id, d.AziendaId, d.Cognome, d.Nome, d.CodiceFiscale,
                     Azienda = db.Aziende.Where(a => a.Id == d.AziendaId).Select(a => a.RagioneSociale).FirstOrDefault(),
                     Livello = d.Contratti.AsQueryable().Where(attivo).Select(c => c.Livello).FirstOrDefault(),
                     Tipo = d.Contratti.OrderByDescending(c => c.DataInizio).Select(c => (TipoContratto?)c.Tipo).FirstOrDefault(),
@@ -347,6 +348,7 @@ public sealed class DipendentiController(AppDbContext db, UtenteCorrente utente,
                     : d.Cessato ? StatoPersonale.Cessato : StatoPersonale.Scaduto,
                 d.HaFoto, Dipendente.SegnapostoPer(d.Genere, d.Pronomi))
             {
+                AziendaId = d.AziendaId,
                 Profilo = !string.IsNullOrWhiteSpace(d.Posizione) ? d.Posizione : d.InForza ? d.MansioneA : d.MansioneU,
                 Team = d.TeamId is { } t ? team.GetValueOrDefault(t) : null,
                 Ral = d.InForza ? d.RalA : d.RalU,
@@ -358,6 +360,7 @@ public sealed class DipendentiController(AppDbContext db, UtenteCorrente utente,
             .ToList();
 
         ViewBag.Oggi = oggi;
+        ViewBag.ConsulentiAziende = await HttpContext.RequestServices.GetRequiredService<ServizioConsulentiAziende>().NomiAsync();
         ViewBag.Ricerca = q;
         ViewBag.Esterni = esterni;
         ViewBag.AziendaId = aziendaId;

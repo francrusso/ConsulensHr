@@ -29,7 +29,7 @@
                     <td data-label="Email">@u.Email</td>
                     @if (esteso)
                     {
-                        <td data-label="Ruolo">@(u.Ruolo switch { "Azienda" => "Referente azienda", var r => r })</td>
+                        <td data-label="Ruolo">@(u.Ruolo switch { "Azienda" => "Referente azienda", "Amministratore" => "Super amministratore", var r => r })</td>
                         <td data-label="Azienda">
                             @if (u.AziendaId is { } a) { <a asp-controller="Aziende" asp-action="Dettaglio" asp-route-id="@a">@u.Azienda</a> } else { <span>—</span> }
                         </td>

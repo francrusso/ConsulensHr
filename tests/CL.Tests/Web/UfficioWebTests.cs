@@ -578,6 +578,9 @@ public sealed class UfficioWebTests : IDisposable
         await _app.CreaUtente("admin@test.it", Ruoli.Consulente);
         var admin = _app.CreateClient(); await admin.Accedi("admin@test.it");
         Assert.Contains("studio1@test.it", WebUtility.HtmlDecode(await admin.GetStringAsync("/Consulenti")));
+        var utenti = WebUtility.HtmlDecode(await admin.GetStringAsync("/Utenti"));
+        Assert.Single(System.Text.RegularExpressions.Regex.Matches(utenti, @"<td[^>]*>admin@test\.it</td>"));   // una sola riga per il super amministratore
+        Assert.Contains("Super amministratore", utenti);
         await admin.InviaForm($"/Consulenti/Dettaglio/{mio.Id}", $"/Consulenti/Assegna/{mio.Id}", new() { ["aziende"] = _aziendaId.ToString() });
         Assert.Contains("Rossi Mario", WebUtility.HtmlDecode(await c1.GetStringAsync("/Dipendenti")));
         Assert.DoesNotContain("Rossi Mario", WebUtility.HtmlDecode(await c2.GetStringAsync("/Dipendenti")));
@@ -587,6 +590,11 @@ public sealed class UfficioWebTests : IDisposable
         Assert.Contains("Beta", WebUtility.HtmlDecode(await c2.GetStringAsync("/Aziende")));
         Assert.DoesNotContain("Beta", WebUtility.HtmlDecode(await c1.GetStringAsync("/Aziende")));
         Assert.Contains("Beta", WebUtility.HtmlDecode(await admin.GetStringAsync("/Aziende"))); // il super amministratore vede tutto
+        // Il super amministratore vede a quale consulente è legata ogni azienda e ogni persona.
+        Assert.Contains("<th scope=\"col\">Consulente</th>", await admin.GetStringAsync("/Aziende"));
+        Assert.Contains("<th scope=\"col\">Consulente</th>", await admin.GetStringAsync("/Dipendenti"));
+        Assert.Contains("Super amministratore", WebUtility.HtmlDecode(await admin.GetStringAsync("/Aziende"))); // ruolo nella card in alto
+        Assert.DoesNotContain("<th scope=\"col\">Consulente</th>", await c1.GetStringAsync("/Aziende"));
     }
 
     [Fact]

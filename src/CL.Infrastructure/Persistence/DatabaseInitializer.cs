@@ -53,7 +53,8 @@ public static class DatabaseInitializer
 
     /// <summary>
     /// Super amministratore da "Seed:Amministratore:Email" (user-secrets). Se l'utente esiste già riceve il ruolo;
-    /// altrimenti si crea con "Seed:Amministratore:Password". Ha anche il ruolo consulente, così usa tutte le pagine dello studio.
+    /// altrimenti si crea (con "Seed:Amministratore:Password" se c'è, altrimenti senza password, da scegliere con il link
+    /// di "Password dimenticata?"). Ha anche il ruolo consulente, così usa tutte le pagine dello studio.
     /// </summary>
     private static async Task SuperAmministratoreAsync(IServiceProvider sp, IConfiguration config, ILogger logger)
     {
@@ -63,16 +64,19 @@ public static class DatabaseInitializer
         var utente = await userManager.FindByEmailAsync(email);
         if (utente is null)
         {
+            // Senza password negli user-secrets l'account nasce come un invito: la password si sceglie da
+            // "Password dimenticata?" nella pagina di accesso (il link arriva all'email, che così risulta confermata).
             var password = config["Seed:Amministratore:Password"];
-            if (string.IsNullOrWhiteSpace(password)) { logger.LogWarning("Seed:Amministratore:Password mancante: super amministratore non creato."); return; }
-            utente = new ApplicationUser { UserName = email, Email = email, EmailConfirmed = true, Nome = "Super amministratore" };
-            var esito = await userManager.CreateAsync(utente, password);
+            var conPassword = !string.IsNullOrWhiteSpace(password);
+            utente = new ApplicationUser { UserName = email, Email = email, EmailConfirmed = conPassword, Nome = "Super amministratore" };
+            var esito = conPassword ? await userManager.CreateAsync(utente, password!) : await userManager.CreateAsync(utente);
             if (!esito.Succeeded)
             {
                 logger.LogError("Creazione super amministratore fallita: {Errori}", string.Join("; ", esito.Errors.Select(e => e.Description)));
                 return;
             }
-            logger.LogInformation("Creato il super amministratore {Email}", email);
+            logger.LogInformation(conPassword ? "Creato il super amministratore {Email}"
+                : "Creato il super amministratore {Email}: la password si sceglie da \"Password dimenticata?\"", email);
         }
         foreach (var ruolo in new[] { Ruoli.Amministratore, Ruoli.Consulente })
             if (!await userManager.IsInRoleAsync(utente, ruolo)) await userManager.AddToRoleAsync(utente, ruolo);

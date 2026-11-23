@@ -6,7 +6,7 @@
 *@
 @{
     var autenticato = User.Identity?.IsAuthenticated == true && ViewData["AuthPanel"] is not true;
-    var ruolo = Utente.IsConsulente ? "Consulente" : Utente.IsAzienda ? "Referente azienda" : Utente.IsDipendente ? "Dipendente" : "";
+    var ruolo = Utente.IsAmministratore ? "Super amministratore" : Utente.IsConsulente ? "Consulente" : Utente.IsAzienda ? "Referente azienda" : Utente.IsDipendente ? "Dipendente" : "";
     var inOnboarding = User.HasClaim(c => c.Type == CL.Infrastructure.Identity.ClaimsPersonalizzati.OnboardingDaCompletare);
 
     // Pulsante "aggiungi" nella barra in alto, in base alla sezione (come in ConsulensNew).
@@ -19,6 +19,8 @@
             esterniAttivi ? "Aggiungi professionista" : "Aggiungi persona", "ri-user-add-line"),
         "aziende" when Utente.IsConsulente => (Url.Action("Nuova", "Aziende"), "Nuova azienda", "ri-add-line"),
         "team" when (ViewContext.RouteData.Values["action"] as string) == "Index" => ("#nuovoTeam", "Nuovo team", "ri-add-line"),
+        "utenti" when Utente.IsAmministratore => (Url.Action("Index", "Consulenti"), "Gestisci i consulenti", "ri-user-star-line"),
+        "consulenti" when (ViewContext.RouteData.Values["action"] as string) == "Index" => ("#nuovoConsulente", "Nuovo consulente", "ri-user-add-line"),
         "assenze" or "ufficio" => (Url.Action("Nuova", "Assenze"), "Nuova richiesta", "ri-calendar-event-line"),
         "bustepaga" when !Utente.IsDipendente => (Url.Action("Carica", "BustePaga"), "Carica busta paga", "ri-upload-2-line"),
         "documenti" when !Utente.IsDipendente && (ViewContext.RouteData.Values["action"] as string) is "Contratti" or "NuovoContratto"
