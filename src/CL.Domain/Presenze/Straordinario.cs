@@ -50,6 +50,13 @@ public sealed class Straordinario : Entity
         DecisoIl = adesso;
     }
 
+    /// <summary>L'azienda revoca lo straordinario (anche approvato): esce dal riepilogo presenze.</summary>
+    public void Revoca()
+    {
+        if (Stato is not (StatoRichiesta.InAttesa or StatoRichiesta.Approvata)) throw new DomainException("La richiesta non è più attiva.");
+        Stato = StatoRichiesta.Annullata;
+    }
+
     public void Rifiuta(string approvatore, string? motivo, DateTime adesso)
     {
         if (Stato != StatoRichiesta.InAttesa) throw new DomainException("Solo le richieste in attesa possono essere rifiutate.");

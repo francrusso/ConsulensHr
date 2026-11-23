@@ -391,6 +391,38 @@ public sealed class UfficioWebTests : IDisposable
     }
 
     [Fact]
+    public async Task Il_referente_vede_il_dettaglio_e_revoca_anche_una_richiesta_passata()
+    {
+        await PreparaDipendente(SedeLavoro.SedeLegale);
+        var giorno = new DateOnly(DateTime.Today.Year, 1, 12);
+        while (!CalendarioLavorativo.IsLavorativo(giorno, 5)) giorno = giorno.AddDays(1);
+        if (giorno >= DateOnly.FromDateTime(DateTime.Today)) return;
+        var id = await _app.ConDb(async db =>
+        {
+            var d = await db.Dipendenti.SingleAsync();
+            var a = await db.Aziende.SingleAsync();
+            var ferie = PianificatoreAssenze.Crea(d, a, TipoAssenza.Ferie, giorno, giorno, [], DateTime.UtcNow);
+            ferie.Approva("hr", DateTime.UtcNow);
+            db.Add(ferie);
+            await db.SaveChangesAsync();
+            return ferie.Id;
+        });
+        await _app.CreaUtente("hr@test.it", Ruoli.Azienda, _aziendaId);
+        var hr = _app.CreateClient();
+        await hr.Accedi("hr@test.it");
+        var html = WebUtility.HtmlDecode(await hr.GetStringAsync("/Assenze"));
+        Assert.Contains("modaleDettaglioRichiesta", html);
+        Assert.Contains($"/Assenze/Revoca/{id}?genere=assenza", html);
+        await hr.InviaForm("/Assenze", $"/Assenze/Revoca/{id}?genere=assenza", new());
+        Assert.Equal(StatoRichiesta.Annullata, (await _app.ConDb(db => db.RichiesteAssenza.SingleAsync())).Stato);
+
+        // Contratti: stato del contratto e modifica che apre proprio quel contratto.
+        var contratti = WebUtility.HtmlDecode(await hr.GetStringAsync("/Documenti/Contratti"));
+        Assert.Contains(">Attivo</span>", contratti);
+        Assert.Matches(@"sezione=contratto&modifica=[Tt]rue&contratto=", contratti);
+    }
+
+    [Fact]
     public async Task Senza_contratto_il_calendario_si_vede_ma_non_si_segna_nulla()
     {
         var dip = await PreparaDipendente(SedeLavoro.SedeLegale);

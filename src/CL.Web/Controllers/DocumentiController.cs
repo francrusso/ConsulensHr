@@ -14,7 +14,15 @@ namespace CL.Web.Controllers;
 public sealed record RigaCu(Guid DipendenteId, string Persona, string Azienda, Guid? CuId, string? NomeFile, DateTime? CaricataIl, DateTime? VisualizzataIl);
 
 public sealed record RigaContrattoDoc(Guid DipendenteId, string Persona, string Azienda, Guid ContrattoId, TipoContratto Tipo,
-    DateOnly Dal, DateOnly? Al, bool HaDocumento, string? NomeFile, DateTime? CaricatoIl);
+    DateOnly Dal, DateOnly? Al, bool HaDocumento, string? NomeFile, DateTime? CaricatoIl, DateOnly? DataCessazione = null)
+{
+    /// <summary>Stato del contratto, con gli stessi nomi e colori dell'elenco del personale.</summary>
+    public StatoPersonale StatoIl(DateOnly oggi) =>
+        DataCessazione is { } c && c <= oggi ? StatoPersonale.Cessato
+        : Dal > oggi ? StatoPersonale.Firmato
+        : Al is { } f && f < oggi ? StatoPersonale.Scaduto
+        : StatoPersonale.Attivo;
+}
 
 public sealed class ElencoDocumentiViewModel<T>
 {
@@ -127,7 +135,7 @@ public sealed class DocumentiController(AppDbContext db, UtenteCorrente utente, 
             from c in db.Contratti.AsNoTracking().Where(c => c.DipendenteId == d.Id)
             orderby d.Cognome, d.Nome, c.DataInizio descending
             select new RigaContrattoDoc(d.Id, d.Cognome + " " + d.Nome, az.RagioneSociale, c.Id, c.Tipo, c.DataInizio, c.DataFine,
-                c.DocumentoChiave != null, c.DocumentoNome, c.DocumentoCaricatoIl)).ToListAsync();
+                c.DocumentoChiave != null, c.DocumentoNome, c.DocumentoCaricatoIl, c.DataCessazione)).ToListAsync();
         return View(new ElencoDocumentiViewModel<RigaContrattoDoc> { Righe = righe, Ricerca = q, AziendaId = aziendaId, Aziende = await ElencoAziende(aziendaId) });
     }
 

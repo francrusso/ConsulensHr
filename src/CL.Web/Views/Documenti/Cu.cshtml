@@ -35,7 +35,24 @@
 else
 {
     <partial name="_Filtri" model="(nameof(CL.Web.Controllers.DocumentiController.Cu), Model.Ricerca, Model.AziendaId, Model.Aziende, (int?)Model.Anno, Model.Anni)" />
-    <p class="small text-body-secondary">CU @(Model.Anno + 1) sui redditi @Model.Anno: @Model.Righe.Count(r => r.CuId is not null) caricate su @Model.Righe.Count.</p>
+    var caricate = Model.Righe.Count(r => r.CuId is not null);
+    var mancanti = Model.Righe.Count - caricate;
+    var complete = Model.Righe.Count > 0 && mancanti == 0;
+    var titoloCu = complete ? $"Tutte le CU {Model.Anno + 1} sono caricate"
+        : mancanti > 0 ? $"{(mancanti == 1 ? "Manca 1 CU" : $"Mancano {mancanti} CU")} da caricare"
+        : $"Nessuna persona per le CU {Model.Anno + 1}";
+    @* Avviso ben visibile: rosso finché mancano CU (vanno consegnate entro il 16 marzo), verde quando ci sono tutte. *@
+    <div class="avviso-cu @(complete ? "completo" : mancanti > 0 ? "mancanti" : "")" role="status">
+        <i class="@(complete ? "ri-checkbox-circle-fill" : "ri-error-warning-fill") icona-avviso-cu" aria-hidden="true"></i>
+        <div class="flex-grow-1">
+            <div class="titolo-avviso-cu">@titoloCu</div>
+            <div class="small">CU @(Model.Anno + 1) sui redditi @Model.Anno: @caricate caricate su @Model.Righe.Count@(mancanti > 0 ? " · vanno consegnate ai dipendenti entro il 16 marzo" : "")</div>
+        </div>
+        @if (Model.Righe.Count > 0)
+        {
+            <div class="progresso-cu" aria-hidden="true"><span style="width:@(caricate * 100 / Model.Righe.Count)%"></span></div>
+        }
+    </div>
 
     <div class="card radius-15 table-responsive table-actions-responsive p-1 customer-results">
         <table class="table mb-0 align-middle">

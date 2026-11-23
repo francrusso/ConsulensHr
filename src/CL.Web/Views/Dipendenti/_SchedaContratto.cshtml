@@ -4,7 +4,9 @@
     var (idDip, contratti, oggi) = Model;
     var it = System.Globalization.CultureInfo.GetCultureInfo("it-IT");
     // Contratto di riferimento: quello in corso, altrimenti il più recente.
-    var corrente = contratti.FirstOrDefault(c => c.AttivoIl(oggi)) ?? contratti.FirstOrDefault();
+    // Dall'elenco dei contratti si arriva con ?contratto=… per vedere (e modificare) proprio quello.
+    var scelto = Guid.TryParse(Context.Request.Query["contratto"], out var idScelto) ? contratti.FirstOrDefault(c => c.Id == idScelto) : null;
+    var corrente = scelto ?? contratti.FirstOrDefault(c => c.AttivoIl(oggi)) ?? contratti.FirstOrDefault();
     var storico = contratti.Where(c => c != corrente).ToList();
     string E(decimal v) => v.ToString("C0", it);
     string Ore(decimal v) => v.ToString("0.##", it) + " h";

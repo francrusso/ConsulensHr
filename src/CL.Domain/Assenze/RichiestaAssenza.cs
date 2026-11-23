@@ -90,4 +90,11 @@ public sealed class RichiestaAssenza : Entity
             throw new DomainException("Non è possibile annullare un'assenza già iniziata: contattare l'ufficio del personale.");
         Stato = StatoRichiesta.Annullata;
     }
+
+    /// <summary>L'azienda revoca una richiesta (anche approvata e già passata, es. registrata per errore): non conta più nei saldi.</summary>
+    public void Revoca()
+    {
+        if (!Attiva) throw new DomainException("La richiesta non è più attiva.");
+        Stato = StatoRichiesta.Annullata;
+    }
 }

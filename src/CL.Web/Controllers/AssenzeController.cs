@@ -366,6 +366,37 @@ public sealed class AssenzeController(AppDbContext db, UtenteCorrente utente, Se
         return Torna(ritorno);
     }
 
+    /// <summary>
+    /// Il referente revoca una richiesta attiva (anche approvata e già passata): assenze e straordinari passano ad annullati,
+    /// lo smart working si toglie. Non conta più in saldi, calendario e riepilogo presenze.
+    /// </summary>
+    [HttpPost, ValidateAntiForgeryToken, Authorize(Roles = Ruoli.Azienda)]
+    public async Task<IActionResult> Revoca(Guid id, string? genere, string? ritorno)
+    {
+        var ids = utente.Filtra(db.Dipendenti).Select(d => d.Id);
+        switch (genere)
+        {
+            case "smart":
+                var g = await db.GiorniSmartWorking.FirstOrDefaultAsync(x => x.Id == id && ids.Contains(x.DipendenteId));
+                if (g is null) return NotFound();
+                db.GiorniSmartWorking.Remove(g);
+                break;
+            case "straordinario":
+                var s = await db.Straordinari.FirstOrDefaultAsync(x => x.Id == id && ids.Contains(x.DipendenteId));
+                if (s is null) return NotFound();
+                if (!Prova(s.Revoca)) { Errore(PrimoErrore()); return Torna(ritorno); }
+                break;
+            default:
+                var r = await Trova(id);
+                if (r is null) return NotFound();
+                if (!Prova(r.Revoca)) { Errore(PrimoErrore()); return Torna(ritorno); }
+                break;
+        }
+        await db.SaveChangesAsync();
+        Conferma("Richiesta revocata.");
+        return Torna(ritorno);
+    }
+
     /// <summary>Il dipendente ritira uno straordinario ancora in attesa.</summary>
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> RitiraStraordinario(Guid id, string? ritorno)

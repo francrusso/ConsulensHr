@@ -33,6 +33,11 @@
                 var decidibile = r.Stato == StatoRichiesta.InAttesa && gestore && (!(r.SmartWorking || r.Straordinario) || Utente.IsAzienda);
                 var tipoNome = r.SmartWorking ? "Smart working" : r.Straordinario ? "Straordinario" : r.Tipo.Descrizione();
                 var azioneDecidi = r.SmartWorking ? "DecidiSmartWorking" : r.Straordinario ? "DecidiStraordinario" : null;
+                // Il referente revoca qualunque richiesta attiva, anche approvata e già passata (es. registrata per errore).
+                var revocabile = Utente.IsAzienda && r.Stato is StatoRichiesta.InAttesa or StatoRichiesta.Approvata;
+                if (revocabile) annullabile = false;
+                var genere = r.SmartWorking ? "smart" : r.Straordinario ? "straordinario" : "assenza";
+                var periodo = r.Dal == r.Al ? r.Dal.ToString("dddd d MMMM yyyy") : $"dal {r.Dal:dddd d MMMM} al {r.Al:dddd d MMMM yyyy}";
                 <tr class="customer-result-row">
                     @if (mostraDipendente)
                     {
@@ -66,6 +71,11 @@
                     </td>
                     <td data-label="Azioni">
                         <div class="customer-actions">
+                            <button type="button" title="Dettaglio" aria-label="Dettaglio della richiesta" data-bs-toggle="modal" data-bs-target="#modaleDettaglioRichiesta"
+                                    data-persona="@r.Dipendente" data-tipo="@tipoNome" data-periodo="@periodo"
+                                    data-ore="@(r.SmartWorking ? "—" : r.Ore.ToString("0.##") + " h")" data-stato="@r.Stato.ToString()"
+                                    data-richiesta="@r.RichiestaIl.ToLocalTime().ToString("dd/MM/yyyy 'alle' HH:mm")" data-decisa="@(r.DecisaDa ?? "—")"
+                                    data-note="@(r.Note ?? "—")" data-motivo="@(r.MotivoRifiuto ?? "")"><i class="ri-eye-line" aria-hidden="true"></i></button>
                             @if (decidibile)
                             {
                                 <form asp-controller="Assenze" asp-action="@(azioneDecidi ?? "Approva")" asp-route-id="@r.Id" asp-route-approva="@(azioneDecidi is null ? null : "true")" method="post" class="d-inline">
@@ -88,6 +98,14 @@
                                     <input type="hidden" name="giorno" value="@r.Dal.ToString("yyyy-MM-dd")" />
                                     <input type="hidden" name="ritorno" value="@ritorno" />
                                     <button type="submit" aria-label="Ritira richiesta" title="Ritira richiesta"><i class="ri-close-circle-line" aria-hidden="true"></i></button>
+                                </form>
+                            }
+                            @if (revocabile)
+                            {
+                                <form asp-controller="Assenze" asp-action="Revoca" asp-route-id="@r.Id" asp-route-genere="@genere" method="post" class="d-inline"
+                                      onsubmit="return confirm('Revocare questa richiesta? Non conterà più (saldi, calendario, riepilogo presenze).');">
+                                    <input type="hidden" name="ritorno" value="@ritorno" />
+                                    <button type="submit" aria-label="Revoca richiesta" title="Revoca richiesta"><i class="ri-arrow-go-back-line" aria-hidden="true"></i></button>
                                 </form>
                             }
                             @if (annullabile)
@@ -134,6 +152,42 @@
             document.getElementById('formRifiuto').action = e.relatedTarget.dataset.azione;
             document.getElementById('descrizioneRifiuto').textContent = e.relatedTarget.dataset.descrizione;
             document.getElementById('motivo').value = '';
+        });
+    </script>
+}
+
+@if (ViewData["ModaleDettaglioRichiesta"] is not true)
+{
+    ViewData["ModaleDettaglioRichiesta"] = true;
+    <div class="modal fade" id="modaleDettaglioRichiesta" tabindex="-1" aria-labelledby="titoloDettaglioRichiesta" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content radius-15">
+                <div class="modal-header">
+                    <h2 class="modal-title h5" id="titoloDettaglioRichiesta">Dettaglio richiesta</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+                </div>
+                <div class="modal-body">
+                    <dl class="dettaglio-richiesta mb-0">
+                        <dt>Persona</dt><dd data-campo="persona"></dd>
+                        <dt>Tipo</dt><dd data-campo="tipo"></dd>
+                        <dt>Periodo</dt><dd data-campo="periodo"></dd>
+                        <dt>Ore</dt><dd data-campo="ore"></dd>
+                        <dt>Stato</dt><dd data-campo="stato"></dd>
+                        <dt>Richiesta il</dt><dd data-campo="richiesta"></dd>
+                        <dt>Decisa da</dt><dd data-campo="decisa"></dd>
+                        <dt>Note</dt><dd data-campo="note"></dd>
+                        <dt data-se="motivo">Motivo del rifiuto</dt><dd data-campo="motivo" data-se="motivo"></dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.getElementById('modaleDettaglioRichiesta').addEventListener('show.bs.modal', function (e) {
+            const d = e.relatedTarget.dataset;
+            const stati = { InAttesa: 'In attesa', Approvata: 'Approvata', Rifiutata: 'Rifiutata', Annullata: 'Annullata' };
+            this.querySelectorAll('[data-campo]').forEach(el => el.textContent = el.dataset.campo === 'stato' ? (stati[d.stato] || d.stato) : (d[el.dataset.campo] || ''));
+            this.querySelectorAll('[data-se="motivo"]').forEach(el => el.hidden = !d.motivo);
         });
     </script>
 }
