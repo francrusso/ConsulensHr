@@ -24,6 +24,7 @@ internal sealed class AziendaConfig : IEntityTypeConfiguration<Azienda>
         b.Property(x => x.Cap).HasMaxLength(5);
         b.Property(x => x.Provincia).HasMaxLength(2);
         b.Property(x => x.LogoChiave).HasMaxLength(500);
+        b.Property(x => x.RichiesteDisattivate).HasMaxLength(500);
         b.Ignore(x => x.SedeCompleta);
         b.HasIndex(x => x.PartitaIva).IsUnique();
     }
@@ -234,6 +235,21 @@ internal sealed class GiornoSmartWorkingConfig : IEntityTypeConfiguration<CL.Dom
         b.Property(x => x.MotivoRifiuto).HasMaxLength(500);
         b.HasOne<Dipendente>().WithMany().HasForeignKey(x => x.DipendenteId).OnDelete(DeleteBehavior.Cascade);
         b.HasIndex(x => new { x.DipendenteId, x.Giorno }).IsUnique();
+        b.HasIndex(x => new { x.Stato, x.Giorno });
+    }
+}
+
+internal sealed class StraordinarioConfig : IEntityTypeConfiguration<CL.Domain.Presenze.Straordinario>
+{
+    public void Configure(EntityTypeBuilder<CL.Domain.Presenze.Straordinario> b)
+    {
+        b.ToTable("Straordinari");
+        b.Property(x => x.Id).ValueGeneratedNever();
+        b.Property(x => x.Note).HasMaxLength(500);
+        b.Property(x => x.DecisoDa).HasMaxLength(256);
+        b.Property(x => x.MotivoRifiuto).HasMaxLength(1000);
+        b.HasOne<Dipendente>().WithMany().HasForeignKey(x => x.DipendenteId).OnDelete(DeleteBehavior.Cascade);
+        b.HasIndex(x => new { x.DipendenteId, x.Giorno });
         b.HasIndex(x => new { x.Stato, x.Giorno });
     }
 }

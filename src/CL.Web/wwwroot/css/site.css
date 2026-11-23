@@ -667,3 +667,42 @@ input.tessera-emoji.altra-emoji::placeholder { font-size: 12.5px; color: var(--c
     background: color-mix(in srgb, #6096FF 14%, #fff); color: color-mix(in srgb, #6096FF 55%, #000); }
 .btn-elimina-chiusura { border: 0; background: transparent; width: 34px; height: 34px; border-radius: 50%; color: var(--consulens-breadcrumb-muted); transition: background .15s, color .15s; }
 .btn-elimina-chiusura:hover, .btn-elimina-chiusura:focus-visible { background: color-mix(in srgb, #D9534F 12%, #fff); color: #A33B37; }
+
+/* Riepilogo presenze: una card per persona */
+.card-presenze { display: flex; flex-direction: column; gap: 16px; }
+.intestazione-presenza { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin-bottom: 14px; }
+.avatar-presenza { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 2px solid #fff; box-shadow: 0 0 0 1px var(--consulens-border); }
+.nome-presenza { font-family: 'Quasimoda', 'Poppins', sans-serif; font-size: 1.1rem; font-weight: 500; }
+.nome-presenza a { color: var(--consulens-breadcrumb-active); text-decoration: none; }
+.nome-presenza a:hover { color: #98494E; }
+.giorni-presenza { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip-giorni { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 50rem; font-size: 12px; font-weight: 500;
+    background: var(--consulens-canvas); color: var(--consulens-breadcrumb-active); }
+.chip-giorni.ufficio { background: color-mix(in srgb, #2FBA6C 12%, #fff); color: #1E7A47; }
+.chip-giorni.remoto { background: color-mix(in srgb, #7C9CD6 16%, #fff); color: color-mix(in srgb, #7C9CD6 55%, #000); }
+.sottotitolo-presenza { font-family: 'Quasimoda', 'Poppins', sans-serif; text-transform: uppercase; font-size: 12px; letter-spacing: .05em;
+    color: var(--consulens-breadcrumb-muted); margin: 6px 0 8px; }
+.assenze-presenza { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-bottom: 10px; }
+.tessera-assenza { display: flex; flex-direction: column; gap: 2px; padding: 8px 12px; border-radius: 10px;
+    background: color-mix(in srgb, var(--colore-cat) 10%, #fff); border-left: 3px solid var(--colore-cat); font-size: 12px; color: var(--consulens-breadcrumb-muted); }
+.tessera-assenza strong { font-size: 1rem; color: var(--consulens-breadcrumb-active); }
+.tessera-assenza.vuota { background: var(--consulens-canvas); border-left-color: var(--consulens-border); }
+.tessera-assenza.vuota strong { color: var(--consulens-breadcrumb-muted); font-weight: 400; }
+.campi-presenza { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px 14px; }
+.campi-presenza .form-label { font-family: 'Quasimoda', 'Poppins', sans-serif; text-transform: uppercase; font-size: 11.5px; letter-spacing: .03em; color: var(--consulens-breadcrumb-muted); margin-bottom: 4px; }
+.campi-presenza .campo-note { grid-column: span 4; }
+.valore-presenza { padding: 6px 0; font-weight: 500; }
+@media (max-width: 991.98px) { .assenze-presenza, .campi-presenza { grid-template-columns: repeat(2, minmax(0, 1fr)); } .campi-presenza .campo-note { grid-column: span 2; } }
+.barra-invio { position: sticky; bottom: 0; background: var(--consulens-canvas, #FFFDFB); padding: 12px 0; z-index: 5; }
+/* Stesso tono della riga sotto il nome nella scheda della persona */
+.dettaglio-presenza { color: #9a858d; font-size: 13px; }
+.nota-campo { margin-top: 4px; font-size: 11.5px; color: #9a858d; display: flex; align-items: center; gap: 4px; }
+.nota-campo i { color: #2FBA6C; }
+.voce-giorno.voce-straordinario { --colore-cat: #D4A017; }
+/* Profilo azienda: tipi di richiesta abilitati */
+.gruppi-richieste { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 32px; }
+.gruppi-richieste legend { float: none; }
+.gruppi-richieste fieldset { min-width: 0; }
+.voce-richiesta { padding: 6px 0 6px 2.5em; border-bottom: 1px solid var(--consulens-border); }
+.voce-richiesta:last-child { border-bottom: 0; }
+@media (max-width: 767.98px) { .gruppi-richieste { grid-template-columns: 1fr; } }

@@ -323,6 +323,74 @@ public sealed class UfficioWebTests : IDisposable
     }
 
     [Fact]
+    public async Task Il_dipendente_segnala_uno_straordinario_che_approvato_va_nel_riepilogo()
+    {
+        var dip = await PreparaDipendente(SedeLavoro.SedeLegale);
+        var oggi = DateOnly.FromDateTime(DateTime.Today);
+        var giorno = oggi;
+        while (!CalendarioLavorativo.IsLavorativo(giorno, 5)) giorno = giorno.AddDays(-1);
+        if (giorno.Month != oggi.Month) return;
+
+        var r = await dip.InviaForm("/Assenze/Nuova", "/Assenze/Nuova", new()
+        {
+            ["Tipo"] = "Straordinario", ["Dal"] = giorno.ToString("yyyy-MM-dd"), ["Ore"] = "2,5", ["Note"] = "Chiusura progetto",
+        });
+        Assert.Contains("in attesa di approvazione", WebUtility.HtmlDecode(await r.Content.ReadAsStringAsync()));
+        var s = await _app.ConDb(db => db.Straordinari.SingleAsync());
+        Assert.Equal((2.5m, StatoRichiesta.InAttesa), (s.Ore, s.Stato));
+
+        await _app.CreaUtente("hr@test.it", Ruoli.Azienda, _aziendaId);
+        var hr = _app.CreateClient();
+        await hr.Accedi("hr@test.it");
+        Assert.Contains($"/Assenze/DecidiStraordinario/{s.Id}", WebUtility.HtmlDecode(await hr.GetStringAsync("/Assenze")));
+        await hr.InviaForm("/Assenze", $"/Assenze/DecidiStraordinario/{s.Id}", new() { ["approva"] = "true" });
+        Assert.Equal(StatoRichiesta.Approvata, (await _app.ConDb(db => db.Straordinari.SingleAsync())).Stato);
+
+        // Nel riepilogo presenze del mese le ore approvate sono già nel campo dello straordinario.
+        var riepilogo = WebUtility.HtmlDecode(await hr.GetStringAsync($"/Presenze/Foglio?anno={giorno.Year}&mese={giorno.Month}"));
+        Assert.Matches(@"name=""righe\[0\]\.Orestraordinario"" value=""2,5""|name=""righe\[0\]\.OreStraordinario"" value=""2,5""", riepilogo);
+        Assert.Contains("2,5 h approvate nel portale", riepilogo);
+    }
+
+    [Fact]
+    public async Task L_azienda_sceglie_i_tipi_di_richiesta_e_gli_altri_spariscono()
+    {
+        var dip = await PreparaDipendente(SedeLavoro.SedeLegale);
+        await _app.ConDb(async db =>
+        {
+            var p = new CL.Domain.Aziende.ProfiloAzienda(_aziendaId);
+            db.Add(p);
+            return await db.SaveChangesAsync();
+        });
+        await _app.CreaUtente("hr@test.it", Ruoli.Azienda, _aziendaId);
+        var hr = _app.CreateClient();
+        await hr.Accedi("hr@test.it");
+
+        // Tutto abilitato tranne straordinari e smart working (ferie e malattia restano comunque).
+        var abilitate = CL.Domain.Aziende.TipiRichiesta.Tutti.Select(t => t.Chiave)
+            .Where(k => k is not ("Straordinario" or "SmartWorking")).ToList();
+        var token = await hr.TokenDa("/Assenze/Nuova");
+        var campi = abilitate.Select(k => new KeyValuePair<string, string>("abilitate", k))
+            .Append(new("__RequestVerificationToken", token));
+        await hr.PostAsync("/Onboarding/RichiesteAbilitate", new FormUrlEncodedContent(campi));
+        var azienda = await _app.ConDb(db => db.Aziende.SingleAsync());
+        Assert.False(azienda.Abilitata("Straordinario"));
+        Assert.True(azienda.Abilitata("Ferie"));
+
+        var modulo = WebUtility.HtmlDecode(await dip.GetStringAsync("/Assenze/Nuova"));
+        Assert.DoesNotContain(">Straordinario</option>", modulo);
+        Assert.DoesNotContain(">Smart working</option>", modulo);
+        Assert.Contains(">Ferie</option>", modulo);
+        var r = await dip.InviaForm("/Assenze/Nuova", "/Assenze/Nuova", new()
+        {
+            ["Tipo"] = "Straordinario", ["Dal"] = DateOnly.FromDateTime(DateTime.Today).ToString("yyyy-MM-dd"), ["Ore"] = "2",
+        });
+        Assert.Contains("non è previsto dall'azienda", WebUtility.HtmlDecode(await r.Content.ReadAsStringAsync()));
+        Assert.Equal(0, await _app.ConDb(db => db.Straordinari.CountAsync()));
+        Assert.DoesNotContain("data-mostra-filtro=\"straordinari\"", await dip.GetStringAsync("/Ufficio"));
+    }
+
+    [Fact]
     public async Task Senza_contratto_il_calendario_si_vede_ma_non_si_segna_nulla()
     {
         var dip = await PreparaDipendente(SedeLavoro.SedeLegale);

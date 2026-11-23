@@ -142,12 +142,24 @@ public sealed class PresenzeController(AppDbContext db, UtenteCorrente utente, S
         return RedirectToAction(nameof(Index), new { anno, mese });
     }
 
-    [Authorize(Policy = Policy.SoloConsulente)]
-    public async Task<IActionResult> Esporta(Guid aziendaId, int anno, int mese)
+    /// <summary>Riepilogo del mese in CSV: l'azienda il proprio, il consulente quello di un'azienda.</summary>
+    public async Task<IActionResult> Esporta(Guid? aziendaId, int anno, int mese)
     {
-        var foglio = await servizio.FoglioAsync(aziendaId, anno, mese);
+        var id = utente.IsAzienda ? utente.AziendaId : aziendaId;
+        if (id is null) return NotFound();
+        var foglio = await servizio.FoglioAsync(id.Value, anno, mese);
         if (foglio is null) return NotFound();
         var nome = new string(foglio.Azienda.RagioneSociale.Where(ch => char.IsLetterOrDigit(ch) || ch == ' ').ToArray()).Trim().Replace(' ', '_');
-        return File(ServizioPresenze.Csv(foglio), "text/csv; charset=utf-8", $"Presenze_{nome}_{anno}-{mese:00}.csv");
+        return File(ServizioPresenze.Csv(foglio), "text/csv; charset=utf-8", $"Riepilogo_presenze_{nome}_{anno}-{mese:00}.csv");
+    }
+
+    /// <summary>Riepilogo del mese di tutte le aziende attive in un solo file (consulente).</summary>
+    [Authorize(Policy = Policy.SoloConsulente)]
+    public async Task<IActionResult> EsportaTutto(int anno, int mese)
+    {
+        var fogli = new List<FoglioPresenze>();
+        foreach (var a in await servizio.StatoMeseAsync(anno, mese))
+            if (await servizio.FoglioAsync(a.AziendaId, anno, mese) is { } f) fogli.Add(f);
+        return File(ServizioPresenze.Csv(fogli, conAzienda: true), "text/csv; charset=utf-8", $"Riepilogo_presenze_{anno}-{mese:00}.csv");
     }
 }

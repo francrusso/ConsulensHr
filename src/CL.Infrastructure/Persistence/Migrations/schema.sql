@@ -1233,3 +1233,66 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261123111556_Straordinari') THEN
+    CREATE TABLE hr."Straordinari" (
+        "Id" uuid NOT NULL,
+        "DipendenteId" uuid NOT NULL,
+        "Giorno" date NOT NULL,
+        "Ore" numeric(12,2) NOT NULL,
+        "Note" character varying(500),
+        "Stato" character varying(32) NOT NULL,
+        "RichiestoIl" timestamp with time zone NOT NULL,
+        "DecisoDa" character varying(256),
+        "DecisoIl" timestamp with time zone,
+        "MotivoRifiuto" character varying(1000),
+        CONSTRAINT "PK_Straordinari" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_Straordinari_Dipendenti_DipendenteId" FOREIGN KEY ("DipendenteId") REFERENCES hr."Dipendenti" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261123111556_Straordinari') THEN
+    CREATE INDEX "IX_Straordinari_DipendenteId_Giorno" ON hr."Straordinari" ("DipendenteId", "Giorno");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261123111556_Straordinari') THEN
+    CREATE INDEX "IX_Straordinari_Stato_Giorno" ON hr."Straordinari" ("Stato", "Giorno");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261123111556_Straordinari') THEN
+    INSERT INTO hr."__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261123111556_Straordinari', '10.0.15');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261123111902_RichiesteAbilitate') THEN
+    ALTER TABLE hr."Aziende" ADD "RichiesteDisattivate" character varying(500);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261123111902_RichiesteAbilitate') THEN
+    INSERT INTO hr."__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261123111902_RichiesteAbilitate', '10.0.15');
+    END IF;
+END $EF$;
+COMMIT;
+

@@ -51,6 +51,12 @@
                         @if (r.Stato == StatoRichiesta.InAttesa) { <span class="voce-stato">in attesa</span> }
                     </span>
                 }
+                @foreach (var (oreStr, statoStr) in item.Straordinari)
+                {
+                    <span class="voce-giorno voce-straordinario @(statoStr == StatoRichiesta.InAttesa ? "in-attesa" : "")" data-filtro="straordinari"><i class="ri-timer-flash-line" aria-hidden="true"></i> Straordinario · @oreStr.ToString("0.##") h
+                        @if (statoStr == StatoRichiesta.InAttesa) { <span class="voce-stato">in attesa</span> }
+                    </span>
+                }
                 @foreach (var c in item.Chiusure) { <span class="voce-giorno voce-chiusura" data-filtro="chiusure"><i class="ri-door-closed-line" aria-hidden="true"></i> @c</span> }
                 @if (item.Festa is { } festa) { <span class="voce-giorno voce-festivo"><i class="ri-flag-2-line" aria-hidden="true"></i> @festa</span> }
                 @if (item.Smart is { } s)
@@ -89,9 +95,13 @@
     <button type="button" class="badge-filtro-categoria active" data-mostra-filtro="ferie" aria-pressed="true"><span class="pallino-legenda" style="background:#6096FF" aria-hidden="true"></span> Ferie</button>
     <button type="button" class="badge-filtro-categoria active" data-mostra-filtro="permessi" aria-pressed="true"><span class="pallino-legenda" style="background:#8E6BD8" aria-hidden="true"></span> Permessi</button>
     <button type="button" class="badge-filtro-categoria active" data-mostra-filtro="malattia" aria-pressed="true"><span class="pallino-legenda" style="background:#F08A4B" aria-hidden="true"></span> Malattia</button>
+    @if (Model.Abilitata(CL.Domain.Aziende.TipiRichiesta.Straordinario))
+    {
+    <button type="button" class="badge-filtro-categoria active" data-mostra-filtro="straordinari" aria-pressed="true"><span class="pallino-legenda" style="background:#D4A017" aria-hidden="true"></span> Straordinari</button>
+    }
     <button type="button" class="badge-filtro-categoria active" data-mostra-filtro="chiusure" aria-pressed="true"><span class="pallino-legenda chiusura" aria-hidden="true"></span> Chiusure aziendali</button>
-    @if (smart) { <button type="button" class="badge-filtro-categoria active" data-mostra-filtro="smart" aria-pressed="true"><span class="pallino-legenda smart-ok" aria-hidden="true"></span> Smart working</button> }
-    @if (distanza) { <button type="button" class="badge-filtro-categoria active" data-mostra-filtro="ufficio" aria-pressed="true"><span class="pallino-legenda ufficio" aria-hidden="true"></span> In ufficio</button> }
+    @if (smart && Model.Abilitata(CL.Domain.Aziende.TipiRichiesta.SmartWorking)) { <button type="button" class="badge-filtro-categoria active" data-mostra-filtro="smart" aria-pressed="true"><span class="pallino-legenda smart-ok" aria-hidden="true"></span> Smart working</button> }
+    @if (distanza && Model.Abilitata(CL.Domain.Aziende.TipiRichiesta.InUfficio)) { <button type="button" class="badge-filtro-categoria active" data-mostra-filtro="ufficio" aria-pressed="true"><span class="pallino-legenda ufficio" aria-hidden="true"></span> In ufficio</button> }
     <button type="button" class="badge-filtro-categoria active" data-mostra-filtro="attesa" aria-pressed="true"><span class="pallino-legenda in-attesa" aria-hidden="true"></span> In attesa di approvazione</button>
 </div>
 
@@ -121,7 +131,10 @@
                         @if (g.Richiedibile)
                         {
                             <a class="azione-giorno" style="--colore-cat:#6096FF" asp-controller="Assenze" asp-action="Nuova" asp-route-dal="@g.Data.ToString("yyyy-MM-dd")" asp-route-tipo="Ferie" asp-route-ritorno="@ritornoQui"><i class="ri-sun-line" aria-hidden="true"></i> Ferie</a>
+                            @if (Model.Abilitata("Rol"))
+                            {
                             <a class="azione-giorno" style="--colore-cat:#8E6BD8" asp-controller="Assenze" asp-action="Nuova" asp-route-dal="@g.Data.ToString("yyyy-MM-dd")" asp-route-tipo="Rol" asp-route-aOre="true" asp-route-ritorno="@ritornoQui"><i class="ri-time-line" aria-hidden="true"></i> Permesso</a>
+                            }
                             <a class="azione-giorno" style="--colore-cat:#F08A4B" asp-controller="Assenze" asp-action="Nuova" asp-route-dal="@g.Data.ToString("yyyy-MM-dd")" asp-route-tipo="Malattia" asp-route-ritorno="@ritornoQui"><i class="ri-first-aid-kit-line" aria-hidden="true"></i> Malattia</a>
                         }
                         @if (g.Modificabile)

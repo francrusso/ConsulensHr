@@ -57,7 +57,11 @@ public sealed class PresenzeWebTests : IDisposable
         var html = WebUtility.HtmlDecode(await hr.GetStringAsync(Foglio));
         Assert.Contains("Rossi Mario", html);
         Assert.Contains("matr. 42", html);
-        Assert.Matches(@"gruppo-portale"">8</td>", html); // il giorno di ferie approvato è già nel foglio
+        Assert.Contains("<span>Ferie</span><strong>8 h</strong>", html); // il giorno di ferie approvato è già nel riepilogo
+        Assert.Contains("Riepilogo presenze", html);
+        Assert.Matches(@"\d+ in ufficio", html);                         // giorni del mese in ufficio e da remoto
+        var azienda = await hr.GetAsync($"/Presenze/Esporta?anno={_anno}&mese={_mese}"); // anche l'azienda esporta
+        Assert.Equal("text/csv", azienda.Content.Headers.ContentType!.MediaType);
 
         var campi = new Dictionary<string, string>
         {
@@ -87,7 +91,10 @@ public sealed class PresenzeWebTests : IDisposable
         Assert.Equal("text/csv", csv.Content.Headers.ContentType!.MediaType);
         var testoCsv = Encoding.UTF8.GetString(await csv.Content.ReadAsByteArrayAsync());
         Assert.StartsWith("﻿Matricola;", testoCsv);
-        Assert.Contains("\"42\";\"Rossi Mario\";RSSMRA85T10A562S;8;0;0;0;0;5,5;0;18;150;0;0;\"Trasferta a Roma\"", testoCsv);
+        Assert.Matches(@"""42"";""Rossi Mario"";RSSMRA85T10A562S;\d+;\d+;\d+;8;0;0;0;0;5,5;0;18;150;0;0;""Trasferta a Roma""", testoCsv);
+        var tutto = Encoding.UTF8.GetString(await consulente.GetByteArrayAsync($"/Presenze/EsportaTutto?anno={_anno}&mese={_mese}"));
+        Assert.StartsWith("﻿Azienda;Stato;Matricola;", tutto);
+        Assert.Contains("Rossi Mario", tutto);
 
         var foglioStudio = $"/Presenze/Foglio?aziendaId={_aziendaId}&anno={_anno}&mese={_mese}";
         var dati = new Dictionary<string, string> { ["aziendaId"] = _aziendaId.ToString(), ["anno"] = _anno.ToString(), ["mese"] = _mese.ToString() };

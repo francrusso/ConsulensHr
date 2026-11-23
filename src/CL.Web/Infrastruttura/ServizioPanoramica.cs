@@ -21,7 +21,7 @@ public sealed record PersonaOggi(Guid Id, string Nome, bool HaFoto, string Segna
 public sealed record GiornataOggi(DateOnly Giorno, bool EOggi, List<PersonaOggi> InUfficio, List<PersonaOggi> DaRemoto, List<PersonaOggi> Assenti);
 
 /// <summary>Richiesta in attesa da mostrare in panoramica (ferie, permessi o smart working).</summary>
-public sealed record RichiestaInAttesa(Guid Id, PersonaOggi Persona, string Tipo, DateOnly Dal, DateOnly Al, bool AOre, decimal Ore, bool SmartWorking);
+public sealed record RichiestaInAttesa(Guid Id, PersonaOggi Persona, string Tipo, DateOnly Dal, DateOnly Al, bool AOre, decimal Ore, bool SmartWorking, bool Straordinario = false);
 
 public sealed record ScadenzaContratto(PersonaOggi Persona, string Tipo, DateOnly DataFine, int Giorni);
 
@@ -118,7 +118,8 @@ public sealed class ServizioPanoramica(AppDbContext db, UtenteCorrente utente, T
 
         var idsInPerimetro = perimetro.Select(d => d.Id);
         var inAttesa = await db.RichiesteAssenza.CountAsync(r => idsInPerimetro.Contains(r.DipendenteId) && r.Stato == StatoRichiesta.InAttesa)
-                       + await db.GiorniSmartWorking.CountAsync(g => idsInPerimetro.Contains(g.DipendenteId) && g.Stato == StatoSmartWorking.InAttesa);
+                       + await db.GiorniSmartWorking.CountAsync(g => idsInPerimetro.Contains(g.DipendenteId) && g.Stato == StatoSmartWorking.InAttesa)
+                       + await db.Straordinari.CountAsync(g => idsInPerimetro.Contains(g.DipendenteId) && g.Stato == StatoRichiesta.InAttesa);
         var persone = dipendenti.ToDictionary(d => d.Id);
         PersonaOggi P(Dipendente d, string? dettaglio = null) => new(d.Id, d.NomeCompleto, d.FotoChiave is not null, d.Segnaposto, dettaglio);
 
@@ -155,6 +156,9 @@ public sealed class ServizioPanoramica(AppDbContext db, UtenteCorrente utente, T
             .Concat((await db.GiorniSmartWorking.AsNoTracking().Where(g => ids.Contains(g.DipendenteId) && g.Stato == StatoSmartWorking.InAttesa)
                     .OrderBy(g => g.Giorno).Take(8).ToListAsync())
                 .Select(g => new RichiestaInAttesa(g.Id, P(persone[g.DipendenteId]), "Smart working", g.Giorno, g.Giorno, false, 0, true)))
+            .Concat((await db.Straordinari.AsNoTracking().Where(g => ids.Contains(g.DipendenteId) && g.Stato == StatoRichiesta.InAttesa)
+                    .OrderBy(g => g.Giorno).Take(8).ToListAsync())
+                .Select(g => new RichiestaInAttesa(g.Id, P(persone[g.DipendenteId]), "Straordinario", g.Giorno, g.Giorno, true, g.Ore, false, true)))
             .OrderBy(x => x.Dal).ThenBy(x => x.Persona.Nome).Take(6).ToList();
 
         // Contratti a termine in scadenza entro 60 giorni, se non c'è già un contratto successivo.

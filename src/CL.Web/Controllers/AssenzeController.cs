@@ -51,6 +51,8 @@ public sealed record RichiestaRiga(
 {
     /// <summary>Giorno di smart working chiesto da chi lavora in presenza (stessa tabella delle ferie, decisione a parte).</summary>
     public bool SmartWorking { get; init; }
+    /// <summary>Ore di straordinario di un giorno (in <see cref="Ore"/>), da approvare come le ferie.</summary>
+    public bool Straordinario { get; init; }
 }
 
 /// <summary>Persona nel calendario; <paramref name="ColoreTeam"/> fa da bordo alla foto (null senza team).</summary>
@@ -156,6 +158,12 @@ public sealed class AssenzeController(AppDbContext db, UtenteCorrente utente, Se
                            join a in db.Aziende.AsNoTracking() on d.AziendaId equals a.Id
                            select new { g, d.Cognome, d.Nome, a.RagioneSociale }).ToListAsync();
         anniRichieste.AddRange(smart.Select(x => x.g.Giorno.Year));
+        // Straordinari: anche loro nella stessa lista.
+        var ore = await (from g in db.Straordinari.AsNoTracking()
+                         join d in dipendenti on g.DipendenteId equals d.Id
+                         join a in db.Aziende.AsNoTracking() on d.AziendaId equals a.Id
+                         select new { g, d.Cognome, d.Nome, a.RagioneSociale }).ToListAsync();
+        anniRichieste.AddRange(ore.Select(x => x.g.Giorno.Year));
         ViewBag.Anni = anniRichieste.Append(Oggi.Year).Append(annoScelto).Distinct().OrderDescending().ToList();
         static StatoRichiesta Stato(StatoSmartWorking s) => s switch
         {
@@ -164,6 +172,9 @@ public sealed class AssenzeController(AppDbContext db, UtenteCorrente utente, Se
         var righeSmart = smart.Where(x => x.g.Stato == StatoSmartWorking.InAttesa || (x.g.Giorno >= inizioAnno && x.g.Giorno <= fineAnno))
             .Select(x => new RichiestaRiga(x.g.Id, x.g.DipendenteId, $"{x.Cognome} {x.Nome}", x.RagioneSociale, TipoAssenza.Ferie,
                 x.g.Giorno, x.g.Giorno, false, 0, Stato(x.g.Stato), x.g.RichiestoIl, null, x.g.DecisoDa, x.g.MotivoRifiuto) { SmartWorking = true })
+            .Concat(ore.Where(x => x.g.Stato == StatoRichiesta.InAttesa || (x.g.Giorno >= inizioAnno && x.g.Giorno <= fineAnno))
+                .Select(x => new RichiestaRiga(x.g.Id, x.g.DipendenteId, $"{x.Cognome} {x.Nome}", x.RagioneSociale, TipoAssenza.Ferie,
+                    x.g.Giorno, x.g.Giorno, true, x.g.Ore, x.g.Stato, x.g.RichiestoIl, x.g.Note, x.g.DecisoDa, x.g.MotivoRifiuto) { Straordinario = true }))
             .ToList();
         query = query.Where(x => x.r.Stato == StatoRichiesta.InAttesa || (x.r.Dal >= inizioAnno && x.r.Dal <= fineAnno));
         // Conteggi per le pillole di stato (prima del filtro sullo stato).
@@ -223,11 +234,11 @@ public sealed class AssenzeController(AppDbContext db, UtenteCorrente utente, Se
     }
 
     /// <summary>Voci in più del modulo per il dipendente, secondo il contratto: smart working o giorni in ufficio.</summary>
-    public const string SceltaSmartWorking = "SmartWorking", SceltaUfficio = "InUfficio";
+    public const string SceltaSmartWorking = "SmartWorking", SceltaUfficio = "InUfficio", SceltaStraordinario = "Straordinario";
 
     public async Task<IActionResult> Nuova(Guid? dipendenteId, DateOnly? dal, string? tipo, bool aOre = false, string? ritorno = null)
     {
-        ViewBag.Lavoro = tipo is SceltaSmartWorking or SceltaUfficio ? tipo : null;
+        ViewBag.Lavoro = tipo is SceltaSmartWorking or SceltaUfficio or SceltaStraordinario ? tipo : null;
         // Dal calendario si arriva con giorno e tipo già scelti (es. permesso a ore di quel giorno).
         var form = new RichiestaForm
         {
@@ -247,9 +258,19 @@ public sealed class AssenzeController(AppDbContext db, UtenteCorrente utente, Se
             form.DipendenteId = utente.DipendenteId; // il dipendente chiede solo per sé: il campo non è nel form
             ModelState.Remove(nameof(form.DipendenteId));
         }
+        // Solo i tipi di richiesta che l'azienda della persona offre.
+        var sceltaTipo = Request.Form["Tipo"].ToString();
+        if (form.DipendenteId is { } chi && await AziendaDi(chi) is { } aziendaPersona && !aziendaPersona.Abilitata(sceltaTipo))
+        {
+            ModelState.Clear();
+            ModelState.AddModelError("", "Questo tipo di richiesta non è previsto dall'azienda.");
+            return await MostraForm(form);
+        }
         // Smart working (chi lavora in presenza) o giorni in ufficio (chi lavora a distanza): stesso modulo, regole del calendario.
         if (Request.Form["Tipo"].ToString() is SceltaSmartWorking or SceltaUfficio && form.DipendenteId is { } perChi)
             return await NuovaGiorniLavoro(form, Request.Form["Tipo"].ToString(), perChi, ritorno);
+        if (Request.Form["Tipo"].ToString() == SceltaStraordinario && form.DipendenteId is { } perChiOre)
+            return await NuovoStraordinario(form, perChiOre, ritorno);
         if (form.AOre && form.Ore is null)
             ModelState.AddModelError(nameof(form.Ore), "Indica quante ore di permesso.");
         if (form.Tipo == TipoAssenza.Malattia && string.IsNullOrWhiteSpace(form.ProtocolloCertificato))
@@ -292,6 +313,69 @@ public sealed class AssenzeController(AppDbContext db, UtenteCorrente utente, Se
         return utente.IsDipendente
             ? RedirectToAction(nameof(Index))
             : RedirectToAction("Dettaglio", "Dipendenti", new { id = dip.Id, sezione = "ferie" });
+    }
+
+    /// <summary>
+    /// Ore di straordinario di un giorno: le segnala il dipendente (anche a posteriori, dal mese scorso) o le registra l'azienda.
+    /// Vanno approvate dall'azienda; il referente può approvarle subito. Approvate, finiscono nel riepilogo presenze.
+    /// </summary>
+    private async Task<IActionResult> NuovoStraordinario(RichiestaForm form, Guid id, string? ritorno)
+    {
+        ViewBag.Lavoro = SceltaStraordinario;
+        ModelState.Clear();
+        var dip = await utente.Filtra(db.Dipendenti.AsNoTracking()).FirstOrDefaultAsync(d => d.Id == id);
+        if (dip is null) return Forbid();
+        if (form.Dal is null) ModelState.AddModelError(nameof(form.Dal), "Indica il giorno dello straordinario.");
+        if (form.Ore is null) ModelState.AddModelError(nameof(form.Ore), "Indica quante ore di straordinario.");
+        if (!ModelState.IsValid) return await MostraForm(form);
+
+        var g = form.Dal!.Value;
+        var primoMeseScorso = new DateOnly(Oggi.Year, Oggi.Month, 1).AddMonths(-1);
+        if (g < primoMeseScorso || g > Oggi.AddDays(31))
+            ModelState.AddModelError(nameof(form.Dal), "Lo straordinario si indica dal mese scorso fino a un mese da oggi.");
+        else if (dip.ContrattoAttivo(g) is null)
+            ModelState.AddModelError(nameof(form.Dal), "In quel giorno non c'è un contratto in corso.");
+        Straordinario? s = null;
+        if (ModelState.IsValid && Prova(() => s = new Straordinario(id, g, form.Ore!.Value, form.Note, AdessoUtc)))
+        {
+            if (utente.IsAzienda && form.ApprovaSubito) s!.Approva(utente.Email, AdessoUtc);
+            db.Straordinari.Add(s!);
+            await db.SaveChangesAsync();
+            Conferma(s!.Stato == StatoRichiesta.Approvata
+                ? $"Straordinario registrato: {s.Ore:0.##} ore il {g:dd/MM/yyyy}."
+                : $"Straordinario di {s.Ore:0.##} ore del {g:dd/MM/yyyy} inviato: in attesa di approvazione dell'azienda.");
+            if (Url.IsLocalUrl(ritorno)) return LocalRedirect(ritorno);
+            return utente.IsDipendente ? RedirectToAction(nameof(Index)) : RedirectToAction("Dettaglio", "Dipendenti", new { id, sezione = "ferie" });
+        }
+        return await MostraForm(form);
+    }
+
+    /// <summary>Approva o rifiuta uno straordinario: decide il referente dell'azienda.</summary>
+    [HttpPost, ValidateAntiForgeryToken, Authorize(Roles = Ruoli.Azienda)]
+    public async Task<IActionResult> DecidiStraordinario(Guid id, bool approva, string? motivo, string? ritorno)
+    {
+        var ids = utente.Filtra(db.Dipendenti).Select(d => d.Id);
+        var s = await db.Straordinari.FirstOrDefaultAsync(x => x.Id == id && ids.Contains(x.DipendenteId));
+        if (s is null) return NotFound();
+        if (Prova(() => { if (approva) s.Approva(utente.Email, AdessoUtc); else s.Rifiuta(utente.Email, motivo, AdessoUtc); }))
+        {
+            await db.SaveChangesAsync();
+            Conferma(approva ? "Straordinario approvato." : "Straordinario rifiutato.");
+        }
+        else Errore(PrimoErrore());
+        return Torna(ritorno);
+    }
+
+    /// <summary>Il dipendente ritira uno straordinario ancora in attesa.</summary>
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> RitiraStraordinario(Guid id, string? ritorno)
+    {
+        var s = await db.Straordinari.FirstOrDefaultAsync(x => x.Id == id && x.DipendenteId == utente.DipendenteId && x.Stato == StatoRichiesta.InAttesa);
+        if (s is null) return NotFound();
+        db.Straordinari.Remove(s);
+        await db.SaveChangesAsync();
+        Conferma("Richiesta di straordinario ritirata.");
+        return Torna(ritorno);
     }
 
     private async Task<IActionResult> NuovaGiorniLavoro(RichiestaForm form, string scelta, Guid id, string? ritorno)
@@ -658,8 +742,18 @@ public sealed class AssenzeController(AppDbContext db, UtenteCorrente utente, Se
     private IActionResult Torna(string? ritorno) =>
         Url.IsLocalUrl(ritorno) ? LocalRedirect(ritorno) : RedirectToAction(nameof(Index));
 
+    private Task<CL.Domain.Aziende.Azienda?> AziendaDi(Guid dipendenteId) =>
+        (from d in utente.Filtra(db.Dipendenti.AsNoTracking().IgnoreAutoIncludes())
+         join a in db.Aziende.AsNoTracking() on d.AziendaId equals a.Id
+         where d.Id == dipendenteId
+         select a).FirstOrDefaultAsync();
+
     private async Task<IActionResult> MostraForm(RichiestaForm form)
     {
+        // Tipi offerti dall'azienda (per il consulente, che sceglie tra più aziende, li controlla il salvataggio).
+        var aziendaModulo = utente.IsAzienda ? await db.Aziende.AsNoTracking().FirstOrDefaultAsync(a => a.Id == utente.AziendaId)
+            : utente.IsDipendente && utente.DipendenteId is { } me ? await AziendaDi(me) : null;
+        ViewBag.Abilitata = aziendaModulo is null ? (Func<string, bool>)(_ => true) : aziendaModulo.Abilitata;
         ViewBag.Gestore = Gestore;
         ViewBag.PuoApprovare = utente.IsAzienda;
         var scelto = form.DipendenteId;

@@ -21,6 +21,20 @@ public sealed class Azienda : Entity
     public int? SantoPatronoMese { get; private set; }
     public int? SantoPatronoGiorno { get; private set; }
     public bool Attiva { get; private set; } = true;
+    /// <summary>Tipi di richiesta non offerti dall'azienda (chiavi di <see cref="TipiRichiesta"/>, separate da virgola).</summary>
+    public string? RichiesteDisattivate { get; private set; }
+
+    /// <summary>Il tipo di richiesta è offerto ai dipendenti e all'azienda.</summary>
+    public bool Abilitata(string chiave) =>
+        string.IsNullOrEmpty(RichiesteDisattivate) || !RichiesteDisattivate.Split(',').Contains(chiave);
+
+    /// <summary>Sceglie i tipi di richiesta offerti; ferie e malattia restano sempre.</summary>
+    public void ImpostaRichiesteAbilitate(IEnumerable<string> abilitate)
+    {
+        var si = abilitate.ToHashSet();
+        var no = TipiRichiesta.Tutti.Where(t => !t.Obbligatorio && !si.Contains(t.Chiave)).Select(t => t.Chiave).ToList();
+        RichiesteDisattivate = no.Count == 0 ? null : string.Join(',', no);
+    }
 
     private Azienda() { } // EF Core
 

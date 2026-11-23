@@ -196,6 +196,10 @@ namespace CL.Infrastructure.Persistence.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<string>("RichiesteDisattivate")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
                     b.Property<int?>("SantoPatronoGiorno")
                         .HasColumnType("integer");
 
@@ -1076,6 +1080,53 @@ namespace CL.Infrastructure.Persistence.Migrations
                     b.ToTable("RighePresenze", "hr");
                 });
 
+            modelBuilder.Entity("CL.Domain.Presenze.Straordinario", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("DecisoDa")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<DateTime?>("DecisoIl")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("DipendenteId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly>("Giorno")
+                        .HasColumnType("date");
+
+                    b.Property<string>("MotivoRifiuto")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<decimal>("Ore")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.Property<DateTime>("RichiestoIl")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Stato")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DipendenteId", "Giorno");
+
+                    b.HasIndex("Stato", "Giorno");
+
+                    b.ToTable("Straordinari", "hr");
+                });
+
             modelBuilder.Entity("CL.Infrastructure.Identity.ApplicationUser", b =>
                 {
                     b.Property<string>("Id")
@@ -1471,6 +1522,15 @@ namespace CL.Infrastructure.Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("DipendenteId")
                         .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("CL.Domain.Presenze.Straordinario", b =>
+                {
+                    b.HasOne("CL.Domain.Dipendenti.Dipendente", null)
+                        .WithMany()
+                        .HasForeignKey("DipendenteId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 

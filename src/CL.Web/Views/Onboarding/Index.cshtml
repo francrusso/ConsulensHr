@@ -53,6 +53,35 @@
     }
 </section>
 
+@if (p.Completato || Model.PerContoAzienda)
+{
+    @* Quali richieste l'azienda offre: quelle spente non compaiono a nessuno (moduli, calendari, azioni rapide). *@
+    <section class="card radius-15 p-4 mt-3 card-panoramica" id="richiesteAbilitate" aria-labelledby="titoloRichieste">
+        <h2 class="titolo-card-panoramica mb-3" id="titoloRichieste"><i class="ri-toggle-line" aria-hidden="true"></i> Tipi di richiesta</h2>
+        <form asp-action="RichiesteAbilitate" method="post">
+            @if (aziendaId is { } idAz) { <input type="hidden" name="aziendaId" value="@idAz" /> }
+            <div class="gruppi-richieste">
+                @foreach (var gruppo in CL.Domain.Aziende.TipiRichiesta.Tutti.GroupBy(t => t.Gruppo))
+                {
+                    <fieldset>
+                        <legend class="sottotitolo-presenza">@gruppo.Key</legend>
+                        @foreach (var t in gruppo)
+                        {
+                            var attivo = Model.Azienda.Abilitata(t.Chiave);
+                            <div class="form-check form-switch voce-richiesta">
+                                <input class="form-check-input" type="checkbox" role="switch" id="tipo-@t.Chiave" name="abilitate" value="@t.Chiave"
+                                       checked="@(attivo || t.Obbligatorio)" disabled="@t.Obbligatorio" />
+                                <label class="form-check-label" for="tipo-@t.Chiave">@t.Nome @if (t.Obbligatorio) { <span class="nota-campo d-inline">sempre attiva</span> }</label>
+                            </div>
+                        }
+                    </fieldset>
+                }
+            </div>
+            <div class="d-flex justify-content-end mt-3"><button type="submit" class="btn btn-primary">Salva</button></div>
+        </form>
+    </section>
+}
+
 @section Scripts {
     <script>
         // Sede operativa: i campi compaiono solo se diversa dalla legale.

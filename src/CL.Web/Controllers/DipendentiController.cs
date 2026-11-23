@@ -771,6 +771,9 @@ public sealed class DipendentiController(AppDbContext db, UtenteCorrente utente,
                     CL.Domain.Presenze.StatoSmartWorking.Rifiutato => CL.Domain.Assenze.StatoRichiesta.Rifiutata,
                     _ => CL.Domain.Assenze.StatoRichiesta.InAttesa,
                 }, g.RichiestoIl, null, g.DecisoDa, g.MotivoRifiuto) { SmartWorking = true }))
+            .Concat((await db.Straordinari.AsNoTracking().Where(g => g.DipendenteId == d.Id && g.Giorno >= inizioAnno && g.Giorno <= fineAnno).ToListAsync())
+                .Select(g => new RichiestaRiga(g.Id, d.Id, d.NomeCompleto, "", CL.Domain.Assenze.TipoAssenza.Ferie, g.Giorno, g.Giorno, true, g.Ore,
+                    g.Stato, g.RichiestoIl, g.Note, g.DecisoDa, g.MotivoRifiuto) { Straordinario = true }))
             .OrderBy(r => r.Stato == CL.Domain.Assenze.StatoRichiesta.InAttesa ? 0 : 1).ThenByDescending(r => r.Dal)
             .ToList();
         ViewBag.Presenze = await PresenzeAnno(d, oggi, richieste, smart.Where(g => g.Stato == CL.Domain.Presenze.StatoSmartWorking.Approvato).Select(g => g.Giorno).ToHashSet(), ufficio);

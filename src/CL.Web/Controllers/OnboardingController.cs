@@ -281,6 +281,18 @@ public sealed class OnboardingController(
         return utente.IsConsulente ? RedirectToAction("Dettaglio", "Aziende", new { id = azienda.Id }) : RedirectToAction("Index", "Home");
     }
 
+    /// <summary>Tipi di richiesta offerti ai dipendenti: quelli non scelti spariscono da moduli e calendari.</summary>
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> RichiesteAbilitate(Guid? aziendaId, List<string>? abilitate)
+    {
+        var (azienda, _) = await Carica(aziendaId);
+        if (azienda is null) return NotFound();
+        azienda.ImpostaRichiesteAbilitate(abilitate ?? []);
+        await db.SaveChangesAsync();
+        Conferma("Tipi di richiesta aggiornati.");
+        return Redirect(Url.Action(nameof(Index), new { aziendaId = utente.IsConsulente ? azienda.Id : (Guid?)null })! + "#richiesteAbilitate");
+    }
+
     private async Task<(Azienda? Azienda, ProfiloAzienda Profilo)> Carica(Guid? aziendaId)
     {
         var id = utente.IsAzienda ? utente.AziendaId : aziendaId;

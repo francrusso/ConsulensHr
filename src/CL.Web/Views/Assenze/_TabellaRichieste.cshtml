@@ -25,12 +25,14 @@
             }
             @foreach (var r in righe)
             {
-                var annullabile = !r.SmartWorking && (r.Stato == StatoRichiesta.InAttesa || (r.Stato == StatoRichiesta.Approvata && r.Dal > oggi))
+                var annullabile = !r.SmartWorking && !r.Straordinario && (r.Stato == StatoRichiesta.InAttesa || (r.Stato == StatoRichiesta.Approvata && r.Dal > oggi))
                                   && (!Utente.IsConsulente || !r.Tipo.RichiedeApprovazione());
                 // Lo smart working lo ritira solo chi l'ha chiesto, finché il giorno non è passato; lo decide solo l'azienda.
                 var ritirabile = r.SmartWorking && Utente.IsDipendente && r.DipendenteId == Utente.DipendenteId && r.Dal >= oggi && r.Stato != StatoRichiesta.Rifiutata;
-                var decidibile = r.Stato == StatoRichiesta.InAttesa && gestore && (!r.SmartWorking || Utente.IsAzienda);
-                var tipoNome = r.SmartWorking ? "Smart working" : r.Tipo.Descrizione();
+                var ritiraOre = r.Straordinario && Utente.IsDipendente && r.DipendenteId == Utente.DipendenteId && r.Stato == StatoRichiesta.InAttesa;
+                var decidibile = r.Stato == StatoRichiesta.InAttesa && gestore && (!(r.SmartWorking || r.Straordinario) || Utente.IsAzienda);
+                var tipoNome = r.SmartWorking ? "Smart working" : r.Straordinario ? "Straordinario" : r.Tipo.Descrizione();
+                var azioneDecidi = r.SmartWorking ? "DecidiSmartWorking" : r.Straordinario ? "DecidiStraordinario" : null;
                 <tr class="customer-result-row">
                     @if (mostraDipendente)
                     {
@@ -46,6 +48,7 @@
                     @if (mostraAzienda) { <td data-label="Azienda">@r.Azienda</td> }
                     <td data-label="Tipo">
                         @if (r.SmartWorking) { <i class="ri-home-wifi-line text-body-secondary" aria-hidden="true"></i> }
+                        @if (r.Straordinario) { <i class="ri-timer-flash-line text-body-secondary" aria-hidden="true"></i> }
                         @tipoNome
                         @if (!string.IsNullOrWhiteSpace(r.Note)) { <i class="ri-chat-3-line text-body-secondary" title="@r.Note" aria-label="Note: @r.Note"></i> }
                     </td>
@@ -65,12 +68,19 @@
                         <div class="customer-actions">
                             @if (decidibile)
                             {
-                                <form asp-controller="Assenze" asp-action="@(r.SmartWorking ? "DecidiSmartWorking" : "Approva")" asp-route-id="@r.Id" asp-route-approva="@(r.SmartWorking ? "true" : null)" method="post" class="d-inline">
+                                <form asp-controller="Assenze" asp-action="@(azioneDecidi ?? "Approva")" asp-route-id="@r.Id" asp-route-approva="@(azioneDecidi is null ? null : "true")" method="post" class="d-inline">
                                     <input type="hidden" name="ritorno" value="@ritorno" />
                                     <button type="submit" class="btn btn-sm btn-primary" title="Approva">Approva</button>
                                 </form>
                                 <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#modaleRifiuto"
-                                        data-azione="@(r.SmartWorking ? Url.Action("DecidiSmartWorking", "Assenze", new { id = r.Id, approva = false }) : Url.Action("Rifiuta", "Assenze", new { id = r.Id }))" data-descrizione="@tipoNome di @r.Dipendente">Rifiuta</button>
+                                        data-azione="@(azioneDecidi is not null ? Url.Action(azioneDecidi, "Assenze", new { id = r.Id, approva = false }) : Url.Action("Rifiuta", "Assenze", new { id = r.Id }))" data-descrizione="@tipoNome di @r.Dipendente">Rifiuta</button>
+                            }
+                            @if (ritiraOre)
+                            {
+                                <form asp-controller="Assenze" asp-action="RitiraStraordinario" asp-route-id="@r.Id" method="post" class="d-inline" onsubmit="return confirm('Ritirare questa richiesta di straordinario?');">
+                                    <input type="hidden" name="ritorno" value="@ritorno" />
+                                    <button type="submit" aria-label="Ritira richiesta" title="Ritira richiesta"><i class="ri-close-circle-line" aria-hidden="true"></i></button>
+                                </form>
                             }
                             @if (ritirabile)
                             {

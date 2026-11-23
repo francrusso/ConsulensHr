@@ -90,6 +90,16 @@
                                 <div class="menu-title">Panoramica</div>
                             </a>
                         </li>
+                        @* Per l'azienda: subito dopo la panoramica. *@
+                        @if (Utente.IsAzienda)
+                        {
+                            <li>
+                                <a asp-controller="Onboarding" asp-action="Index">
+                                    <div class="parent-icon icon-color-1"><i class="ri-building-2-line ri-xs"></i></div>
+                                    <div class="menu-title">Profilo azienda</div>
+                                </a>
+                            </li>
+                        }
                         @if (Utente.IsConsulente)
                         {
                             <li>
@@ -146,17 +156,9 @@
                                 <ul>
                                     <li><a asp-controller="Assenze" asp-action="Calendario">Calendario</a></li>
                                     <li><a asp-controller="Assenze" asp-action="Index">Richieste</a></li>
+                                    <li><a asp-controller="Presenze" asp-action="Index">Riepilogo presenze</a></li>
                                     <li><a asp-controller="Assenze" asp-action="Residui">Residui anno precedente</a></li>
                                 </ul>
-                            </li>
-                        }
-                        @if (Utente.IsConsulente || Utente.IsAzienda)
-                        {
-                            <li>
-                                <a asp-controller="Presenze" asp-action="Index">
-                                    <div class="parent-icon icon-color-1"><i class="ri-time-line ri-xs"></i></div>
-                                    <div class="menu-title">Presenze</div>
-                                </a>
                             </li>
                         }
                         <li>
@@ -185,15 +187,6 @@
                                 <a asp-controller="DatiPersonali" asp-action="Index">
                                     <div class="parent-icon icon-color-1"><i class="ri-user-settings-line ri-xs"></i></div>
                                     <div class="menu-title">I miei dati</div>
-                                </a>
-                            </li>
-                        }
-                        @if (Utente.IsAzienda)
-                        {
-                            <li>
-                                <a asp-controller="Onboarding" asp-action="Index">
-                                    <div class="parent-icon icon-color-1"><i class="ri-building-2-line ri-xs"></i></div>
-                                    <div class="menu-title">Profilo azienda</div>
                                 </a>
                             </li>
                         }

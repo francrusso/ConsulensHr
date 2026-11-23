@@ -105,7 +105,7 @@
                             </div>
                             @if (Utente.IsAzienda)
                             {
-                                <form asp-controller="Assenze" asp-action="@(r.SmartWorking ? "DecidiSmartWorking" : "Approva")" asp-route-id="@r.Id" asp-route-approva="@(r.SmartWorking ? "true" : null)" method="post" class="m-0">
+                                <form asp-controller="Assenze" asp-action="@(r.SmartWorking ? "DecidiSmartWorking" : r.Straordinario ? "DecidiStraordinario" : "Approva")" asp-route-id="@r.Id" asp-route-approva="@(r.SmartWorking || r.Straordinario ? "true" : null)" method="post" class="m-0">
                                     <input type="hidden" name="ritorno" value="@ritorno" />
                                     <button type="submit" class="btn btn-sm btn-primary">Approva</button>
                                 </form>

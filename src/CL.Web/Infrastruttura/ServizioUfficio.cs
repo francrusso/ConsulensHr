@@ -56,6 +56,8 @@ public sealed class ServizioUfficio(AppDbContext db, UtenteCorrente utente, Time
 
         var d = await db.Dipendenti.AsNoTracking().FirstAsync(x => x.Id == id);
         var azienda = await db.Aziende.AsNoTracking().FirstAsync(a => a.Id == d.AziendaId);
+        if (!azienda.Abilitata(modo == ModoLavoro.Presenza ? CL.Domain.Aziende.TipiRichiesta.SmartWorking : CL.Domain.Aziende.TipiRichiesta.InUfficio))
+            return (0, "Questo tipo di richiesta non è previsto dall'azienda.");
         var assenze = await db.RichiesteAssenza.AsNoTracking()
             .Where(r => r.DipendenteId == id && !r.AOre && (r.Stato == StatoRichiesta.Approvata || r.Stato == StatoRichiesta.InAttesa) && r.Dal <= al && r.Al >= dal)
             .ToListAsync();

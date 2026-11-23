@@ -11,7 +11,7 @@
         "Aziende" => ("Aziende", Url.Action("Index", "Aziende")),
         "Dipendenti" or "Team" => (personale, Url.Action("Index", "Dipendenti")),
         "Assenze" => ("Presenze e assenze", Utente.IsDipendente ? Url.Action("Index", "Ufficio") : Url.Action("Calendario", "Assenze")),
-        "Presenze" => ("Presenze", Url.Action("Index", "Presenze")),
+        "Presenze" => ("Presenze e assenze", Url.Action("Calendario", "Assenze")),
         "BustePaga" or "Documenti" => ("Documenti", null),
         "Utenti" when Utente.IsAzienda => ("Personale", Url.Action("Index", "Dipendenti")),
         "Utenti" => ("Utenti", null),

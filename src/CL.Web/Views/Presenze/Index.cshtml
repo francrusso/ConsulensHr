@@ -1,15 +1,18 @@
 @model CL.Web.Controllers.CruscottoPresenzeViewModel
 @{
     var periodo = $"{ServizioBustePaga.NomeMese(Model.Mese)} {Model.Anno}";
-    ViewData["Title"] = "Presenze";
+    ViewData["Title"] = "Riepilogo presenze";
     var inviate = Model.Aziende.Count(a => a.Stato is StatoComunicazione.Inviata or StatoComunicazione.Elaborata);
 }
 <div class="breadcrumb-titolo d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
     <div>
-        <h1 class="titolo-pagina mb-0">Presenze di @periodo.ToLower()</h1>
-        <p class="text-body-secondary mb-0">Ricevute da @inviate aziende su @Model.Aziende.Count.</p>
+        <h1 class="titolo-pagina mb-0">Riepilogo presenze</h1>
+        <p class="text-body-secondary mb-0">@periodo · Ricevute da @inviate aziende su @Model.Aziende.Count.</p>
     </div>
-    <partial name="_Periodo" model='(Model.Anno, Model.Mese, (Guid?)null, "Index")' />
+    <div class="d-flex flex-wrap gap-2 align-items-center">
+        <partial name="_Periodo" model='(Model.Anno, Model.Mese, (Guid?)null, "Index")' />
+        <a asp-action="EsportaTutto" asp-route-anno="@Model.Anno" asp-route-mese="@Model.Mese" class="btn btn-primary text-nowrap"><i class="ri-file-excel-2-line" aria-hidden="true"></i> Esporta tutto</a>
+    </div>
 </div>
 
 <div class="card radius-15 table-responsive table-actions-responsive p-1 customer-results">

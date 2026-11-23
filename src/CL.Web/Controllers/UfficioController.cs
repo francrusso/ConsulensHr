@@ -17,6 +17,8 @@ public sealed record GiornoUfficio(DateOnly Data, bool DelMese, bool Lavorativo,
     /// <summary>Ferie, permessi, malattia... in attesa o approvati che toccano il giorno.</summary>
     public List<RichiestaDelGiorno> Richieste { get; init; } = [];
     public List<string> Chiusure { get; init; } = [];
+    /// <summary>Straordinari del giorno (in attesa o approvati).</summary>
+    public List<(decimal Ore, StatoRichiesta Stato)> Straordinari { get; init; } = [];
     /// <summary>Festività del giorno (nazionale o santo patrono), anche di domenica.</summary>
     public string? Festa { get; init; }
     public bool Festivo => Festa is not null;
@@ -39,6 +41,8 @@ public sealed class UfficioViewModel
     /// <summary>Smart working concesso dal contratto a chi lavora in presenza (es. "2 giorni al mese").</summary>
     public string? SmartConcesso { get; init; }
     public CL.Domain.Dipendenti.PeriodoSmartWorking? PeriodoSmart { get; init; }
+    /// <summary>Tipi di richiesta offerti dall'azienda (chiavi di TipiRichiesta).</summary>
+    public required Func<string, bool> Abilitata { get; init; }
     public int? GiorniSmartConcessi { get; init; }
 }
 
@@ -72,6 +76,8 @@ public sealed class UfficioController(AppDbContext db, UtenteCorrente utente, Se
             .Where(r => r.DipendenteId == id && (r.Stato == StatoRichiesta.Approvata || r.Stato == StatoRichiesta.InAttesa) && r.Dal <= fine && r.Al >= inizio)
             .OrderBy(r => r.Dal).ToListAsync();
         var azienda = await db.Aziende.AsNoTracking().FirstAsync(a => a.Id == d.AziendaId);
+        var straordinari = await db.Straordinari.AsNoTracking()
+            .Where(x => x.DipendenteId == id && x.Giorno >= inizio && x.Giorno <= fine && (x.Stato == StatoRichiesta.InAttesa || x.Stato == StatoRichiesta.Approvata)).ToListAsync();
         var chiusure = await db.ChiusureAziendali.AsNoTracking().Where(c => c.AziendaId == d.AziendaId && c.Dal <= fine && c.Al >= inizio).ToListAsync();
         var contratto = d.ContrattoAttivo(oggi) ?? d.Contratti.OrderByDescending(c => c.DataInizio).FirstOrDefault();
         var giorniSettimana = contratto?.GiorniLavorativiSettimana ?? 5;
@@ -86,20 +92,22 @@ public sealed class UfficioController(AppDbContext db, UtenteCorrente utente, Se
             var assenza = delGiorno.FirstOrDefault(r => !r.AOre)?.Tipo.Descrizione();
             // Lo smart working si chiede da oggi in poi; i giorni in ufficio si segnano anche a posteriori nel mese.
             var daQuando = modo == ModoLavoro.Presenza ? oggi : new DateOnly(oggi.Year, oggi.Month, 1);
-            var modificabile = modo is not null && g.Month == primo.Month && lavorativo && assenza is null && d.InForzaIl(g) && g >= daQuando;
+            var chiaveModo = modo == ModoLavoro.Presenza ? CL.Domain.Aziende.TipiRichiesta.SmartWorking : CL.Domain.Aziende.TipiRichiesta.InUfficio;
+            var modificabile = modo is not null && azienda.Abilitata(chiaveModo) && g.Month == primo.Month && lavorativo && assenza is null && d.InForzaIl(g) && g >= daQuando;
             var richiesta = richieste.GetValueOrDefault(g);
             giorni.Add(new GiornoUfficio(g, g.Month == primo.Month, lavorativo, segnati.Contains(g), assenza, modificabile)
             {
                 Smart = richiesta?.Stato, MotivoRifiuto = richiesta?.MotivoRifiuto,
                 Richieste = delGiorno.Select(r => new RichiestaDelGiorno(r.Tipo, r.Stato, r.AOre, r.AOre ? r.Ore : 0, r.Note)).ToList(),
                 Chiusure = chiusure.Where(c => c.Dal <= giorno && c.Al >= giorno).Select(c => c.Descrizione).ToList(),
+                Straordinari = straordinari.Where(x => x.Giorno == giorno).Select(x => (x.Ore, x.Stato)).ToList(),
                 Richiedibile = g.Month == primo.Month && lavorativo && assenza is null && g >= oggi && d.InForzaIl(g),
                 Festa = CalendarioLavorativo.NomeFestivita(g, azienda.SantoPatronoMese, azienda.SantoPatronoGiorno),
             });
         }
         return View(new UfficioViewModel
         {
-            Anno = primo.Year, Mese = primo.Month, Giorni = giorni, Oggi = oggi, Modo = modo,
+            Anno = primo.Year, Mese = primo.Month, Giorni = giorni, Oggi = oggi, Modo = modo, Abilitata = azienda.Abilitata,
             SmartConcesso = contratto?.SmartWorkingConcesso, PeriodoSmart = contratto?.PeriodoSmartWorking, GiorniSmartConcessi = contratto?.GiorniSmartWorking,
             GiorniPrevisti = contratto?.Modalita == CL.Domain.Dipendenti.ModalitaLavoro.Ibrido ? contratto.GiorniInUfficio : null,
         });

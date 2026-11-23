@@ -8,8 +8,13 @@
     var lavoro = ViewBag.Lavoro as string;
     var tipi = CL.Web.Controllers.RichiestaForm.Tipi.Select(t => { t.Selected = lavoro is null && t.Value == Model.Tipo.ToString(); return t; }).ToList();
     // Per tutti, oltre alle assenze: giorni di smart working (da approvare) e di presenza in ufficio.
+    tipi.Insert(0, new SelectListItem("Straordinario", CL.Web.Controllers.AssenzeController.SceltaStraordinario, lavoro == CL.Web.Controllers.AssenzeController.SceltaStraordinario));
     tipi.Insert(0, new SelectListItem("Presenza in ufficio", CL.Web.Controllers.AssenzeController.SceltaUfficio, lavoro == CL.Web.Controllers.AssenzeController.SceltaUfficio));
     tipi.Insert(0, new SelectListItem("Smart working", CL.Web.Controllers.AssenzeController.SceltaSmartWorking, lavoro == CL.Web.Controllers.AssenzeController.SceltaSmartWorking));
+    // Solo i tipi che l'azienda ha abilitato nel suo profilo.
+    var abilitata = ViewBag.Abilitata as Func<string, bool> ?? (_ => true);
+    var presenze = tipi.Take(3).Where(t => abilitata(t.Value)).ToList();
+    var assenze = tipi.Skip(3).Where(t => abilitata(t.Value)).ToList();
 }
 
 <h1 class="titolo-pagina mb-3">@ViewData["Title"]</h1>
@@ -45,11 +50,14 @@
         <div class="col-md-6">
             <label asp-for="Tipo" class="form-label"></label>
             <select name="Tipo" id="Tipo" class="form-select">
-                <optgroup label="Presenze">
-                    @foreach (var t in tipi.Take(2)) { <option value="@t.Value" selected="@t.Selected">@t.Text</option> }
-                </optgroup>
+                @if (presenze.Count > 0)
+                {
+                    <optgroup label="Presenze">
+                        @foreach (var t in presenze) { <option value="@t.Value" selected="@t.Selected">@t.Text</option> }
+                    </optgroup>
+                }
                 <optgroup label="Assenze">
-                    @foreach (var t in tipi.Skip(2)) { <option value="@t.Value" selected="@t.Selected">@t.Text</option> }
+                    @foreach (var t in assenze) { <option value="@t.Value" selected="@t.Selected">@t.Text</option> }
                 </optgroup>
             </select>
         </div>
@@ -118,12 +126,14 @@
                 document.getElementById('campoAl').hidden = aOre.checked;
                 document.getElementById('campoOre').hidden = !aOre.checked;
                 document.getElementById('etichettaDal').textContent = aOre.checked ? 'Giorno' : 'Dal';
-                // Smart working e giorni in ufficio: solo le date, niente ore né protocollo.
+                // Smart working e giorni in ufficio: solo le date. Straordinario: un giorno e le ore.
                 const giorni = tipo.value === 'SmartWorking' || tipo.value === 'InUfficio';
-                document.getElementById('campoAOre').hidden = giorni;
-                if (giorni && aOre.checked) { aOre.checked = false; }
-                document.getElementById('campoAl').hidden = aOre.checked;
-                document.getElementById('campoOre').hidden = !aOre.checked;
+                const straordinario = tipo.value === 'Straordinario';
+                document.getElementById('campoAOre').hidden = giorni || straordinario;
+                if ((giorni || straordinario) && aOre.checked) { aOre.checked = false; }
+                document.getElementById('campoAl').hidden = aOre.checked || straordinario;
+                document.getElementById('campoOre').hidden = !aOre.checked && !straordinario;
+                document.getElementById('etichettaDal').textContent = aOre.checked || straordinario ? 'Giorno' : 'Dal';
                 const malattia = tipo.value === 'Malattia';
                 document.getElementById('campoProtocollo').hidden = !malattia;
                 document.getElementById('ProtocolloCertificato').required = malattia; // obbligatorio per la malattia
