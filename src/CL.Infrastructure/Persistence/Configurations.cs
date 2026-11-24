@@ -374,6 +374,26 @@ internal sealed class CertificazioneUnicaConfig : IEntityTypeConfiguration<Certi
     }
 }
 
+internal sealed class DocumentoPersonaleConfig : IEntityTypeConfiguration<DocumentoPersonale>
+{
+    public void Configure(EntityTypeBuilder<DocumentoPersonale> b)
+    {
+        b.ToTable("DocumentiPersonali");
+        b.Property(x => x.Id).ValueGeneratedNever();
+        b.Property(x => x.Tipo).HasConversion<string>().HasMaxLength(32);
+        b.Property(x => x.Descrizione).HasMaxLength(150);
+        b.Property(x => x.NomeFile).HasMaxLength(255);
+        b.Property(x => x.TipoFile).HasMaxLength(50);
+        b.Property(x => x.ChiaveArchivio).HasMaxLength(500);
+        b.Property(x => x.CaricatoDa).HasMaxLength(256);
+        b.Ignore(x => x.Titolo);
+        b.HasOne<Dipendente>().WithMany().HasForeignKey(x => x.DipendenteId).OnDelete(DeleteBehavior.Cascade);
+        b.HasOne<Azienda>().WithMany().HasForeignKey(x => x.AziendaId).OnDelete(DeleteBehavior.Restrict);
+        b.HasIndex(x => new { x.DipendenteId, x.Tipo });
+        b.HasIndex(x => x.Scadenza);
+    }
+}
+
 internal sealed class BustaPagaConfig : IEntityTypeConfiguration<BustaPaga>
 {
     public void Configure(EntityTypeBuilder<BustaPaga> b)

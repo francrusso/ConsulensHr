@@ -28,12 +28,27 @@ public sealed record RigaContrattoDoc(Guid DipendenteId, string Persona, string 
         : StatoPersonale.Attivo;
 }
 
+public sealed record RigaDocumentoPersonale(Guid Id, Guid DipendenteId, string Persona, string Azienda, TipoDocumentoPersonale Tipo,
+    string? Descrizione, DateOnly? Scadenza, DateTime CaricatoIl)
+{
+    public string Titolo => Tipo == TipoDocumentoPersonale.Altro && Descrizione is { } d ? d : Tipo.Descrizione();
+    public StatoScadenza StatoIl(DateOnly oggi) => Scadenza switch
+    {
+        null => StatoScadenza.SenzaScadenza,
+        { } s when s < oggi => StatoScadenza.Scaduto,
+        { } s when s <= oggi.AddDays(DocumentoPersonale.GiorniPreavviso) => StatoScadenza.InScadenza,
+        _ => StatoScadenza.Valido,
+    };
+}
+
 public sealed class ElencoDocumentiViewModel<T>
 {
     public required List<T> Righe { get; init; }
     public int Anno { get; init; }
     public List<int> Anni { get; init; } = [];
     public string? Ricerca { get; init; }
+    /// <summary>Filtro per scadenza dei documenti personali: "scaduti" o "in-scadenza".</summary>
+    public string? Stato { get; init; }
     public Guid? AziendaId { get; init; }
     public List<SelectListItem>? Aziende { get; init; }
 }
@@ -157,6 +172,107 @@ public sealed class DocumentiController(AppDbContext db, UtenteCorrente utente, 
             select new RigaContrattoDoc(d.Id, d.Cognome + " " + d.Nome, az.RagioneSociale, c.Id, c.Tipo, c.DataInizio, c.DataFine,
                 c.DocumentoChiave != null, c.DocumentoCaricatoIl, c.DataCessazione)).ToListAsync();
         return View(new ElencoDocumentiViewModel<RigaContrattoDoc> { Righe = righe, Ricerca = q, AziendaId = aziendaId, Aziende = await ElencoAziende(aziendaId) });
+    }
+
+    /// <summary>
+    /// Documenti personali (identità, tessera sanitaria, permesso di soggiorno, moduli detrazioni/TFR) con la scadenza.
+    /// Il dipendente vede e carica i propri; azienda e consulente quelli del personale, filtrabili per scadenza.
+    /// </summary>
+    public async Task<IActionResult> Personali(Guid? aziendaId, string? q, string? stato)
+    {
+        var oggi = DateOnly.FromDateTime(clock.GetLocalNow().Date);
+        var soglia = oggi.AddDays(DocumentoPersonale.GiorniPreavviso);
+        var query =
+            from d in Persone(aziendaId, q)
+            join az in db.Aziende.AsNoTracking() on d.AziendaId equals az.Id
+            join doc in db.DocumentiPersonali.AsNoTracking() on d.Id equals doc.DipendenteId
+            select new { d, az, doc };
+        if (stato == "scaduti") query = query.Where(x => x.doc.Scadenza != null && x.doc.Scadenza < oggi);
+        else if (stato == "in-scadenza") query = query.Where(x => x.doc.Scadenza != null && x.doc.Scadenza <= soglia);
+        var righe = (await query.Select(x => new RigaDocumentoPersonale(x.doc.Id, x.d.Id, x.d.Cognome + " " + x.d.Nome, x.az.RagioneSociale,
+                x.doc.Tipo, x.doc.Descrizione, x.doc.Scadenza, x.doc.CaricatoIl)).ToListAsync())
+            // Prima ciò che è scaduto o sta per scadere, poi per persona.
+            .OrderBy(r => r.StatoIl(oggi) switch { StatoScadenza.Scaduto => 0, StatoScadenza.InScadenza => 1, _ => 2 })
+            .ThenBy(r => r.Persona).ThenBy(r => r.Tipo).ToList();
+        return View(new ElencoDocumentiViewModel<RigaDocumentoPersonale>
+        {
+            Righe = righe, Ricerca = q, Stato = stato, AziendaId = aziendaId, Aziende = await ElencoAziende(aziendaId),
+        });
+    }
+
+    /// <summary>Carica un documento personale: il dipendente per sé, azienda e consulente per una persona del personale.</summary>
+    public async Task<IActionResult> NuovoPersonale(Guid? dipendenteId)
+    {
+        ViewBag.Persone = utente.IsDipendente ? null : await SceltePersone();
+        ViewBag.DipendenteId = dipendenteId;
+        return View();
+    }
+
+    [HttpPost, ValidateAntiForgeryToken, RequestSizeLimit(DimensioneMassima + 256 * 1024)]
+    public async Task<IActionResult> CaricaPersonale(Guid? dipendenteId, TipoDocumentoPersonale tipo, string? descrizione, DateOnly? scadenza,
+        IFormFile? documento, string? ritorno)
+    {
+        var id = utente.IsDipendente ? utente.DipendenteId : dipendenteId;
+        var d = id is null ? null : await utente.Filtra(db.Dipendenti.IgnoreAutoIncludes()).FirstOrDefaultAsync(x => x.Id == id);
+        if (d is null) { Errore("Scegli la persona."); return RedirectToAction(nameof(NuovoPersonale)); }
+        var (tipoFile, estensione, errore) = await ControllaFile(documento);
+        if (errore is not null) { Errore(errore); return RedirectToAction(nameof(NuovoPersonale), new { dipendenteId = d.Id }); }
+
+        var chiave = $"personali/{d.Id}-{Guid.NewGuid():N}{estensione}";
+        DocumentoPersonale doc;
+        try
+        {
+            doc = new DocumentoPersonale(d.AziendaId, d.Id, tipo, descrizione, scadenza, documento!.FileName, tipoFile!, chiave,
+                documento.Length, utente.Email, clock.GetUtcNow().UtcDateTime);
+        }
+        catch (DomainException ex) { Errore(ex.Message); return RedirectToAction(nameof(NuovoPersonale), new { dipendenteId = d.Id }); }
+        await using (var s = documento.OpenReadStream()) await archivio.SalvaAsync(chiave, s);
+        db.DocumentiPersonali.Add(doc);
+        await db.SaveChangesAsync();
+        Conferma(utente.IsDipendente ? $"{doc.Titolo} caricato." : $"{doc.Titolo} di {d.NomeCompleto} caricato.");
+        return Torna(ritorno, nameof(Personali), new { });
+    }
+
+    public async Task<IActionResult> ApriPersonale(Guid id)
+    {
+        var doc = await PersonaleVisibile(id);
+        if (doc is null || await archivio.ApriAsync(doc.ChiaveArchivio) is not { } file) return NotFound();
+        Response.Headers.CacheControl = "no-store, private";
+        Response.Headers.XContentTypeOptions = "nosniff";
+        Response.Headers.ContentDisposition = new ContentDispositionHeaderValue("inline") { FileNameStar = doc.NomeFile.Replace(' ', '_') }.ToString();
+        return File(file, doc.TipoFile);
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> EliminaPersonale(Guid id, string? ritorno)
+    {
+        var doc = await PersonaleVisibile(id);
+        if (doc is null) return NotFound();
+        db.DocumentiPersonali.Remove(doc);
+        await db.SaveChangesAsync();
+        await archivio.EliminaAsync(doc.ChiaveArchivio);
+        Conferma($"{doc.Titolo} eliminato.");
+        return Torna(ritorno, nameof(Personali), new { });
+    }
+
+    /// <summary>Il documento, solo se è di una persona nel perimetro dell'utente (per il dipendente: solo i suoi).</summary>
+    private Task<DocumentoPersonale?> PersonaleVisibile(Guid id)
+    {
+        var visibili = utente.Filtra(db.Dipendenti).Select(d => d.Id);
+        return db.DocumentiPersonali.FirstOrDefaultAsync(c => c.Id == id && visibili.Contains(c.DipendenteId));
+    }
+
+    /// <summary>PDF, JPEG o PNG fino a 10 MB, riconosciuti dai primi byte del file.</summary>
+    private static async Task<(string? Tipo, string? Estensione, string? Errore)> ControllaFile(IFormFile? f)
+    {
+        if (f is not { Length: > 0 }) return (null, null, "Scegli il file.");
+        if (f.Length > DimensioneMassima) return (null, null, "Il file supera 10 MB.");
+        var testa = new byte[5];
+        await using (var s = f.OpenReadStream()) _ = await s.ReadAtLeastAsync(testa, testa.Length, throwOnEndOfStream: false);
+        if (testa.AsSpan().SequenceEqual("%PDF-"u8)) return ("application/pdf", ".pdf", null);
+        if (testa[0] == 0xFF && testa[1] == 0xD8 && testa[2] == 0xFF) return ("image/jpeg", ".jpg", null);
+        if (testa[0] == 0x89 && testa[1] == 0x50 && testa[2] == 0x4E && testa[3] == 0x47) return ("image/png", ".png", null);
+        return (null, null, "Carica un PDF o una foto (JPEG o PNG).");
     }
 
     /// <summary>PDF del contratto: anche il dipendente può aprire i propri.</summary>

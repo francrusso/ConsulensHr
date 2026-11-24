@@ -1,0 +1,88 @@
+@model CL.Web.Controllers.ElencoDocumentiViewModel<CL.Web.Controllers.RigaDocumentoPersonale>
+@using CL.Domain.Documenti
+@inject UtenteCorrente Utente
+@{
+    ViewData["Title"] = Utente.IsDipendente ? "I miei documenti" : "Documenti personali";
+    var oggi = DateOnly.FromDateTime(DateTime.Today);
+    var ritorno = Context.Request.Path + Context.Request.QueryString;
+    var conPersona = !Utente.IsDipendente;
+    var colonne = 4 + (conPersona ? 1 : 0) + (Utente.IsConsulente ? 1 : 0);
+    (string Testo, string Colore) Stato(StatoScadenza s) => s switch
+    {
+        StatoScadenza.Scaduto => ("Scaduto", "#E5484D"),
+        StatoScadenza.InScadenza => ("In scadenza", "#F2B544"),
+        StatoScadenza.Valido => ("Valido", "#2FBA6C"),
+        _ => ("Senza scadenza", "#9AA3AE"),
+    };
+    var scaduti = Model.Righe.Count(r => r.StatoIl(oggi) == StatoScadenza.Scaduto);
+    var inScadenza = Model.Righe.Count(r => r.StatoIl(oggi) == StatoScadenza.InScadenza);
+}
+<div class="breadcrumb-titolo d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+    <h1 class="titolo-pagina mb-0">@ViewData["Title"]</h1>
+</div>
+
+@if (conPersona)
+{
+    <partial name="_Filtri" model="(nameof(CL.Web.Controllers.DocumentiController.Personali), Model.Ricerca, Model.AziendaId, Model.Aziende, (int?)null, (List<int>?)null)" />
+}
+<div class="invoice-filter-categories filtro-stati mb-3" role="group" aria-label="Filtra per scadenza">
+    @foreach (var (valore, testo) in new (string?, string)[] { (null, "Tutti"), ("in-scadenza", "In scadenza"), ("scaduti", "Scaduti") })
+    {
+        <a class="badge-filtro-categoria @(Model.Stato == valore ? "active" : "")" aria-current="@(Model.Stato == valore ? "true" : null)"
+           asp-action="Personali" asp-route-stato="@valore" asp-route-q="@Model.Ricerca" asp-route-aziendaId="@Model.AziendaId">@testo</a>
+    }
+</div>
+
+@if (scaduti + inScadenza > 0 && Model.Stato is null)
+{
+    <div class="avviso-cu mancanti" role="status">
+        <i class="ri-error-warning-fill icona-avviso-cu" aria-hidden="true"></i>
+        <div class="flex-grow-1">
+            <div class="titolo-avviso-cu">@(scaduti > 0 ? $"{scaduti} {(scaduti == 1 ? "documento scaduto" : "documenti scaduti")}" : "")@(scaduti > 0 && inScadenza > 0 ? " · " : "")@(inScadenza > 0 ? $"{inScadenza} in scadenza" : "")</div>
+            <div class="small">Carica il documento rinnovato: quello vecchio si può eliminare.</div>
+        </div>
+    </div>
+}
+
+<div class="card radius-15 table-responsive table-actions-responsive p-1 customer-results">
+    <table class="table mb-0 align-middle">
+        <thead>
+            <tr>
+                @if (conPersona) { <th scope="col">Persona</th> }
+                @if (Utente.IsConsulente) { <th scope="col">Azienda</th> }
+                <th scope="col">Documento</th>
+                <th scope="col">Scadenza</th>
+                <th scope="col">Stato</th>
+                <th scope="col" class="text-end">Azioni</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Righe.Count == 0)
+            {
+                <tr><td colspan="@colonne" class="elenco-vuoto"><span class="elenco-vuoto-icona" aria-hidden="true"><i class="ri-id-card-line"></i></span><div>Nessun documento</div></td></tr>
+            }
+            @foreach (var r in Model.Righe)
+            {
+                var (testo, colore) = Stato(r.StatoIl(oggi));
+                <tr>
+                    @if (conPersona) { <td data-label="Persona"><a asp-controller="Dipendenti" asp-action="Dettaglio" asp-route-id="@r.DipendenteId" class="customer-name"><span>@r.Persona</span></a></td> }
+                    @if (Utente.IsConsulente) { <td data-label="Azienda">@r.Azienda</td> }
+                    <td data-label="Documento"><a asp-action="ApriPersonale" asp-route-id="@r.Id" target="_blank" rel="noopener" class="link-contratto"><i class="ri-file-line" aria-hidden="true"></i> @r.Titolo</a></td>
+                    <td data-label="Scadenza">@(r.Scadenza?.ToString("dd/MM/yyyy") ?? "—")</td>
+                    <td data-label="Stato"><span class="badge badge-stato" style="--colore-stato:@colore"><span class="pallino-stato" aria-hidden="true"></span>@testo</span></td>
+                    <td data-label="Azioni">
+                        <div class="customer-actions">
+                            <a asp-action="ApriPersonale" asp-route-id="@r.Id" target="_blank" rel="noopener" title="Apri" aria-label="Apri @r.Titolo"><i class="ri-eye-line" aria-hidden="true"></i></a>
+                            <a asp-action="NuovoPersonale" asp-route-dipendenteId="@r.DipendenteId" title="Carica un altro documento" aria-label="Carica un altro documento"><i class="ri-upload-2-line" aria-hidden="true"></i></a>
+                            <form asp-action="EliminaPersonale" method="post" class="m-0" onsubmit="return confirm('Eliminare questo documento?');">
+                                <input type="hidden" name="id" value="@r.Id" />
+                                <input type="hidden" name="ritorno" value="@ritorno" />
+                                <button type="submit" title="Elimina" aria-label="Elimina @r.Titolo"><i class="ri-delete-bin-line" aria-hidden="true"></i></button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

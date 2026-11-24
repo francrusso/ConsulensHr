@@ -1,3 +1,4 @@
+using CL.Domain.Documenti;
 using CL.Domain.Assenze;
 using CL.Domain.BustePaga;
 using CL.Domain.Dipendenti;
@@ -210,8 +211,14 @@ public sealed class ServizioPanoramica(AppDbContext db, UtenteCorrente utente, T
         var cuMancanti = personeCu.Count - await db.CertificazioniUniche.CountAsync(c => personeCu.Contains(c.DipendenteId) && c.AnnoImposta == annoCu);
         var cancellazioni = await db.RichiesteAssenza.CountAsync(r => idsInPerimetro.Contains(r.DipendenteId)
                                                                      && r.Stato == StatoRichiesta.Approvata && r.AnnullamentoRichiestoIl != null);
+        // Documenti personali scaduti o in scadenza (30 giorni) del personale nel perimetro.
+        var sogliaDocumenti = oggi.AddDays(DocumentoPersonale.GiorniPreavviso);
+        var documentiScadenza = await db.DocumentiPersonali.AsNoTracking()
+            .Where(x => idsInPerimetro.Contains(x.DipendenteId) && x.Scadenza != null && x.Scadenza <= sogliaDocumenti)
+            .Select(x => new { x.DipendenteId, x.Tipo, x.Descrizione, Scadenza = x.Scadenza!.Value }).ToListAsync();
         var daFare = new List<CosaDaFare>
         {
+            new("Rinnova i documenti personali scaduti o in scadenza", documentiScadenza.Count == 0, "/Documenti/Personali?stato=in-scadenza", documentiScadenza.Count) { Chiave = $"documenti-{oggi:yyyy-MM-dd}" },
             new(utente.IsConsulente ? "Richieste in attesa delle aziende" : "Approva le richieste in attesa", inAttesa == 0, "/Assenze?stato=InAttesa", inAttesa) { Chiave = $"richieste-{oggi:yyyy-MM-dd}" },
             new($"Carica le CU {annoCu + 1} sui redditi {annoCu}", cuMancanti == 0, $"/Documenti/Cu?anno={annoCu}", cuMancanti) { Chiave = $"cu-{annoCu}" },
             new("Rinnova o chiudi i contratti in scadenza", scadenze.Count == 0, "/Documenti/Contratti", scadenze.Count) { Chiave = $"contratti-{oggi:yyyy-MM}" },
@@ -233,6 +240,10 @@ public sealed class ServizioPanoramica(AppDbContext db, UtenteCorrente utente, T
         var eventi = scadenze.Where(x => x.DataFine <= finoA)
             .Select(x => new EventoScadenza(x.DataFine, "Scadenza contratto", $"{x.Persona.Nome} · {x.Tipo}", "contratto", $"/Dipendenti/Dettaglio/{x.Persona.Id}?sezione=contratto"))
             .ToList();
+        eventi.AddRange(documentiScadenza.Where(x => x.Scadenza >= oggi && persone.ContainsKey(x.DipendenteId))
+            .Select(x => new EventoScadenza(x.Scadenza, "Scadenza documento",
+                $"{P(persone[x.DipendenteId]).Nome} · {(x.Tipo == TipoDocumentoPersonale.Altro && x.Descrizione is { } d ? d : x.Tipo.Descrizione())}",
+                "documento", "/Documenti/Personali?stato=in-scadenza")));
         var aziendeChiusure = utente.IsAzienda ? [utente.AziendaId!.Value] : aziendaId is { } scelta ? [scelta] : aziendeIds;
         eventi.AddRange((await db.ChiusureAziendali.AsNoTracking()
                 .Where(c => aziendeChiusure.Contains(c.AziendaId) && c.Al >= oggi && c.Dal <= finoA).ToListAsync())

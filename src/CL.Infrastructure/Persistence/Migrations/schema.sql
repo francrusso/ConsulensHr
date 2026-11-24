@@ -1857,3 +1857,58 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261124164407_DocumentiPersonali') THEN
+    CREATE TABLE hr."DocumentiPersonali" (
+        "Id" uuid NOT NULL,
+        "AziendaId" uuid NOT NULL,
+        "DipendenteId" uuid NOT NULL,
+        "Tipo" character varying(32) NOT NULL,
+        "Descrizione" character varying(150),
+        "Scadenza" date,
+        "NomeFile" character varying(255) NOT NULL,
+        "TipoFile" character varying(50) NOT NULL,
+        "ChiaveArchivio" character varying(500) NOT NULL,
+        "DimensioneByte" bigint NOT NULL,
+        "CaricatoIl" timestamp with time zone NOT NULL,
+        "CaricatoDa" character varying(256) NOT NULL,
+        CONSTRAINT "PK_DocumentiPersonali" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_DocumentiPersonali_Aziende_AziendaId" FOREIGN KEY ("AziendaId") REFERENCES hr."Aziende" ("Id") ON DELETE RESTRICT,
+        CONSTRAINT "FK_DocumentiPersonali_Dipendenti_DipendenteId" FOREIGN KEY ("DipendenteId") REFERENCES hr."Dipendenti" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261124164407_DocumentiPersonali') THEN
+    CREATE INDEX "IX_DocumentiPersonali_AziendaId" ON hr."DocumentiPersonali" ("AziendaId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261124164407_DocumentiPersonali') THEN
+    CREATE INDEX "IX_DocumentiPersonali_DipendenteId_Tipo" ON hr."DocumentiPersonali" ("DipendenteId", "Tipo");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261124164407_DocumentiPersonali') THEN
+    CREATE INDEX "IX_DocumentiPersonali_Scadenza" ON hr."DocumentiPersonali" ("Scadenza");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261124164407_DocumentiPersonali') THEN
+    INSERT INTO hr."__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261124164407_DocumentiPersonali', '10.0.15');
+    END IF;
+END $EF$;
+COMMIT;
+

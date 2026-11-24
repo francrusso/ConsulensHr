@@ -37,6 +37,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, Perimet
     public DbSet<TurnoLavoro> TurniLavoro => Set<TurnoLavoro>();
     public DbSet<Straordinario> Straordinari => Set<Straordinario>();
     public DbSet<CertificazioneUnica> CertificazioniUniche => Set<CertificazioneUnica>();
+    public DbSet<DocumentoPersonale> DocumentiPersonali => Set<DocumentoPersonale>();
     public DbSet<ProfiloAzienda> ProfiliAzienda => Set<ProfiloAzienda>();
     public DbSet<ComunicazioneMensile> ComunicazioniPresenze => Set<ComunicazioneMensile>();
     public DbSet<ProfiloDipendente> ProfiliDipendente => Set<ProfiloDipendente>();
@@ -66,6 +67,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, Perimet
         builder.Entity<BustaPaga>().HasQueryFilter(x => Consentite == null || Consentite.Contains(x.AziendaId));
         builder.Entity<ChiusuraAziendale>().HasQueryFilter(x => Consentite == null || Consentite.Contains(x.AziendaId));
         builder.Entity<CertificazioneUnica>().HasQueryFilter(x => Consentite == null || Consentite.Contains(x.AziendaId));
+        builder.Entity<DocumentoPersonale>().HasQueryFilter(x => Consentite == null || Consentite.Contains(x.AziendaId));
         builder.Entity<ComunicazioneMensile>().HasQueryFilter(x => Consentite == null || Consentite.Contains(x.AziendaId));
         builder.Entity<ProfiloAzienda>().HasQueryFilter(x => Consentite == null || Consentite.Contains(x.AziendaId));
         builder.Entity<Team>().HasQueryFilter(x => Consentite == null || Consentite.Contains(x.AziendaId));

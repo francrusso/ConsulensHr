@@ -33,6 +33,7 @@
         ("documenti", "Contratti" or "NuovoContratto") when gestisce => (Url.Action("NuovoContratto", "Documenti"), "Nuovo contratto", "ri-file-add-line"),
         ("documenti", "Cu" or "NuovaCu") when gestisce
             => (Url.Action("NuovaCu", "Documenti", new { anno = query["anno"].FirstOrDefault() }), "Carica CU", "ri-upload-2-line"),
+        ("documenti", "Personali" or "NuovoPersonale") => (Url.Action("NuovoPersonale", "Documenti"), "Carica documento", "ri-upload-2-line"),
         ("home", _) when Utente.IsConsulente => (Url.Action("Nuova", "Aziende"), "Nuova azienda", "ri-add-line"),
         ("home", _) when Utente.IsAzienda => (Url.Action("Nuovo", "Dipendenti"), "Aggiungi persona", "ri-user-add-line"),
         ("home", _) => (Url.Action("Nuova", "Assenze"), "Nuova richiesta", "ri-calendar-event-line"),
@@ -241,6 +242,7 @@
                                     <li><a asp-controller="BustePaga" asp-action="Index">Buste paga</a></li>
                                     <li><a asp-controller="Documenti" asp-action="Cu">CU</a></li>
                                     @if (!Utente.IsDipendente) { <li><a asp-controller="Documenti" asp-action="Contratti">Contratti</a></li> }
+                                    <li><a asp-controller="Documenti" asp-action="Personali">@(Utente.IsDipendente ? "I miei documenti" : "Documenti personali")</a></li>
                                 </ul>
                             </li>
                             if (Utente.IsAmministratore)

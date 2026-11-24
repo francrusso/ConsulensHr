@@ -912,6 +912,66 @@ namespace CL.Infrastructure.Persistence.Migrations
                     b.ToTable("CertificazioniUniche", "hr");
                 });
 
+            modelBuilder.Entity("CL.Domain.Documenti.DocumentoPersonale", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AziendaId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CaricatoDa")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<DateTime>("CaricatoIl")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ChiaveArchivio")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Descrizione")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<long>("DimensioneByte")
+                        .HasColumnType("bigint");
+
+                    b.Property<Guid>("DipendenteId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("NomeFile")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<DateOnly?>("Scadenza")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<string>("TipoFile")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AziendaId");
+
+                    b.HasIndex("Scadenza");
+
+                    b.HasIndex("DipendenteId", "Tipo");
+
+                    b.ToTable("DocumentiPersonali", "hr");
+                });
+
             modelBuilder.Entity("CL.Domain.Organizzazione.Team", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1850,6 +1910,21 @@ namespace CL.Infrastructure.Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("DipendenteId")
                         .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("CL.Domain.Documenti.DocumentoPersonale", b =>
+                {
+                    b.HasOne("CL.Domain.Aziende.Azienda", null)
+                        .WithMany()
+                        .HasForeignKey("AziendaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("CL.Domain.Dipendenti.Dipendente", null)
+                        .WithMany()
+                        .HasForeignKey("DipendenteId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 

@@ -1,0 +1,67 @@
+@using CL.Domain.Documenti
+@inject UtenteCorrente Utente
+@{
+    ViewData["Title"] = "Carica documento";
+    ViewData["Percorso"] = new List<(string, string?)> { ("Documenti", null), (Utente.IsDipendente ? "I miei documenti" : "Documenti personali", Url.Action("Personali", "Documenti")) };
+    var persone = ViewBag.Persone as List<SelectListItem>;
+    var scelta = (Guid?)ViewBag.DipendenteId;
+}
+<div class="breadcrumb-titolo mb-3"><h1 class="titolo-pagina mb-0">Carica documento</h1></div>
+
+<form asp-action="CaricaPersonale" method="post" enctype="multipart/form-data" class="card radius-15 p-4 card-panoramica">
+    <div class="campi-presenza">
+        @if (persone is not null)
+        {
+            <div class="campo-note">
+                <label for="dipendenteId" class="form-label">Persona</label>
+                <select id="dipendenteId" name="dipendenteId" class="form-select select-persona" required>
+                    <option value="">Cerca per nome</option>
+                    @foreach (var p in persone) { <option value="@p.Value" selected="@(p.Value == scelta?.ToString())">@p.Text</option> }
+                </select>
+            </div>
+        }
+        <div>
+            <label for="tipo" class="form-label">Tipo di documento</label>
+            <select id="tipo" name="tipo" class="form-select">
+                @foreach (var t in Enum.GetValues<TipoDocumentoPersonale>())
+                {
+                    <option value="@t" data-scadenza="@(t.HaScadenza() ? "true" : "false")">@t.Descrizione()</option>
+                }
+            </select>
+        </div>
+        <div id="campoScadenza">
+            <label for="scadenza" class="form-label">Scadenza</label>
+            <input id="scadenza" name="scadenza" type="date" class="form-control" />
+        </div>
+        <div id="campoDescrizione" hidden>
+            <label for="descrizione" class="form-label">Descrizione</label>
+            <input id="descrizione" name="descrizione" class="form-control" maxlength="150" placeholder="Es. patente, attestato di formazione" />
+        </div>
+        <div class="campo-note">
+            <label for="documento" class="form-label">File (PDF o foto)</label>
+            <input id="documento" name="documento" type="file" accept="application/pdf,image/jpeg,image/png" class="form-control" required />
+        </div>
+    </div>
+    <div class="d-flex justify-content-end gap-2 mt-4">
+        <a asp-action="Personali" class="btn btn-outline-secondary">Annulla</a>
+        <button type="submit" class="btn btn-primary"><i class="ri-upload-2-line" aria-hidden="true"></i> Carica</button>
+    </div>
+</form>
+
+@section Scripts {
+    <script>
+        $(function () { if ($.fn.select2) $('.select-persona').select2({ width: '100%', placeholder: 'Cerca per nome' }); });
+        (function () {
+            const tipo = document.getElementById('tipo');
+            const aggiorna = () => {
+                const scelto = tipo.selectedOptions[0];
+                const conScadenza = scelto.dataset.scadenza === 'true';
+                document.getElementById('scadenza').required = conScadenza;
+                document.getElementById('campoDescrizione').hidden = scelto.value !== 'Altro';
+                document.getElementById('descrizione').required = scelto.value === 'Altro';
+            };
+            tipo.addEventListener('change', aggiorna);
+            aggiorna();
+        })();
+    </script>
+}

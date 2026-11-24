@@ -95,4 +95,63 @@ public sealed class DocumentiWebTests : IDisposable
         Assert.Contains("/Documenti/ApriContratto/", html);
         Assert.Empty(_app.ErroriServer);
     }
+
+    [Fact]
+    public async Task Il_dipendente_carica_i_suoi_documenti_e_l_azienda_vede_le_scadenze()
+    {
+        var (azienda, rossi) = await _app.ConDb(async db =>
+        {
+            var a = new Azienda("Acme S.r.l.", PartitaIva.Parse("01234567897"));
+            var r = new Dipendente(a.Id, "Mario", "Rossi", CodiceFiscale.Parse("RSSMRA85T10A562S"), new DateOnly(1985, 1, 1));
+            db.AddRange(a, r);
+            await db.SaveChangesAsync();
+            return (a.Id, r.Id);
+        });
+        var u = await _app.CreaUtente("mario@acme.test", Ruoli.Dipendente);
+        using (var scope = _app.Services.CreateScope())
+        {
+            var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+            var x = (await users.FindByIdAsync(u.Id))!;
+            (x.DipendenteId, x.AziendaId) = (rossi, azienda);
+            await users.UpdateAsync(x);
+        }
+        await _app.CompletaDatiPersonali(rossi);
+        var mario = _app.CreateClient();
+        await mario.Accedi("mario@acme.test");
+
+        async Task<string> Carica(HttpClient c, string tipo, string? scadenza, byte[] file)
+        {
+            using var form = new MultipartFormDataContent
+            {
+                { new StringContent(await c.TokenDa("/Documenti/NuovoPersonale")), "__RequestVerificationToken" },
+                { new StringContent(tipo), "tipo" }, { new StringContent(rossi.ToString()), "dipendenteId" },
+            };
+            if (scadenza is not null) form.Add(new StringContent(scadenza), "scadenza");
+            form.Add(new ByteArrayContent(file), "documento", "doc.pdf");
+            return await Testo(await c.PostAsync("/Documenti/CaricaPersonale", form));
+        }
+        var tra10 = DateTime.Today.AddDays(10).ToString("yyyy-MM-dd");
+        Assert.Contains("Indica la scadenza", await Carica(mario, "DocumentoIdentita", null, Pdf));
+        Assert.Contains("Carica un PDF o una foto", await Carica(mario, "DocumentoIdentita", tra10, [1, 2, 3]));
+        Assert.Contains("Documento d'identità caricato", await Carica(mario, "DocumentoIdentita", tra10, Pdf));
+        Assert.Contains("Modulo detrazioni caricato", await Carica(mario, "ModuloDetrazioni", null, [0xFF, 0xD8, 0xFF, 0xE0, 0]));
+
+        var html = WebUtility.HtmlDecode(await mario.GetStringAsync("/Documenti/Personali"));
+        Assert.Contains("I miei documenti", html);
+        Assert.Contains("In scadenza", html);
+        var id = await _app.ConDb(db => db.DocumentiPersonali.Where(d => d.TipoFile == "image/jpeg").Select(d => d.Id).SingleAsync());
+        var foto = await mario.GetAsync($"/Documenti/ApriPersonale/{id}");
+        Assert.Equal("image/jpeg", foto.Content.Headers.ContentType!.MediaType);
+
+        // L'azienda lo vede tra i documenti in scadenza e nelle cose da fare.
+        await _app.CreaUtente("hr@acme.test", Ruoli.Azienda, azienda);
+        var hr = _app.CreateClient();
+        await hr.Accedi("hr@acme.test");
+        html = WebUtility.HtmlDecode(await hr.GetStringAsync("/Documenti/Personali?stato=in-scadenza"));
+        Assert.Contains("Rossi Mario", html);
+        Assert.Contains("Documento d'identità", html);
+        Assert.DoesNotContain("Modulo detrazioni", html);
+        Assert.Contains("Rinnova i documenti personali", WebUtility.HtmlDecode(await hr.GetStringAsync("/")));
+        Assert.Empty(_app.ErroriServer);
+    }
 }

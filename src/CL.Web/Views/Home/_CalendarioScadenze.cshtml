@@ -6,7 +6,7 @@
     var inizio = primo.AddDays(-(((int)primo.DayOfWeek + 6) % 7));
     var ultimo = primo.AddMonths(1).AddDays(-1);
     var giorniEvento = eventi.Select(e => e.Data).ToHashSet();
-    string Colore(string tipo) => tipo switch { "contratto" => "#F2B544", "chiusura" => "#512D38", "cu" => "#D9534F", _ => "#98494E" };
+    string Colore(string tipo) => tipo switch { "contratto" => "#F2B544", "chiusura" => "#512D38", "cu" => "#D9534F", "documento" => "#6096FF", _ => "#98494E" };
 }
 <section class="card radius-15 p-3 p-md-4 card-panoramica" aria-labelledby="titoloCalendarioScadenze">
     <h2 class="titolo-card-panoramica mb-3" id="titoloCalendarioScadenze"><i class="ri-calendar-2-line" aria-hidden="true"></i> Calendario</h2>
