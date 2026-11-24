@@ -1642,3 +1642,183 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261124162807_UnitaLocaliTitolariSubentro') THEN
+    ALTER TABLE hr."ProfiliAzienda" ADD "CodiciAutorizzazione" character varying(100);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261124162807_UnitaLocaliTitolariSubentro') THEN
+    ALTER TABLE hr."ProfiliAzienda" ADD "ConsulentePrecedente" character varying(200);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261124162807_UnitaLocaliTitolariSubentro') THEN
+    ALTER TABLE hr."ProfiliAzienda" ADD "ContattiPrecedente" character varying(300);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261124162807_UnitaLocaliTitolariSubentro') THEN
+    ALTER TABLE hr."ProfiliAzienda" ADD "ContrattiIntegrativi" character varying(500);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261124162807_UnitaLocaliTitolariSubentro') THEN
+    ALTER TABLE hr."ProfiliAzienda" ADD "Csc" character varying(5);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261124162807_UnitaLocaliTitolariSubentro') THEN
+    ALTER TABLE hr."ProfiliAzienda" ADD "DataSubentro" date;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261124162807_UnitaLocaliTitolariSubentro') THEN
+    ALTER TABLE hr."ProfiliAzienda" ADD "LegaleUnicoTitolare" boolean NOT NULL DEFAULT TRUE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261124162807_UnitaLocaliTitolariSubentro') THEN
+    ALTER TABLE hr."ProfiliAzienda" ADD "Subentro" boolean NOT NULL DEFAULT FALSE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261124162807_UnitaLocaliTitolariSubentro') THEN
+    ALTER TABLE hr."ProfiliAzienda" ADD "UltimoMeseElaborato" date;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261124162807_UnitaLocaliTitolariSubentro') THEN
+    ALTER TABLE hr."Dipendenti" ADD "UnitaLocaleId" uuid;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261124162807_UnitaLocaliTitolariSubentro') THEN
+    ALTER TABLE hr."Aziende" ADD "TipoAvvio" character varying(32) NOT NULL DEFAULT 'NuovaAttivita';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261124162807_UnitaLocaliTitolariSubentro') THEN
+    CREATE TABLE hr."TitolariEffettivi" (
+        "Id" uuid NOT NULL,
+        "Nome" character varying(100) NOT NULL,
+        "Cognome" character varying(100) NOT NULL,
+        "CodiceFiscale" character varying(16) NOT NULL,
+        "Quota" numeric(5,2),
+        "ProfiloAziendaId" uuid NOT NULL,
+        CONSTRAINT "PK_TitolariEffettivi" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_TitolariEffettivi_ProfiliAzienda_ProfiloAziendaId" FOREIGN KEY ("ProfiloAziendaId") REFERENCES hr."ProfiliAzienda" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261124162807_UnitaLocaliTitolariSubentro') THEN
+    CREATE TABLE hr."UnitaLocali" (
+        "Id" uuid NOT NULL,
+        "Nome" character varying(150) NOT NULL,
+        "Via" character varying(300) NOT NULL,
+        "Cap" character varying(5) NOT NULL,
+        "Comune" character varying(150) NOT NULL,
+        "Provincia" character varying(2) NOT NULL,
+        "ReferenteNome" character varying(150),
+        "ReferenteEmail" character varying(256),
+        "ReferenteTelefono" character varying(30),
+        "ProfiloAziendaId" uuid NOT NULL,
+        CONSTRAINT "PK_UnitaLocali" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_UnitaLocali_ProfiliAzienda_ProfiloAziendaId" FOREIGN KEY ("ProfiloAziendaId") REFERENCES hr."ProfiliAzienda" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261124162807_UnitaLocaliTitolariSubentro') THEN
+    CREATE TABLE hr."VociInail" (
+        "Id" uuid NOT NULL,
+        "Voce" character varying(20) NOT NULL,
+        "Tasso" numeric(8,2) NOT NULL,
+        "ProfiloAziendaId" uuid NOT NULL,
+        CONSTRAINT "PK_VociInail" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_VociInail_ProfiliAzienda_ProfiloAziendaId" FOREIGN KEY ("ProfiloAziendaId") REFERENCES hr."ProfiliAzienda" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261124162807_UnitaLocaliTitolariSubentro') THEN
+    CREATE INDEX "IX_TitolariEffettivi_ProfiloAziendaId" ON hr."TitolariEffettivi" ("ProfiloAziendaId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261124162807_UnitaLocaliTitolariSubentro') THEN
+    CREATE INDEX "IX_UnitaLocali_ProfiloAziendaId" ON hr."UnitaLocali" ("ProfiloAziendaId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261124162807_UnitaLocaliTitolariSubentro') THEN
+    CREATE INDEX "IX_VociInail_ProfiloAziendaId" ON hr."VociInail" ("ProfiloAziendaId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261124162807_UnitaLocaliTitolariSubentro') THEN
+    INSERT INTO hr."UnitaLocali" ("Id", "Nome", "Via", "Cap", "Comune", "Provincia", "ProfiloAziendaId")
+    SELECT gen_random_uuid(), 'Sede operativa', p."SedeOperativaVia", p."SedeOperativaCap", p."SedeOperativaComune", p."SedeOperativaProvincia", p."Id"
+    FROM hr."ProfiliAzienda" p
+    WHERE p."SedeOperativaVia" IS NOT NULL AND p."SedeOperativaCap" IS NOT NULL
+      AND p."SedeOperativaComune" IS NOT NULL AND p."SedeOperativaProvincia" IS NOT NULL;
+
+    UPDATE hr."Dipendenti" d
+    SET "Sede" = 'UnitaLocale', "UnitaLocaleId" = u."Id"
+    FROM hr."ProfiliAzienda" p
+    JOIN hr."UnitaLocali" u ON u."ProfiloAziendaId" = p."Id"
+    WHERE d."Sede" = 'SedeOperativa' AND p."AziendaId" = d."AziendaId";
+
+    UPDATE hr."ProfiliAzienda"
+    SET "SedeOperativaVia" = NULL, "SedeOperativaCap" = NULL, "SedeOperativaComune" = NULL, "SedeOperativaProvincia" = NULL
+    WHERE "Id" IN (SELECT "ProfiloAziendaId" FROM hr."UnitaLocali");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261124162807_UnitaLocaliTitolariSubentro') THEN
+    INSERT INTO hr."__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261124162807_UnitaLocaliTitolariSubentro', '10.0.15');
+    END IF;
+END $EF$;
+COMMIT;
+

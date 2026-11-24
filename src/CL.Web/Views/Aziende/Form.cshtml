@@ -11,6 +11,17 @@
         <div asp-validation-summary="ModelOnly" class="alert alert-danger radius-15" role="alert"></div>
         <input type="hidden" asp-for="Id" />
 
+        <div class="col-12">
+            <span class="form-label d-block">Tipo di cliente</span>
+            <div class="d-flex flex-wrap gap-2" role="radiogroup" aria-label="Tipo di cliente">
+                @foreach (var (valore, testo, icona) in new[] { (CL.Domain.Aziende.TipoAvvio.NuovaAttivita, "Nuova attività", "ri-seedling-line"), (CL.Domain.Aziende.TipoAvvio.CambioConsulente, "Cambio consulente", "ri-exchange-line") })
+                {
+                    <input type="radio" class="btn-check" asp-for="TipoAvvio" value="@valore" id="tipo-@valore" checked="@(Model.TipoAvvio == valore)" />
+                    <label class="btn btn-outline-primary rounded-pill" for="tipo-@valore"><i class="@icona" aria-hidden="true"></i> @testo</label>
+                }
+            </div>
+        </div>
+
         <div class="col-md-5">
             <label asp-for="PartitaIva" class="form-label"></label>
             @if (nuova)

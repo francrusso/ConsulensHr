@@ -10,19 +10,32 @@
         <div class="col-md-1"><label asp-for="LegaleProvincia" class="form-label">Prov.</label><input asp-for="LegaleProvincia" class="form-control text-uppercase" maxlength="2" /><span asp-validation-for="LegaleProvincia" class="text-danger"></span></div>
     </div>
 
-    <div class="form-check form-switch mt-4">
-        <input asp-for="OperativaDiversa" class="form-check-input" />
-        <label asp-for="OperativaDiversa" class="form-check-label"></label>
+    @* Unità locali: dove lavora il personale, ciascuna con il suo referente. Righe vuote = ignorate. *@
+    <h3 class="h6 mt-4">Unità locali</h3>
+    <div id="righeUnita">
+        @for (var i = 0; i < Model.Unita.Count + 5; i++)
+        {
+            var u = i < Model.Unita.Count ? Model.Unita[i] : new CL.Web.Controllers.UnitaForm();
+            var nascosta = i >= Model.Unita.Count && !(i == 0 && Model.Unita.Count == 0);
+            <fieldset class="riga-ripetibile" hidden="@nascosta">
+                <legend class="sottotitolo-presenza d-flex justify-content-between align-items-center">Unità locale @(i + 1)
+                    <button type="button" class="btn btn-sm btn-link text-danger togli-riga">Togli</button></legend>
+                <input type="hidden" name="Unita[@i].Id" value="@u.Id" />
+                <div class="row g-3">
+                    <div class="col-md-4"><label class="form-label" for="u@(i)n">Nome</label><input id="u@(i)n" name="Unita[@i].Nome" value="@u.Nome" class="form-control" placeholder="es. Magazzino Milano" maxlength="150" /></div>
+                    <div class="col-md-8"><label class="form-label" for="u@(i)v">Indirizzo</label><input id="u@(i)v" name="Unita[@i].Via" value="@u.Via" class="form-control" maxlength="300" /></div>
+                    <div class="col-md-2"><label class="form-label" for="u@(i)c">CAP</label><input id="u@(i)c" name="Unita[@i].Cap" value="@u.Cap" class="form-control" inputmode="numeric" maxlength="5" /></div>
+                    <div class="col-md-4"><label class="form-label" for="u@(i)m">Comune</label><input id="u@(i)m" name="Unita[@i].Comune" value="@u.Comune" class="form-control" maxlength="150" /></div>
+                    <div class="col-md-2"><label class="form-label" for="u@(i)p">Prov.</label><input id="u@(i)p" name="Unita[@i].Provincia" value="@u.Provincia" class="form-control text-uppercase" maxlength="2" /></div>
+                    <div class="col-md-4"></div>
+                    <div class="col-md-4"><label class="form-label" for="u@(i)rn">Referente</label><input id="u@(i)rn" name="Unita[@i].ReferenteNome" value="@u.ReferenteNome" class="form-control" maxlength="150" /></div>
+                    <div class="col-md-4"><label class="form-label" for="u@(i)re">Email del referente</label><input id="u@(i)re" name="Unita[@i].ReferenteEmail" value="@u.ReferenteEmail" type="email" class="form-control" maxlength="256" /></div>
+                    <div class="col-md-4"><label class="form-label" for="u@(i)rt">Telefono del referente</label><input id="u@(i)rt" name="Unita[@i].ReferenteTelefono" value="@u.ReferenteTelefono" type="tel" class="form-control" maxlength="30" /></div>
+                </div>
+            </fieldset>
+        }
     </div>
-    <div id="campiOperativa" class="mt-4">
-        <h3 class="h6">Sede operativa</h3>
-        <div class="row g-3">
-            <div class="col-md-6"><label asp-for="OperativaVia" class="form-label"></label><input asp-for="OperativaVia" class="form-control" /><span asp-validation-for="OperativaVia" class="text-danger"></span></div>
-            <div class="col-md-2"><label asp-for="OperativaCap" class="form-label"></label><input asp-for="OperativaCap" class="form-control" inputmode="numeric" maxlength="5" /><span asp-validation-for="OperativaCap" class="text-danger"></span></div>
-            <div class="col-md-3"><label asp-for="OperativaComune" class="form-label"></label><input asp-for="OperativaComune" class="form-control" /><span asp-validation-for="OperativaComune" class="text-danger"></span></div>
-            <div class="col-md-1"><label asp-for="OperativaProvincia" class="form-label">Prov.</label><input asp-for="OperativaProvincia" class="form-control text-uppercase" maxlength="2" /><span asp-validation-for="OperativaProvincia" class="text-danger"></span></div>
-        </div>
-    </div>
+    <button type="button" class="btn btn-outline-primary btn-sm mt-2" data-aggiungi-riga="righeUnita"><i class="ri-add-line" aria-hidden="true"></i> Aggiungi unità locale</button>
 
     <partial name="_Pulsanti" model="2" />
 </form>

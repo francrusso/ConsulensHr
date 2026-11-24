@@ -67,8 +67,12 @@ public sealed class DipendenteForm
     /// <summary>La persona a cui il consulente chiede ogni mese presenze, variazioni e documenti.</summary>
     [Display(Name = "Referente paghe")]
     public bool ReferentePaghe { get; set; }
+    /// <summary>Sede di lavoro come chiave del menù: "SedeLegale", "SmartWorking" o "Unita:{id}" (unità locale).</summary>
     [Display(Name = "Sede di lavoro")]
-    public SedeLavoro? Sede { get; set; }
+    public string? Sede { get; set; }
+
+    public static string? ChiaveSede(SedeLavoro? sede, Guid? unita) =>
+        sede == SedeLavoro.UnitaLocale && unita is { } u ? $"Unita:{u}" : sede?.ToString();
 
     [Display(Name = "Genere")]
     public Genere? Genere { get; set; }
@@ -102,7 +106,7 @@ public sealed class DipendenteForm
         TeamId = d.TeamId,
         Posizione = d.Posizione,
         ResponsabileId = d.ResponsabileId,
-        Sede = d.Sede,
+        Sede = DipendenteForm.ChiaveSede(d.Sede, d.UnitaLocaleId),
         ReferentePaghe = d.ReferentePaghe,
     };
 }
@@ -613,12 +617,15 @@ public sealed class DipendentiController(AppDbContext db, UtenteCorrente utente,
             if (form.TeamReferente.Contains(t.Id)) t.ImpostaResponsabile(dip);
             else if (t.ResponsabileId == dip.Id) t.ImpostaResponsabile(null);
         }
-        if (form.Sede is { } sede && !(await SediAzienda(dip.AziendaId)).ContainsKey(sede))
+        if (form.Sede is { Length: > 0 } sede && !(await SediAzienda(dip.AziendaId)).ContainsKey(sede))
         {
             ModelState.AddModelError(nameof(form.Sede), "Questa sede non è tra quelle dell'azienda.");
             return await MostraForm(form);
         }
-        dip.ImpostaSede(form.Sede);
+        // "Unita:{id}" = unità locale dell'azienda; altrimenti sede legale, smart working (o la vecchia sede operativa).
+        if (form.Sede is { } scelta && scelta.StartsWith("Unita:") && Guid.TryParse(scelta[6..], out var unita))
+            dip.ImpostaSede(SedeLavoro.UnitaLocale, unita);
+        else dip.ImpostaSede(Enum.TryParse<SedeLavoro>(form.Sede, out var sl) ? sl : null);
         if (form.Foto is { Length: > 0 } file && await foto.SalvaAsync(dip, file) is { } erroreFoto)
         {
             ModelState.AddModelError(nameof(form.Foto), erroreFoto);
@@ -747,7 +754,7 @@ public sealed class DipendentiController(AppDbContext db, UtenteCorrente utente,
         }
         else
         {
-            ViewBag.Sedi = new Dictionary<SedeLavoro, string> { [SedeLavoro.SmartWorking] = "Smart working" };
+            ViewBag.Sedi = new Dictionary<string, string> { [nameof(SedeLavoro.SmartWorking)] = "Smart working" };
             ViewBag.TeamAzienda = new List<SelectListItem>();
             ViewBag.Colleghi = new List<SelectListItem>();
         }
@@ -825,15 +832,16 @@ public sealed class DipendentiController(AppDbContext db, UtenteCorrente utente,
         return mesi;
     }
 
-    /// <summary>Sedi censite nel profilo dell'azienda (legale e operativa) più lo smart working.</summary>
-    private async Task<Dictionary<SedeLavoro, string>> SediAzienda(Guid aziendaId)
+    /// <summary>Sedi censite nel profilo dell'azienda (legale e unità locali) più lo smart working, per chiave del menù.</summary>
+    private async Task<Dictionary<string, string>> SediAzienda(Guid aziendaId)
     {
         var p = await db.ProfiliAzienda.AsNoTracking().FirstOrDefaultAsync(x => x.AziendaId == aziendaId);
-        var sedi = new Dictionary<SedeLavoro, string>();
+        var sedi = new Dictionary<string, string>();
         static string Testo(Indirizzo i) => $"{i.Via}, {i.Comune} ({i.Provincia})";
-        if (p?.SedeLegale is { } l) sedi[SedeLavoro.SedeLegale] = "Sede legale · " + Testo(l);
-        if (p?.SedeOperativa is { } o) sedi[SedeLavoro.SedeOperativa] = "Sede operativa · " + Testo(o);
-        sedi[SedeLavoro.SmartWorking] = "Smart working";
+        if (p?.SedeLegale is { } l) sedi[nameof(SedeLavoro.SedeLegale)] = "Sede legale · " + Testo(l);
+        foreach (var u in p?.UnitaLocali ?? []) sedi[$"Unita:{u.Id}"] = $"{u.Nome} · {Testo(u.Indirizzo)}";
+        if (p?.SedeOperativa is { } o) sedi[nameof(SedeLavoro.SedeOperativa)] = "Sede operativa · " + Testo(o);
+        sedi[nameof(SedeLavoro.SmartWorking)] = "Smart working";
         return sedi;
     }
 

@@ -48,6 +48,49 @@ internal sealed class ProfiloAziendaConfig : IEntityTypeConfiguration<ProfiloAzi
         b.Ignore(x => x.SedeLegale);
         b.Ignore(x => x.SedeOperativa);
         b.Ignore(x => x.Completato);
+        b.Property(x => x.Csc).HasMaxLength(5);
+        b.Property(x => x.CodiciAutorizzazione).HasMaxLength(100);
+        b.Property(x => x.ContrattiIntegrativi).HasMaxLength(500);
+        b.Property(x => x.ConsulentePrecedente).HasMaxLength(200);
+        b.Property(x => x.ContattiPrecedente).HasMaxLength(300);
+        b.OwnsMany(x => x.VociInail, v =>
+        {
+            v.ToTable("VociInail");
+            v.WithOwner().HasForeignKey("ProfiloAziendaId");
+            v.HasKey(x => x.Id);
+            v.Property(x => x.Id).ValueGeneratedNever();
+            v.Property(x => x.Voce).HasMaxLength(20);
+            v.Property(x => x.Tasso).HasPrecision(8, 2);
+        });
+        b.OwnsMany(x => x.TitolariEffettivi, t =>
+        {
+            t.ToTable("TitolariEffettivi");
+            t.WithOwner().HasForeignKey("ProfiloAziendaId");
+            t.HasKey(x => x.Id);
+            t.Property(x => x.Id).ValueGeneratedNever();
+            t.Property(x => x.Nome).HasMaxLength(100);
+            t.Property(x => x.Cognome).HasMaxLength(100);
+            t.Property(x => x.Quota).HasPrecision(5, 2);
+        });
+        b.OwnsMany(x => x.UnitaLocali, u =>
+        {
+            u.ToTable("UnitaLocali");
+            u.WithOwner().HasForeignKey("ProfiloAziendaId");
+            u.HasKey(x => x.Id);
+            u.Property(x => x.Id).ValueGeneratedNever();
+            u.Ignore(x => x.Indirizzo);
+            u.Property(x => x.Nome).HasMaxLength(150);
+            u.Property(x => x.Via).HasMaxLength(300);
+            u.Property(x => x.Cap).HasMaxLength(5);
+            u.Property(x => x.Comune).HasMaxLength(150);
+            u.Property(x => x.Provincia).HasMaxLength(2);
+            u.Property(x => x.ReferenteNome).HasMaxLength(150);
+            u.Property(x => x.ReferenteEmail).HasMaxLength(256);
+            u.Property(x => x.ReferenteTelefono).HasMaxLength(30);
+        });
+        b.Navigation(x => x.VociInail).UsePropertyAccessMode(PropertyAccessMode.Field);
+        b.Navigation(x => x.TitolariEffettivi).UsePropertyAccessMode(PropertyAccessMode.Field);
+        b.Navigation(x => x.UnitaLocali).UsePropertyAccessMode(PropertyAccessMode.Field);
 
         foreach (var p in new[] { nameof(ProfiloAzienda.FormaGiuridica), nameof(ProfiloAzienda.Ccnl), nameof(ProfiloAzienda.CassaEdile),
                      nameof(ProfiloAzienda.EnteBilaterale), nameof(ProfiloAzienda.FondoPensione), nameof(ProfiloAzienda.SedeLegaleComune),

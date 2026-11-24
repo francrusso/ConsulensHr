@@ -3,10 +3,13 @@
     <partial name="_AziendaId" />
     <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
     @* Azienda ancora senza dipendenti: niente posizioni da indicare, le aprirà il consulente alla prima assunzione. *@
+    @if (ViewData["Subentro"] is not true)
+    {
     <div class="form-check form-switch mb-4">
         <input asp-for="NessunContratto" class="form-check-input" role="switch" />
         <label asp-for="NessunContratto" class="form-check-label"></label>
     </div>
+    }
     <div class="row g-3" id="campiPosizioni">
         <div class="col-md-6"><label asp-for="Ccnl" class="form-label"></label><input asp-for="Ccnl" class="form-control" placeholder="Commercio e terziario (Confcommercio)" /><span asp-validation-for="Ccnl" class="text-danger"></span></div>
         <div class="col-md-3"><label asp-for="GiorniLavorativiSettimana" class="form-label"></label>
@@ -15,6 +18,27 @@
         <div class="col-md-4"><label asp-for="MatricolaInps" class="form-label"></label><input asp-for="MatricolaInps" class="form-control" /><span asp-validation-for="MatricolaInps" class="text-danger"></span></div>
         <div class="col-md-4"><label asp-for="InailCodiceDitta" class="form-label"></label><input asp-for="InailCodiceDitta" class="form-control" /><span asp-validation-for="InailCodiceDitta" class="text-danger"></span></div>
         <div class="col-md-4"><label asp-for="InailPat" class="form-label"></label><input asp-for="InailPat" class="form-control" /><span asp-validation-for="InailPat" class="text-danger"></span></div>
+        <div class="col-md-4"><label asp-for="Csc" class="form-label"></label><input asp-for="Csc" class="form-control" inputmode="numeric" maxlength="5" placeholder="es. 70708" /><span asp-validation-for="Csc" class="text-danger"></span></div>
+        <div class="col-md-8"><label asp-for="CodiciAutorizzazione" class="form-label"></label><input asp-for="CodiciAutorizzazione" class="form-control" placeholder="es. 1R, 2B" /><span asp-validation-for="CodiciAutorizzazione" class="text-danger"></span></div>
+        <div class="col-12">
+            <label class="form-label">Voci di tariffa INAIL e tassi (per mille)</label>
+            <div id="righeVoci">
+                @for (var i = 0; i < Model.VociInail.Count + 5; i++)
+                {
+                    var v = i < Model.VociInail.Count ? Model.VociInail[i] : new CL.Web.Controllers.VoceInailForm();
+                    var nascosta = i >= Model.VociInail.Count && !(i == 0 && Model.VociInail.Count == 0);
+                    <fieldset class="riga-ripetibile mb-2" hidden="@nascosta">
+                        <div class="row g-2 align-items-center">
+                            <div class="col-md-4"><input name="VociInail[@i].Voce" value="@v.Voce" class="form-control text-uppercase" placeholder="Voce (es. 0722)" aria-label="Voce di tariffa @(i + 1)" maxlength="20" /></div>
+                            <div class="col-md-3"><input name="VociInail[@i].Tasso" value="@v.Tasso?.ToString("0.##")" class="form-control" inputmode="decimal" placeholder="Tasso ‰" aria-label="Tasso della voce @(i + 1)" /></div>
+                            <div class="col-md-2"><button type="button" class="btn btn-sm btn-link text-danger togli-riga">Togli</button></div>
+                        </div>
+                    </fieldset>
+                }
+            </div>
+            <button type="button" class="btn btn-outline-primary btn-sm" data-aggiungi-riga="righeVoci"><i class="ri-add-line" aria-hidden="true"></i> Aggiungi voce</button>
+        </div>
+        <div class="col-12"><label asp-for="ContrattiIntegrativi" class="form-label"></label><input asp-for="ContrattiIntegrativi" class="form-control" placeholder="es. contratto integrativo aziendale 2025" /></div>
         <div class="col-12"><p class="small text-body-secondary mb-0">Facoltativi, se previsti dal contratto:</p></div>
         <div class="col-md-4"><label asp-for="CassaEdile" class="form-label"></label><input asp-for="CassaEdile" class="form-control" /></div>
         <div class="col-md-4"><label asp-for="EnteBilaterale" class="form-label"></label><input asp-for="EnteBilaterale" class="form-control" /></div>
@@ -23,6 +47,7 @@
     <script>
         (function () {
             const no = document.getElementById('NessunContratto'), campi = document.getElementById('campiPosizioni');
+            if (!no) return;
             const aggiorna = () => { campi.hidden = no.checked; };
             no.addEventListener('change', aggiorna); aggiorna();
         })();

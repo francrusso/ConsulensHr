@@ -3,6 +3,9 @@ using CL.Domain.ValueObjects;
 
 namespace CL.Domain.Aziende;
 
+/// <summary>Come arriva il cliente: attività appena avviata (senza storico paghe) o cambio di consulente in corso d'anno.</summary>
+public enum TipoAvvio { NuovaAttivita, CambioConsulente }
+
 /// <summary>Azienda cliente del consulente di consulenza del lavoro.</summary>
 public sealed class Azienda : Entity
 {
@@ -24,6 +27,9 @@ public sealed class Azienda : Entity
     public int? SantoPatronoMese { get; private set; }
     public int? SantoPatronoGiorno { get; private set; }
     public bool Attiva { get; private set; } = true;
+    /// <summary>Nuova attività o cambio consulente: decide quali sezioni vede l'azienda nel percorso guidato.</summary>
+    public TipoAvvio TipoAvvio { get; private set; } = TipoAvvio.NuovaAttivita;
+    public void ImpostaTipoAvvio(TipoAvvio tipo) => TipoAvvio = tipo;
     /// <summary>Tipi di richiesta non offerti dall'azienda (chiavi di <see cref="TipiRichiesta"/>, separate da virgola).</summary>
     public string? RichiesteDisattivate { get; private set; }
 

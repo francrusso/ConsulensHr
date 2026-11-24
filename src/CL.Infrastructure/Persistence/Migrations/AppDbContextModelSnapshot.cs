@@ -213,6 +213,11 @@ namespace CL.Infrastructure.Persistence.Migrations
                     b.Property<int?>("SantoPatronoMese")
                         .HasColumnType("integer");
 
+                    b.Property<string>("TipoAvvio")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("PartitaIva")
@@ -241,6 +246,10 @@ namespace CL.Infrastructure.Persistence.Migrations
                         .HasMaxLength(30)
                         .HasColumnType("character varying(30)");
 
+                    b.Property<string>("CodiciAutorizzazione")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<string>("CompletatoDa")
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
@@ -248,7 +257,26 @@ namespace CL.Infrastructure.Persistence.Migrations
                     b.Property<DateTime?>("CompletatoIl")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("ConsulentePrecedente")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("ContattiPrecedente")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("ContrattiIntegrativi")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Csc")
+                        .HasMaxLength(5)
+                        .HasColumnType("character varying(5)");
+
                     b.Property<DateOnly?>("DataInizioAttivita")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly?>("DataSubentro")
                         .HasColumnType("date");
 
                     b.Property<string>("EnteBilaterale")
@@ -300,6 +328,9 @@ namespace CL.Infrastructure.Persistence.Migrations
                     b.Property<string>("LegaleTelefono")
                         .HasMaxLength(30)
                         .HasColumnType("character varying(30)");
+
+                    b.Property<bool>("LegaleUnicoTitolare")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("MatricolaInps")
                         .HasMaxLength(30)
@@ -374,9 +405,15 @@ namespace CL.Infrastructure.Persistence.Migrations
                     b.Property<bool>("SenzaContratti")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("Subentro")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("Telefono")
                         .HasMaxLength(30)
                         .HasColumnType("character varying(30)");
+
+                    b.Property<DateOnly?>("UltimoMeseElaborato")
+                        .HasColumnType("date");
 
                     b.HasKey("Id");
 
@@ -641,6 +678,9 @@ namespace CL.Infrastructure.Persistence.Migrations
                     b.Property<string>("Telefono")
                         .HasMaxLength(30)
                         .HasColumnType("character varying(30)");
+
+                    b.Property<Guid?>("UnitaLocaleId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("UserId")
                         .HasMaxLength(450)
@@ -1563,6 +1603,131 @@ namespace CL.Infrastructure.Persistence.Migrations
                         .HasForeignKey("CL.Domain.Aziende.ProfiloAzienda", "AziendaId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.OwnsMany("CL.Domain.Aziende.TitolareEffettivo", "TitolariEffettivi", b1 =>
+                        {
+                            b1.Property<Guid>("Id")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("CodiceFiscale")
+                                .IsRequired()
+                                .HasMaxLength(16)
+                                .HasColumnType("character varying(16)");
+
+                            b1.Property<string>("Cognome")
+                                .IsRequired()
+                                .HasMaxLength(100)
+                                .HasColumnType("character varying(100)");
+
+                            b1.Property<string>("Nome")
+                                .IsRequired()
+                                .HasMaxLength(100)
+                                .HasColumnType("character varying(100)");
+
+                            b1.Property<Guid>("ProfiloAziendaId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<decimal?>("Quota")
+                                .HasPrecision(5, 2)
+                                .HasColumnType("numeric(5,2)");
+
+                            b1.HasKey("Id");
+
+                            b1.HasIndex("ProfiloAziendaId");
+
+                            b1.ToTable("TitolariEffettivi", "hr");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ProfiloAziendaId");
+                        });
+
+                    b.OwnsMany("CL.Domain.Aziende.UnitaLocale", "UnitaLocali", b1 =>
+                        {
+                            b1.Property<Guid>("Id")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("Cap")
+                                .IsRequired()
+                                .HasMaxLength(5)
+                                .HasColumnType("character varying(5)");
+
+                            b1.Property<string>("Comune")
+                                .IsRequired()
+                                .HasMaxLength(150)
+                                .HasColumnType("character varying(150)");
+
+                            b1.Property<string>("Nome")
+                                .IsRequired()
+                                .HasMaxLength(150)
+                                .HasColumnType("character varying(150)");
+
+                            b1.Property<Guid>("ProfiloAziendaId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("Provincia")
+                                .IsRequired()
+                                .HasMaxLength(2)
+                                .HasColumnType("character varying(2)");
+
+                            b1.Property<string>("ReferenteEmail")
+                                .HasMaxLength(256)
+                                .HasColumnType("character varying(256)");
+
+                            b1.Property<string>("ReferenteNome")
+                                .HasMaxLength(150)
+                                .HasColumnType("character varying(150)");
+
+                            b1.Property<string>("ReferenteTelefono")
+                                .HasMaxLength(30)
+                                .HasColumnType("character varying(30)");
+
+                            b1.Property<string>("Via")
+                                .IsRequired()
+                                .HasMaxLength(300)
+                                .HasColumnType("character varying(300)");
+
+                            b1.HasKey("Id");
+
+                            b1.HasIndex("ProfiloAziendaId");
+
+                            b1.ToTable("UnitaLocali", "hr");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ProfiloAziendaId");
+                        });
+
+                    b.OwnsMany("CL.Domain.Aziende.VoceInail", "VociInail", b1 =>
+                        {
+                            b1.Property<Guid>("Id")
+                                .HasColumnType("uuid");
+
+                            b1.Property<Guid>("ProfiloAziendaId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<decimal>("Tasso")
+                                .HasPrecision(8, 2)
+                                .HasColumnType("numeric(8,2)");
+
+                            b1.Property<string>("Voce")
+                                .IsRequired()
+                                .HasMaxLength(20)
+                                .HasColumnType("character varying(20)");
+
+                            b1.HasKey("Id");
+
+                            b1.HasIndex("ProfiloAziendaId");
+
+                            b1.ToTable("VociInail", "hr");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ProfiloAziendaId");
+                        });
+
+                    b.Navigation("TitolariEffettivi");
+
+                    b.Navigation("UnitaLocali");
+
+                    b.Navigation("VociInail");
                 });
 
             modelBuilder.Entity("CL.Domain.BustePaga.BustaPaga", b =>

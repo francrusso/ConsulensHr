@@ -28,7 +28,80 @@ public sealed record Indirizzo(string Via, string Cap, string Comune, string Pro
 public sealed record LegaleRappresentante(string Nome, string Cognome, CodiceFiscale CodiceFiscale, string? Email, string? Telefono);
 
 public sealed record PosizioniLavoro(string Ccnl, string MatricolaInps, string InailCodiceDitta, string InailPat,
-    string? CassaEdile, string? EnteBilaterale, string? FondoPensione, int GiorniLavorativiSettimana, decimal OreSettimanali);
+    string? CassaEdile, string? EnteBilaterale, string? FondoPensione, int GiorniLavorativiSettimana, decimal OreSettimanali)
+{
+    /// <summary>Codice statistico contributivo INPS (5 cifre) e codici di autorizzazione (es. "1R, 2B").</summary>
+    public string? Csc { get; init; }
+    public string? CodiciAutorizzazione { get; init; }
+    /// <summary>Contratti integrativi o aziendali applicati, oltre al CCNL.</summary>
+    public string? ContrattiIntegrativi { get; init; }
+    public IReadOnlyList<VoceInail> VociInail { get; init; } = [];
+}
+
+/// <summary>Voce di tariffa INAIL della PAT e tasso applicato (per mille).</summary>
+public sealed class VoceInail
+{
+    public Guid Id { get; private set; } = Guid.NewGuid();
+    public string Voce { get; private set; } = null!;
+    public decimal Tasso { get; private set; }
+    private VoceInail() { }
+    public VoceInail(string voce, decimal tasso)
+    {
+        Voce = Guard.NotEmpty(voce, "Voce di tariffa INAIL").ToUpperInvariant();
+        if (Voce.Length > 20) throw new DomainException("Voce di tariffa INAIL troppo lunga.");
+        if (tasso is < 0 or > 1000) throw new DomainException("Tasso INAIL non valido (per mille, tra 0 e 1000).");
+        Tasso = tasso;
+    }
+}
+
+/// <summary>Titolare effettivo (antiriciclaggio): chi possiede o controlla l'azienda.</summary>
+public sealed class TitolareEffettivo
+{
+    public Guid Id { get; private set; } = Guid.NewGuid();
+    public string Nome { get; private set; } = null!;
+    public string Cognome { get; private set; } = null!;
+    public CodiceFiscale CodiceFiscale { get; private set; } = null!;
+    /// <summary>Quota di partecipazione in percentuale, se nota.</summary>
+    public decimal? Quota { get; private set; }
+    private TitolareEffettivo() { }
+    public TitolareEffettivo(string nome, string cognome, CodiceFiscale cf, decimal? quota)
+    {
+        Nome = Guard.NotEmpty(nome, "Nome del titolare effettivo");
+        Cognome = Guard.NotEmpty(cognome, "Cognome del titolare effettivo");
+        CodiceFiscale = cf;
+        if (quota is < 0 or > 100) throw new DomainException("Quota del titolare effettivo tra 0 e 100%.");
+        Quota = quota;
+    }
+}
+
+/// <summary>Sede o unità locale dell'azienda (dove lavora il personale), con il suo referente.</summary>
+public sealed class UnitaLocale
+{
+    public Guid Id { get; private set; } = Guid.NewGuid();
+    public string Nome { get; private set; } = null!;
+    public string Via { get; private set; } = null!;
+    public string Cap { get; private set; } = null!;
+    public string Comune { get; private set; } = null!;
+    public string Provincia { get; private set; } = null!;
+    public string? ReferenteNome { get; private set; }
+    public string? ReferenteEmail { get; private set; }
+    public string? ReferenteTelefono { get; private set; }
+    public Indirizzo Indirizzo => new(Via, Cap, Comune, Provincia);
+    private UnitaLocale() { }
+    public UnitaLocale(Guid? id, string? nome, Indirizzo indirizzo, string? referenteNome, string? referenteEmail, string? referenteTelefono)
+    {
+        if (id is { } i && i != Guid.Empty) Id = i;
+        var v = indirizzo.Validato("dell'unità locale");
+        (Via, Cap, Comune, Provincia) = (v.Via, v.Cap, v.Comune, v.Provincia);
+        Nome = Guard.Facoltativo(nome) ?? $"Unità di {Comune}";
+        ReferenteNome = Guard.Facoltativo(referenteNome);
+        ReferenteEmail = Guard.Facoltativo(referenteEmail)?.ToLowerInvariant();
+        ReferenteTelefono = Guard.Facoltativo(referenteTelefono);
+    }
+}
+
+/// <summary>Cambio consulente: chi seguiva le paghe prima e da quando passa al nuovo consulente.</summary>
+public sealed record DatiSubentro(string ConsulentePrecedente, string? ContattiPrecedente, DateOnly DataSubentro, DateOnly? UltimoMeseElaborato);
 
 /// <summary>Dati per le paghe. Il referente paghe non è più qui: è la persona del personale segnata come tale nella sua scheda.</summary>
 public sealed record DatiPaghe(Iban? IbanAddebito, int? GiornoPagamento, string? NoteStudio);
@@ -40,7 +113,9 @@ public sealed record DatiPaghe(Iban? IbanAddebito, int? GiornoPagamento, string?
 /// </summary>
 public sealed class ProfiloAzienda : Entity
 {
-    public const int UltimoPasso = 6;
+    public const int UltimoPasso = 7;
+    /// <summary>Passo "Cambio consulente": solo per le aziende che arrivano da un altro consulente.</summary>
+    public const int PassoSubentro = 6;
 
     public Guid AziendaId { get; private set; }
     /// <summary>Primo passo non ancora salvato (1–6): da qui riprende il percorso.</summary>
@@ -59,6 +134,7 @@ public sealed class ProfiloAzienda : Entity
     public string? SedeLegaleCap { get; private set; }
     public string? SedeLegaleComune { get; private set; }
     public string? SedeLegaleProvincia { get; private set; }
+    // Sede operativa singola (prima delle unità locali): resta per i profili vecchi, ora si usano le unità locali.
     public string? SedeOperativaVia { get; private set; }
     public string? SedeOperativaCap { get; private set; }
     public string? SedeOperativaComune { get; private set; }
@@ -70,6 +146,12 @@ public sealed class ProfiloAzienda : Entity
     public CodiceFiscale? LegaleCodiceFiscale { get; private set; }
     public string? LegaleEmail { get; private set; }
     public string? LegaleTelefono { get; private set; }
+    /// <summary>Il legale rappresentante è anche l'unico titolare effettivo.</summary>
+    public bool LegaleUnicoTitolare { get; private set; }
+    private readonly List<TitolareEffettivo> _titolariEffettivi = [];
+    public IReadOnlyList<TitolareEffettivo> TitolariEffettivi => _titolariEffettivi;
+    private readonly List<UnitaLocale> _unitaLocali = [];
+    public IReadOnlyList<UnitaLocale> UnitaLocali => _unitaLocali;
 
     // 4. Contratto e posizioni previdenziali/assicurative
     public string? Ccnl { get; private set; }
@@ -83,6 +165,19 @@ public sealed class ProfiloAzienda : Entity
     public string? FondoPensione { get; private set; }
     public int? GiorniLavorativiSettimana { get; private set; }
     public decimal? OreSettimanali { get; private set; }
+    public string? Csc { get; private set; }
+    public string? CodiciAutorizzazione { get; private set; }
+    public string? ContrattiIntegrativi { get; private set; }
+    private readonly List<VoceInail> _vociInail = [];
+    public IReadOnlyList<VoceInail> VociInail => _vociInail;
+
+    // 6. Cambio consulente (solo subentro)
+    /// <summary>L'azienda arriva da un altro consulente: nel percorso c'è anche il passo "Cambio consulente".</summary>
+    public bool Subentro { get; private set; }
+    public string? ConsulentePrecedente { get; private set; }
+    public string? ContattiPrecedente { get; private set; }
+    public DateOnly? DataSubentro { get; private set; }
+    public DateOnly? UltimoMeseElaborato { get; private set; }
 
     // 5. Paghe
     public Iban? IbanAddebito { get; private set; }
@@ -120,11 +215,19 @@ public sealed class ProfiloAzienda : Entity
         Avanza(1);
     }
 
-    public void ImpostaSedi(Indirizzo legale, Indirizzo? operativa)
+    /// <summary>Sede legale e unità locali (dove lavora il personale), ciascuna con il suo referente.</summary>
+    public void ImpostaSedi(Indirizzo legale, IEnumerable<UnitaLocale> unita)
     {
         (SedeLegaleVia, SedeLegaleCap, SedeLegaleComune, SedeLegaleProvincia) = legale.Validato("della sede legale");
-        var o = operativa?.Validato("della sede operativa");
-        (SedeOperativaVia, SedeOperativaCap, SedeOperativaComune, SedeOperativaProvincia) = (o?.Via, o?.Cap, o?.Comune, o?.Provincia);
+        var nuove = unita.ToList();
+        if (nuove.Count > 20) throw new DomainException("Al massimo 20 unità locali.");
+        _unitaLocali.RemoveAll(u => nuove.All(n => n.Id != u.Id));
+        foreach (var n in nuove)
+        {
+            var i = _unitaLocali.FindIndex(u => u.Id == n.Id);
+            if (i >= 0) _unitaLocali[i] = n; else _unitaLocali.Add(n);
+        }
+        (SedeOperativaVia, SedeOperativaCap, SedeOperativaComune, SedeOperativaProvincia) = ((string?)null, (string?)null, (string?)null, (string?)null);
         Avanza(2);
     }
 
@@ -136,6 +239,17 @@ public sealed class ProfiloAzienda : Entity
         LegaleEmail = Guard.Facoltativo(l.Email)?.ToLowerInvariant();
         LegaleTelefono = Guard.Facoltativo(l.Telefono);
         Avanza(3);
+    }
+
+    /// <summary>Titolari effettivi; se il legale rappresentante è l'unico, l'elenco resta vuoto.</summary>
+    public void ImpostaTitolariEffettivi(bool legaleUnico, IEnumerable<TitolareEffettivo> titolari)
+    {
+        var elenco = legaleUnico ? [] : titolari.ToList();
+        if (elenco.Count > 10) throw new DomainException("Al massimo 10 titolari effettivi.");
+        if (elenco.Sum(t => t.Quota ?? 0) > 100) throw new DomainException("Le quote dei titolari effettivi superano il 100%.");
+        LegaleUnicoTitolare = legaleUnico;
+        _titolariEffettivi.Clear();
+        _titolariEffettivi.AddRange(elenco);
     }
 
     public void ImpostaPosizioni(PosizioniLavoro p)
@@ -151,6 +265,14 @@ public sealed class ProfiloAzienda : Entity
         FondoPensione = Guard.Facoltativo(p.FondoPensione);
         GiorniLavorativiSettimana = p.GiorniLavorativiSettimana;
         OreSettimanali = p.OreSettimanali;
+        var csc = Guard.Facoltativo(p.Csc);
+        if (csc is not null && (csc.Length != 5 || !csc.All(char.IsAsciiDigit))) throw new DomainException("Il CSC INPS è di 5 cifre.");
+        Csc = csc;
+        CodiciAutorizzazione = Guard.Facoltativo(p.CodiciAutorizzazione)?.ToUpperInvariant();
+        ContrattiIntegrativi = Guard.Facoltativo(p.ContrattiIntegrativi);
+        if (p.VociInail.Count > 10) throw new DomainException("Al massimo 10 voci di tariffa INAIL.");
+        _vociInail.Clear();
+        _vociInail.AddRange(p.VociInail);
         SenzaContratti = false;
         Avanza(4);
     }
@@ -158,6 +280,7 @@ public sealed class ProfiloAzienda : Entity
     /// <summary>Nessun contratto attivo per ora: il passo è fatto, le posizioni restano da indicare (le aprirà il consulente).</summary>
     public void ImpostaSenzaContratti()
     {
+        if (Subentro) throw new DomainException("Chi cambia consulente ha già le posizioni INPS e INAIL: indicale.");
         SenzaContratti = true;
         Avanza(4);
     }
@@ -171,6 +294,28 @@ public sealed class ProfiloAzienda : Entity
         Avanza(5);
     }
 
+    /// <summary>
+    /// Nuova attività o cambio consulente (dall'azienda). Senza subentro il passo "Cambio consulente" non c'è:
+    /// chi era fermo lì passa al riepilogo.
+    /// </summary>
+    public void ImpostaSubentro(bool subentro)
+    {
+        Subentro = subentro;
+        if (!subentro && Passo == PassoSubentro) Passo = UltimoPasso;
+        if (subentro) SenzaContratti = false;
+    }
+
+    public void ImpostaDatiSubentro(DatiSubentro d)
+    {
+        if (!Subentro) throw new DomainException("L'azienda non arriva da un altro consulente.");
+        ConsulentePrecedente = Guard.NotEmpty(d.ConsulentePrecedente, "Consulente precedente");
+        ContattiPrecedente = Guard.Facoltativo(d.ContattiPrecedente);
+        DataSubentro = d.DataSubentro;
+        if (d.UltimoMeseElaborato is { } m && m > d.DataSubentro) throw new DomainException("L'ultimo mese elaborato dal consulente precedente è dopo la data del cambio.");
+        UltimoMeseElaborato = d.UltimoMeseElaborato is { } u ? new DateOnly(u.Year, u.Month, 1) : null;
+        Avanza(PassoSubentro);
+    }
+
     /// <summary>Dati obbligatori ancora mancanti (vuoto = si può completare).</summary>
     public IReadOnlyList<string> Mancanti()
     {
@@ -180,6 +325,7 @@ public sealed class ProfiloAzienda : Entity
         if (LegaleCodiceFiscale is null) m.Add("legale rappresentante");
         if (MatricolaInps is null && !SenzaContratti) m.Add("contratto e posizioni INPS/INAIL");
         if (Passo <= 5 && CompletatoIl is null) m.Add("paghe");
+        if (Subentro && DataSubentro is null) m.Add("cambio consulente");
         return m;
     }
 
@@ -194,5 +340,10 @@ public sealed class ProfiloAzienda : Entity
     }
 
     /// <summary>Il passo da cui riprendere avanza solo: salvare di nuovo un passo già fatto non fa tornare indietro.</summary>
-    private void Avanza(int salvato) => Passo = Math.Max(Passo, Math.Min(salvato + 1, UltimoPasso));
+    private void Avanza(int salvato)
+    {
+        var prossimo = salvato + 1;
+        if (prossimo == PassoSubentro && !Subentro) prossimo = UltimoPasso; // senza cambio consulente si salta quel passo
+        Passo = Math.Max(Passo, Math.Min(prossimo, UltimoPasso));
+    }
 }

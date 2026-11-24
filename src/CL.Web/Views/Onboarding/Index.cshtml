@@ -8,12 +8,16 @@
     var completo = p.Completato;
     ViewData["Title"] = completo || Model.PerContoAzienda ? "Profilo azienda" : "Benvenuto in Consulens HR";
     ViewData["Completo"] = completo; // i pulsanti delle sezioni: "Salva" invece di "Salva e continua"
+    ViewData["Subentro"] = Model.Profilo.Subentro; // chi cambia consulente ha già le posizioni
     var aziendaId = Model.PerContoAzienda ? Model.AziendaId : (Guid?)null;
+    // Numero mostrato: per una nuova attività il passo "Cambio consulente" non c'è e il riepilogo diventa il 6.
+    int Numero(int passo) => !p.Subentro && passo > CL.Domain.Aziende.ProfiloAzienda.PassoSubentro ? passo - 1 : passo;
     if (aziendaId is not null) ViewData["AziendaIdOnboarding"] = aziendaId; // i form del consulente indicano l'azienda (_AziendaId)
     var titoliSchede = new (int Passo, string Titolo, string Icona)[]
     {
         (1, "Dati societari", "ri-building-2-line"), (2, "Sedi", "ri-map-pin-line"), (3, "Legale rappresentante", "ri-user-star-line"),
         (4, "Contratto e posizioni", "ri-file-text-line"), (5, "Paghe", "ri-bank-card-line"),
+        (CL.Domain.Aziende.ProfiloAzienda.PassoSubentro, "Cambio consulente", "ri-exchange-line"),
         (OnboardingController.PassoRichieste, "Tipi di richiesta", "ri-toggle-line"),
     };
 }
@@ -75,7 +79,7 @@
 {
     @* Profilo completo: sezioni come schede, con le stesse pillole della scheda della persona. *@
     <nav class="invoice-filter-categories mb-3 schede-profilo-azienda" aria-label="Sezioni del profilo">
-        @foreach (var (passo, titolo, icona) in titoliSchede)
+        @foreach (var (passo, titolo, icona) in titoliSchede.Where(t => t.Passo != CL.Domain.Aziende.ProfiloAzienda.PassoSubentro || p.Subentro))
         {
             <a class="badge-filtro-categoria @(Model.Passo == passo ? "active" : "")" aria-current="@(Model.Passo == passo ? "page" : null)"
                asp-action="Index" asp-route-aziendaId="@aziendaId" asp-route-passo="@passo"><i class="@icona" aria-hidden="true"></i> @titolo</a>
@@ -88,15 +92,16 @@ else
         <ol class="passi-onboarding">
             @for (var i = 1; i <= OnboardingViewModel.Titoli.Length; i++)
             {
+                if (i == CL.Domain.Aziende.ProfiloAzienda.PassoSubentro && !p.Subentro) { continue; } // solo per chi cambia consulente
                 var stato = i == Model.Passo ? "corrente" : i < p.Passo ? "fatto" : "da-fare";
                 <li class="passo-@stato">
                     @if (stato != "da-fare" && i != Model.Passo)
                     {
-                        <a asp-action="Index" asp-route-aziendaId="@aziendaId" asp-route-passo="@i"><span class="numero">@(stato == "fatto" ? "✓" : i.ToString())</span><span class="titolo">@OnboardingViewModel.Titoli[i - 1]</span></a>
+                        <a asp-action="Index" asp-route-aziendaId="@aziendaId" asp-route-passo="@i"><span class="numero">@(stato == "fatto" ? "✓" : Numero(i).ToString())</span><span class="titolo">@OnboardingViewModel.Titoli[i - 1]</span></a>
                     }
                     else
                     {
-                        <span aria-current="@(i == Model.Passo ? "step" : null)"><span class="numero">@i</span><span class="titolo">@OnboardingViewModel.Titoli[i - 1]</span></span>
+                        <span aria-current="@(i == Model.Passo ? "step" : null)"><span class="numero">@Numero(i)</span><span class="titolo">@OnboardingViewModel.Titoli[i - 1]</span></span>
                     }
                 </li>
             }
@@ -110,7 +115,7 @@ else
 <section class="card radius-15 p-3 p-md-4 modulo-profilo-azienda" aria-labelledby="titoloPasso">
     <h2 class="titolo-sezione-profilo d-flex align-items-center gap-2" id="titoloPasso">
         @if (completo && titoloSezione.Titolo is not null) { <i class="@titoloSezione.Icona" aria-hidden="true"></i> @titoloSezione.Titolo }
-        else { @($"{Model.Passo}. {OnboardingViewModel.Titoli[Model.Passo - 1]}") }
+        else { @($"{Numero(Model.Passo)}. {OnboardingViewModel.Titoli[Model.Passo - 1]}") }
     </h2>
     @switch (Model.Passo)
     {
@@ -118,6 +123,7 @@ else
         case 2: <partial name="_Sedi" model="(SediForm)Model.Form!" view-data="ViewData" /> break;
         case 3: <partial name="_Legale" model="(LegaleForm)Model.Form!" view-data="ViewData" /> break;
         case 4: <partial name="_Posizioni" model="(PosizioniForm)Model.Form!" view-data="ViewData" /> break;
+        case CL.Domain.Aziende.ProfiloAzienda.PassoSubentro: <partial name="_Subentro" model="(SubentroForm)Model.Form!" view-data="ViewData" /> break;
         case 5:
             @* Il referente paghe si sceglie nella scheda della persona (dipendente o professionista). *@
             <div class="referente-paghe mb-3">
@@ -142,12 +148,22 @@ else
 
 @section Scripts {
     <script>
-        // Sede operativa: i campi compaiono solo se diversa dalla legale.
-        const diversa = document.getElementById('OperativaDiversa');
-        if (diversa) {
-            const campi = document.getElementById('campiOperativa');
-            const aggiorna = () => campi.hidden = !diversa.checked;
-            diversa.addEventListener('change', aggiorna); aggiorna();
+        // Righe ripetibili (unità locali, titolari, voci INAIL): "Aggiungi" mostra la prossima riga nascosta, "Togli" la svuota e la nasconde.
+        document.querySelectorAll('[data-aggiungi-riga]').forEach(b => b.addEventListener('click', () => {
+            const riga = document.querySelector('#' + b.dataset.aggiungiRiga + ' > .riga-ripetibile[hidden]');
+            if (riga) { riga.hidden = false; riga.querySelector('input:not([type=hidden])')?.focus(); }
+        }));
+        document.querySelectorAll('.togli-riga').forEach(b => b.addEventListener('click', () => {
+            const riga = b.closest('.riga-ripetibile');
+            riga.querySelectorAll('input').forEach(i => i.value = '');
+            riga.hidden = true;
+        }));
+        // Titolari: si compilano solo se il legale rappresentante non è l'unico.
+        const unico = document.getElementById('LegaleUnicoTitolare');
+        if (unico) {
+            const blocco = document.getElementById('blocTitolari');
+            const aggiorna = () => blocco.hidden = unico.checked;
+            unico.addEventListener('change', aggiorna); aggiorna();
         }
     </script>
 }

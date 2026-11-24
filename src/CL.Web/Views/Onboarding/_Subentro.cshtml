@@ -1,0 +1,13 @@
+@model CL.Web.Controllers.SubentroForm
+@* Cambio consulente: chi seguiva le paghe prima e da quando subentra il nuovo consulente. *@
+<form asp-action="Subentro" method="post" novalidate>
+    <partial name="_AziendaId" />
+    <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+    <div class="row g-3">
+        <div class="col-md-6"><label asp-for="ConsulentePrecedente" class="form-label"></label><input asp-for="ConsulentePrecedente" class="form-control" /><span asp-validation-for="ConsulentePrecedente" class="text-danger"></span></div>
+        <div class="col-md-6"><label asp-for="ContattiPrecedente" class="form-label"></label><input asp-for="ContattiPrecedente" class="form-control" placeholder="email o telefono" /></div>
+        <div class="col-md-4"><label asp-for="DataSubentro" class="form-label"></label><input asp-for="DataSubentro" type="date" class="form-control" /><span asp-validation-for="DataSubentro" class="text-danger"></span></div>
+        <div class="col-md-4"><label asp-for="UltimoMeseElaborato" class="form-label"></label><input asp-for="UltimoMeseElaborato" type="month" class="form-control" /></div>
+    </div>
+    <partial name="_Pulsanti" model="6" />
+</form>

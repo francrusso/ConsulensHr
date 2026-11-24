@@ -83,7 +83,7 @@ public sealed class AppFactory : WebApplicationFactory<Program>
         if (await db.ProfiliAzienda.AnyAsync(p => p.AziendaId == aziendaId)) return 0;
         var p = new CL.Domain.Aziende.ProfiloAzienda(aziendaId);
         p.ImpostaDatiSocietari(new("S.r.l.", null, "47.11.10", null, "pec@test.it", null));
-        p.ImpostaSedi(new("Via Roma 1", "20100", "Milano", "MI"), null);
+        p.ImpostaSedi(new("Via Roma 1", "20100", "Milano", "MI"), []);
         p.ImpostaLegaleRappresentante(new("Mario", "Rossi", CL.Domain.ValueObjects.CodiceFiscale.Parse("RSSMRA85T10A562S"), null, null));
         p.ImpostaPosizioni(new("Commercio", "1234567890", "12345678", "87654321", null, null, null, 5, 40));
         p.ImpostaPaghe(new(null, 27, null));

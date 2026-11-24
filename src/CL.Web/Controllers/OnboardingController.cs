@@ -63,16 +63,51 @@ public sealed class SediForm
     [Required(ErrorMessage = "Inserisci la provincia."), RegularExpression(@"^[A-Za-z]{2}$", ErrorMessage = "Sigla di 2 lettere (es. MI)."), Display(Name = "Provincia")]
     public string? LegaleProvincia { get; set; }
 
-    [Display(Name = "I dipendenti lavorano in una sede diversa da quella legale")]
-    public bool OperativaDiversa { get; set; }
-    [StringLength(300), Display(Name = "Indirizzo")]
-    public string? OperativaVia { get; set; }
-    [RegularExpression(@"^\d{5}$", ErrorMessage = "CAP di 5 cifre."), Display(Name = "CAP")]
-    public string? OperativaCap { get; set; }
-    [StringLength(150), Display(Name = "Comune")]
-    public string? OperativaComune { get; set; }
-    [RegularExpression(@"^[A-Za-z]{2}$", ErrorMessage = "Sigla di 2 lettere (es. MI)."), Display(Name = "Provincia")]
-    public string? OperativaProvincia { get; set; }
+    /// <summary>Unità locali (sedi in cui lavora il personale) con il loro referente; le righe vuote si ignorano.</summary>
+    public List<UnitaForm> Unita { get; set; } = [];
+}
+
+public sealed class UnitaForm
+{
+    public Guid? Id { get; set; }
+    public string? Nome { get; set; }
+    public string? Via { get; set; }
+    public string? Cap { get; set; }
+    public string? Comune { get; set; }
+    public string? Provincia { get; set; }
+    public string? ReferenteNome { get; set; }
+    public string? ReferenteEmail { get; set; }
+    public string? ReferenteTelefono { get; set; }
+    public bool Vuota => new[] { Nome, Via, Cap, Comune, Provincia, ReferenteNome, ReferenteEmail, ReferenteTelefono }.All(string.IsNullOrWhiteSpace);
+}
+
+public sealed class TitolareForm
+{
+    public string? Nome { get; set; }
+    public string? Cognome { get; set; }
+    public string? CodiceFiscale { get; set; }
+    public decimal? Quota { get; set; }
+    public bool Vuota => new[] { Nome, Cognome, CodiceFiscale }.All(string.IsNullOrWhiteSpace) && Quota is null;
+}
+
+public sealed class VoceInailForm
+{
+    public string? Voce { get; set; }
+    public decimal? Tasso { get; set; }
+    public bool Vuota => string.IsNullOrWhiteSpace(Voce) && Tasso is null;
+}
+
+public sealed class SubentroForm
+{
+    [Required(ErrorMessage = "Indica il consulente precedente."), StringLength(200), Display(Name = "Consulente o studio precedente")]
+    public string? ConsulentePrecedente { get; set; }
+    [StringLength(300), Display(Name = "Contatti (email, telefono)")]
+    public string? ContattiPrecedente { get; set; }
+    [Required(ErrorMessage = "Indica da quando passate al nuovo consulente."), Display(Name = "Data del cambio")]
+    public DateOnly? DataSubentro { get; set; }
+    /// <summary>Mese nel formato yyyy-MM (campo "month").</summary>
+    [Display(Name = "Ultimo mese elaborato dal consulente precedente")]
+    public string? UltimoMeseElaborato { get; set; }
 }
 
 public sealed class LegaleForm
@@ -87,12 +122,22 @@ public sealed class LegaleForm
     public string? Email { get; set; }
     [StringLength(30), Display(Name = "Telefono")]
     public string? Telefono { get; set; }
+    [Display(Name = "Il legale rappresentante è anche l'unico titolare effettivo")]
+    public bool LegaleUnicoTitolare { get; set; } = true;
+    public List<TitolareForm> Titolari { get; set; } = [];
 }
 
 public sealed class PosizioniForm
 {
     [Display(Name = "L'azienda non ha ancora contratti attivi")]
     public bool NessunContratto { get; set; }
+    [RegularExpression(@"^\d{5}$", ErrorMessage = "Il CSC è di 5 cifre."), Display(Name = "CSC (codice statistico contributivo)")]
+    public string? Csc { get; set; }
+    [StringLength(100), Display(Name = "Codici di autorizzazione (CA)")]
+    public string? CodiciAutorizzazione { get; set; }
+    [StringLength(500), Display(Name = "Contratti integrativi o aziendali")]
+    public string? ContrattiIntegrativi { get; set; }
+    public List<VoceInailForm> VociInail { get; set; } = [];
     [Required(ErrorMessage = "Indica il CCNL applicato."), StringLength(150), Display(Name = "CCNL applicato")]
     public string? Ccnl { get; set; }
     [Required(ErrorMessage = "Inserisci la matricola INPS."), StringLength(30), Display(Name = "Matricola aziendale INPS")]
@@ -138,7 +183,7 @@ public sealed class OnboardingViewModel
     public bool PerContoAzienda { get; init; }
     public ReferentePagheRiga? ReferentePaghe { get; init; }
 
-    public static readonly string[] Titoli = ["Dati societari", "Sedi", "Legale rappresentante", "Contratto e posizioni", "Paghe", "Riepilogo"];
+    public static readonly string[] Titoli = ["Dati societari", "Sedi e unità locali", "Legale rappresentante e titolari", "Contratto e posizioni", "Paghe", "Cambio consulente", "Riepilogo"];
 }
 
 /// <summary>
@@ -154,7 +199,7 @@ public sealed class OnboardingController(
     ServizioAccessi accessi, LoghiAziende loghi, TimeProvider clock) : AppController
 {
     /// <summary>Scheda "Tipi di richiesta" del profilo completo.</summary>
-    public const int PassoRichieste = 7;
+    public const int PassoRichieste = 8;
 
     public async Task<IActionResult> Index(Guid? aziendaId, int? passo)
     {
@@ -192,22 +237,17 @@ public sealed class OnboardingController(
     {
         var (azienda, profilo) = await Carica(aziendaId);
         if (azienda is null) return NotFound();
-        if (form.OperativaDiversa)
-        {
-            if (string.IsNullOrWhiteSpace(form.OperativaVia)) ModelState.AddModelError(nameof(form.OperativaVia), "Inserisci l'indirizzo.");
-            if (string.IsNullOrWhiteSpace(form.OperativaCap)) ModelState.AddModelError(nameof(form.OperativaCap), "Inserisci il CAP.");
-            if (string.IsNullOrWhiteSpace(form.OperativaComune)) ModelState.AddModelError(nameof(form.OperativaComune), "Inserisci il comune.");
-            if (string.IsNullOrWhiteSpace(form.OperativaProvincia)) ModelState.AddModelError(nameof(form.OperativaProvincia), "Inserisci la provincia.");
-        }
+        form.Unita = form.Unita.Where(u => !u.Vuota).ToList();
         if (!ModelState.IsValid) return await Mostra(azienda, profilo, 2, form);
 
         var legale = new Indirizzo(form.LegaleVia!, form.LegaleCap!, form.LegaleComune!, form.LegaleProvincia!);
-        var operativa = form.OperativaDiversa ? new Indirizzo(form.OperativaVia!, form.OperativaCap!, form.OperativaComune!, form.OperativaProvincia!) : null;
         if (!Prova(() =>
             {
-                profilo.ImpostaSedi(legale, operativa);
-                // L'indirizzo dell'anagrafica è quello dove si lavora.
-                var dove = profilo.SedeOperativa ?? profilo.SedeLegale!;
+                var unita = form.Unita.Select(u => new UnitaLocale(u.Id, u.Nome, new Indirizzo(u.Via ?? "", u.Cap ?? "", u.Comune ?? "", u.Provincia ?? ""),
+                    u.ReferenteNome, u.ReferenteEmail, u.ReferenteTelefono)).ToList();
+                profilo.ImpostaSedi(legale, unita);
+                // L'indirizzo dell'anagrafica è quello dove si lavora (la prima unità locale, altrimenti la sede legale).
+                var dove = profilo.UnitaLocali.FirstOrDefault()?.Indirizzo ?? profilo.SedeLegale!;
                 azienda.AggiornaAnagrafica(azienda.RagioneSociale, azienda.CodiceFiscale, dove.Via, dove.Cap, dove.Comune, dove.Provincia, azienda.Email);
             })) return await Mostra(azienda, profilo, 2, form);
 
@@ -225,6 +265,13 @@ public sealed class OnboardingController(
         if (!Prova(() => cf = CodiceFiscale.Parse(form.CodiceFiscale!), nameof(form.CodiceFiscale))
             || !Prova(() => profilo.ImpostaLegaleRappresentante(new LegaleRappresentante(form.Nome!, form.Cognome!, cf!, form.Email, form.Telefono))))
             return await Mostra(azienda, profilo, 3, form);
+        form.Titolari = form.Titolari.Where(t => !t.Vuota).ToList();
+        if (!form.LegaleUnicoTitolare && form.Titolari.Count == 0)
+            ModelState.AddModelError("", "Indica almeno un titolare effettivo, o segna che è il legale rappresentante.");
+        if (!ModelState.IsValid
+            || !Prova(() => profilo.ImpostaTitolariEffettivi(form.LegaleUnicoTitolare,
+                form.Titolari.Select(t => new TitolareEffettivo(t.Nome ?? "", t.Cognome ?? "", CodiceFiscale.Parse(t.CodiceFiscale), t.Quota)))))
+            return await Mostra(azienda, profilo, 3, form);
 
         return await SalvaEAvanza(azienda, profilo, 3);
     }
@@ -236,12 +283,16 @@ public sealed class OnboardingController(
         if (azienda is null) return NotFound();
         if (form.NessunContratto)
         {
-            profilo.ImpostaSenzaContratti();
+            if (!Prova(profilo.ImpostaSenzaContratti)) return await Mostra(azienda, profilo, 4, form);
             return await SalvaEAvanza(azienda, profilo, 4);
         }
         if (!ModelState.IsValid
             || !Prova(() => profilo.ImpostaPosizioni(new PosizioniLavoro(form.Ccnl!, form.MatricolaInps!, form.InailCodiceDitta!, form.InailPat!,
-                form.CassaEdile, form.EnteBilaterale, form.FondoPensione, form.GiorniLavorativiSettimana, form.OreSettimanali))))
+                form.CassaEdile, form.EnteBilaterale, form.FondoPensione, form.GiorniLavorativiSettimana, form.OreSettimanali)
+            {
+                Csc = form.Csc, CodiciAutorizzazione = form.CodiciAutorizzazione, ContrattiIntegrativi = form.ContrattiIntegrativi,
+                VociInail = form.VociInail.Where(v => !v.Vuota).Select(v => new VoceInail(v.Voce ?? "", v.Tasso ?? 0)).ToList(),
+            })))
             return await Mostra(azienda, profilo, 4, form);
 
         return await SalvaEAvanza(azienda, profilo, 4);
@@ -260,6 +311,19 @@ public sealed class OnboardingController(
             return await Mostra(azienda, profilo, 5, form);
 
         return await SalvaEAvanza(azienda, profilo, 5);
+    }
+
+    /// <summary>Cambio consulente: chi seguiva le paghe prima, da quando e fino a che mese ha elaborato.</summary>
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> Subentro(Guid? aziendaId, SubentroForm form)
+    {
+        var (azienda, profilo) = await Carica(aziendaId);
+        if (azienda is null) return NotFound();
+        DateOnly? ultimo = DateOnly.TryParseExact((form.UltimoMeseElaborato ?? "") + "-01", "yyyy-MM-dd", out var u) ? u : null;
+        if (!ModelState.IsValid
+            || !Prova(() => profilo.ImpostaDatiSubentro(new DatiSubentro(form.ConsulentePrecedente!, form.ContattiPrecedente, form.DataSubentro!.Value, ultimo))))
+            return await Mostra(azienda, profilo, ProfiloAzienda.PassoSubentro, form);
+        return await SalvaEAvanza(azienda, profilo, ProfiloAzienda.PassoSubentro);
     }
 
     [HttpPost, ValidateAntiForgeryToken]
@@ -325,6 +389,8 @@ public sealed class OnboardingController(
         var azienda = id is { } a ? await db.Aziende.FirstOrDefaultAsync(x => x.Id == a) : null;
         if (azienda is null) return (null, null!);
         var profilo = await db.ProfiliAzienda.FirstOrDefaultAsync(p => p.AziendaId == azienda.Id) ?? new ProfiloAzienda(azienda.Id);
+        // Nuova attività o cambio consulente (scelto quando si crea l'azienda): decide le sezioni del percorso.
+        profilo.ImpostaSubentro(azienda.TipoAvvio == TipoAvvio.CambioConsulente);
         return (azienda, profilo);
     }
 
@@ -339,7 +405,9 @@ public sealed class OnboardingController(
         await Salva(profilo);
         // Profilo completo: si resta sulla scheda appena salvata; durante il percorso si va al passo successivo.
         if (profilo.Completato) Conferma("Modifiche salvate.");
-        return TornaAlPasso(azienda, profilo.Completato ? passo : passo + 1);
+        // Il passo "Cambio consulente" c'è solo per chi arriva da un altro consulente.
+        var prossimo = passo + 1 == ProfiloAzienda.PassoSubentro && !profilo.Subentro ? ProfiloAzienda.UltimoPasso : passo + 1;
+        return TornaAlPasso(azienda, profilo.Completato ? passo : prossimo);
     }
 
     /// <summary>Il consulente lavora per conto di un'azienda: l'indirizzo la indica; il referente non ne ha bisogno.</summary>
@@ -369,12 +437,18 @@ public sealed class OnboardingController(
         2 => new SediForm
         {
             LegaleVia = p.SedeLegaleVia, LegaleCap = p.SedeLegaleCap, LegaleComune = p.SedeLegaleComune, LegaleProvincia = p.SedeLegaleProvincia,
-            OperativaDiversa = p.SedeOperativaVia is not null, OperativaVia = p.SedeOperativaVia, OperativaCap = p.SedeOperativaCap,
-            OperativaComune = p.SedeOperativaComune, OperativaProvincia = p.SedeOperativaProvincia,
+            // Profili vecchi: la sede operativa diventa la prima unità locale.
+            Unita = p.UnitaLocali.Count > 0
+                ? p.UnitaLocali.Select(u => new UnitaForm { Id = u.Id, Nome = u.Nome, Via = u.Via, Cap = u.Cap, Comune = u.Comune, Provincia = u.Provincia,
+                    ReferenteNome = u.ReferenteNome, ReferenteEmail = u.ReferenteEmail, ReferenteTelefono = u.ReferenteTelefono }).ToList()
+                : p.SedeOperativaVia is null ? []
+                : [new UnitaForm { Nome = "Sede operativa", Via = p.SedeOperativaVia, Cap = p.SedeOperativaCap, Comune = p.SedeOperativaComune, Provincia = p.SedeOperativaProvincia }],
         },
         3 => new LegaleForm
         {
             Nome = p.LegaleNome, Cognome = p.LegaleCognome, CodiceFiscale = p.LegaleCodiceFiscale?.Valore, Email = p.LegaleEmail, Telefono = p.LegaleTelefono,
+            LegaleUnicoTitolare = p.LegaleCodiceFiscale is null || p.LegaleUnicoTitolare || p.TitolariEffettivi.Count == 0,
+            Titolari = p.TitolariEffettivi.Select(t => new TitolareForm { Nome = t.Nome, Cognome = t.Cognome, CodiceFiscale = t.CodiceFiscale.Valore, Quota = t.Quota }).ToList(),
         },
         4 => new PosizioniForm
         {
@@ -382,6 +456,13 @@ public sealed class OnboardingController(
             CassaEdile = p.CassaEdile, EnteBilaterale = p.EnteBilaterale, FondoPensione = p.FondoPensione,
             GiorniLavorativiSettimana = p.GiorniLavorativiSettimana ?? 5, OreSettimanali = p.OreSettimanali ?? 40,
             NessunContratto = p.SenzaContratti,
+            Csc = p.Csc, CodiciAutorizzazione = p.CodiciAutorizzazione, ContrattiIntegrativi = p.ContrattiIntegrativi,
+            VociInail = p.VociInail.Select(v => new VoceInailForm { Voce = v.Voce, Tasso = v.Tasso }).ToList(),
+        },
+        ProfiloAzienda.PassoSubentro => new SubentroForm
+        {
+            ConsulentePrecedente = p.ConsulentePrecedente, ContattiPrecedente = p.ContattiPrecedente, DataSubentro = p.DataSubentro,
+            UltimoMeseElaborato = p.UltimoMeseElaborato?.ToString("yyyy-MM"),
         },
         5 => new PagheForm
         {

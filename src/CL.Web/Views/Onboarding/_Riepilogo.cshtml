@@ -23,15 +23,26 @@ else
             (1, "Dati societari", [("Ragione sociale", a.RagioneSociale), ("Forma giuridica", V(p.FormaGiuridica)), ("Partita IVA", a.PartitaIva.Valore),
                 ("Codice fiscale", V(a.CodiceFiscale)), ("REA", V(p.NumeroRea)), ("ATECO", V(p.CodiceAteco)),
                 ("Inizio attività", p.DataInizioAttivita?.ToString("dd/MM/yyyy") ?? "—"), ("PEC", V(p.Pec)), ("Email", V(a.Email)), ("Telefono", V(p.Telefono))]),
-            (2, "Sedi", [("Sede legale", Ind(p.SedeLegale)), ("Sede operativa", p.SedeOperativa is null ? "come la sede legale" : Ind(p.SedeOperativa))]),
-            (3, "Legale rappresentante", [("Nome", V($"{p.LegaleNome} {p.LegaleCognome}".Trim())), ("Codice fiscale", V(p.LegaleCodiceFiscale?.Valore)),
-                ("Email", V(p.LegaleEmail)), ("Telefono", V(p.LegaleTelefono))]),
+            (2, "Sedi e unità locali", [("Sede legale", Ind(p.SedeLegale)),
+                .. (p.UnitaLocali.Count == 0 ? [("Unità locali", "solo la sede legale")]
+                    : p.UnitaLocali.Select(u => (u.Nome, Ind(u.Indirizzo) + (u.ReferenteNome is null ? "" : $" · referente {u.ReferenteNome}"))))]),
+            (3, "Legale rappresentante e titolari", [("Nome", V($"{p.LegaleNome} {p.LegaleCognome}".Trim())), ("Codice fiscale", V(p.LegaleCodiceFiscale?.Valore)),
+                ("Email", V(p.LegaleEmail)), ("Telefono", V(p.LegaleTelefono)),
+                ("Titolari effettivi", p.TitolariEffettivi.Count == 0 ? "il legale rappresentante"
+                    : string.Join(", ", p.TitolariEffettivi.Select(t => $"{t.Cognome} {t.Nome}" + (t.Quota is { } q ? $" ({q:0.##}%)" : ""))))]),
             (4, "Contratto e posizioni", p.SenzaContratti ? [("Contratti", "Nessun contratto attivo per ora")] : [("CCNL", V(p.Ccnl)), ("Settimana", p.GiorniLavorativiSettimana is { } gl ? $"{gl} giorni, {p.OreSettimanali:0.##} ore" : "—"),
-                ("Matricola INPS", V(p.MatricolaInps)), ("INAIL", p.InailCodiceDitta is null ? "—" : $"ditta {p.InailCodiceDitta} · PAT {p.InailPat}"),
+                ("Matricola INPS", V(p.MatricolaInps)), ("CSC e codici autorizzazione", V(string.Join(" · ", new[] { p.Csc, p.CodiciAutorizzazione }.Where(x => x is not null)))),
+                ("INAIL", p.InailCodiceDitta is null ? "—" : $"ditta {p.InailCodiceDitta} · PAT {p.InailPat}"),
+                ("Voci di tariffa INAIL", p.VociInail.Count == 0 ? "—" : string.Join(", ", p.VociInail.Select(v => $"{v.Voce} ({v.Tasso:0.##}‰)"))),
+                ("Contratti integrativi", V(p.ContrattiIntegrativi)),
                 ("Cassa Edile", V(p.CassaEdile)), ("Ente bilaterale", V(p.EnteBilaterale)), ("Previdenza complementare", V(p.FondoPensione))]),
             (5, "Paghe", [("IBAN", V(p.IbanAddebito?.Valore)), ("Pagamento stipendi", p.GiornoPagamento is { } gp ? $"il {gp} del mese" : "—"),
                 ("Referente paghe", Model.ReferentePaghe is { } rp ? rp.Nome : "Non indicato: sceglilo nella scheda della persona"), ("Note", V(p.NoteStudio))]),
         };
+        if (p.Subentro)
+            sezioni = [.. sezioni, (CL.Domain.Aziende.ProfiloAzienda.PassoSubentro, "Cambio consulente", [("Consulente precedente", V(p.ConsulentePrecedente)),
+                ("Contatti", V(p.ContattiPrecedente)), ("Data del cambio", p.DataSubentro?.ToString("dd/MM/yyyy") ?? "—"),
+                ("Ultimo mese elaborato", p.UltimoMeseElaborato?.ToString("MM/yyyy") ?? "—")])];
     }
     @foreach (var s in sezioni)
     {
@@ -61,7 +72,7 @@ else
             </label>
         </div>
         <div class="d-flex justify-content-between">
-            <a asp-action="Index" asp-route-aziendaId="@aziendaId" asp-route-passo="5" class="btn btn-outline-secondary"><i class="ri-arrow-left-line" aria-hidden="true"></i> Indietro</a>
+            <a asp-action="Index" asp-route-aziendaId="@aziendaId" asp-route-passo="@(p.Subentro ? CL.Domain.Aziende.ProfiloAzienda.PassoSubentro : 5)" class="btn btn-outline-secondary"><i class="ri-arrow-left-line" aria-hidden="true"></i> Indietro</a>
             <button type="submit" class="btn btn-primary"><i class="ri-check-line" aria-hidden="true"></i> Conferma e invia al consulente</button>
         </div>
     </form>

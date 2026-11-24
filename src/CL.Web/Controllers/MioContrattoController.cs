@@ -35,6 +35,7 @@ public sealed class MioContrattoController(AppDbContext db, UtenteCorrente utent
             SedeLavoro.SmartWorking => "Smart working",
             SedeLavoro.SedeLegale => profilo?.SedeLegale is { } l ? "Sede legale · " + Ind(l) : "Sede legale",
             SedeLavoro.SedeOperativa => profilo?.SedeOperativa is { } o ? "Sede operativa · " + Ind(o) : "Sede operativa",
+            SedeLavoro.UnitaLocale => profilo?.UnitaLocali.FirstOrDefault(u => u.Id == d.UnitaLocaleId) is { } u ? $"{u.Nome} · {Ind(u.Indirizzo)}" : "Unità locale",
             _ => null,
         };
         // Responsabile: quello diretto, altrimenti chi approva le sue richieste secondo l'organigramma.

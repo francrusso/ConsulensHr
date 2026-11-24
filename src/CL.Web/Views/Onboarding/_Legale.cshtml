@@ -9,5 +9,31 @@
         <div class="col-md-6"><label asp-for="Email" class="form-label"></label><input asp-for="Email" type="email" class="form-control" /><span asp-validation-for="Email" class="text-danger"></span></div>
         <div class="col-md-6"><label asp-for="Telefono" class="form-label"></label><input asp-for="Telefono" type="tel" class="form-control" /></div>
     </div>
+
+    @* Titolari effettivi (antiriciclaggio): chi possiede o controlla l'azienda. *@
+    <h3 class="h6 mt-4">Titolari effettivi</h3>
+    <div class="form-check form-switch mb-3">
+        <input asp-for="LegaleUnicoTitolare" class="form-check-input" role="switch" />
+        <label asp-for="LegaleUnicoTitolare" class="form-check-label"></label>
+    </div>
+    <div id="blocTitolari">
+        <div id="righeTitolari">
+            @for (var i = 0; i < Model.Titolari.Count + 5; i++)
+            {
+                var t = i < Model.Titolari.Count ? Model.Titolari[i] : new CL.Web.Controllers.TitolareForm();
+                var nascosta = i >= Model.Titolari.Count && !(i == 0 && Model.Titolari.Count == 0);
+                <fieldset class="riga-ripetibile" hidden="@nascosta">
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-3"><label class="form-label" for="t@(i)n">Nome</label><input id="t@(i)n" name="Titolari[@i].Nome" value="@t.Nome" class="form-control" maxlength="100" /></div>
+                        <div class="col-md-3"><label class="form-label" for="t@(i)c">Cognome</label><input id="t@(i)c" name="Titolari[@i].Cognome" value="@t.Cognome" class="form-control" maxlength="100" /></div>
+                        <div class="col-md-3"><label class="form-label" for="t@(i)f">Codice fiscale</label><input id="t@(i)f" name="Titolari[@i].CodiceFiscale" value="@t.CodiceFiscale" class="form-control text-uppercase" maxlength="16" /></div>
+                        <div class="col-md-2"><label class="form-label" for="t@(i)q">Quota (%)</label><input id="t@(i)q" name="Titolari[@i].Quota" value="@t.Quota?.ToString("0.##")" class="form-control" inputmode="decimal" /></div>
+                        <div class="col-md-1"><button type="button" class="btn btn-sm btn-link text-danger togli-riga">Togli</button></div>
+                    </div>
+                </fieldset>
+            }
+        </div>
+        <button type="button" class="btn btn-outline-primary btn-sm mt-2" data-aggiungi-riga="righeTitolari"><i class="ri-add-line" aria-hidden="true"></i> Aggiungi titolare</button>
+    </div>
     <partial name="_Pulsanti" model="3" />
 </form>

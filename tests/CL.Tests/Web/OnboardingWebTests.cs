@@ -17,11 +17,12 @@ public sealed class OnboardingWebTests : IDisposable
 
     private static async Task<string> Testo(HttpResponseMessage r) => WebUtility.HtmlDecode(await r.Content.ReadAsStringAsync());
 
-    private async Task<HttpClient> ReferenteNuovo()
+    private async Task<HttpClient> ReferenteNuovo(TipoAvvio tipo = TipoAvvio.NuovaAttivita)
     {
         _aziendaId = await _app.ConDb(async db =>
         {
             var a = new Azienda("Acme S.r.l.", PartitaIva.Parse("01234567897"));
+            a.ImpostaTipoAvvio(tipo);
             db.Add(a);
             await db.SaveChangesAsync();
             return a.Id;
@@ -43,8 +44,8 @@ public sealed class OnboardingWebTests : IDisposable
     private static readonly Dictionary<string, string> Sedi = new()
     {
         ["LegaleVia"] = "Via Roma 1", ["LegaleCap"] = "20121", ["LegaleComune"] = "Milano", ["LegaleProvincia"] = "mi",
-        ["OperativaDiversa"] = "true", ["OperativaVia"] = "Via Po 5", ["OperativaCap"] = "10123", ["OperativaComune"] = "Torino",
-        ["OperativaProvincia"] = "TO",
+        ["Unita[0].Nome"] = "Magazzino", ["Unita[0].Via"] = "Via Po 5", ["Unita[0].Cap"] = "10123", ["Unita[0].Comune"] = "Torino",
+        ["Unita[0].Provincia"] = "TO", ["Unita[0].ReferenteNome"] = "Luca Bianchi",
     };
     private static readonly Dictionary<string, string> Legale = new()
     {
@@ -109,12 +110,67 @@ public sealed class OnboardingWebTests : IDisposable
     }
 
     [Fact]
+    public async Task Chi_cambia_consulente_compila_anche_il_subentro_con_titolari_e_voci_inail()
+    {
+        var hr = await ReferenteNuovo(TipoAvvio.CambioConsulente);
+        await Passo(hr, "Societari", new(Societari));
+        await Passo(hr, "Sedi", new(Sedi));
+
+        // Titolari effettivi diversi dal legale rappresentante: almeno uno, quote entro il 100%.
+        var legale = new Dictionary<string, string>(Legale) { ["LegaleUnicoTitolare"] = "false" };
+        Assert.Contains("3. Legale rappresentante", await Testo(await Passo(hr, "Legale", legale)));
+        legale["Titolari[0].Nome"] = "Anna"; legale["Titolari[0].Cognome"] = "Verdi";
+        legale["Titolari[0].CodiceFiscale"] = "VRDNNA80A41F205K"; legale["Titolari[0].Quota"] = "60";
+        Assert.Contains("4. Contratto e posizioni", await Testo(await Passo(hr, "Legale", legale)));
+
+        var posizioni = new Dictionary<string, string>(Posizioni)
+        {
+            ["Csc"] = "70708", ["CodiciAutorizzazione"] = "3N", ["VociInail[0].Voce"] = "0722", ["VociInail[0].Tasso"] = "4,5",
+        };
+        var html = await Testo(await Passo(hr, "Posizioni", posizioni));
+        Assert.Contains("5. Paghe", html);
+
+        // Dopo le paghe arriva il passo del cambio consulente, poi il riepilogo (7).
+        html = await Testo(await Passo(hr, "Paghe", new(Paghe)));
+        Assert.Contains("6. Cambio consulente", html);
+        html = await Testo(await Passo(hr, "Subentro", new()
+        {
+            ["ConsulentePrecedente"] = "Studio Neri", ["DataSubentro"] = "2026-12-01", ["UltimoMeseElaborato"] = "2026-11",
+        }));
+        Assert.Contains("7. Riepilogo", html);
+        Assert.Contains("Verdi Anna (60%)", html);
+        Assert.Contains("0722", html);
+        Assert.Contains("Studio Neri", html);
+
+        var p = await _app.ConDb(db => db.ProfiliAzienda.SingleAsync());
+        Assert.True(p.Subentro);
+        Assert.Equal("70708", p.Csc);
+        Assert.Equal(4.5m, Assert.Single(p.VociInail).Tasso);
+        Assert.Equal("Magazzino", Assert.Single(p.UnitaLocali).Nome);
+        Assert.Equal(new DateOnly(2026, 11, 1), p.UltimoMeseElaborato);
+        Assert.Empty(_app.ErroriServer);
+    }
+
+    [Fact]
+    public async Task Una_nuova_attivita_non_vede_il_passo_del_cambio_consulente()
+    {
+        var hr = await ReferenteNuovo();
+        await Passo(hr, "Societari", new(Societari));
+        await Passo(hr, "Sedi", new(Sedi));
+        await Passo(hr, "Legale", new(Legale));
+        await Passo(hr, "Posizioni", new(Posizioni));
+        var html = await Testo(await Passo(hr, "Paghe", new(Paghe)));
+        Assert.Contains("6. Riepilogo", html);
+        Assert.DoesNotContain("Cambio consulente", html);
+    }
+
+    [Fact]
     public async Task Dati_non_validi_restano_sul_passo_con_l_errore()
     {
         var hr = await ReferenteNuovo();
         await Passo(hr, "Societari", new(Societari));
 
-        var sedi = new Dictionary<string, string>(Sedi) { ["LegaleCap"] = "201", ["OperativaVia"] = "" };
+        var sedi = new Dictionary<string, string>(Sedi) { ["LegaleCap"] = "201", ["Unita[0].Via"] = "" };
         var html = await Testo(await Passo(hr, "Sedi", sedi));
         Assert.Contains("2. Sedi", html);
         Assert.Contains("CAP di 5 cifre", html);
@@ -155,8 +211,8 @@ public sealed class OnboardingWebTests : IDisposable
         p.ImpostaDatiSocietari(new("S.r.l.", null, "47.11", null, "pec@test.it", null));
         var ex = Assert.Throws<DomainException>(() => p.Completa(true, "x", DateTime.UtcNow));
         Assert.Contains("sede legale", ex.Message);
-        Assert.Throws<DomainException>(() => p.ImpostaSedi(new("Via", "2012", "Milano", "MI"), null));
-        Assert.Throws<DomainException>(() => p.ImpostaSedi(new("Via", "20121", "Milano", "Milano"), null));
+        Assert.Throws<DomainException>(() => p.ImpostaSedi(new("Via", "2012", "Milano", "MI"), []));
+        Assert.Throws<DomainException>(() => p.ImpostaSedi(new("Via", "20121", "Milano", "Milano"), []));
         Assert.Throws<DomainException>(() => p.ImpostaPosizioni(new("CCNL", "1", "2", "3", null, null, null, 7, 40)));
         Assert.Equal(2, p.Passo);
     }

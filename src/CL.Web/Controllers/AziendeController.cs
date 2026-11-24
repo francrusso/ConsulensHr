@@ -52,12 +52,17 @@ public sealed class AziendaForm
 
     public bool HaLogo { get; set; }
 
+    /// <summary>Nuova attività o cambio consulente: decide se l'onboarding chiede i dati del subentro.</summary>
+    [Display(Name = "Tipo di cliente")]
+    public TipoAvvio TipoAvvio { get; set; } = TipoAvvio.NuovaAttivita;
+
     public static AziendaForm Da(Azienda a) => new()
     {
         Id = a.Id,
         RagioneSociale = a.RagioneSociale,
         PartitaIva = a.PartitaIva.Valore,
         CodiceFiscale = a.CodiceFiscale,
+        TipoAvvio = a.TipoAvvio,
         Indirizzo = a.Indirizzo,
         Cap = a.Cap,
         Comune = a.Comune,
@@ -153,6 +158,8 @@ public sealed class AziendeController(AppDbContext db, ServizioAccessi accessi, 
             ModelState.AddModelError(CampoDellErrore(ex.Message), ex.Message);
             return View("Form", form);
         }
+
+        azienda.ImpostaTipoAvvio(form.TipoAvvio);
 
         if (form.Logo is { Length: > 0 } file && await loghi.SalvaAsync(azienda, file) is { } errore)
         {

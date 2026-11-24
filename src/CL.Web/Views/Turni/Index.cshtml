@@ -30,7 +30,7 @@
         <label for="dipendenteId" class="visually-hidden">Dipendente</label>
         <select id="dipendenteId" name="dipendenteId" asp-for="DipendenteId" asp-items="Model.Persone" class="form-select w-auto"><option value="">Tutto il personale</option></select>
         <select asp-for="TeamId" asp-items="Model.Team" class="form-select w-auto" aria-label="Team"><option value="">Tutti i team</option></select>
-        <select asp-for="Sede" class="form-select w-auto" aria-label="Sede"><option value="">Tutte le sedi</option><option value="SedeLegale">Sede legale</option><option value="SedeOperativa">Sede operativa</option><option value="SmartWorking">Smart working</option></select>
+        <select asp-for="Sede" class="form-select w-auto" aria-label="Sede"><option value="">Tutte le sedi</option><option value="SedeLegale">Sede legale</option><option value="UnitaLocale">Unità locali</option><option value="SmartWorking">Smart working</option></select>
     }
     <select asp-for="Vista" class="form-select w-auto" aria-label="Vista calendario"><option value="giorno">Giorno</option><option value="settimana">Settimana</option><option value="mese">Mese</option></select>
     <button class="btn invoice-filter-submit" type="submit">Filtra <i class="ri-filter-3-line" aria-hidden="true"></i></button>

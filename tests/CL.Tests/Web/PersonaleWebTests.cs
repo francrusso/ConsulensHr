@@ -427,5 +427,19 @@ public sealed class PersonaleWebTests : IDisposable
         Assert.Contains("non è tra quelle dell'azienda", await Testo(await hr.InviaForm(pagina, "/Dipendenti/Salva", new(campi))));
         Assert.Contains("Modifiche salvate", await Testo(await hr.InviaForm(pagina, "/Dipendenti/Salva", new(campi) { ["Sede"] = "SmartWorking" })));
         Assert.Equal(SedeLavoro.SmartWorking, (await _app.ConDb(db => db.Dipendenti.SingleAsync())).Sede);
+
+        // Con un'unità locale nel profilo, la persona può lavorare lì.
+        var unita = await _app.ConDb(async db =>
+        {
+            var p = await db.ProfiliAzienda.SingleAsync(x => x.AziendaId == azienda);
+            var u = new UnitaLocale(null, "Magazzino", new("Via Po 5", "10123", "Torino", "TO"), null, null, null);
+            p.ImpostaSedi(p.SedeLegale!, [u]);
+            await db.SaveChangesAsync();
+            return u.Id;
+        });
+        Assert.Contains("Magazzino · Via Po 5, Torino (TO)", WebUtility.HtmlDecode(await hr.GetStringAsync(pagina)));
+        Assert.Contains("Modifiche salvate", await Testo(await hr.InviaForm(pagina, "/Dipendenti/Salva", new(campi) { ["Sede"] = $"Unita:{unita}" })));
+        var dip = await _app.ConDb(db => db.Dipendenti.SingleAsync());
+        Assert.Equal((SedeLavoro.UnitaLocale, unita), (dip.Sede!.Value, dip.UnitaLocaleId!.Value));
     }
 }

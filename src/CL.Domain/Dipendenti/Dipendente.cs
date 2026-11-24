@@ -7,7 +7,8 @@ namespace CL.Domain.Dipendenti;
 public enum Genere { Donna, Uomo, NonBinario, NonIndicato }
 
 /// <summary>Sede di lavoro abituale: una delle sedi censite dall'azienda oppure smart working.</summary>
-public enum SedeLavoro { SedeLegale, SedeOperativa, SmartWorking }
+/// <summary>Dove lavora la persona. "SedeOperativa" è dei profili vecchi: ora si usa un'unità locale.</summary>
+public enum SedeLavoro { SedeLegale, SedeOperativa, SmartWorking, UnitaLocale }
 
 /// <summary>Pronomi dichiarati dalla persona (facoltativi).</summary>
 public enum Pronomi { Femminili, Maschili, Neutri, Tutti, NonIndicati }
@@ -128,7 +129,16 @@ public sealed class Dipendente : Entity
     }
 
     public void ImpostaIban(Iban? iban) => Iban = iban;
-    public void ImpostaSede(SedeLavoro? sede) => Sede = sede;
+    public void ImpostaSede(SedeLavoro? sede) => ImpostaSede(sede, null);
+
+    /// <summary>Unità locale dell'azienda in cui lavora (con <see cref="SedeLavoro.UnitaLocale"/>).</summary>
+    public Guid? UnitaLocaleId { get; private set; }
+    public void ImpostaSede(SedeLavoro? sede, Guid? unitaLocaleId)
+    {
+        if (sede == SedeLavoro.UnitaLocale && unitaLocaleId is null) throw new DomainException("Indica l'unità locale.");
+        Sede = sede;
+        UnitaLocaleId = sede == SedeLavoro.UnitaLocale ? unitaLocaleId : null;
+    }
 
     /// <summary>La persona (dipendente o professionista) a cui il consulente chiede presenze, variazioni e documenti ogni mese.</summary>
     public bool ReferentePaghe { get; private set; }
