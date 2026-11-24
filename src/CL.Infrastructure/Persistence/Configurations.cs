@@ -241,6 +241,11 @@ internal sealed class DipendenteConfig : IEntityTypeConfiguration<Dipendente>
         b.Property(x => x.Posizione).HasMaxLength(100);
         b.Property(x => x.FotoChiave).HasMaxLength(500);
         b.Ignore(x => x.Segnaposto);
+        b.Ignore(x => x.Progressivi);
+        b.Property(x => x.Ratei13).HasPrecision(5, 2);
+        b.Property(x => x.Ratei14).HasPrecision(5, 2);
+        b.Property(x => x.TfrAzienda).HasPrecision(12, 2);
+        b.Property(x => x.TfrFondi).HasPrecision(12, 2);
         b.HasOne<Team>().WithMany().HasForeignKey(x => x.TeamId).OnDelete(DeleteBehavior.SetNull);
         b.HasOne<Dipendente>().WithMany().HasForeignKey(x => x.ResponsabileId).OnDelete(DeleteBehavior.SetNull);
         b.HasIndex(x => new { x.AziendaId, x.Cognome, x.Nome });
@@ -402,6 +407,41 @@ internal sealed class DocumentoPersonaleConfig : IEntityTypeConfiguration<Docume
         b.HasOne<Azienda>().WithMany().HasForeignKey(x => x.AziendaId).OnDelete(DeleteBehavior.Restrict);
         b.HasIndex(x => new { x.DipendenteId, x.Tipo });
         b.HasIndex(x => x.Scadenza);
+    }
+}
+
+internal sealed class DocumentoStoricoConfig : IEntityTypeConfiguration<DocumentoStorico>
+{
+    public void Configure(EntityTypeBuilder<DocumentoStorico> b)
+    {
+        b.ToTable("DocumentiStorici");
+        b.Property(x => x.Id).ValueGeneratedNever();
+        b.Property(x => x.Tipo).HasConversion<string>().HasMaxLength(32);
+        b.Property(x => x.Descrizione).HasMaxLength(150);
+        b.Property(x => x.NomeFile).HasMaxLength(255);
+        b.Property(x => x.TipoFile).HasMaxLength(50);
+        b.Property(x => x.ChiaveArchivio).HasMaxLength(500);
+        b.Property(x => x.CaricatoDa).HasMaxLength(256);
+        b.Ignore(x => x.Titolo);
+        b.HasOne<Azienda>().WithMany().HasForeignKey(x => x.AziendaId).OnDelete(DeleteBehavior.Restrict);
+        b.HasIndex(x => new { x.AziendaId, x.Anno });
+    }
+}
+
+internal sealed class TrattenutaBenefitConfig : IEntityTypeConfiguration<TrattenutaBenefit>
+{
+    public void Configure(EntityTypeBuilder<TrattenutaBenefit> b)
+    {
+        b.ToTable("TrattenuteBenefit");
+        b.Property(x => x.Id).ValueGeneratedNever();
+        b.Property(x => x.Tipo).HasConversion<string>().HasMaxLength(32);
+        b.Property(x => x.Descrizione).HasMaxLength(150);
+        b.Property(x => x.ImportoMensile).HasPrecision(12, 2);
+        b.Property(x => x.Residuo).HasPrecision(12, 2);
+        b.Ignore(x => x.Titolo);
+        b.HasOne<Dipendente>().WithMany().HasForeignKey(x => x.DipendenteId).OnDelete(DeleteBehavior.Cascade);
+        b.HasOne<Azienda>().WithMany().HasForeignKey(x => x.AziendaId).OnDelete(DeleteBehavior.Restrict);
+        b.HasIndex(x => x.DipendenteId);
     }
 }
 

@@ -1,0 +1,78 @@
+@model CL.Web.Controllers.ElencoDocumentiViewModel<CL.Web.Controllers.RigaStorico>
+@using CL.Domain.Documenti
+@inject UtenteCorrente Utente
+@{
+    ViewData["Title"] = "Archivio storico";
+    var ritorno = Context.Request.Path + Context.Request.QueryString;
+    var tipo = ViewBag.Tipo as string;
+    var colonne = 4 + (Utente.IsConsulente ? 1 : 0);
+}
+<div class="breadcrumb-titolo d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+    <h1 class="titolo-pagina mb-0">@ViewData["Title"]</h1>
+</div>
+
+<form asp-action="Storico" method="get" class="invoice-filter-bar customer-filter-form mb-3">
+    <div class="invoice-filter-toolbar flex-wrap">
+        @if (Model.Aziende is not null)
+        {
+            <div>
+                <select name="aziendaId" class="form-select" aria-label="Filtra per azienda">
+                    <option value="">Tutte le aziende</option>
+                    @foreach (var a in Model.Aziende) { <option value="@a.Value" selected="@a.Selected">@a.Text</option> }
+                </select>
+            </div>
+        }
+        <div>
+            <select name="anno" class="form-select" aria-label="Anno">
+                <option value="">Tutti gli anni</option>
+                @foreach (var a in Model.Anni) { <option value="@a" selected="@(a == Model.Anno)">@a</option> }
+            </select>
+        </div>
+        <div>
+            <select name="tipo" class="form-select" aria-label="Tipo di documento">
+                <option value="">Tutti i documenti</option>
+                @foreach (var t in Enum.GetValues<TipoDocumentoStorico>()) { <option value="@t" selected="@(t.ToString() == tipo)">@t.Descrizione()</option> }
+            </select>
+        </div>
+        <div class="invoice-filter-actions"><button class="btn invoice-filter-submit" type="submit">Cerca <i class="ri-search-line" aria-hidden="true"></i></button></div>
+    </div>
+</form>
+
+<div class="card radius-15 table-responsive table-actions-responsive p-1 customer-results">
+    <table class="table mb-0 align-middle">
+        <thead>
+            <tr>
+                <th scope="col">Anno</th>
+                @if (Utente.IsConsulente) { <th scope="col">Azienda</th> }
+                <th scope="col">Documento</th>
+                <th scope="col">Caricato il</th>
+                <th scope="col" class="text-end">Azioni</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Righe.Count == 0)
+            {
+                <tr><td colspan="@colonne" class="elenco-vuoto"><span class="elenco-vuoto-icona" aria-hidden="true"><i class="ri-archive-line"></i></span><div>Nessun documento nell'archivio</div></td></tr>
+            }
+            @foreach (var r in Model.Righe)
+            {
+                <tr>
+                    <td data-label="Anno">@r.Anno</td>
+                    @if (Utente.IsConsulente) { <td data-label="Azienda">@r.Azienda</td> }
+                    <td data-label="Documento"><a asp-action="ApriStorico" asp-route-id="@r.Id" target="_blank" rel="noopener" class="link-contratto"><i class="ri-file-line" aria-hidden="true"></i> @r.Titolo</a></td>
+                    <td data-label="Caricato il">@r.CaricatoIl.ToLocalTime().ToString("dd/MM/yyyy")</td>
+                    <td data-label="Azioni">
+                        <div class="customer-actions">
+                            <a asp-action="ApriStorico" asp-route-id="@r.Id" target="_blank" rel="noopener" title="Apri" aria-label="Apri @r.Titolo @r.Anno"><i class="ri-eye-line" aria-hidden="true"></i></a>
+                            <form asp-action="EliminaStorico" method="post" class="m-0" onsubmit="return confirm('Eliminare questo documento?');">
+                                <input type="hidden" name="id" value="@r.Id" />
+                                <input type="hidden" name="ritorno" value="@ritorno" />
+                                <button type="submit" title="Elimina" aria-label="Elimina @r.Titolo @r.Anno"><i class="ri-delete-bin-line" aria-hidden="true"></i></button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

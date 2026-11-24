@@ -41,6 +41,11 @@ public sealed record RigaDocumentoPersonale(Guid Id, Guid DipendenteId, string P
     };
 }
 
+public sealed record RigaStorico(Guid Id, Guid AziendaId, string Azienda, TipoDocumentoStorico Tipo, int Anno, string? Descrizione, DateTime CaricatoIl)
+{
+    public string Titolo => Tipo == TipoDocumentoStorico.Altro && Descrizione is { } d ? d : Tipo.Descrizione();
+}
+
 public sealed class ElencoDocumentiViewModel<T>
 {
     public required List<T> Righe { get; init; }
@@ -274,6 +279,87 @@ public sealed class DocumentiController(AppDbContext db, UtenteCorrente utente, 
         if (testa[0] == 0x89 && testa[1] == 0x50 && testa[2] == 0x4E && testa[3] == 0x47) return ("image/png", ".png", null);
         return (null, null, "Carica un PDF o una foto (JPEG o PNG).");
     }
+
+    /// <summary>
+    /// Archivio storico dell'azienda: i documenti degli anni passati portati dal consulente precedente
+    /// (CU, 770, UniEmens/DM10, autoliquidazione INAIL, F24, verbali e contenziosi), per anno.
+    /// </summary>
+    [Authorize(Policy = Policy.GestionePersonale)]
+    public async Task<IActionResult> Storico(Guid? aziendaId, int? anno, string? tipo)
+    {
+        var query = from s in db.DocumentiStorici.AsNoTracking()
+                    join az in db.Aziende.AsNoTracking() on s.AziendaId equals az.Id
+                    select new { s, az };
+        if (utente.IsAzienda) query = query.Where(x => x.s.AziendaId == utente.AziendaId);
+        else if (aziendaId is { } scelta) query = query.Where(x => x.s.AziendaId == scelta);
+        var anni = await query.Select(x => x.s.Anno).Distinct().OrderByDescending(a => a).ToListAsync();
+        if (anno is { } a) query = query.Where(x => x.s.Anno == a);
+        if (Enum.TryParse<TipoDocumentoStorico>(tipo, out var t)) query = query.Where(x => x.s.Tipo == t);
+        var righe = await query.OrderByDescending(x => x.s.Anno).ThenBy(x => x.az.RagioneSociale).ThenBy(x => x.s.Tipo)
+            .Select(x => new RigaStorico(x.s.Id, x.az.Id, x.az.RagioneSociale, x.s.Tipo, x.s.Anno, x.s.Descrizione, x.s.CaricatoIl)).ToListAsync();
+        ViewBag.Tipo = tipo;
+        return View(new ElencoDocumentiViewModel<RigaStorico>
+        {
+            Righe = righe, Anno = anno ?? 0, Anni = anni, AziendaId = aziendaId, Aziende = await ElencoAziende(aziendaId),
+        });
+    }
+
+    [Authorize(Policy = Policy.GestionePersonale)]
+    public async Task<IActionResult> NuovoStorico()
+    {
+        ViewBag.Aziende = await ElencoAziende(null);
+        ViewBag.AnnoProposto = AnnoCorrente - 1;
+        return View();
+    }
+
+    [HttpPost, ValidateAntiForgeryToken, Authorize(Policy = Policy.GestionePersonale), RequestSizeLimit(DimensioneMassima + 256 * 1024)]
+    public async Task<IActionResult> CaricaStorico(Guid? aziendaId, TipoDocumentoStorico tipo, int anno, string? descrizione, IFormFile? documento)
+    {
+        var az = utente.IsAzienda ? utente.AziendaId : aziendaId;
+        if (az is not { } id || !await db.Aziende.AnyAsync(a => a.Id == id)) { Errore("Scegli l'azienda."); return RedirectToAction(nameof(NuovoStorico)); }
+        var (tipoFile, estensione, errore) = await ControllaFile(documento);
+        if (errore is not null) { Errore(errore); return RedirectToAction(nameof(NuovoStorico)); }
+        var chiave = $"storico/{id}-{Guid.NewGuid():N}{estensione}";
+        DocumentoStorico doc;
+        try
+        {
+            doc = new DocumentoStorico(id, tipo, anno, descrizione, documento!.FileName, tipoFile!, chiave, documento.Length, utente.Email,
+                clock.GetUtcNow().UtcDateTime);
+        }
+        catch (DomainException ex) { Errore(ex.Message); return RedirectToAction(nameof(NuovoStorico)); }
+        await using (var s = documento.OpenReadStream()) await archivio.SalvaAsync(chiave, s);
+        db.DocumentiStorici.Add(doc);
+        await db.SaveChangesAsync();
+        Conferma($"{doc.Titolo} {doc.Anno} caricato.");
+        return RedirectToAction(nameof(Storico), new { aziendaId = utente.IsConsulente ? id : (Guid?)null });
+    }
+
+    [Authorize(Policy = Policy.GestionePersonale)]
+    public async Task<IActionResult> ApriStorico(Guid id)
+    {
+        var doc = await StoricoVisibile(id);
+        if (doc is null || await archivio.ApriAsync(doc.ChiaveArchivio) is not { } file) return NotFound();
+        Response.Headers.CacheControl = "no-store, private";
+        Response.Headers.XContentTypeOptions = "nosniff";
+        Response.Headers.ContentDisposition = new ContentDispositionHeaderValue("inline") { FileNameStar = doc.NomeFile.Replace(' ', '_') }.ToString();
+        return File(file, doc.TipoFile);
+    }
+
+    [HttpPost, ValidateAntiForgeryToken, Authorize(Policy = Policy.GestionePersonale)]
+    public async Task<IActionResult> EliminaStorico(Guid id, string? ritorno)
+    {
+        var doc = await StoricoVisibile(id);
+        if (doc is null) return NotFound();
+        db.DocumentiStorici.Remove(doc);
+        await db.SaveChangesAsync();
+        await archivio.EliminaAsync(doc.ChiaveArchivio);
+        Conferma($"{doc.Titolo} {doc.Anno} eliminato.");
+        return Torna(ritorno, nameof(Storico), new { });
+    }
+
+    /// <summary>Il documento storico, solo se è di un'azienda dell'utente (il filtro globale vale per il consulente).</summary>
+    private Task<DocumentoStorico?> StoricoVisibile(Guid id) =>
+        db.DocumentiStorici.FirstOrDefaultAsync(x => x.Id == id && (!utente.IsAzienda || x.AziendaId == utente.AziendaId));
 
     /// <summary>Lettera di variazione del contratto (proroga, trasformazione…): anche il dipendente può aprire le proprie.</summary>
     public async Task<IActionResult> ApriLettera(Guid id, Guid letteraId)

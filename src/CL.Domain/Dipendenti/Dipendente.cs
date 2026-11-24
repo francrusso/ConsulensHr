@@ -3,6 +3,9 @@ using CL.Domain.ValueObjects;
 
 namespace CL.Domain.Dipendenti;
 
+/// <summary>Progressivi alla data del subentro: ratei di 13ª e 14ª maturati, TFR rimasto in azienda e versato ai fondi.</summary>
+public sealed record ProgressiviSubentro(DateOnly Al, decimal? Ratei13, decimal? Ratei14, decimal? TfrAzienda, decimal? TfrFondi);
+
 /// <summary>Genere dichiarato dalla persona (facoltativo).</summary>
 public enum Genere { Donna, Uomo, NonBinario, NonIndicato }
 
@@ -130,6 +133,26 @@ public sealed class Dipendente : Entity
 
     public void ImpostaIban(Iban? iban) => Iban = iban;
     public void ImpostaSede(SedeLavoro? sede) => ImpostaSede(sede, null);
+
+    // Progressivi al cambio consulente: ratei e TFR maturati fino alla data del subentro, dall'ultimo cedolino del consulente precedente.
+    public DateOnly? ProgressiviAl { get; private set; }
+    public decimal? Ratei13 { get; private set; }
+    public decimal? Ratei14 { get; private set; }
+    public decimal? TfrAzienda { get; private set; }
+    public decimal? TfrFondi { get; private set; }
+
+    /// <summary>Imposta (o con null toglie) i progressivi al subentro.</summary>
+    public void ImpostaProgressivi(ProgressiviSubentro? p)
+    {
+        if (p is not null)
+        {
+            if (p.Ratei13 is < 0 or > 12 || p.Ratei14 is < 0 or > 12) throw new DomainException("I ratei vanno da 0 a 12.");
+            if (p.TfrAzienda < 0 || p.TfrFondi < 0) throw new DomainException("Il TFR non può essere negativo.");
+        }
+        (ProgressiviAl, Ratei13, Ratei14, TfrAzienda, TfrFondi) = (p?.Al, p?.Ratei13, p?.Ratei14, p?.TfrAzienda, p?.TfrFondi);
+    }
+
+    public ProgressiviSubentro? Progressivi => ProgressiviAl is { } al ? new(al, Ratei13, Ratei14, TfrAzienda, TfrFondi) : null;
 
     /// <summary>Unità locale dell'azienda in cui lavora (con <see cref="SedeLavoro.UnitaLocale"/>).</summary>
     public Guid? UnitaLocaleId { get; private set; }

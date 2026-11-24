@@ -1947,3 +1947,111 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261124165144_ProgressiviTrattenuteStorico') THEN
+    ALTER TABLE hr."Dipendenti" ADD "ProgressiviAl" date;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261124165144_ProgressiviTrattenuteStorico') THEN
+    ALTER TABLE hr."Dipendenti" ADD "Ratei13" numeric(5,2);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261124165144_ProgressiviTrattenuteStorico') THEN
+    ALTER TABLE hr."Dipendenti" ADD "Ratei14" numeric(5,2);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261124165144_ProgressiviTrattenuteStorico') THEN
+    ALTER TABLE hr."Dipendenti" ADD "TfrAzienda" numeric(12,2);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261124165144_ProgressiviTrattenuteStorico') THEN
+    ALTER TABLE hr."Dipendenti" ADD "TfrFondi" numeric(12,2);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261124165144_ProgressiviTrattenuteStorico') THEN
+    CREATE TABLE hr."DocumentiStorici" (
+        "Id" uuid NOT NULL,
+        "AziendaId" uuid NOT NULL,
+        "Tipo" character varying(32) NOT NULL,
+        "Anno" integer NOT NULL,
+        "Descrizione" character varying(150),
+        "NomeFile" character varying(255) NOT NULL,
+        "TipoFile" character varying(50) NOT NULL,
+        "ChiaveArchivio" character varying(500) NOT NULL,
+        "DimensioneByte" bigint NOT NULL,
+        "CaricatoIl" timestamp with time zone NOT NULL,
+        "CaricatoDa" character varying(256) NOT NULL,
+        CONSTRAINT "PK_DocumentiStorici" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_DocumentiStorici_Aziende_AziendaId" FOREIGN KEY ("AziendaId") REFERENCES hr."Aziende" ("Id") ON DELETE RESTRICT
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261124165144_ProgressiviTrattenuteStorico') THEN
+    CREATE TABLE hr."TrattenuteBenefit" (
+        "Id" uuid NOT NULL,
+        "AziendaId" uuid NOT NULL,
+        "DipendenteId" uuid NOT NULL,
+        "Tipo" character varying(32) NOT NULL,
+        "Descrizione" character varying(150),
+        "ImportoMensile" numeric(12,2),
+        "Residuo" numeric(12,2),
+        "Dal" date NOT NULL,
+        "Al" date,
+        CONSTRAINT "PK_TrattenuteBenefit" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_TrattenuteBenefit_Aziende_AziendaId" FOREIGN KEY ("AziendaId") REFERENCES hr."Aziende" ("Id") ON DELETE RESTRICT,
+        CONSTRAINT "FK_TrattenuteBenefit_Dipendenti_DipendenteId" FOREIGN KEY ("DipendenteId") REFERENCES hr."Dipendenti" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261124165144_ProgressiviTrattenuteStorico') THEN
+    CREATE INDEX "IX_DocumentiStorici_AziendaId_Anno" ON hr."DocumentiStorici" ("AziendaId", "Anno");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261124165144_ProgressiviTrattenuteStorico') THEN
+    CREATE INDEX "IX_TrattenuteBenefit_AziendaId" ON hr."TrattenuteBenefit" ("AziendaId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261124165144_ProgressiviTrattenuteStorico') THEN
+    CREATE INDEX "IX_TrattenuteBenefit_DipendenteId" ON hr."TrattenuteBenefit" ("DipendenteId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261124165144_ProgressiviTrattenuteStorico') THEN
+    INSERT INTO hr."__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261124165144_ProgressiviTrattenuteStorico', '10.0.15');
+    END IF;
+END $EF$;
+COMMIT;
+

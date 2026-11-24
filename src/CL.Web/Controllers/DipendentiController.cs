@@ -583,6 +583,45 @@ public sealed class DipendentiController(AppDbContext db, UtenteCorrente utente,
         return SchedaAperta(id);
     }
 
+    /// <summary>Progressivi al cambio consulente (ratei 13ª/14ª, TFR in azienda e ai fondi); senza data si tolgono.</summary>
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> SalvaProgressivi(Guid id, DateOnly? al, decimal? ratei13, decimal? ratei14, decimal? tfrAzienda, decimal? tfrFondi)
+    {
+        var d = await Trova(id);
+        if (d is null) return NotFound();
+        try { d.ImpostaProgressivi(al is { } data ? new ProgressiviSubentro(data, ratei13, ratei14, tfrAzienda, tfrFondi) : null); }
+        catch (CL.Domain.Common.DomainException ex) { Errore(ex.Message); return SchedaAperta(id, "trattenute"); }
+        await db.SaveChangesAsync();
+        Conferma(al is null ? "Progressivi tolti." : "Progressivi salvati.");
+        return SchedaAperta(id, "trattenute");
+    }
+
+    /// <summary>Nuova trattenuta (cessione del quinto, pignoramento, sindacato…) o benefit della persona.</summary>
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> AggiungiTrattenuta(Guid id, TipoTrattenuta tipo, string? descrizione, decimal? importoMensile, decimal? residuo,
+        DateOnly? dal, DateOnly? al)
+    {
+        var d = await Trova(id);
+        if (d is null) return NotFound();
+        if (dal is null) { Errore("Indica da quando vale."); return SchedaAperta(id, "trattenute"); }
+        try { db.TrattenuteBenefit.Add(new TrattenutaBenefit(d.AziendaId, d.Id, tipo, descrizione, importoMensile, residuo, dal.Value, al)); }
+        catch (CL.Domain.Common.DomainException ex) { Errore(ex.Message); return SchedaAperta(id, "trattenute"); }
+        await db.SaveChangesAsync();
+        Conferma($"{tipo.Descrizione()} aggiunta.");
+        return SchedaAperta(id, "trattenute");
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> TogliTrattenuta(Guid id, Guid voceId)
+    {
+        var t = await db.TrattenuteBenefit.FirstOrDefaultAsync(x => x.Id == voceId && x.DipendenteId == id);
+        if (t is null || await Trova(id) is null) return NotFound();
+        db.TrattenuteBenefit.Remove(t);
+        await db.SaveChangesAsync();
+        Conferma($"{t.Titolo} tolta.");
+        return SchedaAperta(id, "trattenute");
+    }
+
     /// <summary>Torna alla scheda con i campi aperti, sulla sezione indicata.</summary>
     private RedirectToActionResult SchedaAperta(Guid id, string? sezione = "contratto") =>
         RedirectToAction(nameof(Dettaglio), new { id, sezione, modifica = true });
@@ -777,7 +816,7 @@ public sealed class DipendentiController(AppDbContext db, UtenteCorrente utente,
         var oggi = Oggi;
         ViewBag.Oggi = oggi;
         ViewBag.Modifica = modifica || d is null;
-        ViewBag.Sezione = d is not null && sezione is "contratto" or "ferie" or "buste" ? sezione : "anagrafica";
+        ViewBag.Sezione = d is not null && sezione is "contratto" or "ferie" or "buste" or "trattenute" ? sezione : "anagrafica";
         ViewBag.Aziende = utente.IsConsulente ? await ElencoAziende(form.AziendaId) : null;
         ViewBag.Dipendente = d;
         ViewBag.Contratti = d?.Contratti.OrderByDescending(c => c.DataInizio).ToList() ?? new List<Contratto>();
@@ -800,6 +839,9 @@ public sealed class DipendentiController(AppDbContext db, UtenteCorrente utente,
         if (d is null) return View("Scheda", form);
 
         ViewBag.Accesso = await accessi.Elenco().FirstOrDefaultAsync(u => u.DipendenteId == d.Id);
+        ViewBag.Trattenute = await db.TrattenuteBenefit.AsNoTracking().Where(t => t.DipendenteId == d.Id)
+            .OrderByDescending(t => t.Al == null).ThenByDescending(t => t.Dal).ToListAsync();
+        ViewBag.AziendaSubentro = await db.Aziende.AnyAsync(a => a.Id == d.AziendaId && a.TipoAvvio == TipoAvvio.CambioConsulente);
         ViewBag.ProfiloPersonale = await db.ProfiliDipendente.AsNoTracking().FirstOrDefaultAsync(p => p.DipendenteId == d.Id);
         ViewBag.Buste = await db.BustePaga.AsNoTracking().Where(b => b.DipendenteId == d.Id)
             .OrderByDescending(b => b.Anno).ThenByDescending(b => b.Mese).Take(24)

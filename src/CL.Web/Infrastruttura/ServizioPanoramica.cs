@@ -1,3 +1,4 @@
+using CL.Domain.Aziende;
 using CL.Domain.Documenti;
 using CL.Domain.Assenze;
 using CL.Domain.BustePaga;
@@ -230,6 +231,9 @@ public sealed class ServizioPanoramica(AppDbContext db, UtenteCorrente utente, T
                                                                        && c.Stato != StatoComunicazione.Bozza);
             daFare.Add(new($"Invia il riepilogo presenze di {ServizioBustePaga.NomeMese(mesePresenze.Month).ToLower()}", inviata,
                 $"/Presenze/Foglio?anno={mesePresenze.Year}&mese={mesePresenze.Month}") { Chiave = $"presenze-{mesePresenze:yyyy-MM}" });
+            if (await db.Aziende.AnyAsync(a => a.Id == mia && a.TipoAvvio == TipoAvvio.CambioConsulente))
+                daFare.Add(new("Carica lo storico del consulente precedente (CU, 770, UniEmens, F24…)", await db.DocumentiStorici.AnyAsync(x => x.AziendaId == mia),
+                    "/Documenti/Storico") { Chiave = "storico-subentro" });
             daFare.Add(new("Indica il referente paghe nella scheda della persona", await db.Dipendenti.AnyAsync(d => d.AziendaId == mia && d.ReferentePaghe), "/Dipendenti") { Chiave = "referente-paghe" });
         }
         // Solo ciò che c'è davvero da fare, in base ai dati: le voci già a posto non si mostrano.

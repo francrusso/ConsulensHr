@@ -1,0 +1,60 @@
+@using CL.Domain.Documenti
+@{
+    ViewData["Title"] = "Carica nell'archivio storico";
+    ViewData["Percorso"] = new List<(string, string?)> { ("Documenti", null), ("Archivio storico", Url.Action("Storico", "Documenti")) };
+    var aziende = ViewBag.Aziende as List<SelectListItem>;
+    var anno = (int)ViewBag.AnnoProposto;
+}
+<div class="breadcrumb-titolo mb-3"><h1 class="titolo-pagina mb-0">@ViewData["Title"]</h1></div>
+
+<form asp-action="CaricaStorico" method="post" enctype="multipart/form-data" class="card radius-15 p-4 card-panoramica">
+    <div class="campi-presenza">
+        @if (aziende is not null)
+        {
+            <div class="campo-note">
+                <label for="aziendaId" class="form-label">Azienda</label>
+                <select id="aziendaId" name="aziendaId" class="form-select" required>
+                    <option value="">Scegli l'azienda</option>
+                    @foreach (var a in aziende) { <option value="@a.Value">@a.Text</option> }
+                </select>
+            </div>
+        }
+        <div>
+            <label for="tipo" class="form-label">Documento</label>
+            <select id="tipo" name="tipo" class="form-select">
+                @foreach (var t in Enum.GetValues<TipoDocumentoStorico>()) { <option value="@t">@t.Descrizione()</option> }
+            </select>
+        </div>
+        <div>
+            <label for="anno" class="form-label">Anno</label>
+            <input id="anno" name="anno" type="number" min="1990" max="2100" value="@anno" class="form-control" required />
+        </div>
+        <div id="campoDescrizione" hidden>
+            <label for="descrizione" class="form-label">Descrizione</label>
+            <input id="descrizione" name="descrizione" class="form-control" maxlength="150" />
+        </div>
+        <div class="campo-note">
+            <label for="documento" class="form-label">File (PDF o foto)</label>
+            <input id="documento" name="documento" type="file" accept="application/pdf,image/jpeg,image/png" class="form-control" required />
+        </div>
+    </div>
+    <div class="d-flex justify-content-end gap-2 mt-4">
+        <a asp-action="Storico" class="btn btn-outline-secondary">Annulla</a>
+        <button type="submit" class="btn btn-primary"><i class="ri-upload-2-line" aria-hidden="true"></i> Carica</button>
+    </div>
+</form>
+
+@section Scripts {
+    <script>
+        (function () {
+            const tipo = document.getElementById('tipo');
+            const aggiorna = () => {
+                const altro = tipo.value === 'Altro';
+                document.getElementById('campoDescrizione').hidden = !altro;
+                document.getElementById('descrizione').required = altro;
+            };
+            tipo.addEventListener('change', aggiorna);
+            aggiorna();
+        })();
+    </script>
+}

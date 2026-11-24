@@ -19,7 +19,8 @@
         ? new Microsoft.AspNetCore.Html.HtmlString("<span class=\"non-inserito\">Non inserito</span>")
         : new Microsoft.AspNetCore.Html.HtmlString(System.Text.Encodings.Web.HtmlEncoder.Default.Encode(v));
     var schede = new[] { ("anagrafica", "Anagrafica", "ri-user-line"), ("contratto", "Contratto", "ri-file-text-line"),
-                         ("ferie", "Assenze e presenze", "ri-calendar-event-line"), ("buste", "Buste paga", "ri-file-list-3-line") };
+                         ("ferie", "Assenze e presenze", "ri-calendar-event-line"), ("buste", "Buste paga", "ri-file-list-3-line"),
+                         ("trattenute", "Trattenute e progressivi", "ri-money-euro-circle-line") };
 }
 
 <div class="breadcrumb-titolo d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
@@ -554,6 +555,84 @@
     }
     <partial name="~/Views/BustePaga/_TabellaBuste.cshtml" model="(buste, true, Utente.IsConsulente, false, false, ritornoBuste)" />
 </section>
+    </div>
+
+    <div id="scheda-trattenute" role="tabpanel" class="pannello-scheda" hidden="@(sezione != "trattenute")">
+        @{
+            var trattenute = (List<CL.Domain.Dipendenti.TrattenutaBenefit>)ViewBag.Trattenute;
+            var subentro = ViewBag.AziendaSubentro is true;
+            string Euro(decimal? v) => v is { } x ? x.ToString("N2", System.Globalization.CultureInfo.GetCultureInfo("it-IT")) + " €" : "—";
+            string Num(decimal? v) => v?.ToString("0.##") ?? "";
+        }
+        <section class="card radius-15 p-3 p-md-4 mb-3 sezione-profilo" aria-labelledby="titoloTrattenute">
+            <h2 class="titolo-sezione-profilo mb-3" id="titoloTrattenute">Trattenute e benefit</h2>
+            <div class="table-responsive">
+                <table class="table mb-0 align-middle">
+                    <thead><tr><th scope="col">Voce</th><th scope="col">Dettaglio</th><th scope="col" class="text-end">Al mese</th><th scope="col" class="text-end">Residuo</th><th scope="col">Periodo</th><th scope="col" class="solo-modifica"><span class="visually-hidden">Azioni</span></th></tr></thead>
+                    <tbody>
+                        @if (trattenute.Count == 0)
+                        {
+                            <tr><td colspan="6" class="elenco-vuoto"><span class="elenco-vuoto-icona" aria-hidden="true"><i class="ri-money-euro-circle-line"></i></span><div>Nessuna trattenuta o benefit</div></td></tr>
+                        }
+                        @foreach (var t in trattenute)
+                        {
+                            <tr class="@(t.AttivaIl(oggi) ? "" : "text-body-secondary")">
+                                <td>@t.Tipo.Descrizione()@if (t.Tipo.IsBenefit()) { <span class="badge badge-stato ms-1" style="--colore-stato:#2FBA6C"><span class="pallino-stato" aria-hidden="true"></span>Benefit</span> }</td>
+                                <td>@(t.Descrizione ?? "—")</td>
+                                <td class="text-end text-nowrap">@Euro(t.ImportoMensile)</td>
+                                <td class="text-end text-nowrap">@Euro(t.Residuo)</td>
+                                <td class="text-nowrap">@t.Dal.ToString("dd/MM/yyyy") – @(t.Al?.ToString("dd/MM/yyyy") ?? "in corso")</td>
+                                <td class="solo-modifica text-end">
+                                    <form asp-action="TogliTrattenuta" asp-route-id="@d.Id" asp-route-voceId="@t.Id" method="post" class="m-0" onsubmit="return confirm('Togliere questa voce?');">
+                                        <button type="submit" class="btn btn-outline-danger btn-sm" aria-label="Togli @t.Titolo"><i class="ri-delete-bin-line" aria-hidden="true"></i></button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <form asp-action="AggiungiTrattenuta" asp-route-id="@d.Id" method="post" class="solo-modifica mt-3">
+                <div class="campi-profilo">
+                    <div><label for="tr-tipo" class="form-label">Voce</label>
+                        <select id="tr-tipo" name="tipo" class="form-select">
+                            @foreach (var tt in Enum.GetValues<CL.Domain.Dipendenti.TipoTrattenuta>()) { <option value="@tt">@tt.Descrizione()</option> }
+                        </select></div>
+                    <div><label for="tr-descrizione" class="form-label">Finanziaria, creditore o descrizione</label><input id="tr-descrizione" name="descrizione" class="form-control" maxlength="150" /></div>
+                    <div><label for="tr-importo" class="form-label">Importo mensile (€)</label><input id="tr-importo" name="importoMensile" inputmode="decimal" class="form-control" /></div>
+                    <div><label for="tr-residuo" class="form-label">Debito residuo (€)</label><input id="tr-residuo" name="residuo" inputmode="decimal" class="form-control" /></div>
+                    <div><label for="tr-dal" class="form-label">Dal</label><input id="tr-dal" name="dal" type="date" class="form-control" required /></div>
+                    <div><label for="tr-al" class="form-label">Al</label><input id="tr-al" name="al" type="date" class="form-control" /></div>
+                    <div class="d-flex align-items-end"><button type="submit" class="btn btn-primary"><i class="ri-add-line" aria-hidden="true"></i> Aggiungi</button></div>
+                </div>
+            </form>
+        </section>
+
+        @if (subentro || d.Progressivi is not null)
+        {
+            var pr = d.Progressivi;
+            @* Progressivi al cambio consulente, dall'ultimo cedolino elaborato dal consulente precedente. *@
+            <section class="card radius-15 p-3 p-md-4 mb-3 sezione-profilo" aria-labelledby="titoloProgressivi">
+                <h2 class="titolo-sezione-profilo mb-3" id="titoloProgressivi">Progressivi al cambio consulente</h2>
+                <dl class="valori-profilo solo-lettura mb-0">
+                    <div><dt>Alla data</dt><dd>@(pr?.Al.ToString("dd/MM/yyyy") ?? "—")</dd></div>
+                    <div><dt>Ratei 13ª maturati</dt><dd>@(pr?.Ratei13?.ToString("0.##") ?? "—")</dd></div>
+                    <div><dt>Ratei 14ª maturati</dt><dd>@(pr?.Ratei14?.ToString("0.##") ?? "—")</dd></div>
+                    <div><dt>TFR maturato in azienda</dt><dd>@Euro(pr?.TfrAzienda)</dd></div>
+                    <div><dt>TFR versato ai fondi</dt><dd>@Euro(pr?.TfrFondi)</dd></div>
+                </dl>
+                <form asp-action="SalvaProgressivi" asp-route-id="@d.Id" method="post" class="solo-modifica">
+                    <div class="campi-profilo">
+                        <div><label for="pr-al" class="form-label">Alla data</label><input id="pr-al" name="al" type="date" value="@pr?.Al.ToString("yyyy-MM-dd")" class="form-control" /></div>
+                        <div><label for="pr-13" class="form-label">Ratei 13ª maturati</label><input id="pr-13" name="ratei13" value="@Num(pr?.Ratei13)" inputmode="decimal" class="form-control" /></div>
+                        <div><label for="pr-14" class="form-label">Ratei 14ª maturati</label><input id="pr-14" name="ratei14" value="@Num(pr?.Ratei14)" inputmode="decimal" class="form-control" /></div>
+                        <div><label for="pr-tfra" class="form-label">TFR maturato in azienda (€)</label><input id="pr-tfra" name="tfrAzienda" value="@Num(pr?.TfrAzienda)" inputmode="decimal" class="form-control" /></div>
+                        <div><label for="pr-tfrf" class="form-label">TFR versato ai fondi (€)</label><input id="pr-tfrf" name="tfrFondi" value="@Num(pr?.TfrFondi)" inputmode="decimal" class="form-control" /></div>
+                        <div class="d-flex align-items-end"><button type="submit" class="btn btn-primary">Salva progressivi</button></div>
+                    </div>
+                </form>
+            </section>
+        }
     </div>
 
     <form asp-action="CaricaFoto" asp-route-id="@d.Id" method="post" enctype="multipart/form-data" id="formFotoSubito" class="d-none">

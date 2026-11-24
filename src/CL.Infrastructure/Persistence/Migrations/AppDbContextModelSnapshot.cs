@@ -654,6 +654,9 @@ namespace CL.Infrastructure.Persistence.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<DateOnly?>("ProgressiviAl")
+                        .HasColumnType("date");
+
                     b.Property<string>("Pronomi")
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)");
@@ -661,6 +664,14 @@ namespace CL.Infrastructure.Persistence.Migrations
                     b.Property<string>("Provincia")
                         .HasMaxLength(2)
                         .HasColumnType("character varying(2)");
+
+                    b.Property<decimal?>("Ratei13")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("numeric(5,2)");
+
+                    b.Property<decimal?>("Ratei14")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("numeric(5,2)");
 
                     b.Property<bool>("ReferentePaghe")
                         .HasColumnType("boolean");
@@ -678,6 +689,14 @@ namespace CL.Infrastructure.Persistence.Migrations
                     b.Property<string>("Telefono")
                         .HasMaxLength(30)
                         .HasColumnType("character varying(30)");
+
+                    b.Property<decimal?>("TfrAzienda")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.Property<decimal?>("TfrFondi")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
 
                     b.Property<Guid?>("UnitaLocaleId")
                         .HasColumnType("uuid");
@@ -864,6 +883,49 @@ namespace CL.Infrastructure.Persistence.Migrations
                     b.ToTable("ProfiliDipendente", "hr");
                 });
 
+            modelBuilder.Entity("CL.Domain.Dipendenti.TrattenutaBenefit", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly?>("Al")
+                        .HasColumnType("date");
+
+                    b.Property<Guid>("AziendaId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly>("Dal")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Descrizione")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<Guid>("DipendenteId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal?>("ImportoMensile")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.Property<decimal?>("Residuo")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AziendaId");
+
+                    b.HasIndex("DipendenteId");
+
+                    b.ToTable("TrattenuteBenefit", "hr");
+                });
+
             modelBuilder.Entity("CL.Domain.Documenti.CertificazioneUnica", b =>
                 {
                     b.Property<Guid>("Id")
@@ -970,6 +1032,59 @@ namespace CL.Infrastructure.Persistence.Migrations
                     b.HasIndex("DipendenteId", "Tipo");
 
                     b.ToTable("DocumentiPersonali", "hr");
+                });
+
+            modelBuilder.Entity("CL.Domain.Documenti.DocumentoStorico", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Anno")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("AziendaId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CaricatoDa")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<DateTime>("CaricatoIl")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ChiaveArchivio")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Descrizione")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<long>("DimensioneByte")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("NomeFile")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<string>("TipoFile")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AziendaId", "Anno");
+
+                    b.ToTable("DocumentiStorici", "hr");
                 });
 
             modelBuilder.Entity("CL.Domain.Organizzazione.Team", b =>
@@ -1939,6 +2054,21 @@ namespace CL.Infrastructure.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("CL.Domain.Dipendenti.TrattenutaBenefit", b =>
+                {
+                    b.HasOne("CL.Domain.Aziende.Azienda", null)
+                        .WithMany()
+                        .HasForeignKey("AziendaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("CL.Domain.Dipendenti.Dipendente", null)
+                        .WithMany()
+                        .HasForeignKey("DipendenteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("CL.Domain.Documenti.CertificazioneUnica", b =>
                 {
                     b.HasOne("CL.Domain.Aziende.Azienda", null)
@@ -1966,6 +2096,15 @@ namespace CL.Infrastructure.Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("DipendenteId")
                         .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("CL.Domain.Documenti.DocumentoStorico", b =>
+                {
+                    b.HasOne("CL.Domain.Aziende.Azienda", null)
+                        .WithMany()
+                        .HasForeignKey("AziendaId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 

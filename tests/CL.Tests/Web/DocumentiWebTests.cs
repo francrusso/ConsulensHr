@@ -216,4 +216,60 @@ public sealed class DocumentiWebTests : IDisposable
         Assert.Empty((await _app.ConDb(db => db.Contratti.SingleAsync())).Lettere);
         Assert.Empty(_app.ErroriServer);
     }
+
+    [Fact]
+    public async Task Subentro_progressivi_trattenute_e_archivio_storico()
+    {
+        var (azienda, rossi) = await _app.ConDb(async db =>
+        {
+            var a = new Azienda("Acme S.r.l.", PartitaIva.Parse("01234567897"));
+            a.ImpostaTipoAvvio(TipoAvvio.CambioConsulente);
+            var r = new Dipendente(a.Id, "Mario", "Rossi", CodiceFiscale.Parse("RSSMRA85T10A562S"), new DateOnly(1985, 1, 1));
+            db.AddRange(a, r);
+            await db.SaveChangesAsync();
+            return (a.Id, r.Id);
+        });
+        await _app.CreaUtente("hr@acme.test", Ruoli.Azienda, azienda);
+        var hr = _app.CreateClient();
+        await hr.Accedi("hr@acme.test");
+        var pagina = $"/Dipendenti/Dettaglio/{rossi}?sezione=trattenute";
+
+        // Progressivi al subentro.
+        Assert.Contains("Progressivi al cambio consulente", WebUtility.HtmlDecode(await hr.GetStringAsync(pagina)));
+        Assert.Contains("I ratei vanno da 0 a 12", await Testo(await hr.InviaForm(pagina, $"/Dipendenti/SalvaProgressivi/{rossi}",
+            new() { ["al"] = "2026-11-30", ["ratei13"] = "13" })));
+        Assert.Contains("Progressivi salvati", await Testo(await hr.InviaForm(pagina, $"/Dipendenti/SalvaProgressivi/{rossi}",
+            new() { ["al"] = "2026-11-30", ["ratei13"] = "11", ["ratei14"] = "5", ["tfrAzienda"] = "4200", ["tfrFondi"] = "1800" })));
+        var d = await _app.ConDb(db => db.Dipendenti.SingleAsync());
+        Assert.Equal(new ProgressiviSubentro(new DateOnly(2026, 11, 30), 11, 5, 4200, 1800), d.Progressivi);
+
+        // Trattenute e benefit.
+        Assert.Contains("Indica da quando vale", await Testo(await hr.InviaForm(pagina, $"/Dipendenti/AggiungiTrattenuta/{rossi}",
+            new() { ["tipo"] = "CessioneQuinto" })));
+        var html = await Testo(await hr.InviaForm(pagina, $"/Dipendenti/AggiungiTrattenuta/{rossi}", new()
+        {
+            ["tipo"] = "CessioneQuinto", ["descrizione"] = "Banca Esempio", ["importoMensile"] = "250", ["residuo"] = "9000", ["dal"] = "2025-01-01",
+        }));
+        Assert.Contains("Cessione del quinto aggiunta", html);
+        Assert.Contains("Banca Esempio", html);
+        var voce = await _app.ConDb(db => db.TrattenuteBenefit.SingleAsync());
+        Assert.Equal(250m, voce.ImportoMensile);
+        await hr.InviaForm(pagina, $"/Dipendenti/TogliTrattenuta/{rossi}?voceId={voce.Id}", new());
+        Assert.Equal(0, await _app.ConDb(db => db.TrattenuteBenefit.CountAsync()));
+
+        // Archivio storico: compare tra le cose da fare finché è vuoto.
+        Assert.Contains("Carica lo storico del consulente precedente", WebUtility.HtmlDecode(await hr.GetStringAsync("/")));
+        using (var form = new MultipartFormDataContent
+               {
+                   { new StringContent(await hr.TokenDa("/Documenti/NuovoStorico")), "__RequestVerificationToken" },
+                   { new StringContent("Modello770"), "tipo" }, { new StringContent("2024"), "anno" },
+               })
+        {
+            form.Add(new ByteArrayContent(Pdf), "documento", "770.pdf");
+            Assert.Contains("Modello 770 2024 caricato", await Testo(await hr.PostAsync("/Documenti/CaricaStorico", form)));
+        }
+        Assert.DoesNotContain("Carica lo storico del consulente precedente", WebUtility.HtmlDecode(await hr.GetStringAsync("/")));
+        Assert.Contains("Modello 770", WebUtility.HtmlDecode(await hr.GetStringAsync("/Documenti/Storico?anno=2024")));
+        Assert.Empty(_app.ErroriServer);
+    }
 }
