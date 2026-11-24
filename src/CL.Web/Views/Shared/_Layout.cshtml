@@ -7,7 +7,7 @@
 *@
 @{
     var autenticato = User.Identity?.IsAuthenticated == true && ViewData["AuthPanel"] is not true;
-    var ruolo = Utente.IsAmministratore ? "Super amministratore" : Utente.IsConsulente ? "Consulente" : Utente.IsAzienda ? "Referente azienda" : Utente.IsDipendente ? "Dipendente" : "";
+    var ruolo = Utente.IsAmministratore ? "Super amministratore" : Utente.IsConsulente ? "Consulente" : Utente.IsAzienda ? "Referente azienda" : Utente.IsDipendente ? await Avatar.MansioneAsync() : "";
     var inOnboarding = User.HasClaim(c => c.Type == CL.Infrastructure.Identity.ClaimsPersonalizzati.OnboardingDaCompletare);
 
     // Pulsante "aggiungi" nella barra in alto: dipende dalla sezione e dalla pagina (come in ConsulensNew) e da chi guarda.
@@ -35,7 +35,8 @@
             => (Url.Action("NuovaCu", "Documenti", new { anno = query["anno"].FirstOrDefault() }), "Carica CU", "ri-upload-2-line"),
         ("home", _) when Utente.IsConsulente => (Url.Action("Nuova", "Aziende"), "Nuova azienda", "ri-add-line"),
         ("home", _) when Utente.IsAzienda => (Url.Action("Nuovo", "Dipendenti"), "Aggiungi persona", "ri-user-add-line"),
-        ("home", _) => (Url.Action("Nuova", "Assenze"), "Chiedi ferie o permessi", "ri-calendar-event-line"),
+        ("home", _) => (Url.Action("Nuova", "Assenze"), "Nuova richiesta", "ri-calendar-event-line"),
+        _ when Utente.IsDipendente => (Url.Action("Nuova", "Assenze"), "Nuova richiesta", "ri-calendar-event-line"),
         _ => (null, "", ""),
     };
 }

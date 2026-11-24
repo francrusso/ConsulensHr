@@ -15,7 +15,7 @@
 <div class="col-12"><div class="form-check"><input asp-for="AccordoCollega" class="form-check-input" /><label asp-for="AccordoCollega" class="form-check-label">Confermo di aver già concordato lo scambio con il collega.</label></div></div>
 </div></div>
 <div class="col-12"><label asp-for="Note" class="form-label">Motivo della richiesta</label><textarea asp-for="Note" rows="3" maxlength="1000" class="form-control" required></textarea></div>
-<div class="col-12"><p class="small text-muted">La richiesta sarà valutata dall'azienda. La pianificazione cambierà solo dopo l'approvazione.</p><button type="submit" class="btn btn-primary">Invia richiesta</button><a asp-action="Index" class="btn btn-outline-secondary">Annulla</a></div>
+<div class="col-12"><button type="submit" class="btn btn-primary">Invia richiesta</button><a asp-action="Index" class="btn btn-outline-secondary">Annulla</a></div>
 </form></div>
 @section Scripts {
 <script>

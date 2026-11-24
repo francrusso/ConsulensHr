@@ -11,6 +11,17 @@ namespace CL.Web.Infrastruttura;
 /// </summary>
 public sealed class ServizioAvatar(AppDbContext db, UtenteCorrente utente)
 {
+    public async Task<string> MansioneAsync()
+    {
+        if (!utente.IsDipendente || utente.DipendenteId is not { } id) return "Dipendente";
+        var persona = await db.Dipendenti.AsNoTracking().FirstOrDefaultAsync(d => d.Id == id);
+        if (persona is null) return "Dipendente";
+        var mansione = persona.Posizione;
+        if (string.IsNullOrWhiteSpace(mansione))
+            mansione = persona.ContrattoAttivo(DateOnly.FromDateTime(DateTime.Today))?.Mansione;
+        return string.IsNullOrWhiteSpace(mansione) ? "Dipendente" : mansione;
+    }
+
     public enum Origine { Foto, Logo, Segnaposto }
 
     /// <summary>Azienda da mostrare al posto del marchio Consulens; senza logo se ne mostra il nome.</summary>
