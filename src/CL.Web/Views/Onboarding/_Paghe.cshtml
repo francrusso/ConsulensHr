@@ -9,5 +9,31 @@
     <div class="row g-3 mt-1">
         <div class="col-12"><label asp-for="NoteStudio" class="form-label"></label><textarea asp-for="NoteStudio" class="form-control" rows="3" placeholder="Premi di produzione, buoni pasto, trasferte, accordi aziendali…"></textarea></div>
     </div>
+
+    @* Referenti per amministrazione e personale: chi lo studio contatta per cosa. *@
+    <h3 class="h6 mt-4">Referenti amministrazione e HR</h3>
+    <div id="righeReferenti">
+        @for (var i = 0; i < Model.Referenti.Count + 5; i++)
+        {
+            var r = i < Model.Referenti.Count ? Model.Referenti[i] : new CL.Web.Controllers.ReferenteForm();
+            var nascosta = i >= Model.Referenti.Count && !(i == 0 && Model.Referenti.Count == 0);
+            <fieldset class="riga-ripetibile" hidden="@nascosta">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-2"><label class="form-label" for="r@(i)a">Ambito</label>
+                        <select id="r@(i)a" name="Referenti[@i].Ambito" class="form-select">
+                            @foreach (var (v, t) in new[] { (CL.Domain.Aziende.AmbitoReferente.Amministrazione, "Amministrazione"), (CL.Domain.Aziende.AmbitoReferente.RisorseUmane, "Risorse umane"), (CL.Domain.Aziende.AmbitoReferente.Altro, "Altro") })
+                            { <option value="@v" selected="@(r.Ambito == v)">@t</option> }
+                        </select></div>
+                    <div class="col-md-3"><label class="form-label" for="r@(i)n">Nome e cognome</label><input id="r@(i)n" name="Referenti[@i].Nome" value="@r.Nome" class="form-control" maxlength="150" /></div>
+                    <div class="col-md-2"><label class="form-label" for="r@(i)r">Ruolo</label><input id="r@(i)r" name="Referenti[@i].Ruolo" value="@r.Ruolo" class="form-control" maxlength="100" placeholder="Responsabile amministrativo" /></div>
+                    <div class="col-md-2"><label class="form-label" for="r@(i)e">Email</label><input id="r@(i)e" name="Referenti[@i].Email" value="@r.Email" type="email" class="form-control" maxlength="256" /></div>
+                    <div class="col-md-2"><label class="form-label" for="r@(i)t">Telefono</label><input id="r@(i)t" name="Referenti[@i].Telefono" value="@r.Telefono" type="tel" class="form-control" maxlength="30" /></div>
+                    <div class="col-md-1"><button type="button" class="btn btn-sm btn-link text-danger togli-riga">Togli</button></div>
+                </div>
+            </fieldset>
+        }
+    </div>
+    <button type="button" class="btn btn-outline-primary btn-sm mt-2" data-aggiungi-riga="righeReferenti"><i class="ri-add-line" aria-hidden="true"></i> Aggiungi referente</button>
+
     <partial name="_Pulsanti" model="5" />
 </form>

@@ -53,7 +53,7 @@ public sealed class AziendaForm
     public bool HaLogo { get; set; }
 
     /// <summary>Nuova attività o cambio consulente: decide se l'onboarding chiede i dati del subentro.</summary>
-    [Display(Name = "Tipo di cliente")]
+    [Display(Name = "Tipo di attività")]
     public TipoAvvio TipoAvvio { get; set; } = TipoAvvio.NuovaAttivita;
 
     public static AziendaForm Da(Azienda a) => new()

@@ -1822,3 +1822,38 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261124163352_ReferentiAzienda') THEN
+    CREATE TABLE hr."ReferentiAzienda" (
+        "Id" uuid NOT NULL,
+        "Ambito" character varying(32) NOT NULL,
+        "Nome" character varying(150) NOT NULL,
+        "Ruolo" character varying(100),
+        "Email" character varying(256),
+        "Telefono" character varying(30),
+        "ProfiloAziendaId" uuid NOT NULL,
+        CONSTRAINT "PK_ReferentiAzienda" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_ReferentiAzienda_ProfiliAzienda_ProfiloAziendaId" FOREIGN KEY ("ProfiloAziendaId") REFERENCES hr."ProfiliAzienda" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261124163352_ReferentiAzienda') THEN
+    CREATE INDEX "IX_ReferentiAzienda_ProfiloAziendaId" ON hr."ReferentiAzienda" ("ProfiloAziendaId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261124163352_ReferentiAzienda') THEN
+    INSERT INTO hr."__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261124163352_ReferentiAzienda', '10.0.15');
+    END IF;
+END $EF$;
+COMMIT;
+

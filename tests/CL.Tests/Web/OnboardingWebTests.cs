@@ -112,8 +112,11 @@ public sealed class OnboardingWebTests : IDisposable
     [Fact]
     public async Task Chi_cambia_consulente_compila_anche_il_subentro_con_titolari_e_voci_inail()
     {
-        var hr = await ReferenteNuovo(TipoAvvio.CambioConsulente);
-        await Passo(hr, "Societari", new(Societari));
+        // L'azienda creata come nuova attività dichiara nell'onboarding di essere già operativa.
+        var hr = await ReferenteNuovo();
+        Assert.Contains("Attività già operativa", WebUtility.HtmlDecode(await hr.GetStringAsync("/Onboarding")));
+        await Passo(hr, "Societari", new(Societari) { ["TipoAvvio"] = "CambioConsulente" });
+        Assert.Equal(TipoAvvio.CambioConsulente, (await _app.ConDb(db => db.Aziende.SingleAsync())).TipoAvvio);
         await Passo(hr, "Sedi", new(Sedi));
 
         // Titolari effettivi diversi dal legale rappresentante: almeno uno, quote entro il 100%.
@@ -131,7 +134,16 @@ public sealed class OnboardingWebTests : IDisposable
         Assert.Contains("5. Paghe", html);
 
         // Dopo le paghe arriva il passo del cambio consulente, poi il riepilogo (7).
-        html = await Testo(await Passo(hr, "Paghe", new(Paghe)));
+        html = await Testo(await Passo(hr, "Paghe", new(Paghe)
+        {
+            ["Referenti[0].Ambito"] = "RisorseUmane", ["Referenti[0].Nome"] = "Giulia Neri", ["Referenti[0].Email"] = "hr@acme.test",
+            ["Referenti[1].Nome"] = "Senza contatti",
+        }));
+        Assert.Contains("Indica email o telefono di Senza contatti", html);
+        html = await Testo(await Passo(hr, "Paghe", new(Paghe)
+        {
+            ["Referenti[0].Ambito"] = "RisorseUmane", ["Referenti[0].Nome"] = "Giulia Neri", ["Referenti[0].Email"] = "hr@acme.test",
+        }));
         Assert.Contains("6. Cambio consulente", html);
         html = await Testo(await Passo(hr, "Subentro", new()
         {
@@ -141,6 +153,7 @@ public sealed class OnboardingWebTests : IDisposable
         Assert.Contains("Verdi Anna (60%)", html);
         Assert.Contains("0722", html);
         Assert.Contains("Studio Neri", html);
+        Assert.Contains("Giulia Neri · hr@acme.test", html);
 
         var p = await _app.ConDb(db => db.ProfiliAzienda.SingleAsync());
         Assert.True(p.Subentro);

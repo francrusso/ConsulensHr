@@ -17,6 +17,9 @@ namespace CL.Web.Controllers;
 
 public sealed class SocietariForm
 {
+    /// <summary>Nuova attività o attività già operativa (che arriva da un altro consulente).</summary>
+    public TipoAvvio TipoAvvio { get; set; } = TipoAvvio.NuovaAttivita;
+
     [Required(ErrorMessage = "Inserisci la ragione sociale."), StringLength(200), Display(Name = "Ragione sociale")]
     public string RagioneSociale { get; set; } = "";
 
@@ -166,6 +169,17 @@ public sealed class PagheForm
     public int? GiornoPagamento { get; set; }
     [StringLength(2000), Display(Name = "Note per il consulente")]
     public string? NoteStudio { get; set; }
+    public List<ReferenteForm> Referenti { get; set; } = [];
+}
+
+public sealed class ReferenteForm
+{
+    public AmbitoReferente Ambito { get; set; }
+    public string? Nome { get; set; }
+    public string? Ruolo { get; set; }
+    public string? Email { get; set; }
+    public string? Telefono { get; set; }
+    public bool Vuota => new[] { Nome, Ruolo, Email, Telefono }.All(string.IsNullOrWhiteSpace);
 }
 
 #endregion
@@ -183,7 +197,7 @@ public sealed class OnboardingViewModel
     public bool PerContoAzienda { get; init; }
     public ReferentePagheRiga? ReferentePaghe { get; init; }
 
-    public static readonly string[] Titoli = ["Dati societari", "Sedi e unità locali", "Legale rappresentante e titolari", "Contratto e posizioni", "Paghe", "Cambio consulente", "Riepilogo"];
+    public static readonly string[] Titoli = ["Dati societari", "Sedi e unità locali", "Legale rappresentante e titolari", "Contratto e posizioni", "Paghe e referenti", "Cambio consulente", "Riepilogo"];
 }
 
 /// <summary>
@@ -227,6 +241,8 @@ public sealed class OnboardingController(
                     string.IsNullOrWhiteSpace(form.Email) ? azienda.Email : form.Email);
                 profilo.ImpostaDatiSocietari(new DatiSocietari(form.FormaGiuridica!, form.NumeroRea, form.CodiceAteco!,
                     form.DataInizioAttivita, form.Pec!, form.Telefono));
+                azienda.ImpostaTipoAvvio(form.TipoAvvio);
+                profilo.ImpostaSubentro(form.TipoAvvio == TipoAvvio.CambioConsulente);
             })) return await Mostra(azienda, profilo, 1, form);
 
         return await SalvaEAvanza(azienda, profilo, 1);
@@ -307,6 +323,8 @@ public sealed class OnboardingController(
 
         Iban? iban = null;
         if ((!string.IsNullOrWhiteSpace(form.Iban) && !Prova(() => iban = Iban.Parse(form.Iban), nameof(form.Iban)))
+            || !Prova(() => profilo.ImpostaReferenti(form.Referenti.Where(r => !r.Vuota)
+                .Select(r => new ReferenteAzienda(r.Ambito, r.Nome ?? "", r.Ruolo, r.Email, r.Telefono)).ToList()))
             || !Prova(() => profilo.ImpostaPaghe(new DatiPaghe(iban, form.GiornoPagamento, form.NoteStudio))))
             return await Mostra(azienda, profilo, 5, form);
 
@@ -431,6 +449,7 @@ public sealed class OnboardingController(
     {
         1 => new SocietariForm
         {
+            TipoAvvio = a.TipoAvvio,
             RagioneSociale = a.RagioneSociale, CodiceFiscale = a.CodiceFiscale, Email = a.Email, FormaGiuridica = p.FormaGiuridica,
             NumeroRea = p.NumeroRea, CodiceAteco = p.CodiceAteco, DataInizioAttivita = p.DataInizioAttivita, Pec = p.Pec, Telefono = p.Telefono,
         },
@@ -467,6 +486,7 @@ public sealed class OnboardingController(
         5 => new PagheForm
         {
             Iban = p.IbanAddebito?.Valore, GiornoPagamento = p.GiornoPagamento, NoteStudio = p.NoteStudio,
+            Referenti = p.Referenti.Select(r => new ReferenteForm { Ambito = r.Ambito, Nome = r.Nome, Ruolo = r.Ruolo, Email = r.Email, Telefono = r.Telefono }).ToList(),
         },
         _ => null,
     };

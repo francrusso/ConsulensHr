@@ -36,8 +36,10 @@ else
                 ("Voci di tariffa INAIL", p.VociInail.Count == 0 ? "—" : string.Join(", ", p.VociInail.Select(v => $"{v.Voce} ({v.Tasso:0.##}‰)"))),
                 ("Contratti integrativi", V(p.ContrattiIntegrativi)),
                 ("Cassa Edile", V(p.CassaEdile)), ("Ente bilaterale", V(p.EnteBilaterale)), ("Previdenza complementare", V(p.FondoPensione))]),
-            (5, "Paghe", [("IBAN", V(p.IbanAddebito?.Valore)), ("Pagamento stipendi", p.GiornoPagamento is { } gp ? $"il {gp} del mese" : "—"),
-                ("Referente paghe", Model.ReferentePaghe is { } rp ? rp.Nome : "Non indicato: sceglilo nella scheda della persona"), ("Note", V(p.NoteStudio))]),
+            (5, "Paghe e referenti", [("IBAN", V(p.IbanAddebito?.Valore)), ("Pagamento stipendi", p.GiornoPagamento is { } gp ? $"il {gp} del mese" : "—"),
+                ("Referente paghe", Model.ReferentePaghe is { } rp ? rp.Nome : "Non indicato: sceglilo nella scheda della persona"), ("Note", V(p.NoteStudio)),
+                .. p.Referenti.Select(r => (r.Ambito switch { CL.Domain.Aziende.AmbitoReferente.Amministrazione => "Amministrazione", CL.Domain.Aziende.AmbitoReferente.RisorseUmane => "Risorse umane", _ => "Referente" },
+                    string.Join(" · ", new[] { r.Nome, r.Ruolo, r.Email, r.Telefono }.Where(x => x is not null))))]),
         };
         if (p.Subentro)
             sezioni = [.. sezioni, (CL.Domain.Aziende.ProfiloAzienda.PassoSubentro, "Cambio consulente", [("Consulente precedente", V(p.ConsulentePrecedente)),

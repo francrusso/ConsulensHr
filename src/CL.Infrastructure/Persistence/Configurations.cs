@@ -91,6 +91,19 @@ internal sealed class ProfiloAziendaConfig : IEntityTypeConfiguration<ProfiloAzi
         b.Navigation(x => x.VociInail).UsePropertyAccessMode(PropertyAccessMode.Field);
         b.Navigation(x => x.TitolariEffettivi).UsePropertyAccessMode(PropertyAccessMode.Field);
         b.Navigation(x => x.UnitaLocali).UsePropertyAccessMode(PropertyAccessMode.Field);
+        b.OwnsMany(x => x.Referenti, r =>
+        {
+            r.ToTable("ReferentiAzienda");
+            r.WithOwner().HasForeignKey("ProfiloAziendaId");
+            r.HasKey(x => x.Id);
+            r.Property(x => x.Id).ValueGeneratedNever();
+            r.Property(x => x.Ambito).HasConversion<string>().HasMaxLength(32);
+            r.Property(x => x.Nome).HasMaxLength(150);
+            r.Property(x => x.Ruolo).HasMaxLength(100);
+            r.Property(x => x.Email).HasMaxLength(256);
+            r.Property(x => x.Telefono).HasMaxLength(30);
+        });
+        b.Navigation(x => x.Referenti).UsePropertyAccessMode(PropertyAccessMode.Field);
 
         foreach (var p in new[] { nameof(ProfiloAzienda.FormaGiuridica), nameof(ProfiloAzienda.Ccnl), nameof(ProfiloAzienda.CassaEdile),
                      nameof(ProfiloAzienda.EnteBilaterale), nameof(ProfiloAzienda.FondoPensione), nameof(ProfiloAzienda.SedeLegaleComune),

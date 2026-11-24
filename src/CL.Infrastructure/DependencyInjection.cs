@@ -24,10 +24,12 @@ public static class DependencyInjection
         // il "transaction pooler" (6543) non supporta i prepared statement usati da Npgsql.
         // "Data Source=file.db" = modalità demo locale su SQLite (solo per provare l'interfaccia, schema creato senza migrazioni).
         if (UsaSqliteDemo(connectionString))
-            services.AddDbContext<AppDbContext>(o => o.UseSqlite(connectionString));
+            services.AddDbContext<AppDbContext>(o => o.UseSqlite(connectionString, l => l.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery)));
         else
             services.AddDbContext<AppDbContext>(o => o.UseNpgsql(ConnessioneRobusta(connectionString),
                 pg => pg.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName)
+                       // Il profilo azienda ha più elenchi (unità locali, titolari, voci INAIL, referenti): una query per elenco.
+                       .UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery)
                        .MigrationsHistoryTable("__EFMigrationsHistory", AppDbContext.Schema)
                        // Errori di rete momentanei (connessione chiusa dal pooler, riavvio di Supabase): si riprova da soli.
                        .EnableRetryOnFailure(maxRetryCount: 3, maxRetryDelay: TimeSpan.FromSeconds(5), errorCodesToAdd: null)));

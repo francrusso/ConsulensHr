@@ -74,6 +74,30 @@ public sealed class TitolareEffettivo
     }
 }
 
+/// <summary>Ambito di un referente dell'azienda.</summary>
+public enum AmbitoReferente { Amministrazione, RisorseUmane, Altro }
+
+/// <summary>Persona di riferimento dell'azienda per amministrazione o personale (contatti per lo studio).</summary>
+public sealed class ReferenteAzienda
+{
+    public Guid Id { get; private set; } = Guid.NewGuid();
+    public AmbitoReferente Ambito { get; private set; }
+    public string Nome { get; private set; } = null!;
+    public string? Ruolo { get; private set; }
+    public string? Email { get; private set; }
+    public string? Telefono { get; private set; }
+    private ReferenteAzienda() { }
+    public ReferenteAzienda(AmbitoReferente ambito, string nome, string? ruolo, string? email, string? telefono)
+    {
+        Ambito = ambito;
+        Nome = Guard.NotEmpty(nome, "Nome del referente");
+        Ruolo = Guard.Facoltativo(ruolo);
+        Email = Guard.Facoltativo(email)?.ToLowerInvariant();
+        Telefono = Guard.Facoltativo(telefono);
+        if (Email is null && Telefono is null) throw new DomainException($"Indica email o telefono di {Nome}.");
+    }
+}
+
 /// <summary>Sede o unità locale dell'azienda (dove lavora il personale), con il suo referente.</summary>
 public sealed class UnitaLocale
 {
@@ -250,6 +274,18 @@ public sealed class ProfiloAzienda : Entity
         LegaleUnicoTitolare = legaleUnico;
         _titolariEffettivi.Clear();
         _titolariEffettivi.AddRange(elenco);
+    }
+
+    private readonly List<ReferenteAzienda> _referenti = [];
+    /// <summary>Referenti per amministrazione e personale.</summary>
+    public IReadOnlyList<ReferenteAzienda> Referenti => _referenti;
+
+    public void ImpostaReferenti(IEnumerable<ReferenteAzienda> referenti)
+    {
+        var elenco = referenti.ToList();
+        if (elenco.Count > 10) throw new DomainException("Al massimo 10 referenti.");
+        _referenti.Clear();
+        _referenti.AddRange(elenco);
     }
 
     public void ImpostaPosizioni(PosizioniLavoro p)

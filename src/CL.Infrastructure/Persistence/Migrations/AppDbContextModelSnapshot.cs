@@ -1604,6 +1604,46 @@ namespace CL.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.OwnsMany("CL.Domain.Aziende.ReferenteAzienda", "Referenti", b1 =>
+                        {
+                            b1.Property<Guid>("Id")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("Ambito")
+                                .IsRequired()
+                                .HasMaxLength(32)
+                                .HasColumnType("character varying(32)");
+
+                            b1.Property<string>("Email")
+                                .HasMaxLength(256)
+                                .HasColumnType("character varying(256)");
+
+                            b1.Property<string>("Nome")
+                                .IsRequired()
+                                .HasMaxLength(150)
+                                .HasColumnType("character varying(150)");
+
+                            b1.Property<Guid>("ProfiloAziendaId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("Ruolo")
+                                .HasMaxLength(100)
+                                .HasColumnType("character varying(100)");
+
+                            b1.Property<string>("Telefono")
+                                .HasMaxLength(30)
+                                .HasColumnType("character varying(30)");
+
+                            b1.HasKey("Id");
+
+                            b1.HasIndex("ProfiloAziendaId");
+
+                            b1.ToTable("ReferentiAzienda", "hr");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ProfiloAziendaId");
+                        });
+
                     b.OwnsMany("CL.Domain.Aziende.TitolareEffettivo", "TitolariEffettivi", b1 =>
                         {
                             b1.Property<Guid>("Id")
@@ -1722,6 +1762,8 @@ namespace CL.Infrastructure.Persistence.Migrations
                             b1.WithOwner()
                                 .HasForeignKey("ProfiloAziendaId");
                         });
+
+                    b.Navigation("Referenti");
 
                     b.Navigation("TitolariEffettivi");
 

@@ -2,6 +2,16 @@
 <form asp-action="Societari" method="post" enctype="multipart/form-data" novalidate>
     <partial name="_AziendaId" />
     <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+    <div class="mb-3">
+        <span class="form-label d-block">Tipo di attività</span>
+        <div class="d-flex flex-wrap gap-2" role="radiogroup" aria-label="Tipo di attività">
+            @foreach (var (valore, testo, icona) in new[] { (CL.Domain.Aziende.TipoAvvio.NuovaAttivita, "Nuova attività", "ri-seedling-line"), (CL.Domain.Aziende.TipoAvvio.CambioConsulente, "Attività già operativa", "ri-exchange-line") })
+            {
+                <input type="radio" class="btn-check" asp-for="TipoAvvio" value="@valore" id="tipo-@valore" checked="@(Model.TipoAvvio == valore)" />
+                <label class="btn btn-outline-primary rounded-pill" for="tipo-@valore"><i class="@icona" aria-hidden="true"></i> @testo</label>
+            }
+        </div>
+    </div>
     <div class="row g-3">
         <div class="col-md-8">
             <label asp-for="RagioneSociale" class="form-label"></label>
