@@ -59,6 +59,45 @@ public enum TipoContratto
     Altro,
 }
 
+/// <summary>Tipo di documento del contratto: la lettera di assunzione è il documento principale, le altre sono variazioni.</summary>
+public enum TipoLettera { Assunzione, Proroga, Trasformazione, VariazioneOrario, VariazioneLivello, VariazioneMansione, Altro }
+
+public static class TipoLetteraExtensions
+{
+    public static string Descrizione(this TipoLettera t) => t switch
+    {
+        TipoLettera.Assunzione => "Contratto / lettera di assunzione",
+        TipoLettera.Proroga => "Proroga",
+        TipoLettera.Trasformazione => "Trasformazione",
+        TipoLettera.VariazioneOrario => "Variazione di orario",
+        TipoLettera.VariazioneLivello => "Variazione di livello",
+        TipoLettera.VariazioneMansione => "Variazione di mansione",
+        _ => "Altra comunicazione",
+    };
+}
+
+/// <summary>Lettera di variazione del contratto (proroga, trasformazione, orario, livello…): PDF nell'archivio privato.</summary>
+public sealed class LetteraContratto
+{
+    public Guid Id { get; private set; } = Guid.NewGuid();
+    public TipoLettera Tipo { get; private set; }
+    /// <summary>Da quando vale la variazione.</summary>
+    public DateOnly DataEffetto { get; private set; }
+    public string Chiave { get; private set; } = null!;
+    public string NomeFile { get; private set; } = null!;
+    public DateTime CaricataIl { get; private set; }
+    private LetteraContratto() { }
+    public LetteraContratto(TipoLettera tipo, DateOnly dataEffetto, string chiave, string nomeFile, DateTime adesso)
+    {
+        if (tipo == TipoLettera.Assunzione || !Enum.IsDefined(tipo)) throw new DomainException("Tipo di lettera non valido.");
+        Tipo = tipo;
+        DataEffetto = dataEffetto;
+        Chiave = Guard.NotEmpty(chiave, "Documento");
+        NomeFile = Guard.NomeFile(nomeFile, "lettera.pdf");
+        CaricataIl = adesso;
+    }
+}
+
 /// <summary>
 /// Rapporto di lavoro con le condizioni economiche e normative.
 /// Le spettanze annue di ferie e ROL sono in ore riferite al full-time, come da CCNL;
@@ -201,6 +240,26 @@ public sealed class Contratto : Entity
         if (giorni < 0 || giorni > massimo)
             throw new DomainException($"Giorni di smart working: da 1 a {massimo} {(periodo == Dipendenti.PeriodoSmartWorking.Settimana ? "a settimana" : "al mese")}.");
         (GiorniSmartWorking, PeriodoSmartWorking) = (giorni, periodo);
+    }
+
+    private readonly List<LetteraContratto> _lettere = [];
+    /// <summary>Variazioni del contratto (proroghe, trasformazioni, orario, livello…), dalla più recente.</summary>
+    public IReadOnlyList<LetteraContratto> Lettere => _lettere;
+
+    public void AggiungiLettera(LetteraContratto lettera)
+    {
+        if (lettera.DataEffetto < DataInizio) throw new DomainException("La variazione non può valere prima dell'inizio del contratto.");
+        if (_lettere.Count >= 50) throw new DomainException("Troppe lettere per questo contratto.");
+        _lettere.Add(lettera);
+    }
+
+    /// <summary>Toglie la lettera e ne restituisce la chiave d'archivio (da eliminare dopo il salvataggio).</summary>
+    public string? RimuoviLettera(Guid id)
+    {
+        var l = _lettere.FirstOrDefault(x => x.Id == id);
+        if (l is null) return null;
+        _lettere.Remove(l);
+        return l.Chiave;
     }
 
     public void RimuoviDocumento() => (DocumentoChiave, DocumentoNome, DocumentoCaricatoIl) = (null, null, null);

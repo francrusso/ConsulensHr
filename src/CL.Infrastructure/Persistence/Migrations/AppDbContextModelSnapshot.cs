@@ -1854,6 +1854,47 @@ namespace CL.Infrastructure.Persistence.Migrations
                         .HasForeignKey("DipendenteId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.OwnsMany("CL.Domain.Dipendenti.LetteraContratto", "Lettere", b1 =>
+                        {
+                            b1.Property<Guid>("Id")
+                                .HasColumnType("uuid");
+
+                            b1.Property<DateTime>("CaricataIl")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.Property<string>("Chiave")
+                                .IsRequired()
+                                .HasMaxLength(500)
+                                .HasColumnType("character varying(500)");
+
+                            b1.Property<Guid>("ContrattoId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<DateOnly>("DataEffetto")
+                                .HasColumnType("date");
+
+                            b1.Property<string>("NomeFile")
+                                .IsRequired()
+                                .HasMaxLength(200)
+                                .HasColumnType("character varying(200)");
+
+                            b1.Property<string>("Tipo")
+                                .IsRequired()
+                                .HasMaxLength(32)
+                                .HasColumnType("character varying(32)");
+
+                            b1.HasKey("Id");
+
+                            b1.HasIndex("ContrattoId");
+
+                            b1.ToTable("LettereContratto", "hr");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ContrattoId");
+                        });
+
+                    b.Navigation("Lettere");
                 });
 
             modelBuilder.Entity("CL.Domain.Dipendenti.Dipendente", b =>

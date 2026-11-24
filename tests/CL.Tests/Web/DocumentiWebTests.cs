@@ -154,4 +154,66 @@ public sealed class DocumentiWebTests : IDisposable
         Assert.Contains("Rinnova i documenti personali", WebUtility.HtmlDecode(await hr.GetStringAsync("/")));
         Assert.Empty(_app.ErroriServer);
     }
+
+    [Fact]
+    public async Task Le_variazioni_del_contratto_si_caricano_col_loro_tipo()
+    {
+        var (azienda, rossi, contratto) = await _app.ConDb(async db =>
+        {
+            var a = new Azienda("Acme S.r.l.", PartitaIva.Parse("01234567897"));
+            var r = new Dipendente(a.Id, "Mario", "Rossi", CodiceFiscale.Parse("RSSMRA85T10A562S"), new DateOnly(1985, 1, 1));
+            var c = r.Assumi(TipoContratto.TempoDeterminato, "Commercio", "4", new DateOnly(2025, 1, 1), new DateOnly(2026, 12, 31), 28_000m);
+            db.AddRange(a, r);
+            await db.SaveChangesAsync();
+            return (a.Id, r.Id, c.Id);
+        });
+        await _app.CreaUtente("hr@acme.test", Ruoli.Azienda, azienda);
+        var hr = _app.CreateClient();
+        await hr.Accedi("hr@acme.test");
+        var pagina = $"/Dipendenti/Dettaglio/{rossi}?sezione=contratto";
+
+        async Task<string> Carica(string tipo, string? dal)
+        {
+            using var form = new MultipartFormDataContent
+            {
+                { new StringContent(await hr.TokenDa(pagina)), "__RequestVerificationToken" }, { new StringContent(tipo), "tipo" },
+            };
+            if (dal is not null) form.Add(new StringContent(dal), "dataEffetto");
+            form.Add(new ByteArrayContent(Pdf), "documento", "lettera.pdf");
+            return await Testo(await hr.PostAsync($"/Dipendenti/CaricaContratto/{rossi}?contrattoId={contratto}", form));
+        }
+        Assert.Contains("Indica da quando vale la variazione", await Carica("Proroga", null));
+        Assert.Contains("non può valere prima dell'inizio", await Carica("Proroga", "2024-06-01"));
+        var html = await Carica("Proroga", "2027-01-01");
+        Assert.Contains("Proroga caricata", html);
+        Assert.Contains("dal 01/01/2027", html);
+        Assert.Contains("Contratto caricato", await Carica("Assunzione", null));
+
+        var c = await _app.ConDb(db => db.Contratti.SingleAsync());
+        Assert.NotNull(c.DocumentoChiave);
+        var lettera = Assert.Single(c.Lettere);
+        Assert.Equal(TipoLettera.Proroga, lettera.Tipo);
+        Assert.Contains("+ 1 variazione", WebUtility.HtmlDecode(await hr.GetStringAsync("/Documenti/Contratti")));
+
+        // Il dipendente la vede in "Il mio contratto" e la apre.
+        var u = await _app.CreaUtente("mario@acme.test", Ruoli.Dipendente);
+        using (var scope = _app.Services.CreateScope())
+        {
+            var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+            var x = (await users.FindByIdAsync(u.Id))!;
+            (x.DipendenteId, x.AziendaId) = (rossi, azienda);
+            await users.UpdateAsync(x);
+        }
+        await _app.CompletaDatiPersonali(rossi);
+        var mario = _app.CreateClient();
+        await mario.Accedi("mario@acme.test");
+        Assert.Contains("Variazioni del contratto", WebUtility.HtmlDecode(await mario.GetStringAsync("/MioContratto")));
+        var pdf = await mario.GetAsync($"/Documenti/ApriLettera/{contratto}?letteraId={lettera.Id}");
+        Assert.Equal(HttpStatusCode.OK, pdf.StatusCode);
+
+        // Rimossa la lettera, il file non si apre più.
+        await hr.InviaForm(pagina, $"/Dipendenti/RimuoviLettera/{rossi}?contrattoId={contratto}&letteraId={lettera.Id}", new());
+        Assert.Empty((await _app.ConDb(db => db.Contratti.SingleAsync())).Lettere);
+        Assert.Empty(_app.ErroriServer);
+    }
 }

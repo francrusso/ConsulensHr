@@ -67,6 +67,22 @@
             </dl>
         </section>
 
+        @if (corrente.Lettere.Count > 0)
+        {
+            <section class="card radius-15 p-3 p-md-4 mb-3 sezione-profilo" aria-labelledby="titoloVariazioni">
+                <h2 class="titolo-sezione-profilo mb-3" id="titoloVariazioni"><i class="ri-file-edit-line" aria-hidden="true"></i> Variazioni del contratto</h2>
+                <ul class="list-unstyled mb-0">
+                    @foreach (var l in corrente.Lettere.OrderByDescending(x => x.DataEffetto))
+                    {
+                        <li class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                            <a asp-controller="Documenti" asp-action="ApriLettera" asp-route-id="@corrente.Id" asp-route-letteraId="@l.Id" target="_blank" rel="noopener" class="link-contratto"><i class="ri-file-pdf-2-line" aria-hidden="true"></i> @CL.Domain.Dipendenti.TipoLetteraExtensions.Descrizione(l.Tipo)</a>
+                            <span class="small text-body-secondary">dal @l.DataEffetto.ToString("dd/MM/yyyy")</span>
+                        </li>
+                    }
+                </ul>
+            </section>
+        }
+
         <section class="card radius-15 p-3 p-md-4 mb-3 sezione-profilo" aria-labelledby="titoloOrganizzazione">
             <h2 class="titolo-sezione-profilo mb-3" id="titoloOrganizzazione"><i class="ri-organization-chart" aria-hidden="true"></i> Dove e con chi lavori</h2>
             <dl class="campi-profilo valori-profilo mb-0">

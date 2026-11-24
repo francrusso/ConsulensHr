@@ -96,8 +96,8 @@ else
     </section>
 
     <section class="card radius-15 p-3 p-md-4 mb-3" aria-labelledby="titoloDocumento">
-        <h2 class="titolo-sezione-profilo" id="titoloDocumento">Documento del contratto</h2>
-        <partial name="_DocumentoContratto" model="(idDip, corrente)" />
+        <h2 class="titolo-sezione-profilo" id="titoloDocumento">Documenti del contratto</h2>
+        <partial name="_DocumentoContratto" model="(idDip, corrente, true)" />
     </section>
 }
 
@@ -116,7 +116,7 @@ else
                             <td>@c.Tipo.Descrizione()</td>
                             <td>@(string.IsNullOrEmpty(c.Ccnl) ? "—" : $"{c.Ccnl} · {c.Livello}")</td>
                             <td class="text-end text-nowrap">@E(c.RetribuzioneLordaAnnua)</td>
-                            <td><partial name="_DocumentoContratto" model="(idDip, c)" /></td>
+                            <td><partial name="_DocumentoContratto" model="(idDip, c, false)" /></td>
                         </tr>
                     }
                 </tbody>

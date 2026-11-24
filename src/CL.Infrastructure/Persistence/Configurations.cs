@@ -268,6 +268,17 @@ internal sealed class ContrattoConfig : IEntityTypeConfiguration<Contratto>
         b.Ignore(x => x.OreSettimanali);
         b.Ignore(x => x.OreGiornaliere);
         b.Ignore(x => x.RetribuzioneMensileLorda);
+        b.OwnsMany(x => x.Lettere, l =>
+        {
+            l.ToTable("LettereContratto");
+            l.WithOwner().HasForeignKey("ContrattoId");
+            l.HasKey(x => x.Id);
+            l.Property(x => x.Id).ValueGeneratedNever();
+            l.Property(x => x.Tipo).HasConversion<string>().HasMaxLength(32);
+            l.Property(x => x.Chiave).HasMaxLength(500);
+            l.Property(x => x.NomeFile).HasMaxLength(200);
+        });
+        b.Navigation(x => x.Lettere).UsePropertyAccessMode(PropertyAccessMode.Field);
     }
 }
 

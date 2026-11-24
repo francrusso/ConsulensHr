@@ -405,7 +405,8 @@ public sealed class DipendentiController(AppDbContext db, UtenteCorrente utente,
     /// (<c>contratti/</c>) e si apre solo passando dai controlli di accesso; quello sostituito si elimina dopo il salvataggio.
     /// </summary>
     [HttpPost, ValidateAntiForgeryToken, RequestSizeLimit(DocumentiController.DimensioneMassima + 256 * 1024)]
-    public async Task<IActionResult> CaricaContratto(Guid id, Guid contrattoId, IFormFile? documento)
+    public async Task<IActionResult> CaricaContratto(Guid id, Guid contrattoId, IFormFile? documento, TipoLettera tipo = TipoLettera.Assunzione,
+        DateOnly? dataEffetto = null)
     {
         if (await TrovaContratto(id, contrattoId) is not { } c) return NotFound();
         var errore = documento is not { Length: > 0 } ? "Scegli il file del contratto."
@@ -418,6 +419,22 @@ public sealed class DipendentiController(AppDbContext db, UtenteCorrente utente,
             return SchedaAperta(id);
         }
         var chiave = $"contratti/{id}-{Guid.NewGuid():N}.pdf";
+        if (tipo != TipoLettera.Assunzione)
+        {
+            // Variazione (proroga, trasformazione, orario, livello…): si aggiunge alle lettere del contratto.
+            if (dataEffetto is null) { Errore("Indica da quando vale la variazione."); return SchedaAperta(id); }
+            LetteraContratto lettera;
+            try
+            {
+                lettera = new LetteraContratto(tipo, dataEffetto.Value, chiave, documento!.FileName, clock.GetUtcNow().UtcDateTime);
+                c.AggiungiLettera(lettera);
+            }
+            catch (CL.Domain.Common.DomainException ex) { Errore(ex.Message); return SchedaAperta(id); }
+            await using (var st = documento.OpenReadStream()) await archivio.SalvaAsync(chiave, st);
+            await db.SaveChangesAsync();
+            Conferma($"{tipo.Descrizione()} caricata.");
+            return SchedaAperta(id);
+        }
         await using (var st = documento!.OpenReadStream()) await archivio.SalvaAsync(chiave, st);
         var precedente = c.DocumentoChiave;
         c.ImpostaDocumento(chiave, documento.FileName, clock.GetUtcNow().UtcDateTime);
@@ -528,6 +545,28 @@ public sealed class DipendentiController(AppDbContext db, UtenteCorrente utente,
         Response.Headers.CacheControl = "private, no-store";
         Response.Headers.XContentTypeOptions = "nosniff";
         return File(file, "application/pdf", c.DocumentoNome ?? "contratto.pdf");
+    }
+
+    public async Task<IActionResult> ApriLettera(Guid id, Guid contrattoId, Guid letteraId)
+    {
+        var l = (await TrovaContratto(id, contrattoId))?.Lettere.FirstOrDefault(x => x.Id == letteraId);
+        if (l is null || await archivio.ApriAsync(l.Chiave) is not { } file) return NotFound();
+        Response.Headers.CacheControl = "private, no-store";
+        Response.Headers.XContentTypeOptions = "nosniff";
+        return File(file, "application/pdf", l.NomeFile);
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> RimuoviLettera(Guid id, Guid contrattoId, Guid letteraId)
+    {
+        if (await TrovaContratto(id, contrattoId) is not { } c) return NotFound();
+        if (c.RimuoviLettera(letteraId) is { } chiave)
+        {
+            await db.SaveChangesAsync();
+            await archivio.EliminaAsync(chiave);
+            Conferma("Lettera rimossa.");
+        }
+        return SchedaAperta(id);
     }
 
     [HttpPost, ValidateAntiForgeryToken]

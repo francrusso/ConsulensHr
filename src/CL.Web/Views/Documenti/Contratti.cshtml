@@ -43,6 +43,10 @@
                         {
                             <a asp-action="ApriContratto" asp-route-id="@r.ContrattoId" target="_blank" rel="noopener" class="link-contratto"><i class="ri-file-pdf-2-line" aria-hidden="true"></i> Apri</a>
                         }
+                        @if (r.Lettere > 0)
+                        {
+                            <a asp-controller="Dipendenti" asp-action="Dettaglio" asp-route-id="@r.DipendenteId" asp-route-sezione="contratto" asp-route-contratto="@r.ContrattoId" class="d-block small">+ @r.Lettere @(r.Lettere == 1 ? "variazione" : "variazioni")</a>
+                        }
                         else
                         {
                             <a asp-controller="Dipendenti" asp-action="Dettaglio" asp-route-id="@r.DipendenteId" asp-route-sezione="contratto" asp-route-modifica="true" asp-route-contratto="@r.ContrattoId" class="contratto-mancante"><i class="ri-upload-2-line" aria-hidden="true"></i> Da caricare</a>

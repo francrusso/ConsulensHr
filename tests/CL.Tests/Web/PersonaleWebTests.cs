@@ -102,7 +102,7 @@ public sealed class PersonaleWebTests : IDisposable
         var html = WebUtility.HtmlDecode(await hr.GetStringAsync(pagina));
         Assert.Contains("Contratto in corso", html);
         Assert.Contains("Commercio", html);
-        Assert.Contains("Nessun documento caricato", html);
+        Assert.Contains("Nessun contratto caricato", html);
 
         // Dalla scheda Contratto la foto si salva subito.
         using (var form = new MultipartFormDataContent { { new StringContent(await hr.TokenDa(pagina)), "__RequestVerificationToken" } })

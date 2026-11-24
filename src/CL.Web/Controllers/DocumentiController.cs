@@ -18,7 +18,7 @@ namespace CL.Web.Controllers;
 public sealed record RigaCu(Guid DipendenteId, string Persona, string Azienda, Guid? CuId, DateTime? CaricataIl, DateTime? VisualizzataIl);
 
 public sealed record RigaContrattoDoc(Guid DipendenteId, string Persona, string Azienda, Guid ContrattoId, TipoContratto Tipo,
-    DateOnly Dal, DateOnly? Al, bool HaDocumento, DateTime? CaricatoIl, DateOnly? DataCessazione)
+    DateOnly Dal, DateOnly? Al, bool HaDocumento, DateTime? CaricatoIl, DateOnly? DataCessazione, int Lettere = 0)
 {
     /// <summary>Stato del singolo contratto, con gli stessi nomi e colori dell'elenco del personale.</summary>
     public StatoPersonale StatoIl(DateOnly oggi) =>
@@ -170,7 +170,7 @@ public sealed class DocumentiController(AppDbContext db, UtenteCorrente utente, 
             from c in db.Contratti.AsNoTracking().Where(c => c.DipendenteId == d.Id)
             orderby d.Cognome, d.Nome, c.DataInizio descending
             select new RigaContrattoDoc(d.Id, d.Cognome + " " + d.Nome, az.RagioneSociale, c.Id, c.Tipo, c.DataInizio, c.DataFine,
-                c.DocumentoChiave != null, c.DocumentoCaricatoIl, c.DataCessazione)).ToListAsync();
+                c.DocumentoChiave != null, c.DocumentoCaricatoIl, c.DataCessazione, c.Lettere.Count)).ToListAsync();
         return View(new ElencoDocumentiViewModel<RigaContrattoDoc> { Righe = righe, Ricerca = q, AziendaId = aziendaId, Aziende = await ElencoAziende(aziendaId) });
     }
 
@@ -273,6 +273,16 @@ public sealed class DocumentiController(AppDbContext db, UtenteCorrente utente, 
         if (testa[0] == 0xFF && testa[1] == 0xD8 && testa[2] == 0xFF) return ("image/jpeg", ".jpg", null);
         if (testa[0] == 0x89 && testa[1] == 0x50 && testa[2] == 0x4E && testa[3] == 0x47) return ("image/png", ".png", null);
         return (null, null, "Carica un PDF o una foto (JPEG o PNG).");
+    }
+
+    /// <summary>Lettera di variazione del contratto (proroga, trasformazione…): anche il dipendente può aprire le proprie.</summary>
+    public async Task<IActionResult> ApriLettera(Guid id, Guid letteraId)
+    {
+        var visibili = utente.Filtra(db.Dipendenti).Select(d => d.Id);
+        var c = await db.Contratti.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id && visibili.Contains(x.DipendenteId));
+        var l = c?.Lettere.FirstOrDefault(x => x.Id == letteraId);
+        if (l is null || await archivio.ApriAsync(l.Chiave) is not { } file) return NotFound();
+        return Pdf(file, l.NomeFile);
     }
 
     /// <summary>PDF del contratto: anche il dipendente può aprire i propri.</summary>

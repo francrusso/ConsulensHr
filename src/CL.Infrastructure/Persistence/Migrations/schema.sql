@@ -1912,3 +1912,38 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261124164706_LettereContratto') THEN
+    CREATE TABLE hr."LettereContratto" (
+        "Id" uuid NOT NULL,
+        "Tipo" character varying(32) NOT NULL,
+        "DataEffetto" date NOT NULL,
+        "Chiave" character varying(500) NOT NULL,
+        "NomeFile" character varying(200) NOT NULL,
+        "CaricataIl" timestamp with time zone NOT NULL,
+        "ContrattoId" uuid NOT NULL,
+        CONSTRAINT "PK_LettereContratto" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_LettereContratto_Contratti_ContrattoId" FOREIGN KEY ("ContrattoId") REFERENCES hr."Contratti" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261124164706_LettereContratto') THEN
+    CREATE INDEX "IX_LettereContratto_ContrattoId" ON hr."LettereContratto" ("ContrattoId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261124164706_LettereContratto') THEN
+    INSERT INTO hr."__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261124164706_LettereContratto', '10.0.15');
+    END IF;
+END $EF$;
+COMMIT;
+
