@@ -1,0 +1,16 @@
+@model IReadOnlyCollection<DayOfWeek>
+<fieldset class="col-12">
+    <legend class="form-label fs-6">Giorni della settimana</legend>
+    <div class="micro-calendario-turni" aria-label="Seleziona i giorni del turno">
+    @foreach (var (giorno, nome, breve) in new[] {
+        (DayOfWeek.Monday, "Lunedì", "LUN"), (DayOfWeek.Tuesday, "Martedì", "MAR"),
+        (DayOfWeek.Wednesday, "Mercoledì", "MER"), (DayOfWeek.Thursday, "Giovedì", "GIO"),
+        (DayOfWeek.Friday, "Venerdì", "VEN"), (DayOfWeek.Saturday, "Sabato", "SAB"), (DayOfWeek.Sunday, "Domenica", "DOM") })
+    {
+        <label class="micro-calendario-giorno" title="@nome">
+            <input type="checkbox" name="Giorni" value="@giorno" checked="@Model.Contains(giorno)" aria-label="@nome" />
+            <span class="micro-calendario-nome">@breve</span>
+        </label>
+    }
+    </div>
+</fieldset>

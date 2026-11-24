@@ -315,7 +315,7 @@ td.elenco-vuoto { text-align: center; padding: 2.5rem 1rem !important; color: va
     letter-spacing: .03em; color: var(--consulens-muted); margin-bottom: 4px; }
 .scheda-profilo .valori-profilo dd { margin: 0; color: var(--consulens-breadcrumb-active); font-size: 15px; font-weight: 500; overflow-wrap: anywhere; }
 .documento-file { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border: 1px solid var(--consulens-border);
-    border-radius: 10px; background: var(--consulens-canvas); color: var(--consulens-breadcrumb-active); font-weight: 500; }
+    border-radius: 8px; background: var(--consulens-canvas); color: var(--consulens-breadcrumb-active); font-weight: 500; }
 .documento-file i { color: #98494E; font-size: 20px; }
 .documento-file:hover { border-color: #98494E; }
 .alert-success::after { -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='m8 12.5 2.8 2.8L16 10'/%3E%3C/svg%3E") center / contain no-repeat;
@@ -738,7 +738,7 @@ input.tessera-emoji.altra-emoji::placeholder { font-size: 12.5px; color: var(--c
 .barra-saldo { height: 8px; border-radius: 50rem; background: color-mix(in srgb, var(--colore-saldo) 12%, #fff); overflow: hidden; }
 .barra-saldo span { display: block; height: 100%; border-radius: 50rem; background: var(--colore-saldo); }
 .numeri-saldo { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
-.numeri-saldo > div { padding: 8px 10px; border-radius: 10px; background: var(--consulens-canvas); }
+.numeri-saldo > div { padding: 8px 10px; border-radius: 8px; background: var(--consulens-canvas); }
 .numeri-saldo dt { font-family: 'Quasimoda', 'Poppins', sans-serif; text-transform: uppercase; font-size: 10.5px; font-weight: 400; letter-spacing: .04em; color: #9a858d; }
 .numeri-saldo dd { margin: 2px 0 0; font-weight: 600; color: var(--consulens-breadcrumb-active); font-variant-numeric: tabular-nums; }
 @media (max-width: 575.98px) { .numeri-saldo { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
@@ -749,3 +749,43 @@ input.tessera-emoji.altra-emoji::placeholder { font-size: 12.5px; color: var(--c
 .voce-assegnazione:has(input:checked) { background: color-mix(in srgb, #2FBA6C 8%, #fff); border-color: color-mix(in srgb, #2FBA6C 30%, #fff); }
 @media (max-width: 767.98px) { .elenco-assegnazioni { grid-template-columns: 1fr; } }
 .filtro-consulente .form-select { min-width: 220px; }
+
+.turno-note { white-space: pre-wrap; overflow-wrap: anywhere; max-width: 28rem; }
+
+/* Pianificazione settimanale dei turni. */
+.turni-griglia { min-width: 1150px; table-layout: fixed; border-collapse: separate; border-spacing: 6px; }
+.turni-griglia > :not(caption) > * > * { padding: 0; border: 0; background: transparent; box-shadow: none; vertical-align: top; }
+.turni-griglia thead th { padding: 4px 8px 10px; color: var(--consulens-breadcrumb-muted); font-weight: 400; text-transform: uppercase; font-size: 11px; }
+.turni-griglia tbody .turni-persona { height: 1px; }
+.turni-griglia .turni-persona { width: 285px; position: sticky; left: 0; background: #fff; z-index: 1; }
+.turni-griglia th:last-child, .turni-griglia td:last-child { width: 65px; text-align: center; }
+.turni-griglia tbody td:last-child { padding-top: 18px; }
+.turni-cella .cal-giorno { height: 100%; min-height: 118px; }
+.turni-profilo { height: 100%; }
+.turni-profilo .user-box { width: 100%; min-height: 118px; height: 100%; padding: 12px; gap: 12px; background: color-mix(in srgb, var(--team-colore) 24%, #fff); border-color: var(--team-colore); }
+.turni-profilo .user-name { text-transform: uppercase; font-size: 14px; }
+.turni-profilo .user-img { width: 46px; height: 46px; }
+.turni-profilo .designattion { font-family: 'Poppins', sans-serif; font-size: 12px; }
+.turni-team-badge { display: inline-block; margin-top: 6px; padding: 3px 9px; border-radius: 20px; background: var(--team-colore); color: var(--team-testo); font-family: 'Poppins', sans-serif; font-size: 11px; font-weight: 500; }
+.turni-profilo .user-info { display: block; }
+.turni-profilo .user-info p { max-width: 195px; white-space: normal; overflow-wrap: anywhere; }
+.turni-blocco { display: flex; flex-direction: column; gap: 3px; background: #f7ece0; border-left: 3px solid #a36468; border-radius: 7px; padding: 8px; margin-bottom: 6px; color: #512d38; font-size: 12px; }
+.turni-blocco:hover { background: #f0dfd0; color: #512d38; }
+.turni-notte { background: #eeeaf5; border-left-color: #8e6bd8; }
+.turni-aggiungi { display: flex; min-height: 44px; align-items: center; justify-content: center; color: #a88a92; border: 1px dashed transparent; border-radius: 7px; }
+.turni-aggiungi:hover, .turni-aggiungi:focus-visible { border-color: #a36468; background: #fcf2e7; color: #754455; }
+
+/* Selezione compatta dei giorni per turni e rotazioni. */
+.micro-calendario-turni { display: grid; grid-template-columns: repeat(7, minmax(0, 42px)); gap: 6px; max-width: 100%; }
+.micro-calendario-giorno { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; aspect-ratio: 1; margin: 0; border: 1px solid var(--consulens-border); border-radius: 8px; background: var(--consulens-canvas); color: var(--consulens-breadcrumb-muted); cursor: pointer; }
+.micro-calendario-giorno input { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+.micro-calendario-nome { font-family: 'Quasimoda', sans-serif; font-size: 11px; letter-spacing: .03em; }
+.micro-calendario-giorno:has(input:checked) { background: #f6e8e4; border-color: #98494e; color: #512d38; }
+.micro-calendario-giorno:has(input:focus-visible) { outline: 2px solid #98494e; outline-offset: 3px; }
+.micro-calendario-giorno:hover { border-color: #98494e; }
+
+.turni-selezione .select2-container .select2-selection--multiple { min-height: 44px; border: 1px solid var(--consulens-border); border-radius: 10px; background: #fff; padding: 4px 8px; font-family: 'Poppins', sans-serif; }
+.turni-selezione .select2-container--default.select2-container--focus .select2-selection--multiple { border-color: #98494e; box-shadow: 0 0 0 2px #f6e8e4; }
+.turni-selezione .select2-container--default .select2-selection--multiple .select2-selection__choice { background: #f6e8e4; border: 1px solid #edd9da; border-radius: 16px; color: #512d38; font-size: 12px; padding: 4px 9px; margin: 3px 6px 3px 0; }
+.turni-selezione .select2-container--default .select2-selection--multiple .select2-selection__choice__remove { color: #98494e; border: 0; margin-right: 6px; }
+.turni-selezione .select2-search__field { font-family: 'Poppins', sans-serif; font-size: 13px; }

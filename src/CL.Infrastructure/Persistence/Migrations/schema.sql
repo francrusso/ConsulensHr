@@ -1402,3 +1402,243 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261124084538_TurniLavoro') THEN
+    CREATE TABLE hr."TurniLavoro" (
+        "Id" uuid NOT NULL,
+        "DipendenteId" uuid NOT NULL,
+        "Inizio" timestamp without time zone NOT NULL,
+        "Fine" timestamp without time zone NOT NULL,
+        "Note" character varying(500),
+        CONSTRAINT "PK_TurniLavoro" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_TurniLavoro_Dipendenti_DipendenteId" FOREIGN KEY ("DipendenteId") REFERENCES hr."Dipendenti" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261124084538_TurniLavoro') THEN
+    CREATE INDEX "IX_TurniLavoro_DipendenteId_Inizio_Fine" ON hr."TurniLavoro" ("DipendenteId", "Inizio", "Fine");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261124084538_TurniLavoro') THEN
+    INSERT INTO hr."__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261124084538_TurniLavoro', '10.0.15');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261124091028_TurnazioneSettimanale') THEN
+    ALTER TABLE hr."TurniLavoro" ADD "Nome" character varying(80);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261124091028_TurnazioneSettimanale') THEN
+    CREATE TABLE hr."TurniSalvati" (
+        "Id" uuid NOT NULL,
+        "AziendaId" uuid NOT NULL,
+        "Nome" character varying(80) NOT NULL,
+        "Inizio" time without time zone NOT NULL,
+        "Fine" time without time zone NOT NULL,
+        CONSTRAINT "PK_TurniSalvati" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_TurniSalvati_Aziende_AziendaId" FOREIGN KEY ("AziendaId") REFERENCES hr."Aziende" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261124091028_TurnazioneSettimanale') THEN
+    CREATE UNIQUE INDEX "IX_TurniSalvati_AziendaId_Nome" ON hr."TurniSalvati" ("AziendaId", "Nome");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261124091028_TurnazioneSettimanale') THEN
+    INSERT INTO hr."__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261124091028_TurnazioneSettimanale', '10.0.15');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261124094803_CicliGiornalieriTurni') THEN
+    ALTER TABLE hr."TurniSalvati" ADD "GiorniSettimana" integer NOT NULL DEFAULT 127;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261124094803_CicliGiornalieriTurni') THEN
+    ALTER TABLE hr."TurniSalvati" ADD "TeamId" uuid;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261124094803_CicliGiornalieriTurni') THEN
+    ALTER TABLE hr."TurniLavoro" ADD "Tipo" character varying(32) NOT NULL DEFAULT 'Lavoro';
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261124094803_CicliGiornalieriTurni') THEN
+    CREATE TABLE hr."FasiTurniSalvati" (
+        "Id" uuid NOT NULL,
+        "Ordine" integer NOT NULL,
+        "Nome" character varying(80) NOT NULL,
+        "Tipo" character varying(32) NOT NULL,
+        "Inizio" time without time zone,
+        "Fine" time without time zone,
+        "TurnoSalvatoId" uuid NOT NULL,
+        CONSTRAINT "PK_FasiTurniSalvati" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_FasiTurniSalvati_TurniSalvati_TurnoSalvatoId" FOREIGN KEY ("TurnoSalvatoId") REFERENCES hr."TurniSalvati" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261124094803_CicliGiornalieriTurni') THEN
+    CREATE INDEX "IX_FasiTurniSalvati_TurnoSalvatoId_Ordine" ON hr."FasiTurniSalvati" ("TurnoSalvatoId", "Ordine");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261124094803_CicliGiornalieriTurni') THEN
+    INSERT INTO hr."__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261124094803_CicliGiornalieriTurni', '10.0.15');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261124095624_PubblicazioneECambioTurni') THEN
+    ALTER TABLE hr."TurniLavoro" ADD "PubblicatoIl" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261124095624_PubblicazioneECambioTurni') THEN
+    ALTER TABLE hr."TurniLavoro" ADD "TeamVincolatoId" uuid;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261124095624_PubblicazioneECambioTurni') THEN
+    ALTER TABLE hr."TurniLavoro" ADD "Versione" integer NOT NULL DEFAULT 0;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261124095624_PubblicazioneECambioTurni') THEN
+    CREATE TABLE hr."RichiesteCambioTurno" (
+        "Id" uuid NOT NULL,
+        "DipendenteId" uuid NOT NULL,
+        "TurnoId" uuid NOT NULL,
+        "TurnoCollegaId" uuid,
+        "CollegaId" uuid,
+        "AccordoCollega" boolean NOT NULL,
+        "VersioneTurno" integer NOT NULL,
+        "VersioneCollega" integer,
+        "InizioOriginale" timestamp without time zone NOT NULL,
+        "FineOriginale" timestamp without time zone NOT NULL,
+        "NuovoInizio" timestamp without time zone NOT NULL,
+        "NuovaFine" timestamp without time zone NOT NULL,
+        "Note" character varying(1000) NOT NULL,
+        "Stato" character varying(32) NOT NULL,
+        "RichiestoIl" timestamp with time zone NOT NULL,
+        "DecisoDa" character varying(256),
+        "MotivoRifiuto" character varying(1000),
+        CONSTRAINT "PK_RichiesteCambioTurno" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_RichiesteCambioTurno_Dipendenti_DipendenteId" FOREIGN KEY ("DipendenteId") REFERENCES hr."Dipendenti" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261124095624_PubblicazioneECambioTurni') THEN
+    CREATE INDEX "IX_RichiesteCambioTurno_DipendenteId_Stato" ON hr."RichiesteCambioTurno" ("DipendenteId", "Stato");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261124095624_PubblicazioneECambioTurni') THEN
+    CREATE INDEX "IX_RichiesteCambioTurno_TurnoId" ON hr."RichiesteCambioTurno" ("TurnoId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261124095624_PubblicazioneECambioTurni') THEN
+    INSERT INTO hr."__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261124095624_PubblicazioneECambioTurni', '10.0.15');
+    END IF;
+END $EF$;
+COMMIT;
+
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261124100256_TeamMultipliTurni') THEN
+    ALTER TABLE hr."TurniLavoro" ADD "VincoliTeam" character varying(4000);
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261124100256_TeamMultipliTurni') THEN
+    CREATE TABLE hr."TeamAbilitatiTurni" (
+        "Id" uuid NOT NULL,
+        "TeamId" uuid NOT NULL,
+        "TurnoSalvatoId" uuid NOT NULL,
+        CONSTRAINT "PK_TeamAbilitatiTurni" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_TeamAbilitatiTurni_TurniSalvati_TurnoSalvatoId" FOREIGN KEY ("TurnoSalvatoId") REFERENCES hr."TurniSalvati" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261124100256_TeamMultipliTurni') THEN
+    CREATE UNIQUE INDEX "IX_TeamAbilitatiTurni_TurnoSalvatoId_TeamId" ON hr."TeamAbilitatiTurni" ("TurnoSalvatoId", "TeamId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261124100256_TeamMultipliTurni') THEN
+    INSERT INTO hr."__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261124100256_TeamMultipliTurni', '10.0.15');
+    END IF;
+END $EF$;
+COMMIT;
+

@@ -1,0 +1,87 @@
+@model TurniViewModel
+@{
+    ViewData["Title"] = Model.Gestione ? "Turni di lavoro" : "I miei turni";
+    var fine = Model.Settimana.AddDays(Model.GiorniVista - 1);
+    var precedente = Model.Vista == "mese" ? Model.Settimana.AddMonths(-1) : Model.Settimana.AddDays(-Model.GiorniVista);
+    var successivo = Model.Vista == "mese" ? Model.Settimana.AddMonths(1) : Model.Settimana.AddDays(Model.GiorniVista);
+    var it = System.Globalization.CultureInfo.GetCultureInfo("it-IT");
+    var periodo = Model.GiorniVista == 1 ? fine.ToString("d MMMM yyyy", it) : Model.Settimana.Year != fine.Year
+        ? $"{Model.Settimana.ToString("d MMMM yyyy", it)}-{fine.ToString("d MMMM yyyy", it)}"
+        : Model.Settimana.Month != fine.Month
+            ? $"{Model.Settimana.ToString("d MMMM", it)}-{fine.ToString("d MMMM yyyy", it)}"
+            : $"{Model.Settimana.Day}-{fine.ToString("d MMMM yyyy", it)}";
+}
+<div class="breadcrumb-titolo d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+    <h1 class="titolo-pagina mb-0">@ViewData["Title"]</h1>
+    @if (Model.Gestione)
+    {
+        var bozze = Model.Turni.Count(t => t.Turno.PubblicatoIl is null);
+        <form asp-action="Pubblica" method="post" class="d-flex align-items-center gap-2">
+            <input type="hidden" name="data" value="@Model.Settimana.ToString("yyyy-MM-dd")" /><input type="hidden" name="dipendenteId" value="@Model.DipendenteId" /><input type="hidden" name="teamId" value="@Model.TeamId" /><input type="hidden" name="sede" value="@Model.Sede" /><input type="hidden" name="vista" value="@Model.Vista" />
+            <span class="small text-muted">@bozze turni in bozza</span>
+            <button type="submit" class="btn btn-primary" disabled="@(bozze == 0)">Pubblica i turni</button>
+        </form>
+    }
+</div>
+<form method="get" class="invoice-filter-bar d-flex flex-wrap gap-2 mb-3">
+    <input type="hidden" name="data" value="@Model.Settimana.ToString("yyyy-MM-dd")" />
+    @if (Model.Gestione)
+    {
+        <label for="dipendenteId" class="visually-hidden">Dipendente</label>
+        <select id="dipendenteId" name="dipendenteId" asp-for="DipendenteId" asp-items="Model.Persone" class="form-select w-auto"><option value="">Tutto il personale</option></select>
+        <select asp-for="TeamId" asp-items="Model.Team" class="form-select w-auto" aria-label="Team"><option value="">Tutti i team</option></select>
+        <select asp-for="Sede" class="form-select w-auto" aria-label="Sede"><option value="">Tutte le sedi</option><option value="SedeLegale">Sede legale</option><option value="SedeOperativa">Sede operativa</option><option value="SmartWorking">Smart working</option></select>
+    }
+    <select asp-for="Vista" class="form-select w-auto" aria-label="Vista calendario"><option value="giorno">Giorno</option><option value="settimana">Settimana</option><option value="mese">Mese</option></select>
+    <button class="btn invoice-filter-submit" type="submit">Filtra <i class="ri-filter-3-line" aria-hidden="true"></i></button>
+</form>
+<div class="barra-mese mb-3">
+    <a asp-action="Index" asp-route-data="@precedente.ToString("yyyy-MM-dd")" asp-route-dipendenteId="@Model.DipendenteId" asp-route-teamId="@Model.TeamId" asp-route-sede="@Model.Sede" asp-route-vista="@Model.Vista" class="btn btn-outline-primary btn-sm" aria-label="Periodo precedente"><i class="ri-arrow-left-s-line" aria-hidden="true"></i></a>
+    <h2 class="titolo-mese mb-0">@periodo.ToUpper(it)</h2>
+    <a asp-action="Index" asp-route-data="@successivo.ToString("yyyy-MM-dd")" asp-route-dipendenteId="@Model.DipendenteId" asp-route-teamId="@Model.TeamId" asp-route-sede="@Model.Sede" asp-route-vista="@Model.Vista" class="btn btn-outline-primary btn-sm" aria-label="Periodo successivo"><i class="ri-arrow-right-s-line" aria-hidden="true"></i></a>
+</div>
+<div class="table-responsive turni-calendario">
+<table class="table mb-0 turni-griglia" style="min-width:@(Math.Max(700, 350 + Model.GiorniVista * 140))px"><thead><tr><th scope="col" class="turni-persona">Dipendente</th>
+@for (var i = 0; i < Model.GiorniVista; i++) { var g = Model.Settimana.AddDays(i); <th scope="col" class="text-center cal-intestazione"><span class="d-block text-muted small">@g.ToString("ddd")</span>@g.ToString("dd MMM")</th> }
+<th scope="col" class="text-center">Ore</th></tr></thead><tbody>
+@foreach (var p in Model.Righe)
+{
+    var dellaPersona = Model.Turni.Where(t => t.Turno.DipendenteId == p.Id).ToList();
+    var ore = dellaPersona.Sum(t => Model.OreEffettive(t.Turno));
+    <tr><th scope="row" class="turni-persona"><div class="topbar-profile turni-profilo" style="--team-colore:@p.ColoreTeam; --team-testo:@p.TestoTeam"><div class="d-flex user-box align-items-center">
+        <img class="user-img" src="@(p.HaFoto ? Url.Action("Foto", "Dipendenti", new { id = p.Id }) : Url.Content($"~/assets/images/avatar/{p.Segnaposto}.png"))" alt="Foto di @p.Nome" loading="lazy" />
+        <div class="user-info"><p class="user-name mb-0">@p.Nome</p><p class="designattion mb-0">@(p.Posizione ?? p.Azienda)</p>
+            @if (p.Team is { } nomeTeam) { <span class="turni-team-badge">@if (p.EmojiTeam is { } emoji) { <span aria-hidden="true">@emoji</span> } @nomeTeam</span> }
+        </div>
+    </div></div></th>
+    @for (var i = 0; i < Model.GiorniVista; i++)
+    {
+        var g = Model.Settimana.AddDays(i); var inizio = g.ToDateTime(TimeOnly.MinValue);
+        var turni = dellaPersona.Where(t => t.Turno.Inizio < inizio.AddDays(1) && t.Turno.Fine > inizio).ToList();
+        <td class="turni-cella"><div class="cal-giorno @(g.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday ? "non-lavorativo" : "")">
+        @foreach (var a in Model.Assenze.Where(a => a.DipendenteId == p.Id && a.Dal <= g && a.Al >= g))
+        {
+            <span class="badge bg-light text-dark text-wrap">@a.Tipo.Descrizione() @(a.AOre ? $"· {a.Ore:0.##} h" : "") @(a.Stato == StatoRichiesta.InAttesa ? "· in attesa" : "")</span>
+        }
+        @foreach (var r in turni)
+        {
+            var t = r.Turno;
+            <a class="turni-blocco @(t.Fine.Date != t.Inizio.Date ? "turni-notte" : "")" href="@(Model.Gestione ? Url.Action("Modifica", new { id = t.Id }) : (t.Tipo == TipoGiornataTurno.Lavoro ? Url.Action("CambioTurno", "Assenze", new { turnoId = t.Id }) : null))" title="@t.Note">
+                <strong>@(t.Nome ?? "Turno")</strong>
+                @if (Model.Gestione && t.PubblicatoIl is null) { <small>Bozza</small> }
+                @if (t.Tipo == TipoGiornataTurno.Lavoro) { <span>@t.Inizio.ToString("HH:mm") – @t.Fine.ToString("HH:mm")</span> }
+                @if (t.Tipo == TipoGiornataTurno.Lavoro && t.Inizio < inizio) { <small>Dal giorno precedente</small> } else if (t.Tipo == TipoGiornataTurno.Lavoro && t.Fine.Date != t.Inizio.Date) { <small>Fine il @t.Fine.ToString("dd/MM")</small> }
+                @if (!string.IsNullOrWhiteSpace(t.Note)) { <small class="turno-note">@t.Note</small> }
+            </a>
+        }
+        @if (Model.Gestione)
+        {
+            <a class="turni-aggiungi" asp-action="Modifica" asp-route-dipendenteId="@p.Id" asp-route-giorno="@g.ToString("yyyy-MM-dd")" aria-label="Aggiungi turno per @p.Nome il @g.ToString("dd/MM/yyyy")"><i class="ri-add-line" aria-hidden="true"></i><span class="visually-hidden">Aggiungi turno</span></a>
+        }
+        </div></td>
+    }
+    <td class="text-center fw-semibold">@ore.ToString("0.##")</td></tr>
+}
+@if (Model.Righe.Count == 0) { <tr><td colspan="@(Model.GiorniVista + 2)" class="text-center py-5 text-muted">Nessun dipendente da mostrare.</td></tr> }
+</tbody></table>
+</div>

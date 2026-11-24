@@ -1,0 +1,32 @@
+@model CambioTurnoForm
+@{ ViewData["Title"] = "Modifica / scambio turno"; }
+<h1 class="titolo-pagina mb-3">@ViewData["Title"]</h1>
+<div class="card radius-15 p-4"><form asp-action="CambioTurno" method="post" class="row g-3">
+<div asp-validation-summary="All" class="text-danger" role="alert"></div>
+<div class="col-12"><label asp-for="TurnoId" class="form-label">Il tuo turno</label><select asp-for="TurnoId" asp-items="Model.Turni" class="form-select" required><option value="">Seleziona un turno pubblicato</option></select></div>
+<div class="col-12"><label asp-for="Scambio" class="form-label">Tipo di richiesta</label><select asp-for="Scambio" class="form-select"><option value="false">Modifica orario</option><option value="true">Scambio con un collega</option></select></div>
+<div class="col-12" id="nuoviOrari"><div class="row g-3">
+<div class="col-md-6"><label asp-for="NuovoInizio" class="form-label">Nuovo inizio</label><input asp-for="NuovoInizio" type="datetime-local" class="form-control" /></div>
+<div class="col-md-6"><label asp-for="NuovaFine" class="form-label">Nuova fine</label><input asp-for="NuovaFine" type="datetime-local" class="form-control" /></div>
+</div></div>
+<div class="col-12" id="scambioCollega" hidden><div class="row g-3">
+<div class="col-md-6"><label asp-for="CollegaId" class="form-label">Collega</label><select asp-for="CollegaId" asp-items="Model.Colleghi" class="form-select"><option value="">Seleziona collega</option></select></div>
+<div class="col-md-6"><label asp-for="TurnoCollegaId" class="form-label">Turno del collega da scambiare</label><select asp-for="TurnoCollegaId" class="form-select"><option value="">Seleziona turno</option>@foreach (var t in Model.TurniColleghi) { <option value="@t.Id" data-collega="@t.DipendenteId">@t.Descrizione</option> }</select></div>
+<div class="col-12"><div class="form-check"><input asp-for="AccordoCollega" class="form-check-input" /><label asp-for="AccordoCollega" class="form-check-label">Confermo di aver già concordato lo scambio con il collega.</label></div></div>
+</div></div>
+<div class="col-12"><label asp-for="Note" class="form-label">Motivo della richiesta</label><textarea asp-for="Note" rows="3" maxlength="1000" class="form-control" required></textarea></div>
+<div class="col-12"><p class="small text-muted">La richiesta sarà valutata dall'azienda. La pianificazione cambierà solo dopo l'approvazione.</p><button type="submit" class="btn btn-primary">Invia richiesta</button><a asp-action="Index" class="btn btn-outline-secondary">Annulla</a></div>
+</form></div>
+@section Scripts {
+<script>
+(() => {
+    const modo = document.getElementById('Scambio'), collega = document.getElementById('CollegaId'), turni = document.getElementById('TurnoCollegaId');
+    function aggiorna() {
+        const scambio = modo.value === 'true'; document.getElementById('scambioCollega').hidden = !scambio; document.getElementById('nuoviOrari').hidden = scambio;
+        Array.from(turni.options).forEach(o => { if (o.value) o.disabled = o.hidden = o.dataset.collega !== collega.value; });
+        if (turni.selectedOptions[0]?.disabled) turni.value = '';
+    }
+    modo.addEventListener('change', aggiorna); collega.addEventListener('change', aggiorna); aggiorna();
+})();
+</script>
+}

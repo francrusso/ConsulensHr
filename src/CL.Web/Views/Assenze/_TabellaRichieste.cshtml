@@ -29,9 +29,9 @@
             @foreach (var r in righe)
             {
                 var mia = Utente.IsDipendente && r.DipendenteId == Utente.DipendenteId;
-                var assenza = !r.SmartWorking && !r.Straordinario; // ferie, permessi, malattia...
+                var assenza = !r.SmartWorking && !r.Straordinario && !r.CambioTurno; // ferie, permessi, malattia...
                 // Il referente revoca qualunque richiesta attiva, anche approvata e già passata (es. registrata per errore).
-                var revocabile = Utente.IsAzienda && r.Stato is StatoRichiesta.InAttesa or StatoRichiesta.Approvata;
+                var revocabile = !r.CambioTurno && Utente.IsAzienda && r.Stato is StatoRichiesta.InAttesa or StatoRichiesta.Approvata;
                 // Annulla (se non può revocare): una richiesta in attesa, o approvata e non ancora iniziata. Il dipendente,
                 // per una richiesta approvata, chiede invece la cancellazione all'azienda; il consulente annulla solo
                 // ciò che non richiede approvazione (es. malattia).
@@ -45,8 +45,8 @@
                 var decidibile = r.Stato == StatoRichiesta.InAttesa && puoApprovare && (assenza || Utente.IsAzienda);
                 var ritirabile = r.SmartWorking && mia && r.Dal >= oggi && r.Stato != StatoRichiesta.Rifiutata;
                 var ritiraOre = r.Straordinario && mia && r.Stato == StatoRichiesta.InAttesa;
-                var tipoNome = r.SmartWorking ? "Smart working" : r.Straordinario ? "Straordinario" : r.Tipo.Descrizione();
-                var azioneDecidi = r.SmartWorking ? "DecidiSmartWorking" : r.Straordinario ? "DecidiStraordinario" : null;
+                var tipoNome = r.CambioTurno ? "Modifica / scambio turno" : r.SmartWorking ? "Smart working" : r.Straordinario ? "Straordinario" : r.Tipo.Descrizione();
+                var azioneDecidi = r.CambioTurno ? "DecidiCambioTurno" : r.SmartWorking ? "DecidiSmartWorking" : r.Straordinario ? "DecidiStraordinario" : null;
                 var genere = r.SmartWorking ? "smart" : r.Straordinario ? "straordinario" : "assenza";
                 var periodo = r.Dal == r.Al ? r.Dal.ToString("dddd d MMMM yyyy") : $"dal {r.Dal:dddd d MMMM} al {r.Al:dddd d MMMM yyyy}";
                 <tr class="customer-result-row">
@@ -72,7 +72,7 @@
                         @if (r.Dal == r.Al) { @r.Dal.ToString("ddd dd/MM/yyyy") }
                         else { @($"{r.Dal:dd/MM} – {r.Al:dd/MM/yyyy}") }
                     </td>
-                    <td data-label="Ore" class="text-end">@(r.SmartWorking ? "—" : r.Ore.ToString("0.##"))</td>
+                    <td data-label="Ore" class="text-end">@(r.SmartWorking || r.CambioTurno ? "—" : r.Ore.ToString("0.##"))</td>
                     <td data-label="Stato">
                         <partial name="~/Views/Assenze/_StatoRichiesta.cshtml" model="r.Stato" />
                         @if (r.AnnullamentoInAttesa)
@@ -89,7 +89,7 @@
                         <div class="customer-actions">
                             <button type="button" title="Dettaglio" aria-label="Dettaglio della richiesta" data-bs-toggle="modal" data-bs-target="#modaleDettaglioRichiesta"
                                     data-persona="@r.Dipendente" data-tipo="@tipoNome" data-periodo="@periodo"
-                                    data-ore="@(r.SmartWorking ? "—" : r.Ore.ToString("0.##") + " h")" data-stato="@r.Stato.ToString()"
+                                    data-ore="@(r.SmartWorking || r.CambioTurno ? "—" : r.Ore.ToString("0.##") + " h")" data-stato="@r.Stato.ToString()"
                                     data-richiesta="@r.RichiestaIl.ToLocalTime().ToString("dd/MM/yyyy 'alle' HH:mm")" data-decisa="@(r.DecisaDa ?? "—")"
                                     data-note="@(r.Note ?? "—")" data-motivo="@(r.MotivoRifiuto ?? "")"><i class="ri-eye-line" aria-hidden="true"></i></button>
                             @if (decidibile)
@@ -100,6 +100,10 @@
                                 </form>
                                 <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#modaleRifiuto"
                                         data-azione="@(azioneDecidi is not null ? Url.Action(azioneDecidi, "Assenze", new { id = r.Id, approva = false }) : Url.Action("Rifiuta", "Assenze", new { id = r.Id }))" data-descrizione="@tipoNome di @r.Dipendente">Rifiuta</button>
+                            }
+                            @if (r.CambioTurno && mia && r.Stato == StatoRichiesta.InAttesa)
+                            {
+                                <form asp-controller="Assenze" asp-action="RitiraCambioTurno" asp-route-id="@r.Id" method="post"><button type="submit" class="btn btn-outline-secondary btn-sm">Ritira</button></form>
                             }
                             @if (ritiraOre)
                             {

@@ -1,0 +1,10 @@
+@model TurniSalvatiViewModel
+@{ ViewData["Title"] = "Turni salvati"; }
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3"><h1 class="titolo-pagina mb-0">Turni salvati</h1></div>
+<div class="card radius-15"><div class="card-body"><div class="table-responsive"><table class="table align-middle"><thead><tr><th>Nome</th><th>Azienda</th><th>Orario / Rotazione</th><th>Giorni</th><th>Azioni</th></tr></thead><tbody>
+@foreach (var t in Model.Turni)
+{
+    <tr><td>@t.Nome</td><td>@Model.Aziende[t.AziendaId]</td><td>@if (t.Ciclico) { @string.Join(" → ", t.Fasi.OrderBy(f => f.Ordine).Select(f => f.Nome)) } else { <span>@t.Inizio.ToString("HH:mm") – @t.Fine.ToString("HH:mm") @(t.Fine < t.Inizio ? "(+1 giorno)" : "")</span> }</td><td>@string.Join(", ", Enum.GetValues<DayOfWeek>().Where(t.Previsto).OrderBy(g => ((int)g + 6) % 7).Select(g => System.Globalization.CultureInfo.GetCultureInfo("it-IT").DateTimeFormat.GetAbbreviatedDayName(g)))</td><td><div class="customer-actions d-flex gap-2"><a asp-action="Modello" asp-route-id="@t.Id" class="btn btn-outline-primary btn-sm">Modifica</a><form asp-action="EliminaModello" method="post" onsubmit="return confirm('Rimuovere il turno dalla libreria?');"><input type="hidden" name="id" value="@t.Id" /><button type="submit" class="btn btn-outline-danger btn-sm">Elimina</button></form></div></td></tr>
+}
+@if (Model.Turni.Count == 0) { <tr><td colspan="5" class="text-center py-4 text-muted">Nessun turno salvato. Crea il primo turno per iniziare.</td></tr> }
+</tbody></table></div></div></div>

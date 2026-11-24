@@ -32,6 +32,9 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, Perimet
     public DbSet<ChiusuraAziendale> ChiusureAziendali => Set<ChiusuraAziendale>();
     public DbSet<GiornoInUfficio> GiorniInUfficio => Set<GiornoInUfficio>();
     public DbSet<GiornoSmartWorking> GiorniSmartWorking => Set<GiornoSmartWorking>();
+    public DbSet<RichiestaCambioTurno> RichiesteCambioTurno => Set<RichiestaCambioTurno>();
+    public DbSet<TurnoSalvato> TurniSalvati => Set<TurnoSalvato>();
+    public DbSet<TurnoLavoro> TurniLavoro => Set<TurnoLavoro>();
     public DbSet<Straordinario> Straordinari => Set<Straordinario>();
     public DbSet<CertificazioneUnica> CertificazioniUniche => Set<CertificazioneUnica>();
     public DbSet<ProfiloAzienda> ProfiliAzienda => Set<ProfiloAzienda>();
@@ -73,6 +76,9 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, Perimet
         builder.Entity<SaldoIniziale>().HasQueryFilter(x => Consentite == null || Set<Dipendente>().Any(d => d.Id == x.DipendenteId));
         builder.Entity<GiornoInUfficio>().HasQueryFilter(x => Consentite == null || Set<Dipendente>().Any(d => d.Id == x.DipendenteId));
         builder.Entity<GiornoSmartWorking>().HasQueryFilter(x => Consentite == null || Set<Dipendente>().Any(d => d.Id == x.DipendenteId));
+        builder.Entity<RichiestaCambioTurno>().HasQueryFilter(x => Consentite == null || Set<Dipendente>().Any(d => d.Id == x.DipendenteId));
+        builder.Entity<TurnoSalvato>().HasQueryFilter(x => Consentite == null || Consentite.Contains(x.AziendaId));
+        builder.Entity<TurnoLavoro>().HasQueryFilter(x => Consentite == null || Set<Dipendente>().Any(d => d.Id == x.DipendenteId));
         builder.Entity<Straordinario>().HasQueryFilter(x => Consentite == null || Set<Dipendente>().Any(d => d.Id == x.DipendenteId));
         builder.Entity<ProfiloDipendente>().HasQueryFilter(x => Consentite == null || Set<Dipendente>().Any(d => d.Id == x.DipendenteId));
     }

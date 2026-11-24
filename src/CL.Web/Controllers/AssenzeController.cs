@@ -50,6 +50,7 @@ public sealed record RichiestaRiga(
     bool AOre, decimal Ore, StatoRichiesta Stato, DateTime RichiestaIl, string? Note, string? DecisaDa, string? MotivoRifiuto)
 {
     /// <summary>Giorno di smart working chiesto da chi lavora in presenza (stessa tabella delle ferie, decisione a parte).</summary>
+    public bool CambioTurno { get; init; }
     public bool SmartWorking { get; init; }
     /// <summary>Ore di straordinario di un giorno (in <see cref="Ore"/>), da approvare come le ferie.</summary>
     public bool Straordinario { get; init; }
@@ -119,7 +120,7 @@ public sealed class AssenzeViewModel
 /// Decide il referente dell'azienda (o il responsabile indicato dall'organigramma); il consulente registra ma non approva.
 /// </summary>
 [Authorize]
-public sealed class AssenzeController(AppDbContext db, UtenteCorrente utente, ServizioSaldi saldi, NotificheAssenze notifiche,
+public sealed partial class AssenzeController(AppDbContext db, UtenteCorrente utente, ServizioSaldi saldi, NotificheAssenze notifiche,
     ServizioOrganigramma organigramma, ServizioUfficio ufficio, TimeProvider clock) : AppController
 {
     private DateOnly Oggi => DateOnly.FromDateTime(clock.GetLocalNow().DateTime);
@@ -159,9 +160,16 @@ public sealed class AssenzeController(AppDbContext db, UtenteCorrente utente, Se
                                   join a in db.Aziende.AsNoTracking() on d.AziendaId equals a.Id
                                   select new { s, d.Cognome, d.Nome, a.RagioneSociale }).ToListAsync();
 
+        var cambiTurno = await (from r in db.RichiesteCambioTurno.AsNoTracking()
+            join d in dipendenti on r.DipendenteId equals d.Id
+            join a in db.Aziende on d.AziendaId equals a.Id
+            select new { r, d.Cognome, d.Nome, a.RagioneSociale }).ToListAsync();
+        var idsColleghi = cambiTurno.Where(x => x.r.CollegaId != null).Select(x => x.r.CollegaId!.Value).Distinct().ToList();
+        var nomiColleghi = await db.Dipendenti.AsNoTracking().Where(d => idsColleghi.Contains(d.Id)).ToDictionaryAsync(d => d.Id, d => d.Cognome + " " + d.Nome);
         var anni = await (from r in db.RichiesteAssenza.AsNoTracking()
                           join d in dipendenti on r.DipendenteId equals d.Id
                           select r.Dal.Year).Distinct().ToListAsync();
+        anni.AddRange(cambiTurno.Select(x => x.r.InizioOriginale.Year));
         anni.AddRange(smart.Select(x => x.g.Giorno.Year));
         anni.AddRange(straordinari.Select(x => x.s.Giorno.Year));
         anni.AddRange([Oggi.Year, annoScelto]);
@@ -184,6 +192,10 @@ public sealed class AssenzeController(AppDbContext db, UtenteCorrente utente, Se
                 .Select(x => new RichiestaRiga(x.s.Id, x.s.DipendenteId, $"{x.Cognome} {x.Nome}", x.RagioneSociale, TipoAssenza.Ferie,
                     x.s.Giorno, x.s.Giorno, true, x.s.Ore, x.s.Stato, x.s.RichiestoIl, x.s.Note, x.s.DecisoDa, x.s.MotivoRifiuto) { Straordinario = true }))
             .ToList();
+        righe.AddRange(cambiTurno.Where(x => x.r.Stato == StatoRichiesta.InAttesa || DellAnno(DateOnly.FromDateTime(x.r.InizioOriginale)))
+            .Select(x => new RichiestaRiga(x.r.Id, x.r.DipendenteId, $"{x.Cognome} {x.Nome}", x.RagioneSociale, TipoAssenza.Ferie,
+                DateOnly.FromDateTime(x.r.InizioOriginale), DateOnly.FromDateTime(x.r.NuovoInizio), false, 0, x.r.Stato, x.r.RichiestoIl,
+                $"{(x.r.CollegaId is null ? "Modifica" : $"Scambio concordato con {nomiColleghi.GetValueOrDefault(x.r.CollegaId!.Value, "collega")}")}: {x.r.InizioOriginale:dd/MM HH:mm}–{x.r.FineOriginale:dd/MM HH:mm} → {x.r.NuovoInizio:dd/MM HH:mm}–{x.r.NuovaFine:dd/MM HH:mm}. {x.r.Note}", x.r.DecisoDa, x.r.MotivoRifiuto) { CambioTurno = true }));
         var conteggi = righe.GroupBy(x => x.Stato).ToDictionary(g => g.Key, g => g.Count());
         if (stato is { } filtro) righe = righe.Where(x => x.Stato == filtro).ToList();
         // In cima ciò che c'è da decidere (richieste in attesa e cancellazioni chieste), poi dalla più recente.

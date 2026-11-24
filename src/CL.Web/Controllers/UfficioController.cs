@@ -19,6 +19,7 @@ public sealed record GiornoUfficio(DateOnly Data, bool DelMese, bool Lavorativo,
     public string? MotivoRifiuto { get; init; }
     /// <summary>Ferie, permessi, malattia... in attesa o approvati che toccano il giorno.</summary>
     public List<RichiestaDelGiorno> Richieste { get; init; } = [];
+    public List<TurnoLavoro> Turni { get; init; } = [];
     public List<string> Chiusure { get; init; } = [];
     /// <summary>Straordinari del giorno (in attesa o approvati).</summary>
     public List<(decimal Ore, StatoRichiesta Stato)> Straordinari { get; init; } = [];
@@ -73,6 +74,9 @@ public sealed class UfficioController(AppDbContext db, UtenteCorrente utente, Se
         var richieste = modo == ModoLavoro.Presenza
             ? await db.GiorniSmartWorking.AsNoTracking().Where(g => g.DipendenteId == id && g.Giorno >= inizio && g.Giorno <= fine).ToDictionaryAsync(g => g.Giorno)
             : [];
+        var inizioTurni = inizio.ToDateTime(TimeOnly.MinValue);
+        var fineTurni = fine.AddDays(1).ToDateTime(TimeOnly.MinValue);
+        var turni = await db.TurniLavoro.AsNoTracking().Where(t => t.DipendenteId == id && t.PubblicatoIl != null && t.Inizio < fineTurni && t.Fine > inizioTurni).OrderBy(t => t.Inizio).ToListAsync();
         var segnati = (await db.GiorniInUfficio.AsNoTracking().Where(g => g.DipendenteId == id && g.Giorno >= inizio && g.Giorno <= fine)
             .Select(g => g.Giorno).ToListAsync()).ToHashSet();
         var assenze = await db.RichiesteAssenza.AsNoTracking()
@@ -101,6 +105,7 @@ public sealed class UfficioController(AppDbContext db, UtenteCorrente utente, Se
             var richiesta = richieste.GetValueOrDefault(g);
             giorni.Add(new GiornoUfficio(g, delMese, lavorativo, segnati.Contains(g), puoSegnare && libero && g >= daQuando)
             {
+                Turni = turni.Where(t => t.Inizio < giorno.AddDays(1).ToDateTime(TimeOnly.MinValue) && t.Fine > giorno.ToDateTime(TimeOnly.MinValue)).ToList(),
                 Smart = richiesta?.Stato, MotivoRifiuto = richiesta?.MotivoRifiuto,
                 Richieste = delGiorno.Select(r => new RichiestaDelGiorno(r.Tipo, r.Stato, r.AOre, r.AOre ? r.Ore : 0, r.Note)).ToList(),
                 Chiusure = chiusure.Where(c => c.Dal <= giorno && c.Al >= giorno).Select(c => c.Descrizione).ToList(),

@@ -238,3 +238,23 @@ Smart working, straordinari, cancellazioni, revoche e chiusure non mandano email
 - I campi di indirizzo suggeriscono comuni dall'elenco ISTAT (circa 8.000) e vie dal servizio Photon di OpenStreetMap
   (solo Italia), compilando CAP e provincia.
 - La partita IVA di una nuova azienda si verifica sul registro VIES della Commissione europea.
+
+## Turni di lavoro
+
+Il calendario mostra dipendenti, foto e badge del team sulle righe e i giorni sulle colonne. Sono disponibili viste giorno, settimana e mese e filtri per persona, team e sede abituale. La navigazione e i colori riprendono il calendario presenze. Le assenze approvate o in attesa compaiono nelle celle; le assenze approvate di giornata intera sono escluse dal conteggio delle ore pianificate. Non vengono calcolati cedolini, costi retributivi o maggiorazioni.
+
+### Turni salvati e cicli giornalieri
+
+La libreria per azienda contiene turni con nome, giorni della settimana e orari, oppure cicli giornalieri ordinati (es. Mattina 06–14 → Pomeriggio 14–22 → Notte 22–06 → Smonto → Riposo). I notturni terminano il giorno successivo; smonto e riposo non conteggiano ore lavorate. Il ciclo parte dalla prima fase alla data iniziale e avanza ogni giorno di calendario, ripetendosi; nei giorni della settimana esclusi non genera assegnazioni. Si può limitare un modello a uno o più team con una multiselezione facoltativa; senza selezione è disponibile per tutti. La modifica del modello non modifica retroattivamente le assegnazioni.
+
+Da **Nuovo turno** si selezionano uno o più dipendenti, un periodo e un modello salvato; in alternativa si indicano giorni e orari personalizzati. L'inserimento è unico e atomico: sovrapposizioni, team incompatibili, assenze approvate di giornata intera o giornate fuori dal rapporto di lavoro bloccano tutto l'invio. La durata massima di un turno lavorato è 24 ore, il periodo massimo è un anno. Lo smonto può seguire il notturno che termina al mattino.
+
+### Pubblicazione
+
+Le assegnazioni nascono in **bozza** e sono visibili solo al referente e al consulente nel rispettivo perimetro. **Pubblica i turni** rende visibili ai dipendenti i turni del periodo e dei filtri mostrati. Anche il calendario personale include solo turni pubblicati. Una modifica gestionale riporta il turno in bozza fino alla nuova pubblicazione. Prima della pubblicazione vengono ricontrollate le assenze approvate.
+
+### Richiesta di modifica e scambio
+
+Il dipendente sceglie **Modifica / scambio turno** dal modulo **Nuova richiesta**, oppure clicca un turno pubblicato nel proprio calendario turni. Può proporre un nuovo orario o selezionare un collega della stessa azienda e uno dei suoi turni pubblicati. Per lo scambio deve confermare l'accordo già raggiunto con il collega; questa dichiarazione non equivale a una conferma digitale del collega.
+
+La richiesta compare nel normale elenco **Richieste**, con gli stessi filtri per anno e stato. Finché è in attesa, i turni restano invariati e il richiedente può ritirarla. Decide il referente azienda: l'approvazione verifica proprietà, versioni dei turni, pubblicazione, date future, contratto, vincoli di team, assenze approvate e sovrapposizioni. Lo scambio aggiorna entrambe le assegnazioni nello stesso salvataggio; una modifica approvata è subito visibile. Se i turni sono stati modificati nel frattempo, lo scambio non viene applicato e serve una nuova richiesta. Il consulente vede le richieste nel proprio perimetro ma non le approva.

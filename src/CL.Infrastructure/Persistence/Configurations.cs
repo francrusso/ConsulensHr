@@ -349,3 +349,71 @@ internal sealed class ApplicationUserConfig : IEntityTypeConfiguration<Applicati
         b.HasIndex(x => x.DipendenteId).IsUnique();
     }
 }
+
+internal sealed class TurnoLavoroConfig : IEntityTypeConfiguration<TurnoLavoro>
+{
+    public void Configure(EntityTypeBuilder<TurnoLavoro> b)
+    {
+        b.ToTable("TurniLavoro");
+        b.Ignore(x => x.OreLavorate);
+        b.Ignore(x => x.TeamConsentiti);
+        b.Property(x => x.VincoliTeam).HasMaxLength(4000);
+        b.Property(x => x.Versione).IsConcurrencyToken();
+        b.Property(x => x.Nome).HasMaxLength(80);
+        b.Property(x => x.Id).ValueGeneratedNever();
+        b.Property(x => x.Inizio).HasColumnType("timestamp without time zone");
+        b.Property(x => x.Fine).HasColumnType("timestamp without time zone");
+        b.Property(x => x.Note).HasMaxLength(500);
+        b.HasOne<Dipendente>().WithMany().HasForeignKey(x => x.DipendenteId).OnDelete(DeleteBehavior.Cascade);
+        b.HasIndex(x => new { x.DipendenteId, x.Inizio, x.Fine });
+    }
+}
+
+internal sealed class TurnoSalvatoConfig : IEntityTypeConfiguration<TurnoSalvato>
+{
+    public void Configure(EntityTypeBuilder<TurnoSalvato> b)
+    {
+        b.ToTable("TurniSalvati");
+        b.Ignore(x => x.Ciclico);
+        b.Ignore(x => x.TeamConsentiti);
+        b.OwnsMany(x => x.TeamAbilitati, t =>
+        {
+            t.ToTable("TeamAbilitatiTurni"); t.WithOwner().HasForeignKey("TurnoSalvatoId");
+            t.HasKey(x => x.Id); t.Property(x => x.Id).ValueGeneratedNever();
+            t.HasIndex("TurnoSalvatoId", nameof(TeamAbilitatoTurno.TeamId)).IsUnique();
+        });
+        b.Navigation(x => x.TeamAbilitati).HasField("_teamAbilitati").UsePropertyAccessMode(PropertyAccessMode.Field).AutoInclude();
+        b.OwnsMany(x => x.Fasi, f =>
+        {
+            f.ToTable("FasiTurniSalvati");
+            f.WithOwner().HasForeignKey("TurnoSalvatoId");
+            f.HasKey(x => x.Id);
+            f.Property(x => x.Id).ValueGeneratedNever();
+            f.Property(x => x.Nome).HasMaxLength(80);
+            f.HasIndex("TurnoSalvatoId", nameof(FaseTurno.Ordine));
+        });
+        b.Navigation(x => x.Fasi).HasField("_fasi").UsePropertyAccessMode(PropertyAccessMode.Field).AutoInclude();
+        b.Property(x => x.Id).ValueGeneratedNever();
+        b.Property(x => x.Nome).HasMaxLength(80);
+        b.HasOne<Azienda>().WithMany().HasForeignKey(x => x.AziendaId).OnDelete(DeleteBehavior.Cascade);
+        b.HasIndex(x => new { x.AziendaId, x.Nome }).IsUnique();
+    }
+}
+
+internal sealed class RichiestaCambioTurnoConfig : IEntityTypeConfiguration<RichiestaCambioTurno>
+{
+    public void Configure(EntityTypeBuilder<RichiestaCambioTurno> b)
+    {
+        b.ToTable("RichiesteCambioTurno");
+        b.Property(x => x.Id).ValueGeneratedNever();
+        b.Property(x => x.Stato).IsConcurrencyToken();
+        b.Property(x => x.Note).HasMaxLength(1000);
+        b.Property(x => x.DecisoDa).HasMaxLength(256);
+        b.Property(x => x.MotivoRifiuto).HasMaxLength(1000);
+        foreach (var nome in new[] { nameof(RichiestaCambioTurno.InizioOriginale), nameof(RichiestaCambioTurno.FineOriginale), nameof(RichiestaCambioTurno.NuovoInizio), nameof(RichiestaCambioTurno.NuovaFine) })
+            b.Property<DateTime>(nome).HasColumnType("timestamp without time zone");
+        b.HasOne<Dipendente>().WithMany().HasForeignKey(x => x.DipendenteId).OnDelete(DeleteBehavior.Cascade);
+        b.HasIndex(x => new { x.DipendenteId, x.Stato });
+        b.HasIndex(x => x.TurnoId);
+    }
+}

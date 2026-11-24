@@ -17,7 +17,6 @@
     <section class="card radius-15 p-4 mb-3 text-center">
         <span class="elenco-vuoto-icona mx-auto" aria-hidden="true"><i class="ri-file-text-line"></i></span>
         <p class="text-body-secondary mb-3">Nessun contratto registrato.</p>
-        <div><a asp-action="Assumi" asp-route-id="@idDip" class="btn btn-primary"><i class="ri-file-add-line" aria-hidden="true"></i> Registra il contratto</a></div>
     </section>
 }
 else
@@ -31,7 +30,6 @@ else
                               : (inCorso ? "Incarico in corso" : corrente.DataInizio > oggi ? "Incarico firmato" : "Ultimo incarico"))
                 @if (!subordinato) { <span class="badge bg-info align-middle ms-1 fs-6">Professionista esterno</span> }
             </h2>
-            <a asp-action="Assumi" asp-route-id="@idDip" class="btn btn-outline-primary btn-sm">Nuovo contratto <i class="ri-file-add-line" aria-hidden="true"></i></a>
         </div>
         <dl class="campi-profilo valori-profilo mb-0 solo-lettura">
             <div><dt>Tipo di rapporto</dt><dd>@corrente.Tipo.Descrizione()</dd></div>

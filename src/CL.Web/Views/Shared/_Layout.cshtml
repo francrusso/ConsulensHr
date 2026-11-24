@@ -18,9 +18,13 @@
     var gestisce = !Utente.IsDipendente; // consulente o referente azienda
     (string? Url, string Etichetta, string Icona) azione = inOnboarding ? (null, "", "") : (sezione, pagina) switch
     {
+        ("turni", "Salvati" or "Modello") when Utente.IsAzienda || Utente.IsConsulente => (Url.Action("Modello", "Turni"), "Crea turno salvato", "ri-add-line"),
+        ("aziende", "Dettaglio") when gestisce => (Url.Action("Nuovo", "Dipendenti", new { aziendaId = ViewContext.RouteData.Values["id"] }), "Aggiungi persona", "ri-user-add-line"),
+        ("dipendenti", "Dettaglio") when gestisce && query["sezione"] == "contratto" => (Url.Action("Assumi", "Dipendenti", new { id = ViewContext.RouteData.Values["id"] }), "Nuovo contratto", "ri-file-add-line"),
         ("dipendenti", _) when gestisce => (Url.Action("Nuovo", "Dipendenti", new { aziendaId = query["aziendaId"].FirstOrDefault() }),
             query["esterni"] == "true" ? "Aggiungi professionista" : "Aggiungi persona", "ri-user-add-line"),
         ("aziende", _) when Utente.IsConsulente => (Url.Action("Nuova", "Aziende"), "Nuova azienda", "ri-add-line"),
+        ("turni", "Index") when Utente.IsAzienda || Utente.IsConsulente => (Url.Action("Modifica", "Turni"), "Nuovo turno", "ri-add-line"),
         ("team", "Index") => ("#nuovoTeam", "Nuovo team", "ri-add-line"),
         ("utenti", "Index" or "Nuovo") when Utente.IsConsulente => (Url.Action("Nuovo", "Utenti"), "Aggiungi altro utente", "ri-user-add-line"),
         ("consulenti", "Index") => ("#nuovoConsulente", "Nuovo consulente", "ri-user-add-line"),
@@ -215,6 +219,16 @@
                                         <li><a asp-controller="Assenze" asp-action="Index">Richieste</a></li>
                                         <li><a asp-controller="Presenze" asp-action="Index">Riepilogo presenze</a></li>
                                     </ul>
+                                </li>
+                            }
+                            @if (Utente.IsDipendente)
+                            {
+                                <li><a asp-controller="Turni" asp-action="Index"><div class="parent-icon icon-color-1"><i class="ri-time-line ri-xs"></i></div><div class="menu-title">I miei turni</div></a></li>
+                            }
+                            else
+                            {
+                                <li><a href="javascript:;" class="has-arrow"><div class="parent-icon icon-color-1"><i class="ri-time-line ri-xs"></i></div><div class="menu-title">Turni di lavoro</div></a>
+                                    <ul><li><a asp-controller="Turni" asp-action="Index">Calendario turni</a></li><li><a asp-controller="Turni" asp-action="Salvati">Turni salvati</a></li></ul>
                                 </li>
                             }
                             <li>

@@ -1,0 +1,57 @@
+@model TurnoSalvatoForm
+@{ ViewData["Title"] = Model.Id is null ? "Crea turno salvato" : "Modifica turno salvato"; }
+<h1 class="titolo-pagina mb-3">@ViewData["Title"]</h1>
+<div class="card radius-15"><div class="card-body"><form asp-action="Modello" method="post">
+<div asp-validation-summary="All" class="text-danger" role="alert"></div><input asp-for="Id" type="hidden" />
+<div class="row g-3">
+<div class="col-md-6"><label asp-for="AziendaId" class="form-label">Azienda</label>@if (Model.Id is null) { <select asp-for="AziendaId" asp-items="Model.Aziende" class="form-select" required><option value="">Seleziona azienda</option></select> } else { <input asp-for="AziendaId" type="hidden" /><p class="form-control-plaintext">@Model.Aziende.FirstOrDefault(a => a.Value == Model.AziendaId.ToString())?.Text</p> }</div>
+<div class="col-md-6"><label asp-for="Nome" class="form-label">Nome turno</label><input asp-for="Nome" class="form-control" placeholder="Es. Mattina o Rotazione" maxlength="80" required /></div>
+<div class="col-md-6 turni-selezione"><label asp-for="TeamIds" class="form-label">Team abilitati (facoltativo)</label><select asp-for="TeamIds" multiple class="form-select" data-placeholder="Tutti i team">@foreach (var t in Model.Team) { <option value="@t.Value" data-azienda="@t.Group?.Name">@t.Text</option> }</select></div>
+<div class="col-md-6"><label asp-for="Ciclico" class="form-label">Tipo di turno</label><select asp-for="Ciclico" class="form-select"><option value="false">Orario fisso</option><option value="true">Rotazione giornaliera</option></select></div>
+<partial name="_GiorniTurno" model="Model.Giorni" />
+<div class="col-12" id="orarioFisso"><div class="row g-3">
+<div class="col-md-6"><label asp-for="Inizio" class="form-label">Ora di inizio</label><input asp-for="Inizio" type="time" class="form-control" /></div>
+<div class="col-md-6"><label asp-for="Fine" class="form-label">Ora di fine</label><input asp-for="Fine" type="time" class="form-control" /></div>
+</div></div>
+<div class="col-12" id="cicloGiornaliero" hidden>
+<p class="small text-muted">Il ciclo parte dalla prima giornata alla data di assegnazione e avanza ogni giorno di calendario. Nei giorni della settimana esclusi non viene assegnato alcun turno. Smonto e riposo non conteggiano ore lavorate.</p>
+<div class="table-responsive"><table class="table align-middle"><thead><tr><th>Giorno del ciclo</th><th>Nome</th><th>Tipo</th><th>Inizio</th><th>Fine</th><th></th></tr></thead><tbody id="fasi">
+@for (var i = 0; i < Model.Fasi.Count; i++)
+{
+<tr class="fase-turno"><td class="numero-fase">@(i + 1)</td><td><input asp-for="Fasi[i].Nome" class="form-control" maxlength="80" aria-label="Nome giornata" /></td><td><select asp-for="Fasi[i].Tipo" class="form-select tipo-fase" aria-label="Tipo giornata"><option value="Lavoro">Lavoro</option><option value="Smonto">Smonto</option><option value="Riposo">Riposo</option></select></td><td><input asp-for="Fasi[i].Inizio" type="time" class="form-control ora-fase" aria-label="Ora inizio" /></td><td><input asp-for="Fasi[i].Fine" type="time" class="form-control ora-fase" aria-label="Ora fine" /></td><td><button type="button" class="btn btn-outline-danger btn-sm togli-fase" aria-label="Rimuovi giornata"><i class="ri-close-line" aria-hidden="true"></i></button></td></tr>
+}
+</tbody></table></div>
+<button type="button" class="btn btn-outline-primary btn-sm" id="aggiungiFase"><i class="ri-add-line" aria-hidden="true"></i> Aggiungi giornata al ciclo</button>
+</div>
+</div><div class="d-flex gap-2 mt-4"><a asp-action="Salvati" class="btn btn-outline-secondary">Annulla</a><button class="btn btn-primary" type="submit">Salva turno</button></div>
+</form></div></div>
+@section Scripts {
+<script>
+(() => {
+    const tipo = document.getElementById('Ciclico'), righe = document.getElementById('fasi');
+    function aggiorna() {
+        const ciclo = tipo.value === 'true';
+        document.getElementById('orarioFisso').hidden = ciclo;
+        document.getElementById('cicloGiornaliero').hidden = !ciclo;
+        righe.querySelectorAll('tr').forEach((r, i) => {
+            r.querySelector('.numero-fase').textContent = i + 1;
+            r.querySelectorAll('input,select').forEach(el => { el.name = el.name.replace(/Fasi\[\d+\]/, 'Fasi[' + i + ']'); });
+            r.querySelectorAll('.ora-fase').forEach(el => el.disabled = r.querySelector('.tipo-fase').value !== 'Lavoro');
+        });
+        document.getElementById('aggiungiFase').disabled = righe.children.length >= 31;
+    }
+    tipo.addEventListener('change', aggiorna);
+    righe.addEventListener('change', aggiorna);
+    righe.addEventListener('click', e => { const b = e.target.closest('.togli-fase'); if (b) { b.closest('tr').remove(); aggiorna(); } });
+    document.getElementById('aggiungiFase').addEventListener('click', () => {
+        const tr = document.createElement('tr'); tr.className = 'fase-turno';
+        tr.innerHTML = '<td class="numero-fase"></td><td><input name="Fasi[0].Nome" class="form-control" maxlength="80" aria-label="Nome giornata"></td><td><select name="Fasi[0].Tipo" class="form-select tipo-fase" aria-label="Tipo giornata"><option value="Lavoro">Lavoro</option><option value="Smonto">Smonto</option><option value="Riposo">Riposo</option></select></td><td><input name="Fasi[0].Inizio" type="time" class="form-control ora-fase" aria-label="Ora inizio"></td><td><input name="Fasi[0].Fine" type="time" class="form-control ora-fase" aria-label="Ora fine"></td><td><button type="button" class="btn btn-outline-danger btn-sm togli-fase" aria-label="Rimuovi giornata">×</button></td>';
+        righe.append(tr); aggiorna();
+    });
+    const azienda = document.getElementById('AziendaId'), team = document.getElementById('TeamIds');
+    if (window.jQuery && jQuery.fn.select2) jQuery(team).select2({ width: '100%', placeholder: 'Tutti i team', closeOnSelect: false });
+    function filtraTeam() { Array.from(team.options).forEach(o => { if (o.value) o.disabled = o.hidden = o.dataset.azienda !== azienda.value; }); Array.from(team.selectedOptions).forEach(o => { if (o.disabled) o.selected = false; }); if (window.jQuery) jQuery(team).trigger('change.select2'); }
+    azienda.addEventListener('change', filtraTeam); filtraTeam(); aggiorna();
+})();
+</script>
+}

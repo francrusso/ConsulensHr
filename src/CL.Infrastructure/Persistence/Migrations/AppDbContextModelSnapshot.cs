@@ -1025,6 +1025,75 @@ namespace CL.Infrastructure.Persistence.Migrations
                     b.ToTable("GiorniSmartWorking", "hr");
                 });
 
+            modelBuilder.Entity("CL.Domain.Presenze.RichiestaCambioTurno", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("AccordoCollega")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid?>("CollegaId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("DecisoDa")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<Guid>("DipendenteId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("FineOriginale")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<DateTime>("InizioOriginale")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("MotivoRifiuto")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("Note")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<DateTime>("NuovaFine")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<DateTime>("NuovoInizio")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<DateTime>("RichiestoIl")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Stato")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<Guid?>("TurnoCollegaId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TurnoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int?>("VersioneCollega")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("VersioneTurno")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TurnoId");
+
+                    b.HasIndex("DipendenteId", "Stato");
+
+                    b.ToTable("RichiesteCambioTurno", "hr");
+                });
+
             modelBuilder.Entity("CL.Domain.Presenze.RigaPresenze", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1138,6 +1207,87 @@ namespace CL.Infrastructure.Persistence.Migrations
                     b.HasIndex("Stato", "Giorno");
 
                     b.ToTable("Straordinari", "hr");
+                });
+
+            modelBuilder.Entity("CL.Domain.Presenze.TurnoLavoro", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("DipendenteId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("Fine")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<DateTime>("Inizio")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("Nome")
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime?>("PubblicatoIl")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("TeamVincolatoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<int>("Versione")
+                        .IsConcurrencyToken()
+                        .HasColumnType("integer");
+
+                    b.Property<string>("VincoliTeam")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DipendenteId", "Inizio", "Fine");
+
+                    b.ToTable("TurniLavoro", "hr");
+                });
+
+            modelBuilder.Entity("CL.Domain.Presenze.TurnoSalvato", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AziendaId")
+                        .HasColumnType("uuid");
+
+                    b.Property<TimeOnly>("Fine")
+                        .HasColumnType("time without time zone");
+
+                    b.Property<int>("GiorniSettimana")
+                        .HasColumnType("integer");
+
+                    b.Property<TimeOnly>("Inizio")
+                        .HasColumnType("time without time zone");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.Property<Guid?>("TeamId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AziendaId", "Nome")
+                        .IsUnique();
+
+                    b.ToTable("TurniSalvati", "hr");
                 });
 
             modelBuilder.Entity("CL.Infrastructure.Identity.ApplicationUser", b =>
@@ -1542,6 +1692,15 @@ namespace CL.Infrastructure.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("CL.Domain.Presenze.RichiestaCambioTurno", b =>
+                {
+                    b.HasOne("CL.Domain.Dipendenti.Dipendente", null)
+                        .WithMany()
+                        .HasForeignKey("DipendenteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("CL.Domain.Presenze.RigaPresenze", b =>
                 {
                     b.HasOne("CL.Domain.Presenze.ComunicazioneMensile", null)
@@ -1564,6 +1723,87 @@ namespace CL.Infrastructure.Persistence.Migrations
                         .HasForeignKey("DipendenteId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("CL.Domain.Presenze.TurnoLavoro", b =>
+                {
+                    b.HasOne("CL.Domain.Dipendenti.Dipendente", null)
+                        .WithMany()
+                        .HasForeignKey("DipendenteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("CL.Domain.Presenze.TurnoSalvato", b =>
+                {
+                    b.HasOne("CL.Domain.Aziende.Azienda", null)
+                        .WithMany()
+                        .HasForeignKey("AziendaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.OwnsMany("CL.Domain.Presenze.FaseTurno", "Fasi", b1 =>
+                        {
+                            b1.Property<Guid>("Id")
+                                .HasColumnType("uuid");
+
+                            b1.Property<TimeOnly?>("Fine")
+                                .HasColumnType("time without time zone");
+
+                            b1.Property<TimeOnly?>("Inizio")
+                                .HasColumnType("time without time zone");
+
+                            b1.Property<string>("Nome")
+                                .IsRequired()
+                                .HasMaxLength(80)
+                                .HasColumnType("character varying(80)");
+
+                            b1.Property<int>("Ordine")
+                                .HasColumnType("integer");
+
+                            b1.Property<string>("Tipo")
+                                .IsRequired()
+                                .HasMaxLength(32)
+                                .HasColumnType("character varying(32)");
+
+                            b1.Property<Guid>("TurnoSalvatoId")
+                                .HasColumnType("uuid");
+
+                            b1.HasKey("Id");
+
+                            b1.HasIndex("TurnoSalvatoId", "Ordine");
+
+                            b1.ToTable("FasiTurniSalvati", "hr");
+
+                            b1.WithOwner()
+                                .HasForeignKey("TurnoSalvatoId");
+                        });
+
+                    b.OwnsMany("CL.Domain.Presenze.TeamAbilitatoTurno", "TeamAbilitati", b1 =>
+                        {
+                            b1.Property<Guid>("Id")
+                                .HasColumnType("uuid");
+
+                            b1.Property<Guid>("TeamId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<Guid>("TurnoSalvatoId")
+                                .HasColumnType("uuid");
+
+                            b1.HasKey("Id");
+
+                            b1.HasIndex("TurnoSalvatoId", "TeamId")
+                                .IsUnique();
+
+                            b1.ToTable("TeamAbilitatiTurni", "hr");
+
+                            b1.WithOwner()
+                                .HasForeignKey("TurnoSalvatoId");
+                        });
+
+                    b.Navigation("Fasi");
+
+                    b.Navigation("TeamAbilitati");
                 });
 
             modelBuilder.Entity("CL.Infrastructure.Identity.ApplicationUser", b =>

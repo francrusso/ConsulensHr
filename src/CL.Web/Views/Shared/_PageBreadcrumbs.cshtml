@@ -17,6 +17,7 @@
         "DatiPersonali" => ("I miei dati", null),
         "MioContratto" => ("Il mio contratto", null),
         "Consulenti" => ("Consulenti", Url.Action("Index", "Consulenti")),
+        "Turni" => (Utente.IsDipendente ? "I miei turni" : "Turni di lavoro", Url.Action("Index", "Turni")),
         "Ufficio" => ("Calendario", Url.Action("Index", "Ufficio")),
         "Account" => ("Profilo", null),
         _ => (controller, null),

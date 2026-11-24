@@ -93,6 +93,10 @@
                 @if (g.DelMese)
                 {
                     <span class="voci-giorno">
+                        @foreach (var t in g.Turni)
+                        {
+                            <a asp-controller="Turni" asp-action="Index" asp-route-data="@g.Data.ToString("yyyy-MM-dd")" class="voce-giorno" title="@t.Note"><i class="ri-time-line" aria-hidden="true"></i> @(t.Nome ?? "Turno") @if (t.Tipo == TipoGiornataTurno.Lavoro) { <span>@t.Inizio.ToString("dd/MM HH:mm") – @t.Fine.ToString("dd/MM HH:mm")</span> }</a>
+                        }
                         @foreach (var r in g.Richieste)
                         {
                             <span class="voce-giorno @(r.Stato == StatoRichiesta.InAttesa ? "in-attesa" : "")" data-filtro="@Filtro(r.Tipo)" style="--colore-cat:@Colore(r.Tipo)" title="@r.Note">
