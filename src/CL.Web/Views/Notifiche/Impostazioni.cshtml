@@ -30,7 +30,7 @@
             <div class="d-flex align-items-center">
                 <i class="ri-notification-line icon-canale notifiche-canale-icona" aria-hidden="true"></i>
                 <div class="ms-3">
-                    <h2 class="h5 text-primary" id="titolo-canali">Canali di ricezione</h2>
+                    <h2 class="titolo-sezione-notifiche mb-1" id="titolo-canali">Canali di ricezione</h2>
                     <p class="mb-0">Le notifiche in piattaforma sono sempre attive. Per ogni tipologia scegli se ricevere anche l'email.</p>
                 </div>
             </div>
@@ -72,7 +72,7 @@
 
     <section class="card radius-15 p-3 card-categorie-wrapper card-tinted" aria-labelledby="titolo-categorie">
         <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-            <h2 class="h5 text-primary mb-0" id="titolo-categorie"><i class="ri-list-check-3 icon-canale notifiche-canale-icona" aria-hidden="true"></i> Categorie di notifica</h2>
+            <h2 class="titolo-sezione-notifiche mb-0" id="titolo-categorie"><i class="ri-list-check-3 icon-canale notifiche-canale-icona" aria-hidden="true"></i> Categorie di notifica</h2>
             <span class="stato-salvataggio" role="status" aria-live="polite"></span>
         </div>
 
@@ -81,7 +81,7 @@
             var idSezione = $"sezione-{g.Categoria}";
             <section class="card p-3 radius-15 card-categoria-notifica" aria-labelledby="@idSezione">
                 <div class="d-flex justify-content-between align-items-center gap-2">
-                    <h3 class="h5 text-primary mb-0" id="@idSezione"><i class="@IconeNotifiche.Di(g.Categoria) me-1" aria-hidden="true"></i> @g.Categoria.Descrizione()</h3>
+                    <h3 class="titolo-sezione-notifiche mb-0" id="@idSezione"><i class="@IconeNotifiche.Di(g.Categoria)" aria-hidden="true"></i> @g.Categoria.Descrizione()</h3>
                     <button type="button" class="btn btn-link text-info fw-medium p-0 toggle-categoria">@(g.Tipi.Any(t => t.Email) ? "Disattiva tutte" : "Attiva tutte")</button>
                 </div>
                 <div class="notifiche-tipi">
@@ -108,7 +108,7 @@
         }
 
         <section class="card p-3 radius-15 card-categoria-notifica mb-0" aria-labelledby="sezione-accesso">
-            <h3 class="h5 text-primary mb-0" id="sezione-accesso"><i class="ri-shield-keyhole-line me-1" aria-hidden="true"></i> Accesso e sicurezza</h3>
+            <h3 class="titolo-sezione-notifiche mb-0" id="sezione-accesso"><i class="ri-shield-keyhole-line" aria-hidden="true"></i> Accesso e sicurezza</h3>
             <div class="notifiche-tipi">
                 @foreach (var a in CatalogoNotifiche.SempreAttivi)
                 {

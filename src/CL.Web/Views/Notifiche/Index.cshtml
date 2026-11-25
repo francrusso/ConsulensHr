@@ -51,7 +51,7 @@
 <div class="elenco-notifiche">
     @if (Model.Notifiche.Count == 0)
     {
-        <div class="card radius-15 p-4 text-center elenco-vuoto">
+        <div class="card radius-15 elenco-vuoto" role="status">
             <span class="elenco-vuoto-icona" aria-hidden="true"><i class="ri-notification-2-line"></i></span>
             <div>@(Model.Ricerca is null && Model.Categoria is null && !Model.SoloDaLeggere ? "Non ci sono notifiche" : "Nessuna notifica con questi filtri")</div>
         </div>
