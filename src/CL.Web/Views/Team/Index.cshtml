@@ -1,6 +1,8 @@
 @model OrganigrammaViewModel
 @{
     ViewData["Title"] = "Team";
+    // Il consulente arriva dal profilo dell'azienda: nel percorso, il nome dell'azienda riporta lì.
+    if (Model.PerConto) ViewData["Percorso"] = new List<(string, string?)> { ("Aziende", Url.Action("Index", "Aziende")), (Model.Azienda, Url.Action("Index", "Onboarding", new { aziendaId = Model.AziendaId })) };
     // Ricerca per nome del team o di una persona che ne fa parte.
     var q = ViewBag.Ricerca as string;
     bool Corrisponde(CL.Domain.Organizzazione.Team t) => string.IsNullOrEmpty(q)
@@ -11,13 +13,7 @@
     string? Avatar(MembroTeam m) => m.HaFoto ? Url.Action("Foto", "Dipendenti", new { id = m.Id }) : Url.Content($"~/assets/images/avatar/{m.Segnaposto}.png");
 }
 <div class="breadcrumb-titolo d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
-    <div>
-        @if (Model.PerConto)
-        {
-            <a asp-controller="Aziende" asp-action="Dettaglio" asp-route-id="@Model.AziendaId" class="small text-body-secondary"><i class="ri-arrow-left-s-line" aria-hidden="true"></i> @Model.Azienda</a>
-        }
-        <h1 class="titolo-pagina mb-0">Team</h1>
-    </div>
+    <h1 class="titolo-pagina mb-0">Team</h1>
 </div>
 
 <form asp-action="Index" method="get" class="invoice-filter-bar customer-filter-form">

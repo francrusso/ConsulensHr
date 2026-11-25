@@ -1,17 +1,13 @@
 @model OrganigrammaViewModel
 @{
     ViewData["Title"] = "Organigramma";
+    // Il consulente arriva dal profilo dell'azienda: nel percorso, il nome dell'azienda riporta lì.
+    if (Model.PerConto) ViewData["Percorso"] = new List<(string, string?)> { ("Aziende", Url.Action("Index", "Aziende")), (Model.Azienda, Url.Action("Index", "Onboarding", new { aziendaId = Model.AziendaId })) };
     // Il nodo dell'azienda in cima al grafico mostra il logo (letto da _Nodo).
     if (Model.HaLogo) ViewData["LogoAzienda"] = Url.Action("Logo", "Aziende", new { id = Model.AziendaId });
 }
 <div class="breadcrumb-titolo d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
-    <div>
-        @if (Model.PerConto)
-        {
-            <a asp-controller="Aziende" asp-action="Dettaglio" asp-route-id="@Model.AziendaId" class="small text-body-secondary"><i class="ri-arrow-left-s-line" aria-hidden="true"></i> @Model.Azienda</a>
-        }
-        <h1 class="titolo-pagina mb-0">Organigramma</h1>
-    </div>
+    <h1 class="titolo-pagina mb-0">Organigramma</h1>
     @if (Model.Team.Count > 0 || Model.Dipendenti.Count > 0)
     {
         <div class="org-strumenti d-flex gap-2" aria-label="Zoom del grafico">

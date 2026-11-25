@@ -51,7 +51,7 @@ public sealed class FlussiWebTests : IDisposable
         });
         var html = await Testo(r);
         Assert.Contains("Azienda Acme S.r.l. creata", html);
-        Assert.Contains("Via Roma 1, 56121 Pisa (PI)", html);
+        Assert.Contains("P.IVA 01234567897 · Pisa", html); // si arriva al profilo dell'azienda
         var aziendaId = await _app.ConDb(db => db.Aziende.Select(a => a.Id).SingleAsync());
 
         // Partita IVA duplicata

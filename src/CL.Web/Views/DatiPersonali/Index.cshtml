@@ -5,13 +5,18 @@
     // Studio e referente compilano per conto del dipendente: la persona viaggia nei link e nei moduli (_IdDipendente).
     Guid? dipendenteId = Model.PerConto ? Model.Dipendente.Id : null;
     if (dipendenteId is not null) ViewData["DipendenteIdDati"] = dipendenteId;
+    // Per conto della persona: nel percorso il suo nome riporta alla sua scheda.
+    if (Model.PerConto)
+        ViewData["Percorso"] = new List<(string, string?)>
+        {
+            ("Personale", Url.Action("Index", "Dipendenti")), (Model.Dipendente.NomeCompleto, Url.Action("Dettaglio", "Dipendenti", new { id = Model.Dipendente.Id })),
+        };
     ViewData["Completo"] = p.Completato; // i pulsanti delle sezioni: "Salva" invece di "Salva e continua"
 }
 <div class="breadcrumb-titolo mb-3">
     <div>
         @if (Model.PerConto)
         {
-            <a asp-controller="Dipendenti" asp-action="Dettaglio" asp-route-id="@Model.Dipendente.Id" class="small text-body-secondary"><i class="ri-arrow-left-s-line" aria-hidden="true"></i> @Model.Dipendente.NomeCompleto</a>
             <h1 class="titolo-pagina mb-0">Dati personali di @Model.Dipendente.NomeCompleto</h1>
         }
         else

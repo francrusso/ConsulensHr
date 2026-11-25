@@ -198,23 +198,33 @@ public sealed class OnboardingWebTests : IDisposable
     [Fact]
     public async Task Lo_studio_vede_lo_stato_e_puo_compilare_per_conto_dell_azienda()
     {
-        await ReferenteNuovo();
+        var hr = await ReferenteNuovo();
         await _app.CreaUtente("consulente@test.it", Ruoli.Consulente);
         var consulente = _app.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = true });
         await consulente.Accedi("consulente@test.it");
 
+        // La scheda dell'azienda è la stessa pagina "Profilo azienda" del referente, con in più le azioni dello studio.
         var scheda = WebUtility.HtmlDecode(await consulente.GetStringAsync($"/Aziende/Dettaglio/{_aziendaId}"));
-        Assert.Contains("Non iniziato", scheda);
+        Assert.Contains("Profilo azienda", scheda);
+        Assert.Contains("ACME S.R.L.", scheda);
+        Assert.Contains("Da completare", scheda);
+        Assert.Contains("1. Dati societari", scheda);
+        Assert.Contains("Referenti con accesso al portale", scheda);
+        Assert.Contains("Disattiva", scheda);
         Assert.Contains("Profilo da completare", WebUtility.HtmlDecode(await consulente.GetStringAsync("/Aziende")));
 
         var pagina = $"/Onboarding?aziendaId={_aziendaId}";
         var html = await Testo(await Passo(consulente, "Societari", new(Societari) { ["aziendaId"] = _aziendaId.ToString() }, pagina));
-        Assert.Contains("Profilo di Acme S.r.l.", html);
         Assert.Contains("2. Sedi", html);
 
         scheda = WebUtility.HtmlDecode(await consulente.GetStringAsync($"/Aziende/Dettaglio/{_aziendaId}"));
-        Assert.Contains("In compilazione", scheda);
-        Assert.Contains("passo 2 di 6", scheda);
+        Assert.Contains("2. Sedi", scheda);
+
+        // Il referente vede la stessa pagina, senza le azioni dello studio.
+        var suo = WebUtility.HtmlDecode(await hr.GetStringAsync("/Onboarding"));
+        Assert.Contains("2. Sedi", suo);
+        Assert.DoesNotContain("Referenti con accesso al portale", suo);
+        Assert.DoesNotContain("Disattiva", suo);
     }
 
     [Fact]

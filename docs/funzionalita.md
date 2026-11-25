@@ -25,6 +25,10 @@ CU e contratti. **Non calcola i cedolini**: i PDF arrivano dal gestionale paghe 
 
 Il pulsante in alto a destra cambia con la sezione ("Aggiungi persona", "Nuova azienda", "Nuova richiesta", "Carica busta paga"…).
 
+Negli elenchi ogni filtro applicato (ricerca, azienda, consulente, team, sezione…) compare come chip sotto la barra dei
+filtri: la ✕ lo toglie e torna a mostrare tutto. Nel percorso in alto i livelli sono cliccabili (es. Aziende › nome
+dell'azienda › Organigramma): non ci sono link "indietro" sopra il titolo.
+
 ## Accesso
 
 - Login con email e password (almeno 10 caratteri, con maiuscole, minuscole e numeri). Dopo 5 tentativi falliti
@@ -37,10 +41,16 @@ Il pulsante in alto a destra cambia con la sezione ("Aggiungi persona", "Nuova a
 
 ## Aziende
 
-- **Elenco** (studio): ricerca per ragione sociale o partita IVA; il super amministratore filtra per consulente e vede
-  la colonna "Consulente".
+- **Elenco** (studio): tutte le aziende, anche le disattivate, con la colonna Stato e le pillole Tutte, Attive,
+  Profilo da completare, Disattivate; ricerca per ragione sociale o partita IVA; il super amministratore filtra per
+  consulente e vede la colonna "Consulente".
 - **Nuova azienda**: la partita IVA viene verificata sul registro europeo VIES, che precompila ragione sociale e sede.
-- **Scheda**: dati, personale, stato del profilo e referenti (con invito).
+- **Scheda**: è la stessa pagina **Profilo azienda** del referente (intestazione con logo e stato, schede o passi del
+  percorso), con in più le azioni dello studio: personale, organigramma, disattivazione,
+  consulente assegnato (per il super amministratore) e i referenti con accesso al portale (con invito).
+- **Eliminazione**: un'azienda disattivata si può eliminare per sempre dal suo profilo ("Elimina", scrivendo la ragione
+  sociale come conferma). Si cancellano anche personale, contratti, buste paga, CU, documenti e archivio storico,
+  presenze, richieste, turni, team e gli accessi di referenti e dipendenti, con i file nell'archivio.
 
 ### Profilo azienda (percorso guidato)
 

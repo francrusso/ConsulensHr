@@ -1,7 +1,10 @@
 @model OnboardingViewModel
+@inject UtenteCorrente Utente
 @*
     Percorso guidato (profilo da completare): passi numerati, si torna solo a quelli già fatti.
     Profilo completo: le stesse sezioni come schede, più "Tipi di richiesta".
+    È la stessa pagina per il referente e per il consulente (che arriva da Aziende): cambiano solo i permessi. Il consulente
+    ha in più le azioni dello studio nell'intestazione e, in fondo, i referenti con accesso al portale.
 *@
 @{
     var p = Model.Profilo;
@@ -13,6 +16,7 @@
     // Numero mostrato: per una nuova attività il passo "Cambio consulente" non c'è e il riepilogo diventa il 6.
     int Numero(int passo) => !p.Subentro && passo > CL.Domain.Aziende.ProfiloAzienda.PassoSubentro ? passo - 1 : passo;
     if (aziendaId is not null) ViewData["AziendaIdOnboarding"] = aziendaId; // i form del consulente indicano l'azienda (_AziendaId)
+    if (Model.PerContoAzienda) ViewData["Percorso"] = new List<(string Nome, string? Link)> { ("Aziende", Url.Action("Index", "Aziende")) };
     var titoliSchede = new (int Passo, string Titolo, string Icona)[]
     {
         (1, "Dati societari", "ri-building-2-line"), (2, "Sedi", "ri-map-pin-line"), (3, "Legale rappresentante", "ri-user-star-line"),
@@ -22,11 +26,7 @@
     };
 }
 <div class="breadcrumb-titolo mb-3">
-    @if (Model.PerContoAzienda)
-    {
-        <a asp-controller="Aziende" asp-action="Dettaglio" asp-route-id="@Model.AziendaId" class="small text-body-secondary"><i class="ri-arrow-left-s-line" aria-hidden="true"></i> @Model.Azienda.RagioneSociale</a>
-    }
-    <h1 class="titolo-pagina mb-0">@(Model.PerContoAzienda ? "Profilo di " + Model.Azienda.RagioneSociale : ViewData["Title"])</h1>
+    <h1 class="titolo-pagina mb-0">@ViewData["Title"]</h1>
     @if (!completo && !Model.PerContoAzienda)
     {
         <p class="text-body-secondary mb-0">Prima di iniziare servono alcune informazioni sull'azienda: il consulente le usa per gestire assunzioni, paghe e adempimenti. Ci vogliono circa 10 minuti e puoi interrompere quando vuoi: i dati di ogni passo restano salvati.</p>
@@ -50,12 +50,32 @@
                     <h2 class="fs-5 mb-0 text-breadcrumb nome-profilo d-flex align-items-center gap-2 flex-wrap">
                         @Model.Azienda.RagioneSociale.ToUpperInvariant()
                         <span class="badge badge-stato" style="--colore-stato:@(completo ? "#2FBA6C" : "#F2B544")"><span class="pallino-stato" aria-hidden="true"></span>@(completo ? "Profilo completo" : "Da completare")</span>
+                        @if (!Model.Azienda.Attiva) { <span class="badge badge-stato" style="--colore-stato:#9AA3AE"><span class="pallino-stato" aria-hidden="true"></span>Disattivata</span> }
                     </h2>
                     <div class="azienda-profilo">@string.Join(" · ", new[] { p.FormaGiuridica, "P.IVA " + Model.Azienda.PartitaIva.Valore, Model.Azienda.Comune }.Where(x => !string.IsNullOrWhiteSpace(x)))</div>
+                    @if (Model.PerContoAzienda && Utente.IsAmministratore)
+                    {
+                        <div class="azienda-profilo">Consulente: @(Model.Consulente ?? "nessuno")</div>
+                    }
                     @if (completo && p.CompletatoIl is { } il) { <div class="mansione-profilo">Completato il @il.ToLocalTime().ToString("dd/MM/yyyy")</div> }
                 </div>
             </div>
-            <div class="d-flex align-items-center gap-2">
+            <div class="d-flex flex-wrap align-items-center justify-content-end gap-2">
+                @if (Model.PerContoAzienda)
+                {
+                    @* Azioni dello studio: il referente le ha nel menù (personale, organigramma) o non le ha (disattivazione). *@
+                    <a asp-controller="Dipendenti" asp-action="Index" asp-route-aziendaId="@Model.AziendaId" class="btn btn-outline-primary btn-sm"><i class="ri-team-line" aria-hidden="true"></i> Personale (@Model.Personale)</a>
+                    <a asp-controller="Team" asp-action="Organigramma" asp-route-aziendaId="@Model.AziendaId" class="btn btn-outline-primary btn-sm"><i class="ri-organization-chart" aria-hidden="true"></i> Organigramma</a>
+                    <form asp-controller="Aziende" asp-action="CambiaStato" asp-route-id="@Model.AziendaId" method="post" class="m-0"
+                          onsubmit="@(Model.Azienda.Attiva ? "return confirm('Disattivare questa azienda? Non comparirà più tra le aziende attive.');" : null)">
+                        <button type="submit" class="btn btn-outline-primary btn-sm"><i class="@(Model.Azienda.Attiva ? "ri-forbid-line" : "ri-checkbox-circle-line")" aria-hidden="true"></i> @(Model.Azienda.Attiva ? "Disattiva" : "Riattiva")</button>
+                    </form>
+                    @if (!Model.Azienda.Attiva)
+                    {
+                        @* Solo un'azienda disattivata si può eliminare, con la conferma nella finestra in fondo alla pagina. *@
+                        <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#eliminaAzienda"><i class="ri-delete-bin-line" aria-hidden="true"></i> Elimina</button>
+                    }
+                }
                 <form asp-action="CaricaLogo" method="post" enctype="multipart/form-data" class="m-0">
                     <partial name="_AziendaId" />
                     <input type="hidden" name="passo" value="@Model.Passo" />
@@ -72,6 +92,24 @@
                 }
             </div>
         </div>
+        @if (Model.Referenti is { } referenti)
+        {
+            @* Solo per il consulente: chi dell'azienda accede al portale (è il referente a completare il profilo). *@
+            <section class="referenti-azienda" aria-labelledby="titoloAccessi">
+                <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+                    <h2 class="titolo-card-panoramica mb-0" id="titoloAccessi"><i class="ri-shield-user-line" aria-hidden="true"></i> Referenti con accesso al portale</h2>
+                    <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="collapse" data-bs-target="#nuovoReferente" aria-expanded="false" aria-controls="nuovoReferente">
+                        <i class="ri-user-add-line" aria-hidden="true"></i> Invita un referente
+                    </button>
+                </div>
+                <div class="collapse mt-3" id="nuovoReferente">
+                    <partial name="~/Views/Utenti/_FormInvito.cshtml" model='("InvitaReferente", (Guid?)Model.AziendaId, "Invita")' />
+                </div>
+                <div class="mt-3">
+                    <partial name="~/Views/Utenti/_TabellaAccessi.cshtml" model='(referenti, Context.Request.Path + Context.Request.QueryString, false)' />
+                </div>
+            </section>
+        }
     </div>
 </div>
 
@@ -145,6 +183,31 @@ else
         default: <partial name="_Riepilogo" model="Model" /> break;
     }
 </section>
+
+@if (Model.PerContoAzienda && !Model.Azienda.Attiva)
+{
+    <div class="modal fade" id="eliminaAzienda" tabindex="-1" aria-labelledby="titoloEliminaAzienda" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <form asp-controller="Aziende" asp-action="Elimina" asp-route-id="@Model.AziendaId" method="post" class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title fs-5" id="titoloEliminaAzienda">Eliminare @Model.Azienda.RagioneSociale?</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Si cancellano per sempre l'azienda e tutti i suoi dati: personale e contratti, buste paga, CU, documenti e archivio
+                        storico, presenze, richieste, turni, team e gli accessi al portale di referenti e dipendenti. <strong>Non si può annullare.</strong></p>
+                    <p class="small text-body-secondary">Prima scarica i documenti che lo studio deve conservare per legge.</p>
+                    <label for="confermaEliminaAzienda" class="form-label">Per confermare scrivi <strong>@Model.Azienda.RagioneSociale</strong></label>
+                    <input id="confermaEliminaAzienda" name="conferma" class="form-control" autocomplete="off" required />
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">Annulla</button>
+                    <button type="submit" class="btn btn-danger"><i class="ri-delete-bin-line" aria-hidden="true"></i> Elimina definitivamente</button>
+                </div>
+            </form>
+        </div>
+    </div>
+}
 
 @section Scripts {
     <script>

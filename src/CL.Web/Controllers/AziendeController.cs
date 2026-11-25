@@ -72,17 +72,44 @@ public sealed class AziendaForm
     };
 }
 
-public sealed record AziendaRiga(Guid Id, string RagioneSociale, string PartitaIva, string? Comune, bool Attiva, int Dipendenti, bool ProfiloCompleto);
+public sealed record AziendaRiga(Guid Id, string RagioneSociale, string PartitaIva, string? Comune, bool Attiva, int Dipendenti, bool ProfiloCompleto)
+{
+    public StatoAzienda Stato => !Attiva ? StatoAzienda.Disattivata : ProfiloCompleto ? StatoAzienda.Attiva : StatoAzienda.DaCompletare;
+}
+
+/// <summary>Stato di un'azienda nell'elenco (pillole e colonna): attiva con profilo completo, da completare, disattivata.</summary>
+public enum StatoAzienda { Attiva, DaCompletare, Disattivata }
+
+public static class StatoAziendaExtensions
+{
+    public static string Chiave(this StatoAzienda s) => s switch
+    {
+        StatoAzienda.Attiva => "attive", StatoAzienda.DaCompletare => "da-completare", _ => "disattivate",
+    };
+
+    public static string Descrizione(this StatoAzienda s, bool plurale = false) => s switch
+    {
+        StatoAzienda.Attiva => plurale ? "Attive" : "Attiva",
+        StatoAzienda.DaCompletare => "Profilo da completare",
+        _ => plurale ? "Disattivate" : "Disattivata",
+    };
+
+    public static string Colore(this StatoAzienda s) => s switch
+    {
+        StatoAzienda.Attiva => "#2FBA6C", StatoAzienda.DaCompletare => "#F2B544", _ => "#9AA3AE",
+    };
+}
 
 /// <summary>
 /// Aziende clienti dello studio. Il consulente vede (e trova nella ricerca) solo quelle del suo perimetro;
 /// quelle che crea gli vengono assegnate subito. Il super amministratore le vede tutte e può filtrarle per consulente.
 /// </summary>
 [Authorize(Policy = Policy.SoloConsulente)]
-public sealed class AziendeController(AppDbContext db, ServizioAccessi accessi, ServizioConsulentiAziende consulenti, LoghiAziende loghi,
-    IArchivioDocumenti archivio, IRicercaPartitaIva registro, UtenteCorrente utente) : AppController
+public sealed class AziendeController(AppDbContext db, ServizioConsulentiAziende consulenti, LoghiAziende loghi,
+    IArchivioDocumenti archivio, IRicercaPartitaIva registro, UtenteCorrente utente, EliminazioneAzienda eliminazione) : AppController
 {
-    public async Task<IActionResult> Index(string? q, string? consulenteId)
+    /// <summary>Tutte le aziende del perimetro, anche disattivate, con le pillole per stato (come nel personale).</summary>
+    public async Task<IActionResult> Index(string? q, string? consulenteId, string? stato)
     {
         var query = db.Aziende.AsNoTracking();
         if (utente.IsAmministratore && !string.IsNullOrEmpty(consulenteId))
@@ -97,14 +124,19 @@ public sealed class AziendeController(AppDbContext db, ServizioAccessi accessi, 
             query = query.Where(a => a.RagioneSociale.ToLower().Contains(testo) || ((string)(object)a.PartitaIva).Contains(testo));
         }
 
-        var righe = await query
+        var tutte = await query
             .OrderBy(a => a.RagioneSociale)
             .Select(a => new AziendaRiga(a.Id, a.RagioneSociale, a.PartitaIva.Valore, a.Comune, a.Attiva,
                 db.Dipendenti.Count(d => d.AziendaId == a.Id),
                 db.ProfiliAzienda.Any(p => p.AziendaId == a.Id && p.CompletatoIl != null)))
             .ToListAsync();
+        var scelto = Enum.GetValues<StatoAzienda>().Cast<StatoAzienda?>().FirstOrDefault(s => s!.Value.Chiave() == stato);
+        var righe = scelto is { } st ? tutte.Where(a => a.Stato == st).ToList() : tutte;
 
         ViewBag.Ricerca = q;
+        ViewBag.Stato = scelto;
+        ViewBag.Totale = tutte.Count;
+        ViewBag.Conteggi = Enum.GetValues<StatoAzienda>().ToDictionary(s => s, s => tutte.Count(a => a.Stato == s));
         ViewBag.Consulenti = await consulenti.ElencoAsync(consulenteId);
         ViewBag.ConsulentiAziende = await consulenti.NomiAsync();
         return View(righe);
@@ -171,7 +203,7 @@ public sealed class AziendeController(AppDbContext db, ServizioAccessi accessi, 
 
         await db.SaveChangesAsync();
         Conferma(form.Id is null ? $"Azienda {azienda.RagioneSociale} creata." : "Modifiche salvate.");
-        return RedirectToAction(nameof(Dettaglio), new { id = azienda.Id });
+        return RedirectToAction("Index", "Onboarding", new { aziendaId = azienda.Id });
     }
 
     /// <summary>Precompilazione del modulo: dati dell'impresa dal registro VIES a partire dalla partita IVA.</summary>
@@ -211,19 +243,28 @@ public sealed class AziendeController(AppDbContext db, ServizioAccessi accessi, 
         return File(file, LoghiAziende.TipoMime(chiave));
     }
 
-    public async Task<IActionResult> Dettaglio(Guid id)
+    /// <summary>
+    /// La scheda dell'azienda è la stessa pagina "Profilo azienda" del referente, con in più le azioni dello studio:
+    /// questo indirizzo resta valido (link nelle notifiche, negli elenchi) e porta lì.
+    /// </summary>
+    public IActionResult Dettaglio(Guid id) => RedirectToAction("Index", "Onboarding", new { aziendaId = id });
+
+    /// <summary>
+    /// Elimina per sempre un'azienda disattivata con tutti i suoi dati (vedi <see cref="EliminazioneAzienda"/>):
+    /// la conferma è la ragione sociale scritta per intero.
+    /// </summary>
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> Elimina(Guid id, string? conferma)
     {
-        var azienda = await db.Aziende.AsNoTracking().FirstOrDefaultAsync(a => a.Id == id);
-        if (azienda is null) return NotFound();
-        ViewBag.Dipendenti = await db.Dipendenti.AsNoTracking()
-            .Where(d => d.AziendaId == id)
-            .OrderBy(d => d.Cognome).ThenBy(d => d.Nome)
-            .ToListAsync();
-        ViewBag.Profilo = await db.ProfiliAzienda.AsNoTracking().FirstOrDefaultAsync(p => p.AziendaId == id);
-        ViewBag.Referenti = await accessi.Elenco().Where(u => u.AziendaId == id && u.Ruolo == Ruoli.Azienda)
-            .OrderBy(u => u.Nome).ToListAsync();
-        ViewBag.ConsulentiAziende = await consulenti.NomiAsync();
-        return View(azienda);
+        var nome = await db.Aziende.Where(a => a.Id == id).Select(a => a.RagioneSociale).FirstOrDefaultAsync();
+        if (nome is null) return NotFound();
+        if (await eliminazione.EliminaAsync(id, conferma) is { } errore)
+        {
+            Errore(errore);
+            return RedirectToAction("Index", "Onboarding", new { aziendaId = id });
+        }
+        Conferma($"{nome} è stata eliminata con tutti i suoi dati.");
+        return RedirectToAction(nameof(Index));
     }
 
     [HttpPost, ValidateAntiForgeryToken]
@@ -234,7 +275,7 @@ public sealed class AziendeController(AppDbContext db, ServizioAccessi accessi, 
         if (azienda.Attiva) azienda.Disattiva(); else azienda.Riattiva();
         await db.SaveChangesAsync();
         Conferma(azienda.Attiva ? "Azienda riattivata." : "Azienda disattivata.");
-        return RedirectToAction(nameof(Dettaglio), new { id });
+        return RedirectToAction("Index", "Onboarding", new { aziendaId = id });
     }
 
     /// <summary>Il campo del form a cui si riferisce un messaggio del dominio (riconosciuto dal testo); "" = errore generale.</summary>

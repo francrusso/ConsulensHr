@@ -181,7 +181,7 @@ public sealed class OrganigrammaWebTests : IDisposable
         var cercati = WebUtility.HtmlDecode(await hr.GetStringAsync("/Team?q=magaz"));
         Assert.Contains("Magazzino", cercati);
         Assert.DoesNotContain("Apri il team Vendite", cercati);
-        Assert.Contains("Ricerca:", cercati); // chip per togliere la ricerca
+        Assert.Contains("data-chip-filtri", cercati); // segnaposto dei chip dei filtri (li compone js/chip-filtri.js)
         Assert.DoesNotContain("li approva il", gestione); // niente più spiegazione delle regole
         var magazzino = await _app.ConDb(db => db.Team.SingleAsync(t => t.Nome == "Magazzino"));
 

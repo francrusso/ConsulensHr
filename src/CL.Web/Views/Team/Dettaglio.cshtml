@@ -4,11 +4,14 @@
     var team = Model.Team.First(t => t.Id == idTeam);
     var modifica = (bool)ViewBag.Modifica; // dal badge dell'organigramma: si apre già con i dati in modifica
     ViewData["Title"] = team.Nome;
-    ViewData["Percorso"] = new List<(string, string?)>
-    {
-        (Model.PerConto ? "Dipendenti" : "Personale", Url.Action("Index", "Dipendenti")),
-        ("Team", Url.Action("Index", "Team", new { aziendaId = Model.PerConto ? Model.AziendaId : (Guid?)null })),
-    };
+    // Il consulente: Aziende › <azienda> (profilo) › Team; il referente: Personale › Team.
+    ViewData["Percorso"] = Model.PerConto
+        ? new List<(string, string?)>
+        {
+            ("Aziende", Url.Action("Index", "Aziende")), (Model.Azienda, Url.Action("Index", "Onboarding", new { aziendaId = Model.AziendaId })),
+            ("Team", Url.Action("Index", "Team", new { aziendaId = Model.AziendaId })),
+        }
+        : new List<(string, string?)> { ("Personale", Url.Action("Index", "Dipendenti")), ("Team", Url.Action("Index", "Team")) };
     // Prima il responsabile, poi gli altri in ordine alfabetico.
     var membri = Model.Dipendenti.Where(d => d.TeamId == team.Id).OrderBy(d => d.Id == team.ResponsabileId ? 0 : 1).ThenBy(d => d.Nome).ToList();
     var aggiungibili = Model.Dipendenti.Where(d => d.TeamId != team.Id && d.InForza).ToList();

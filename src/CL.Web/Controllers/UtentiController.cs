@@ -86,7 +86,7 @@ public sealed class UtentiController(
     {
         if (!utente.PuoGestireAzienda(aziendaId) || !await db.Aziende.AnyAsync(a => a.Id == aziendaId)) return Forbid();
         ritorno = Url.IsLocalUrl(ritorno) ? ritorno
-            : utente.IsConsulente ? Url.Action("Dettaglio", "Aziende", new { id = aziendaId })! : Url.Action("Index", "Dipendenti")!;
+            : utente.IsConsulente ? Url.Action("Index", "Onboarding", new { aziendaId })! : Url.Action("Index", "Dipendenti")!;
         return await Invita(form, Ruoli.Azienda, aziendaId, null, ritorno);
     }
 

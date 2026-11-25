@@ -1,9 +1,13 @@
 @model CL.Web.Controllers.ContrattoForm
 @{
     ViewData["Title"] = "Nuovo contratto";
+    // Nel percorso il nome della persona riporta alla sua scheda.
+    ViewData["Percorso"] = new List<(string, string?)>
+    {
+        ("Personale", Url.Action("Index", "Dipendenti")), (Model.NomeDipendente, Url.Action("Dettaglio", "Dipendenti", new { id = Model.DipendenteId })),
+    };
 }
 
-<a asp-action="Dettaglio" asp-route-id="@Model.DipendenteId" class="small text-body-secondary"><i class="ri-arrow-left-s-line" aria-hidden="true"></i> @Model.NomeDipendente</a>
 <h1 class="titolo-pagina mb-3"><span class="solo-dipendente">Nuovo contratto</span><span class="solo-esterno">Nuovo incarico</span> · @Model.NomeDipendente</h1>
 
 <div class="card radius-15 p-4">

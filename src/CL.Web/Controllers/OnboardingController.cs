@@ -192,9 +192,18 @@ public sealed class OnboardingViewModel
     public required ProfiloAzienda Profilo { get; init; }
     public required int Passo { get; init; }
     public object? Form { get; init; }
-    /// <summary>Il consulente che compila per conto dell'azienda (link e testi diversi).</summary>
+    /// <summary>
+    /// Il consulente: stessa pagina del referente, in più le azioni dello studio (personale, organigramma, anagrafica,
+    /// disattivazione) e i referenti con accesso al portale.
+    /// </summary>
     public bool PerContoAzienda { get; init; }
     public ReferentePagheRiga? ReferentePaghe { get; init; }
+    /// <summary>Solo per il consulente: i referenti con accesso al portale (con invito).</summary>
+    public List<UtenteRiga>? Referenti { get; init; }
+    /// <summary>Solo per il consulente: quante persone ha l'azienda.</summary>
+    public int Personale { get; init; }
+    /// <summary>Solo per il super amministratore: il consulente a cui è assegnata l'azienda.</summary>
+    public string? Consulente { get; init; }
 
     public static readonly string[] Titoli = ["Dati societari", "Sedi e unità locali", "Legale rappresentante e titolari", "Contratto e posizioni", "Paghe e referenti", "Cambio consulente", "Riepilogo"];
 }
@@ -209,7 +218,7 @@ public sealed class OnboardingViewModel
 [Authorize(Policy = Policy.GestionePersonale)]
 public sealed class OnboardingController(
     AppDbContext db, UtenteCorrente utente, SignInManager<ApplicationUser> signIn, ServizioNotifiche notifiche,
-    LoghiAziende loghi, TimeProvider clock) : AppController
+    ServizioAccessi accessi, ServizioConsulentiAziende consulenti, LoghiAziende loghi, TimeProvider clock) : AppController
 {
     /// <summary>Scheda "Tipi di richiesta" del profilo completo.</summary>
     public const int PassoRichieste = 8;
@@ -358,7 +367,7 @@ public sealed class OnboardingController(
         if (utente.IsAzienda && await signIn.UserManager.GetUserAsync(User) is { } io)
             await signIn.RefreshSignInAsync(io); // toglie il blocco del percorso guidato dalla sessione
         Conferma(primaVolta ? "Grazie! Il profilo dell'azienda è completo e il consulente è stato avvisato." : "Profilo aggiornato.");
-        return utente.IsConsulente ? RedirectToAction("Dettaglio", "Aziende", new { id = azienda.Id }) : RedirectToAction("Index", "Home");
+        return utente.IsConsulente ? TornaAlPasso(azienda, null) : RedirectToAction("Index", "Home");
     }
 
     /// <summary>Logo dall'intestazione del profilo: si salva subito.</summary>
@@ -436,6 +445,11 @@ public sealed class OnboardingController(
         {
             AziendaId = azienda.Id, Azienda = azienda, Profilo = profilo, Passo = passo, Form = form,
             PerContoAzienda = utente.IsConsulente,
+            Referenti = utente.IsConsulente
+                ? await accessi.Elenco().Where(u => u.AziendaId == azienda.Id && u.Ruolo == Ruoli.Azienda).OrderBy(u => u.Nome).ToListAsync()
+                : null,
+            Personale = utente.IsConsulente ? await db.Dipendenti.CountAsync(d => d.AziendaId == azienda.Id) : 0,
+            Consulente = utente.IsAmministratore ? (await consulenti.NomiAsync()).GetValueOrDefault(azienda.Id) : null,
             // Referente paghe (serve alla scheda Paghe e al riepilogo): la persona segnata come tale nella sua scheda del personale.
             ReferentePaghe = passo is 5 or ProfiloAzienda.UltimoPasso
                 ? await db.Dipendenti.AsNoTracking().IgnoreAutoIncludes().Where(d => d.AziendaId == azienda.Id && d.ReferentePaghe)

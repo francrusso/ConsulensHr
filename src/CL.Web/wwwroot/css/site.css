@@ -847,3 +847,10 @@ input.tessera-emoji.altra-emoji::placeholder { font-size: 12.5px; color: var(--c
   .impostazioni-notifiche .notifiche-tipi.con-whatsapp .notifiche-tipo { grid-template-columns: minmax(0, 1fr) auto auto; }
   .impostazioni-notifiche .notifiche-sempre, .impostazioni-notifiche .notifiche-intestazione > span:nth-child(2) { display: none; }
 }
+
+/* Profilo azienda del consulente: i referenti con accesso, dentro la card del logo, su beige chiarissimo. */
+.scheda-profilo .referenti-azienda {
+  margin-top: 16px; padding: 16px; border-radius: 12px;
+  background: var(--bs-secondary-bg-subtle); border: 1px solid var(--consulens-border);
+}
+.scheda-profilo .referenti-azienda .customer-results { margin-bottom: 0; box-shadow: none; }

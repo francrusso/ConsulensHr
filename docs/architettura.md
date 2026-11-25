@@ -171,5 +171,6 @@ Servizi principali in `Infrastruttura`:
 | `ServizioNotifiche` | Consegna delle notifiche (piattaforma ed email), campanella, letture e impostazioni dell'utente. |
 | `NotificheRichieste` | Testi e destinatari delle notifiche su assenze, smart working, straordinari, cambi turno e chiusure. |
 | `PromemoriaScadenze` | Promemoria di contratti e documenti personali in scadenza (una volta per scadenza). |
+| `EliminazioneAzienda` | Eliminazione definitiva di un'azienda disattivata con tutti i dati, in una transazione; poi i file dell'archivio. |
 | `Immagini`, `LoghiAziende`, `FotoDipendenti`, `ServizioAvatar` | Caricamento e visualizzazione di loghi e foto. |
 | `Filtri`, `Elenchi` | Condizioni riusabili tradotte in SQL; opzioni delle select di indirizzo. |

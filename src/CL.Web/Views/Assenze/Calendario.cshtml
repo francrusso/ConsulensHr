@@ -48,39 +48,41 @@
     </form>
 </div>
 
-<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
-    @* Filtri: ogni pillola mostra o nasconde una categoria nel calendario. *@
-    <div class="invoice-filter-categories filtro-stati filtri-calendario mb-0" role="group" aria-label="Mostra nel calendario">
+@*
+    Barra dei filtri, nell'ordine: azienda (solo consulente) e team, pillole che mostrano o nascondono le categorie,
+    ufficio/remoto. I menù appartengono al form qui sotto con l'attributo form="filtriCalendario" e si applicano appena cambiano.
+*@
+<form id="filtriCalendario" asp-action="Calendario" method="get" class="d-none">
+    <input type="hidden" name="anno" value="@Model.Anno" /><input type="hidden" name="mese" value="@Model.Mese" />
+    @if (Model.Aziende is null && Model.AziendaId is { } azFisso) { <input type="hidden" name="aziendaId" value="@azFisso" /> }
+</form>
+<div class="d-flex flex-wrap align-items-center gap-2 mb-3 barra-calendario">
+    @if (Model.Aziende is not null)
+    {
+        <select name="aziendaId" form="filtriCalendario" class="form-select form-select-sm w-auto" asp-items="Model.Aziende" aria-label="Filtra per azienda" data-chip-togli-anche="teamId" onchange="this.form.teamId && (this.form.teamId.value = ''); this.form.submit()"><option value="">Tutte le aziende</option></select>
+    }
+    @if (Model.Team.Count > 0)
+    {
+        <select name="teamId" form="filtriCalendario" class="form-select form-select-sm w-auto select-team" aria-label="Filtra per team">
+            <option value="">Tutti i team</option>
+            @foreach (var t in Model.Team)
+            {
+                <option value="@t.Id" selected="@(t.Id == Model.TeamId)" data-colore="@t.Colore" data-emoji="@t.Emoji">@t.Nome</option>
+            }
+        </select>
+    }
+    <div class="invoice-filter-categories filtro-stati filtri-calendario mb-0 flex-grow-1" role="group" aria-label="Mostra nel calendario">
         <button type="button" class="badge-filtro-categoria active" data-filtro="presenti" aria-pressed="true"><span class="pallino-legenda presente" aria-hidden="true"></span> Presenti</button>
         <button type="button" class="badge-filtro-categoria active" data-filtro="assenze" aria-pressed="true"><span class="pallino-legenda assente" aria-hidden="true"></span> Assenze</button>
         <button type="button" class="badge-filtro-categoria active" data-filtro="chiusure" aria-pressed="true"><span class="pallino-legenda chiusura" aria-hidden="true"></span> Chiusure aziendali</button>
         <button type="button" class="badge-filtro-categoria active" data-filtro="attesa" aria-pressed="true"><span class="pallino-legenda in-attesa" aria-hidden="true"></span> In attesa di approvazione</button>
     </div>
-    @* Filtri per azienda (solo consulente) e per team, applicati appena cambiano. *@
-    <form asp-action="Calendario" method="get" class="d-flex gap-2 m-0">
-        <input type="hidden" name="anno" value="@Model.Anno" /><input type="hidden" name="mese" value="@Model.Mese" />
-        @if (Model.Aziende is not null)
-        {
-            <select name="aziendaId" class="form-select form-select-sm" asp-items="Model.Aziende" aria-label="Filtra per azienda" onchange="this.form.teamId && (this.form.teamId.value = ''); this.form.submit()"><option value="">Tutte le aziende</option></select>
-        }
-        else if (Model.AziendaId is { } azFisso) { <input type="hidden" name="aziendaId" value="@azFisso" /> }
-        @if (Model.Team.Count > 0)
-        {
-            <select name="teamId" class="form-select form-select-sm select-team" aria-label="Filtra per team">
-                <option value="">Tutti i team</option>
-                @foreach (var t in Model.Team)
-                {
-                    <option value="@t.Id" selected="@(t.Id == Model.TeamId)" data-colore="@t.Colore" data-emoji="@t.Emoji">@t.Nome</option>
-                }
-            </select>
-        }
-        @* Dove lavorano i presenti: in ufficio (in presenza o giorno segnato) o da remoto. *@
-        <select name="luogo" class="form-select form-select-sm" aria-label="Filtra per luogo di lavoro" onchange="this.form.submit()">
-            <option value="">Ufficio e remoto</option>
-            <option value="ufficio" selected="@(Model.Luogo == "ufficio")">In ufficio</option>
-            <option value="remoto" selected="@(Model.Luogo == "remoto")">Da remoto</option>
-        </select>
-    </form>
+    @* Dove lavorano i presenti: in ufficio (in presenza o giorno segnato) o da remoto. *@
+    <select name="luogo" form="filtriCalendario" class="form-select form-select-sm w-auto" aria-label="Filtra per luogo di lavoro" onchange="this.form.submit()">
+        <option value="">Ufficio e remoto</option>
+        <option value="ufficio" selected="@(Model.Luogo == "ufficio")">In ufficio</option>
+        <option value="remoto" selected="@(Model.Luogo == "remoto")">Da remoto</option>
+    </select>
 </div>
 
 @* Mese a tutta larghezza, con le frecce ai due lati. *@

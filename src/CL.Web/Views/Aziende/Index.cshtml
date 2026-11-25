@@ -5,6 +5,11 @@
     // Solo il super amministratore vede la colonna con i consulenti di ogni azienda.
     var colonnaConsulente = Utente.IsAmministratore;
     var consulentiAziende = ViewBag.ConsulentiAziende as Dictionary<Guid, string> ?? new();
+    // Pillole per stato, come nell'elenco del personale: di default tutte, anche le disattivate.
+    var statoScelto = ViewBag.Stato as StatoAzienda?;
+    var conteggi = (Dictionary<StatoAzienda, int>)ViewBag.Conteggi;
+    var consulenteId = Context.Request.Query["consulenteId"].FirstOrDefault();
+    var colonne = colonnaConsulente ? 7 : 6;
 }
 
 <div class="breadcrumb-titolo d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
@@ -26,6 +31,20 @@
     </form>
     <partial name="_ChipRicerca" />
 
+    <nav class="invoice-filter-categories filtro-stati mb-3" aria-label="Stato dell'azienda">
+        <a class="badge-filtro-categoria @(statoScelto is null ? "active" : "")" aria-current="@(statoScelto is null ? "page" : null)"
+           asp-action="Index" asp-route-q="@ViewBag.Ricerca" asp-route-consulenteId="@consulenteId">
+            Tutte <span>(@ViewBag.Totale)</span>
+        </a>
+        @foreach (var st in Enum.GetValues<StatoAzienda>())
+        {
+            <a class="badge-filtro-categoria @(statoScelto == st ? "active" : "")" aria-current="@(statoScelto == st ? "page" : null)"
+               asp-action="Index" asp-route-q="@ViewBag.Ricerca" asp-route-consulenteId="@consulenteId" asp-route-stato="@st.Chiave()">
+                <span class="pallino-stato" style="--colore-stato:@st.Colore()" aria-hidden="true"></span> @st.Descrizione(plurale: true) <span>(@conteggi[st])</span>
+            </a>
+        }
+    </nav>
+
     <div class="card radius-15 table-responsive table-actions-responsive p-1 customer-results">
         <table class="table mb-0">
             <thead>
@@ -35,26 +54,26 @@
                     <th scope="col">Comune</th>
                     <th scope="col" class="text-end">Personale</th>
                     @if (colonnaConsulente) { <th scope="col">Consulente</th> }
+                    <th scope="col">Stato</th>
                     <th scope="col" class="text-end">Azioni</th>
                 </tr>
             </thead>
             <tbody>
                 @if (Model.Count == 0)
                 {
-                    <tr><td colspan="@(colonnaConsulente ? 6 : 5)" class="elenco-vuoto"><span class="elenco-vuoto-icona" aria-hidden="true"><i class="ri-building-line"></i></span><div>Nessuna azienda trovata</div></td></tr>
+                    <tr><td colspan="@colonne" class="elenco-vuoto"><span class="elenco-vuoto-icona" aria-hidden="true"><i class="ri-building-line"></i></span><div>Nessuna azienda trovata</div></td></tr>
                 }
                 @foreach (var a in Model)
                 {
                     <tr class="customer-result-row">
                         <td data-label="Azienda">
                             <a class="customer-name" asp-action="Dettaglio" asp-route-id="@a.Id"><i class="ri-building-line" aria-hidden="true"></i><span>@a.RagioneSociale</span></a>
-                            @if (!a.Attiva) { <span class="badge bg-secondary ms-1">Disattivata</span> }
-                            else if (!a.ProfiloCompleto) { <span class="badge bg-warning text-dark ms-1">Profilo da completare</span> }
                         </td>
                         <td data-label="Partita IVA">@a.PartitaIva</td>
                         <td data-label="Comune">@(string.IsNullOrWhiteSpace(a.Comune) ? "—" : a.Comune)</td>
                         <td data-label="Personale" class="text-end">@a.Dipendenti</td>
                         @if (colonnaConsulente) { <td data-label="Consulente">@(consulentiAziende.GetValueOrDefault(a.Id) ?? "Nessuno")</td> }
+                        <td data-label="Stato"><span class="badge badge-stato" style="--colore-stato:@a.Stato.Colore()"><span class="pallino-stato" aria-hidden="true"></span>@a.Stato.Descrizione()</span></td>
                         <td data-label="Azioni">
                             <div class="customer-actions">
                                 <a asp-action="Dettaglio" asp-route-id="@a.Id" aria-label="Visualizza azienda" title="Visualizza azienda"><i class="ri-eye-line" aria-hidden="true"></i></a>

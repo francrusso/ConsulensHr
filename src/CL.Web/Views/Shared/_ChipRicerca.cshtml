@@ -1,17 +1,2 @@
-@* Chip della ricerca attiva: la ✕ ricarica la pagina con gli stessi filtri ma senza il testo cercato. *@
-@{
-    var q = Context.Request.Query["q"].ToString().Trim();
-    var resto = Context.Request.Query.Where(kv => kv.Key != "q" && !string.IsNullOrEmpty(kv.Value))
-        .Select(kv => $"{Uri.EscapeDataString(kv.Key)}={Uri.EscapeDataString(kv.Value.ToString())}");
-    var senzaRicerca = Context.Request.Path + (resto.Any() ? "?" + string.Join("&", resto) : "");
-}
-@if (q.Length > 0)
-{
-    <div class="chip-filtri mb-3" aria-label="Filtri attivi">
-        <span class="chip-filtro">
-            <i class="ri-search-line" aria-hidden="true"></i>
-            Ricerca: <strong>"@q"</strong>
-            <a href="@senzaRicerca" class="chip-togli" aria-label="Cancella la ricerca" title="Cancella la ricerca"><i class="ri-close-line" aria-hidden="true"></i></a>
-        </span>
-    </div>
-}
+@* Segnaposto dei chip dei filtri attivi (ricerca e menù): li compone js/chip-filtri.js, ognuno con la ✕ per toglierlo. *@
+<div class="chip-filtri mb-3" data-chip-filtri hidden></div>
