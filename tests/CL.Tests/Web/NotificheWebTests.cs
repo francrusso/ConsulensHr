@@ -123,7 +123,8 @@ public sealed class NotificheWebTests : IDisposable
         if (ProssimoLavorativo() is not { } giorno) return;
 
         // Il referente spegne l'email delle nuove richieste di assenza.
-        var r = await hr.InviaForm("/Notifiche/Impostazioni", "/Notifiche/Email", new() { ["tipi"] = "AssenzaDaApprovare", ["attiva"] = "false" });
+        var r = await hr.InviaForm("/Notifiche/Impostazioni", "/Notifiche/Scelta",
+            new() { ["tipi"] = "AssenzaDaApprovare", ["canale"] = "Email", ["attiva"] = "false" });
         Assert.Equal(HttpStatusCode.NoContent, r.StatusCode);
         var scelta = await _app.ConDb(db => db.PreferenzeNotifiche.SingleAsync(p => p.UtenteId == _idReferente));
         Assert.Equal((TipoNotifica.AssenzaDaApprovare, false), (scelta.Tipo, scelta.Email));
@@ -161,13 +162,69 @@ public sealed class NotificheWebTests : IDisposable
         Assert.DoesNotContain("Nuova richiesta da approvare", html); // non è responsabile di nessuno
 
         // Una tipologia che non può ricevere non si imposta.
-        var r = await dip.InviaForm("/Notifiche/Impostazioni", "/Notifiche/Email", new() { ["tipi"] = "PresenzeInviate", ["attiva"] = "false" });
+        var r = await dip.InviaForm("/Notifiche/Impostazioni", "/Notifiche/Scelta",
+            new() { ["tipi"] = "PresenzeInviate", ["canale"] = "Email", ["attiva"] = "false" });
         Assert.Equal(HttpStatusCode.BadRequest, r.StatusCode);
 
         html = WebUtility.HtmlDecode(await hr.GetStringAsync("/Notifiche/Impostazioni"));
         Assert.Contains("Nuova richiesta da approvare", html);
         Assert.Contains("Promemoria presenze", html);
         Assert.DoesNotContain("Nuova busta paga", html);
+    }
+
+    [Fact]
+    public async Task Con_il_numero_collegato_le_notifiche_scelte_arrivano_anche_su_WhatsApp()
+    {
+        _app.WhatsApp.Configurato = true;
+        var (dip, hr) = await Prepara();
+        if (ProssimoLavorativo() is not { } giorno) return;
+        Task<HttpResponseMessage> Invia(string azione, Dictionary<string, string> campi) => hr.InviaForm("/Notifiche/Impostazioni", azione, campi);
+        Task<ApplicationUser> Referente() => _app.ConDb(db => db.Users.SingleAsync(u => u.Id == _idReferente));
+
+        // Senza numero collegato WhatsApp non si accende; senza consenso non parte nessun codice.
+        var r = await Invia("/Notifiche/Scelta", new() { ["tipi"] = "AssenzaDaApprovare", ["canale"] = "WhatsApp", ["attiva"] = "true" });
+        Assert.Equal(HttpStatusCode.BadRequest, r.StatusCode);
+        Assert.Contains("serve il tuo consenso", await Testo(await Invia("/Notifiche/WhatsAppCodice", new() { ["numero"] = "333 123 4567" })));
+        Assert.Empty(_app.WhatsApp.Codici);
+
+        var html = await Testo(await Invia("/Notifiche/WhatsAppCodice", new() { ["numero"] = "333 123 4567", ["consenso"] = "true" }));
+        Assert.Contains("Ti abbiamo inviato un codice su WhatsApp al +39 333 123 4567", html);
+        Assert.Contains("Inserisci il codice", html);
+        var (numero, codice) = Assert.Single(_app.WhatsApp.Codici);
+        Assert.Equal("+393331234567", numero);
+
+        // Un codice sbagliato non collega il numero.
+        html = await Testo(await Invia("/Notifiche/WhatsAppVerifica", new() { ["numero"] = numero, ["codice"] = codice == "000000" ? "111111" : "000000" }));
+        Assert.Contains("Codice non valido", html);
+        Assert.False((await Referente()).PhoneNumberConfirmed);
+
+        html = await Testo(await Invia("/Notifiche/WhatsAppVerifica", new() { ["numero"] = numero, ["codice"] = codice }));
+        Assert.Contains("WhatsApp collegato", html);
+        var referente = await Referente();
+        Assert.Equal(("+393331234567", true), (referente.PhoneNumber, referente.PhoneNumberConfirmed));
+        Assert.NotNull(referente.WhatsAppConsensoIl);
+
+        // WhatsApp acceso solo per le nuove richieste di assenza (predefinito: spento per tutte).
+        r = await Invia("/Notifiche/Scelta", new() { ["tipi"] = "AssenzaDaApprovare", ["canale"] = "WhatsApp", ["attiva"] = "true" });
+        Assert.Equal(HttpStatusCode.NoContent, r.StatusCode);
+        // Prima uno straordinario (WhatsApp spento), poi le ferie: la coda è in ordine, quindi lo straordinario sarebbe già arrivato.
+        await dip.InviaForm("/Assenze/Nuova", "/Assenze/Nuova", new()
+        {
+            ["Tipo"] = "Straordinario", ["Dal"] = DateTime.Today.ToString("yyyy-MM-dd"), ["Ore"] = "2",
+        });
+        await ChiediFerie(dip, giorno);
+        var messaggio = await _app.WhatsApp.AttendiAsync("Richiesta di ferie da approvare: Mario Rossi");
+        Assert.Equal("+393331234567", messaggio.Numero);
+        Assert.Equal("Test", messaggio.Nome);
+        // Il pulsante del messaggio apre la notifica nel portale.
+        var notifica = (await NotificheDi(_idReferente)).Single(n => n.Tipo == TipoNotifica.AssenzaDaApprovare);
+        Assert.Equal(notifica.Id.ToString(), messaggio.IdNotifica);
+        Assert.DoesNotContain(_app.WhatsApp.Notifiche, m => m.Titolo.StartsWith("Straordinario"));
+
+        Assert.Contains("Numero WhatsApp scollegato", await Testo(await Invia("/Notifiche/WhatsAppScollega", new())));
+        referente = await Referente();
+        Assert.Null(referente.PhoneNumber);
+        Assert.Null(referente.WhatsAppConsensoIl);
     }
 
     [Fact]

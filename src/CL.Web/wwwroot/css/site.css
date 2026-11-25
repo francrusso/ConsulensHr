@@ -821,12 +821,19 @@ input.tessera-emoji.altra-emoji::placeholder { font-size: 12.5px; color: var(--c
 .impostazioni-notifiche .card-canale.attivo { border-color: var(--bs-info); background: var(--consulens-surface); }
 .impostazioni-notifiche .card-canale.disabilitato { opacity: .65; }
 .impostazioni-notifiche .canale-stato { font-size: 11px; color: var(--consulens-muted); }
+.impostazioni-notifiche .canale-azione { font-size: 12px; font-weight: 500; color: var(--consulens-accent); text-align: left; }
+.impostazioni-notifiche .collega-whatsapp {
+  margin-top: 16px; padding: 16px; border-radius: 12px; border: 1px solid var(--consulens-border); background: var(--consulens-surface-subtle);
+}
+.impostazioni-notifiche .collega-passo + .collega-passo, .impostazioni-notifiche .collega-passo + p { margin-top: 12px; }
+.impostazioni-notifiche .campo-numero-whatsapp { max-width: 260px; }
 .impostazioni-notifiche .card-categoria-notifica { margin-bottom: 12px; }
 .impostazioni-notifiche .notifiche-tipi { margin-top: 8px; }
 .impostazioni-notifiche .notifiche-tipo {
   display: grid; grid-template-columns: minmax(0, 1fr) 130px 60px; gap: 12px; align-items: center;
   padding: 10px 8px; border-top: 1px solid var(--consulens-divider);
 }
+.impostazioni-notifiche .notifiche-tipi.con-whatsapp .notifiche-tipo { grid-template-columns: minmax(0, 1fr) 130px 60px 76px; }
 .impostazioni-notifiche .notifiche-tipo-fisso { grid-template-columns: minmax(0, 1fr) auto; }
 .impostazioni-notifiche .notifiche-intestazione { border-top: 0; padding-block: 4px; font-size: 11px; letter-spacing: .5px; text-transform: uppercase; color: var(--consulens-muted); }
 .impostazioni-notifiche .notifiche-tipo-descrizione { font-size: 12px; color: var(--consulens-description-text); }
@@ -837,5 +844,6 @@ input.tessera-emoji.altra-emoji::placeholder { font-size: 12.5px; color: var(--c
 @media (max-width: 575.98px) {
   .impostazioni-notifiche .card-canale { width: 100%; }
   .impostazioni-notifiche .notifiche-tipo { grid-template-columns: minmax(0, 1fr) auto; }
+  .impostazioni-notifiche .notifiche-tipi.con-whatsapp .notifiche-tipo { grid-template-columns: minmax(0, 1fr) auto auto; }
   .impostazioni-notifiche .notifiche-sempre, .impostazioni-notifiche .notifiche-intestazione > span:nth-child(2) { display: none; }
 }

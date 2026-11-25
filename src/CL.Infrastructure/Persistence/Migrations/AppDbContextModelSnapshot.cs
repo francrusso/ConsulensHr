@@ -1155,6 +1155,9 @@ namespace CL.Infrastructure.Persistence.Migrations
                         .HasMaxLength(450)
                         .HasColumnType("character varying(450)");
 
+                    b.Property<bool>("WhatsApp")
+                        .HasColumnType("boolean");
+
                     b.HasKey("Id");
 
                     b.HasIndex("UtenteId", "Tipo")
@@ -1651,6 +1654,9 @@ namespace CL.Infrastructure.Persistence.Migrations
                     b.Property<string>("UserName")
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
+
+                    b.Property<DateTime?>("WhatsAppConsensoIl")
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 

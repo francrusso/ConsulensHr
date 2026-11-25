@@ -225,7 +225,13 @@ Chi compie un'azione non riceve la notifica della propria azione.
 Le notifiche in piattaforma sono **sempre attive**. In **Impostazioni notifiche** (`/Notifiche/Impostazioni`, anche dalla
 campanella e dal profilo) ognuno sceglie per quali tipologie ricevere **anche l'email**: interruttore per tipologia,
 "Disattiva tutte" per sezione e interruttore generale del canale Email; ogni scelta si salva subito. Senza scelta l'email è
-attiva. Compaiono solo le tipologie che il ruolo può ricevere. Il canale **WhatsApp** è previsto ma non ancora disponibile.
+attiva. Compaiono solo le tipologie che il ruolo può ricevere.
+
+**WhatsApp**: ognuno collega il proprio cellulare dalle impostazioni (al dipendente si propone quello dell'anagrafica),
+dà il consenso e conferma il numero con il codice ricevuto su WhatsApp (pochi minuti di validità, al massimo 5 tentativi,
+un nuovo codice ogni minuto). Poi accende WhatsApp per le tipologie che vuole: senza scelta è spento, perché ogni messaggio
+ha un costo. I messaggi arrivano dal numero Consulens +39 349 584 4020, con il titolo e il testo della notifica e il
+pulsante "Apri nel portale". "Scollega" toglie numero e consenso e ferma subito gli invii.
 
 "I consulenti dell'azienda" sono quelli a cui l'azienda è assegnata; se non è assegnata a nessuno, la notifica va ai
 super amministratori. Le email partono in background; senza server SMTP configurato arrivano solo le notifiche in

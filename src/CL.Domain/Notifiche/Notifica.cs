@@ -48,26 +48,34 @@ public sealed class Notifica : Entity
     private static string Taglia(string s, int max) => s.Length <= max ? s : s[..(max - 1)] + "…";
 }
 
+/// <summary>Canali oltre alla piattaforma (sempre attiva) su cui si può ricevere una notifica.</summary>
+public enum CanaleNotifica { Email, WhatsApp }
+
 /// <summary>
-/// Scelta di un utente sull'email di una tipologia. Senza riga vale il predefinito: email attiva.
-/// Il canale WhatsApp, quando arriverà, avrà qui la sua scelta accanto all'email.
+/// Scelte di un utente su una tipologia, per canale. Senza riga valgono i predefiniti: email attiva, WhatsApp spento
+/// (ogni messaggio WhatsApp ha un costo e richiede un numero collegato con consenso).
 /// </summary>
 public sealed class PreferenzaNotifica : Entity
 {
     public const bool EmailPredefinita = true;
+    public const bool WhatsAppPredefinito = false;
 
     public string UtenteId { get; private set; } = null!;
     public TipoNotifica Tipo { get; private set; }
-    public bool Email { get; private set; }
+    public bool Email { get; private set; } = EmailPredefinita;
+    public bool WhatsApp { get; private set; } = WhatsAppPredefinito;
 
     private PreferenzaNotifica() { } // EF Core
 
-    public PreferenzaNotifica(string utenteId, TipoNotifica tipo, bool email)
+    public PreferenzaNotifica(string utenteId, TipoNotifica tipo)
     {
         UtenteId = Guard.NotEmpty(utenteId, "Utente");
         Tipo = tipo;
-        Email = email;
     }
 
-    public void ImpostaEmail(bool attiva) => Email = attiva;
+    public void Imposta(CanaleNotifica canale, bool attiva)
+    {
+        if (canale == CanaleNotifica.WhatsApp) WhatsApp = attiva;
+        else Email = attiva;
+    }
 }

@@ -14,6 +14,12 @@ public sealed class ApplicationUser : IdentityUser
     public Guid? AziendaId { get; set; }
     public Guid? DipendenteId { get; set; }
     public bool Attivo { get; set; } = true;
+
+    /// <summary>
+    /// Consenso a ricevere notifiche su WhatsApp (data in cui ha confermato il numero). Il numero è <see cref="IdentityUser.PhoneNumber"/>,
+    /// valido solo se <see cref="IdentityUser.PhoneNumberConfirmed"/>: lo conferma il codice ricevuto su WhatsApp.
+    /// </summary>
+    public DateTime? WhatsAppConsensoIl { get; set; }
 }
 
 public static class Ruoli

@@ -124,7 +124,11 @@ ricevuto. I destinatari si trovano con le query di `QueryDestinatari` (studio, r
 l'accesso attivo; l'email parte solo con l'email confermata. I testi delle richieste sono in `NotificheRichieste`; gli altri
 eventi chiamano il servizio dal proprio controller o servizio. Le scadenze le controlla `PromemoriaScadenze`, lanciato dal
 servizio in background `ControlloScadenze` (non registrato nell'ambiente `Testing`, dove i test lo chiamano a mano).
-Per aggiungere WhatsApp basterà un nuovo canale accanto all'email in `PreferenzaNotifica` e in `InviaAsync`.
+WhatsApp è il secondo canale di `PreferenzaNotifica` (predefinito spento): `InviaAsync` accoda in `CodaWhatsApp` le
+notifiche per chi ha collegato il numero (`PhoneNumber` confermato e `WhatsAppConsensoIl` dell'utente) e le ha accese;
+`InvioCodaWhatsApp` le spedisce con `IInvioWhatsApp` (`CL.Infrastructure/WhatsApp`, WhatsApp Cloud API con template).
+Il collegamento lo gestisce `CollegamentoWhatsApp`: il codice è il token telefonico di Identity
+(`GenerateChangePhoneNumberTokenAsync`), con attesa tra un invio e l'altro e tentativi limitati in memoria.
 
 ## Archivio documenti (`CL.Infrastructure/Archivio`)
 

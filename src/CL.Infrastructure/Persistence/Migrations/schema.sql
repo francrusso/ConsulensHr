@@ -2127,3 +2127,28 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261125103737_NotificheWhatsApp') THEN
+    ALTER TABLE hr."PreferenzeNotifiche" ADD "WhatsApp" boolean NOT NULL DEFAULT FALSE;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261125103737_NotificheWhatsApp') THEN
+    ALTER TABLE hr."AspNetUsers" ADD "WhatsAppConsensoIl" timestamp with time zone;
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261125103737_NotificheWhatsApp') THEN
+    INSERT INTO hr."__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261125103737_NotificheWhatsApp', '10.0.15');
+    END IF;
+END $EF$;
+COMMIT;
+

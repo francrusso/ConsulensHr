@@ -19,8 +19,8 @@ public sealed class NotificheViewModel
     public required List<SelectListItem> Categorie { get; init; }
 }
 
-/// <summary>Una tipologia nelle impostazioni, con la scelta dell'utente per l'email.</summary>
-public sealed record ScelteNotifica(DefinizioneNotifica Definizione, bool Email);
+/// <summary>Una tipologia nelle impostazioni, con le scelte dell'utente per email e WhatsApp.</summary>
+public sealed record ScelteNotifica(DefinizioneNotifica Definizione, bool Email, bool WhatsApp);
 
 public sealed record GruppoNotifiche(CategoriaNotifica Categoria, List<ScelteNotifica> Tipi);
 
@@ -29,14 +29,20 @@ public sealed class ImpostazioniNotificheViewModel
     public required List<GruppoNotifiche> Gruppi { get; init; }
     /// <summary>Server SMTP configurato: senza, per ora arrivano solo le notifiche in piattaforma.</summary>
     public bool EmailConfigurata { get; init; }
+    public required StatoWhatsApp WhatsApp { get; init; }
+    /// <summary>Numero a cui è appena partito il codice: la pagina chiede di inserirlo.</summary>
+    public string? NumeroInVerifica { get; init; }
 }
 
 /// <summary>
-/// Notifiche dell'utente (tutti i ruoli): elenco, lettura, e impostazioni dell'email per tipologia. Le notifiche in
-/// piattaforma sono sempre attive; l'email si accende e si spegne per ogni tipologia (salvataggio immediato).
+/// Notifiche dell'utente (tutti i ruoli): elenco, lettura e impostazioni. Le notifiche in piattaforma sono sempre attive;
+/// email e WhatsApp si accendono e si spengono per ogni tipologia (salvataggio immediato). WhatsApp richiede di collegare
+/// il numero con consenso e codice di verifica.
 /// </summary>
-public sealed class NotificheController(ServizioNotifiche notifiche, IInvioEmail email) : AppController
+public sealed class NotificheController(ServizioNotifiche notifiche, CollegamentoWhatsApp whatsApp, IInvioEmail email) : AppController
 {
+    private const string ChiaveNumeroInVerifica = "WhatsAppNumero";
+
     private const int PerPagina = 20;
 
     public async Task<IActionResult> Index(string? q, CategoriaNotifica? categoria, bool daLeggere = false, int pagina = 1)
@@ -91,29 +97,67 @@ public sealed class NotificheController(ServizioNotifiche notifiche, IInvioEmail
         return Torna(ritorno);
     }
 
-    /// <summary>Le tipologie che l'utente può ricevere, per sezione, con l'email accesa o spenta.</summary>
+    /// <summary>Le tipologie che l'utente può ricevere, per sezione, con email e WhatsApp accesi o spenti.</summary>
     public async Task<IActionResult> Impostazioni()
     {
-        var scelte = await notifiche.EmailAsync();
+        var scelte = await notifiche.ScelteAsync();
         var gruppi = CatalogoNotifiche.Per(await notifiche.RuoliAsync())
             .GroupBy(d => d.Categoria)
-            .Select(g => new GruppoNotifiche(g.Key, g.Select(d => new ScelteNotifica(d, scelte[d.Tipo])).ToList()))
+            .Select(g => new GruppoNotifiche(g.Key, g.Select(d => new ScelteNotifica(d, scelte[d.Tipo].Email, scelte[d.Tipo].WhatsApp)).ToList()))
             .ToList();
-        return View(new ImpostazioniNotificheViewModel { Gruppi = gruppi, EmailConfigurata = email.Configurato });
+        var stato = await whatsApp.StatoAsync();
+        return View(new ImpostazioniNotificheViewModel
+        {
+            Gruppi = gruppi, EmailConfigurata = email.Configurato, WhatsApp = stato,
+            NumeroInVerifica = stato.Collegato ? null : TempData[ChiaveNumeroInVerifica] as string,
+        });
     }
 
     /// <summary>
-    /// Accende o spegne l'email delle tipologie indicate (una, quelle di una sezione o tutte). Chiamata dalla pagina
-    /// delle impostazioni a ogni interruttore: risponde senza contenuto.
+    /// Accende o spegne un canale per le tipologie indicate (una, quelle di una sezione o tutte). Chiamata dalla pagina
+    /// delle impostazioni a ogni interruttore: risponde senza contenuto. WhatsApp solo con il numero collegato.
     /// </summary>
     [HttpPost, ValidateAntiForgeryToken]
-    public async Task<IActionResult> Email(List<TipoNotifica> tipi, bool attiva)
+    public async Task<IActionResult> Scelta(List<TipoNotifica> tipi, CanaleNotifica canale, bool attiva)
     {
         var ricevibili = CatalogoNotifiche.Per(await notifiche.RuoliAsync()).Select(d => d.Tipo).ToHashSet();
         var scelti = tipi.Where(ricevibili.Contains).Distinct().ToList();
         if (scelti.Count == 0) return BadRequest();
-        await notifiche.ImpostaEmailAsync(scelti, attiva);
+        if (canale == CanaleNotifica.WhatsApp && !(await whatsApp.StatoAsync()).Collegato) return BadRequest();
+        await notifiche.ImpostaAsync(scelti, canale, attiva);
         return NoContent();
+    }
+
+    /// <summary>Primo passo del collegamento: consenso e numero, a cui parte un codice su WhatsApp.</summary>
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> WhatsAppCodice(string? numero, bool consenso)
+    {
+        var (inVerifica, errore) = await whatsApp.InviaCodiceAsync(numero, consenso);
+        if (inVerifica is not null) TempData[ChiaveNumeroInVerifica] = inVerifica;
+        if (errore is not null) Errore(errore);
+        else Conferma($"Ti abbiamo inviato un codice su WhatsApp al {NumeroWhatsApp.Leggibile(inVerifica!)}.");
+        return RedirectToAction(nameof(Impostazioni));
+    }
+
+    /// <summary>Secondo passo: il codice ricevuto conferma il numero e attiva il canale.</summary>
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> WhatsAppVerifica(string? numero, string? codice)
+    {
+        if (await whatsApp.VerificaAsync(numero, codice) is { } errore)
+        {
+            Errore(errore);
+            TempData[ChiaveNumeroInVerifica] = numero;
+        }
+        else Conferma("WhatsApp collegato: ora scegli quali notifiche ricevere anche su WhatsApp.");
+        return RedirectToAction(nameof(Impostazioni));
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> WhatsAppScollega()
+    {
+        await whatsApp.ScollegaAsync();
+        Conferma("Numero WhatsApp scollegato: non riceverai più notifiche su WhatsApp.");
+        return RedirectToAction(nameof(Impostazioni));
     }
 
     private IActionResult Torna(string? ritorno) => Url.IsLocalUrl(ritorno) ? LocalRedirect(ritorno) : RedirectToAction(nameof(Index));

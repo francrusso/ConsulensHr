@@ -4,6 +4,7 @@ using CL.Infrastructure.Identity;
 using CL.Infrastructure.Indirizzi;
 using CL.Infrastructure.Persistence;
 using CL.Infrastructure.Registro;
+using CL.Infrastructure.WhatsApp;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -56,6 +57,15 @@ public static class DependencyInjection
         services.AddSingleton<IInvioEmail, InvioEmailSmtp>();
         services.AddSingleton<CodaEmail>();
         services.AddHostedService<InvioCodaEmail>();
+
+        services.Configure<OpzioniWhatsApp>(configuration.GetSection("WhatsApp"));
+        services.AddHttpClient<IInvioWhatsApp, InvioWhatsAppCloud>(c =>
+        {
+            c.BaseAddress = new Uri(InvioWhatsAppCloud.IndirizzoServizio);
+            c.Timeout = TimeSpan.FromSeconds(15);
+        });
+        services.AddSingleton<CodaWhatsApp>();
+        services.AddHostedService<InvioCodaWhatsApp>();
 
         services.Configure<OpzioniArchivio>(configuration.GetSection("Archivio"));
         services.AddSingleton<IArchivioDocumenti, ArchivioSuDisco>();

@@ -43,7 +43,50 @@ Le impostazioni sensibili vanno **sempre** negli user-secrets (in sviluppo) o ne
 | `Seed:Amministratore:Email` / `Password` | Super amministratore. Senza password l'account nasce come un invito: la password si sceglie da "Password dimenticata?". |
 | `Email:Host`, `Porta` (587), `Ssl` (true), `Utente`, `Password`, `Mittente`, `NomeMittente` | Server SMTP per inviti, recupero password e notifiche. Senza `Host` e `Mittente` le email sono disattivate e il link di invito compare a schermo. |
 | `App:UrlPubblico` | Indirizzo pubblico del sito usato nei link delle email (in produzione è obbligatorio di fatto: non ci si fida dell'header `Host`). |
+| `WhatsApp:PhoneNumberId`, `WhatsApp:Token` | WhatsApp Cloud API di Meta per le notifiche (vedi sotto). Senza, il canale WhatsApp non è disponibile. Solo negli user-secrets o nelle variabili d'ambiente. |
+| `WhatsApp:NumeroMittente` | Numero Consulens da cui arrivano i messaggi, mostrato nel portale (in `appsettings.json`: +39 349 584 4020). |
+| `WhatsApp:TemplateNotifica` (`notifica_consulens_hr`), `TemplateCodice` (`codice_verifica_consulens_hr`), `Lingua` (`it`), `VersioneApi` (`v23.0`) | Nomi dei template approvati e versione della Graph API, se diversi dai predefiniti. |
 | `Archivio:Percorso` | Cartella dei documenti caricati (buste paga, CU, contratti, foto, loghi). Predefinita: `src/CL.Web/App_Data/archivio`, fuori da `wwwroot`. |
+
+### WhatsApp (notifiche)
+
+Le notifiche WhatsApp partono dal numero Consulens registrato sulla piattaforma WhatsApp Business di Meta, con la
+WhatsApp Cloud API. Il numero usato nell'app WhatsApp Business del telefono non può inviarle in automatico.
+
+1. In WhatsApp Manager › **API Setup** copia il **Phone Number ID** del numero Consulens (non è il numero di telefono) e
+   crea un token permanente da un utente di sistema del Business Manager con il permesso `whatsapp_business_messaging`.
+2. Salvali negli user-secrets (in produzione nelle variabili d'ambiente `WhatsApp__PhoneNumberId` e `WhatsApp__Token`):
+
+```bash
+dotnet user-secrets set "WhatsApp:PhoneNumberId" "INCOLLA-QUI-IL-PHONE-NUMBER-ID" --project src/CL.Web
+```
+
+```bash
+dotnet user-secrets set "WhatsApp:Token" "INCOLLA-QUI-IL-TOKEN" --project src/CL.Web
+```
+
+3. In WhatsApp Manager › **Modelli di messaggio** crea e fai approvare i due template, in italiano (`it`):
+
+   - **`notifica_consulens_hr`**, categoria **Utilità**. Corpo:
+
+     ```
+     Ciao {{1}}, c'è una novità per te su Consulens HR.
+
+     *{{2}}*
+     {{3}}
+
+     Puoi scegliere quali notifiche ricevere su WhatsApp dalle impostazioni del portale.
+     ```
+
+     Esempi per l'approvazione: `{{1}}` Mario, `{{2}}` Richiesta di ferie da approvare: Anna Bianchi, `{{3}}` Anna Bianchi
+     ha chiesto ferie dal 09/12/2026 al 10/12/2026 (16 ore). Pulsante **Visita sito web**, testo "Apri nel portale",
+     URL **dinamico** `https://<App:UrlPubblico>/Notifiche/Apri/{{1}}` (il portale passa l'id della notifica).
+   - **`codice_verifica_consulens_hr`**, categoria **Autenticazione**, con il pulsante **Copia codice** e l'avviso di
+     sicurezza. Il codice vale pochi minuti: se si indica la scadenza, non oltre 5 minuti.
+
+Ogni messaggio inviato da un'azienda su WhatsApp ha un costo (tariffe Meta per i template di utilità e di autenticazione):
+per questo nel portale WhatsApp è spento per tutte le tipologie finché la persona non le accende. Se l'invio non riesce,
+il log riporta l'errore di Meta (template non approvato, numero senza WhatsApp…).
 
 ### Supabase
 

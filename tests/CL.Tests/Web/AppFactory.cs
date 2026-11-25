@@ -30,6 +30,9 @@ public sealed class AppFactory : WebApplicationFactory<Program>
     /// <summary>Email al posto dell'SMTP: come senza server finché un test non imposta <see cref="EmailFinte.Configurato"/>.</summary>
     public EmailFinte Email { get; } = new();
 
+    /// <summary>WhatsApp al posto della Cloud API di Meta: non disponibile finché un test non imposta <see cref="WhatsAppFinto.Configurato"/>.</summary>
+    public WhatsAppFinto WhatsApp { get; } = new();
+
     public AppFactory() => _conn.Open();
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
@@ -51,6 +54,8 @@ public sealed class AppFactory : WebApplicationFactory<Program>
             services.AddSingleton<CL.Infrastructure.Indirizzi.IRicercaIndirizzi, IndirizziFinti>();
             services.RemoveAll<CL.Infrastructure.Email.IInvioEmail>();
             services.AddSingleton<CL.Infrastructure.Email.IInvioEmail>(Email);
+            services.RemoveAll<CL.Infrastructure.WhatsApp.IInvioWhatsApp>();
+            services.AddSingleton<CL.Infrastructure.WhatsApp.IInvioWhatsApp>(WhatsApp);
         });
     }
 
@@ -217,5 +222,36 @@ public sealed class EmailFinte : CL.Infrastructure.Email.IInvioEmail
             await Task.Delay(50);
         }
         throw new TimeoutException($"Nessuna email \"{oggetto}\". Arrivate: {string.Join(" | ", Inviate.Select(m => m.Oggetto))}");
+    }
+}
+
+/// <summary>WhatsApp finto: raccoglie codici e notifiche (queste in background, dalla coda) invece di chiamare Meta.</summary>
+public sealed class WhatsAppFinto : CL.Infrastructure.WhatsApp.IInvioWhatsApp
+{
+    public bool Configurato { get; set; }
+    public System.Collections.Concurrent.ConcurrentQueue<(string Numero, string Codice)> Codici { get; } = new();
+    public System.Collections.Concurrent.ConcurrentQueue<CL.Infrastructure.WhatsApp.NotificaWhatsApp> Notifiche { get; } = new();
+
+    public Task<bool> InviaCodiceAsync(string numero, string codice, CancellationToken ct = default)
+    {
+        if (Configurato) Codici.Enqueue((numero, codice));
+        return Task.FromResult(Configurato);
+    }
+
+    public Task<bool> InviaNotificaAsync(string numero, string nome, string titolo, string testo, string idNotifica, CancellationToken ct = default)
+    {
+        if (Configurato) Notifiche.Enqueue(new(numero, nome, titolo, testo, idNotifica));
+        return Task.FromResult(Configurato);
+    }
+
+    /// <summary>Aspetta (al massimo 5 secondi) che arrivi una notifica WhatsApp con questo titolo.</summary>
+    public async Task<CL.Infrastructure.WhatsApp.NotificaWhatsApp> AttendiAsync(string titolo)
+    {
+        for (var i = 0; i < 100; i++)
+        {
+            if (Notifiche.FirstOrDefault(m => m.Titolo == titolo) is { } m) return m;
+            await Task.Delay(50);
+        }
+        throw new TimeoutException($"Nessuna notifica WhatsApp \"{titolo}\". Arrivate: {string.Join(" | ", Notifiche.Select(m => m.Titolo))}");
     }
 }

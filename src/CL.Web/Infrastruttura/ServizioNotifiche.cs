@@ -4,15 +4,17 @@ using CL.Domain.Notifiche;
 using CL.Infrastructure.Email;
 using CL.Infrastructure.Identity;
 using CL.Infrastructure.Persistence;
+using CL.Infrastructure.WhatsApp;
 using Microsoft.EntityFrameworkCore;
 
 namespace CL.Web.Infrastruttura;
 
 /// <summary>
 /// Chi riceve una notifica: un utente con accesso attivo. L'email parte solo se l'ha confermata (cioè ha scelto la
-/// password dal link d'invito); la notifica in piattaforma la trova comunque al primo accesso.
+/// password dal link d'invito); la notifica in piattaforma la trova comunque al primo accesso. <see cref="WhatsApp"/> è il
+/// numero collegato e confermato con il consenso, altrimenti null.
 /// </summary>
-public sealed record Destinatario(string UtenteId, string? Email, string Nome, bool EmailConfermata, Guid? DipendenteId);
+public sealed record Destinatario(string UtenteId, string? Email, string Nome, bool EmailConfermata, Guid? DipendenteId, string? WhatsApp = null);
 
 /// <summary>Una notifica per una persona. <see cref="Chiave"/> identifica l'evento per non ripetere un promemoria.</summary>
 public sealed record MessaggioNotifica(Destinatario A, string Titolo, string Testo, string? Link, string? Chiave = null);
@@ -21,7 +23,8 @@ public sealed record MessaggioNotifica(Destinatario A, string Titolo, string Tes
 public static class QueryDestinatari
 {
     private static readonly Expression<Func<ApplicationUser, Destinatario>> Riga =
-        u => new Destinatario(u.Id, u.Email, u.Nome, u.EmailConfirmed, u.DipendenteId);
+        u => new Destinatario(u.Id, u.Email, u.Nome, u.EmailConfirmed, u.DipendenteId,
+            u.PhoneNumberConfirmed && u.WhatsAppConsensoIl != null ? u.PhoneNumber : null);
 
     /// <summary>
     /// I consulenti a cui è assegnata l'azienda. Se non è assegnata a nessuno, i super amministratori (vedono tutte le
@@ -59,12 +62,12 @@ public static class QueryDestinatari
 }
 
 /// <summary>
-/// Consegna le notifiche: sempre in piattaforma (campanella e pagina Notifiche), anche per email a chi non l'ha spenta
-/// per quella tipologia (pagina Impostazioni notifiche). Chi compie l'azione non riceve la notifica della propria azione.
-/// Le email partono in background dalla <see cref="CodaEmail"/>.
+/// Consegna le notifiche: sempre in piattaforma (campanella e pagina Notifiche), per email a chi non l'ha spenta per
+/// quella tipologia e su WhatsApp a chi ha collegato il numero e l'ha accesa (pagina Impostazioni notifiche). Chi compie
+/// l'azione non riceve la notifica della propria azione. Email e WhatsApp partono in background dalle rispettive code.
 /// </summary>
-public sealed class ServizioNotifiche(AppDbContext db, CodaEmail coda, ServizioAccessi accessi, UtenteCorrente utente,
-    ServizioOrganigramma organigramma, TimeProvider clock)
+public sealed class ServizioNotifiche(AppDbContext db, CodaEmail coda, CodaWhatsApp codaWhatsApp, IInvioWhatsApp whatsApp,
+    ServizioAccessi accessi, UtenteCorrente utente, ServizioOrganigramma organigramma, TimeProvider clock)
 {
     /// <summary>Quante notifiche mostra la campanella.</summary>
     public const int Anteprima = 5;
@@ -98,7 +101,8 @@ public sealed class ServizioNotifiche(AppDbContext db, CodaEmail coda, ServizioA
         if (lista.Count == 0) return 0;
 
         var adesso = clock.GetUtcNow().UtcDateTime;
-        foreach (var m in lista) db.Notifiche.Add(new Notifica(m.A.UtenteId, tipo, m.Titolo, m.Testo, m.Link, adesso, m.Chiave));
+        var notifiche = lista.Select(m => (Messaggio: m, Notifica: new Notifica(m.A.UtenteId, tipo, m.Titolo, m.Testo, m.Link, adesso, m.Chiave))).ToList();
+        db.Notifiche.AddRange(notifiche.Select(x => x.Notifica));
         await db.SaveChangesAsync();
 
         // Email a chi non l'ha spenta per questa tipologia (senza scelta salvata vale il predefinito: attiva).
@@ -110,6 +114,19 @@ public sealed class ServizioNotifiche(AppDbContext db, CodaEmail coda, ServizioA
         foreach (var m in lista.Where(m => m.A.EmailConfermata && !string.IsNullOrWhiteSpace(m.A.Email) && !senzaEmail.Contains(m.A.UtenteId)))
             coda.Accoda(new MessaggioEmail(m.A.Email!, m.Titolo,
                 Html(m.A, tipo, m.Testo, m.Link is null ? null : accessi.UrlAssoluto(m.Link), impostazioni)));
+
+        // WhatsApp solo a chi ha collegato il numero e ha acceso questa tipologia (predefinito: spento). Il pulsante del
+        // messaggio apre la notifica, che porta alla pagina dell'evento.
+        var conNumero = notifiche.Where(x => x.Messaggio.A.WhatsApp is not null).ToList();
+        if (conNumero.Count > 0 && whatsApp.Configurato)
+        {
+            var ids = conNumero.Select(x => x.Messaggio.A.UtenteId).Distinct().ToList();
+            var conWhatsApp = (await db.PreferenzeNotifiche.AsNoTracking()
+                .Where(p => p.Tipo == tipo && p.WhatsApp && ids.Contains(p.UtenteId))
+                .Select(p => p.UtenteId).ToListAsync()).ToHashSet();
+            foreach (var (m, n) in conNumero.Where(x => conWhatsApp.Contains(x.Messaggio.A.UtenteId)))
+                codaWhatsApp.Accoda(new NotificaWhatsApp(m.A.WhatsApp!, m.A.Nome, m.Titolo, m.Testo, n.Id.ToString()));
+        }
         return destinatari.Count;
     }
 
@@ -181,22 +198,25 @@ public sealed class ServizioNotifiche(AppDbContext db, CodaEmail coda, ServizioA
         return ruoli;
     }
 
-    /// <summary>Email attiva o no per ogni tipologia, per l'utente corrente.</summary>
-    public async Task<Dictionary<TipoNotifica, bool>> EmailAsync()
+    /// <summary>Email e WhatsApp accesi o no per ogni tipologia, per l'utente corrente (senza scelta: i predefiniti).</summary>
+    public async Task<Dictionary<TipoNotifica, (bool Email, bool WhatsApp)>> ScelteAsync()
     {
         var scelte = await db.PreferenzeNotifiche.AsNoTracking().Where(p => p.UtenteId == utente.UserId)
-            .ToDictionaryAsync(p => p.Tipo, p => p.Email);
-        return CatalogoNotifiche.Tutte.ToDictionary(d => d.Tipo, d => scelte.GetValueOrDefault(d.Tipo, PreferenzaNotifica.EmailPredefinita));
+            .ToDictionaryAsync(p => p.Tipo, p => (p.Email, p.WhatsApp));
+        return CatalogoNotifiche.Tutte.ToDictionary(d => d.Tipo,
+            d => scelte.GetValueOrDefault(d.Tipo, (PreferenzaNotifica.EmailPredefinita, PreferenzaNotifica.WhatsAppPredefinito)));
     }
 
-    /// <summary>Accende o spegne l'email delle tipologie indicate, per l'utente corrente.</summary>
-    public async Task ImpostaEmailAsync(IReadOnlyCollection<TipoNotifica> tipi, bool attiva)
+    /// <summary>Accende o spegne un canale per le tipologie indicate, per l'utente corrente.</summary>
+    public async Task ImpostaAsync(IReadOnlyCollection<TipoNotifica> tipi, CanaleNotifica canale, bool attiva)
     {
         if (utente.UserId is not { } io || tipi.Count == 0) return;
         var esistenti = await db.PreferenzeNotifiche.Where(p => p.UtenteId == io && tipi.Contains(p.Tipo)).ToDictionaryAsync(p => p.Tipo);
         foreach (var tipo in tipi.Distinct())
-            if (esistenti.TryGetValue(tipo, out var p)) p.ImpostaEmail(attiva);
-            else db.PreferenzeNotifiche.Add(new PreferenzaNotifica(io, tipo, attiva));
+        {
+            if (!esistenti.TryGetValue(tipo, out var p)) db.PreferenzeNotifiche.Add(p = new PreferenzaNotifica(io, tipo));
+            p.Imposta(canale, attiva);
+        }
         await db.SaveChangesAsync();
     }
 }
