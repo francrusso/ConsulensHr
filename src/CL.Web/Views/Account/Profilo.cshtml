@@ -45,5 +45,14 @@
             </form>
         </section>
     </div>
+    <div class="col-12">
+        <section class="card radius-15 p-4 d-flex flex-row flex-wrap align-items-center justify-content-between gap-3">
+            <div>
+                <h2 class="h6 mb-1">Notifiche</h2>
+                <p class="small text-body-secondary mb-0">Le notifiche in piattaforma sono sempre attive: scegli per quali tipologie ricevere anche l'email.</p>
+            </div>
+            <a asp-controller="Notifiche" asp-action="Impostazioni" class="btn btn-outline-primary"><i class="ri-settings-3-line" aria-hidden="true"></i> Impostazioni notifiche</a>
+        </section>
+    </div>
 </div>
 @section Scripts { <partial name="_ScriptPassword" /> }

@@ -1,11 +1,10 @@
 using System.Globalization;
-using System.Net;
 using System.Text;
 using CL.Domain.Assenze;
 using CL.Domain.Aziende;
 using CL.Domain.Dipendenti;
+using CL.Domain.Notifiche;
 using CL.Domain.Presenze;
-using CL.Infrastructure.Email;
 using CL.Infrastructure.Identity;
 using CL.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -36,7 +35,7 @@ public sealed record FoglioPresenze(Azienda Azienda, int Anno, int Mese, Comunic
 public sealed record StatoAziendaMese(Guid AziendaId, string RagioneSociale, StatoComunicazione? Stato, DateTime? InviataIl, int Dipendenti);
 
 /// <summary>Foglio presenze del mese: righe per i dipendenti in forza, assenze dal portale, invio ed esportazione.</summary>
-public sealed class ServizioPresenze(AppDbContext db, CodaEmail coda, ServizioAccessi accessi)
+public sealed class ServizioPresenze(AppDbContext db, ServizioNotifiche notifiche)
 {
     public async Task<FoglioPresenze?> FoglioAsync(Guid aziendaId, int anno, int mese)
     {
@@ -166,35 +165,39 @@ public sealed class ServizioPresenze(AppDbContext db, CodaEmail coda, ServizioAc
         return [.. Encoding.UTF8.GetPreamble(), .. Encoding.UTF8.GetBytes(sb.ToString())];
     }
 
-    /// <summary>Email ai consulenti dell'azienda (<see cref="QueryUtenti.EmailStudioAsync"/>): ha inviato le presenze del mese.</summary>
+    /// <summary>Notifica ai consulenti dell'azienda (<see cref="QueryDestinatari.StudioAsync"/>): ha inviato le presenze del mese.</summary>
     public async Task AvvisaStudioAsync(Azienda azienda, ComunicazioneMensile c)
     {
-        var link = WebUtility.HtmlEncode(accessi.ComponiUrl($"/Presenze/Foglio?aziendaId={azienda.Id}&anno={c.Anno}&mese={c.Mese}"));
-        var periodo = $"{ServizioBustePaga.NomeMese(c.Mese)} {c.Anno}";
-        foreach (var email in await db.EmailStudioAsync(azienda.Id))
-            coda.Accoda(new MessaggioEmail(email, $"Presenze di {periodo.ToLower()} inviate: {azienda.RagioneSociale}",
-                $"""
-                <p>{WebUtility.HtmlEncode(azienda.RagioneSociale)} ha inviato presenze e variazioni di {periodo.ToLower()} ({c.Righe.Count} dipendenti).</p>
-                <p><a href="{link}">{link}</a></p><p>Consulens HR</p>
-                """));
+        var periodo = $"{ServizioBustePaga.NomeMese(c.Mese).ToLower()} {c.Anno}";
+        await notifiche.InviaAsync(TipoNotifica.PresenzeInviate, await db.StudioAsync(azienda.Id),
+            $"Presenze di {periodo} inviate: {azienda.RagioneSociale}",
+            $"{azienda.RagioneSociale} ha inviato presenze e variazioni di {periodo} ({c.Righe.Count} {(c.Righe.Count == 1 ? "dipendente" : "dipendenti")}).",
+            $"/Presenze/Foglio?aziendaId={azienda.Id}&anno={c.Anno}&mese={c.Mese}");
     }
 
     /// <summary>Sollecito o riapertura: avvisa i referenti dell'azienda. Restituisce quanti sono stati avvisati.</summary>
     public async Task<int> AvvisaAziendaAsync(Azienda azienda, int anno, int mese, bool riaperta, string? motivo = null)
     {
         var periodo = $"{ServizioBustePaga.NomeMese(mese).ToLower()} {anno}";
-        var link = WebUtility.HtmlEncode(accessi.ComponiUrl($"/Presenze/Foglio?anno={anno}&mese={mese}"));
-        var destinatari = await db.EmailConRuoloAsync(Ruoli.Azienda, azienda.Id);
-        foreach (var email in destinatari)
-            coda.Accoda(new MessaggioEmail(email,
-                riaperta ? $"Presenze di {periodo} da correggere" : $"Promemoria: presenze di {periodo}",
-                $"""
-                <p>{(riaperta
+        return await notifiche.InviaAsync(riaperta ? TipoNotifica.PresenzeRiaperte : TipoNotifica.PresenzeDaInviare,
+            await db.ReferentiAsync(azienda.Id),
+            riaperta ? $"Presenze di {periodo} da correggere" : $"Promemoria: presenze di {periodo}",
+            NotificheRichieste.Righe(
+                riaperta
                     ? $"Il consulente ha riaperto la comunicazione delle presenze di {periodo} per una correzione."
-                    : $"Il consulente attende presenze e variazioni di {periodo} per elaborare le buste paga.")}</p>
-                {(string.IsNullOrWhiteSpace(motivo) ? "" : $"<p>Messaggio del consulente: {WebUtility.HtmlEncode(motivo)}</p>")}
-                <p>Puoi compilarla e inviarla dal portale: <a href="{link}">{link}</a></p><p>Consulens HR</p>
-                """));
-        return destinatari.Count;
+                    : $"Il consulente attende presenze e variazioni di {periodo} per elaborare le buste paga.",
+                string.IsNullOrWhiteSpace(motivo) ? null : $"Messaggio del consulente: {motivo.Trim()}",
+                "Puoi compilarla e inviarla dal portale."),
+            $"/Presenze/Foglio?anno={anno}&mese={mese}");
+    }
+
+    /// <summary>Il consulente ha elaborato il mese: avvisa i referenti dell'azienda.</summary>
+    public async Task AvvisaElaborataAsync(Guid aziendaId, ComunicazioneMensile c)
+    {
+        var periodo = $"{ServizioBustePaga.NomeMese(c.Mese).ToLower()} {c.Anno}";
+        await notifiche.InviaAsync(TipoNotifica.PresenzeElaborate, await db.ReferentiAsync(aziendaId),
+            $"Presenze di {periodo} elaborate",
+            $"Lo studio ha elaborato presenze e variazioni di {periodo}.",
+            $"/Presenze/Foglio?anno={c.Anno}&mese={c.Mese}");
     }
 }

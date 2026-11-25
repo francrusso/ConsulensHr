@@ -54,7 +54,8 @@ public sealed class UfficioViewModel
 /// alcuni giorni di smart working, che l'azienda approva. Tutto si vede nel calendario di presenze e assenze.
 /// </summary>
 [Authorize(Roles = Ruoli.Dipendente)]
-public sealed class UfficioController(AppDbContext db, UtenteCorrente utente, ServizioUfficio ufficio, TimeProvider clock) : AppController
+public sealed class UfficioController(AppDbContext db, UtenteCorrente utente, ServizioUfficio ufficio, NotificheRichieste notifiche,
+    TimeProvider clock) : AppController
 {
     private DateOnly Oggi => DateOnly.FromDateTime(clock.GetLocalNow().DateTime);
 
@@ -169,6 +170,7 @@ public sealed class UfficioController(AppDbContext db, UtenteCorrente utente, Se
             return torna;
         }
         await db.SaveChangesAsync();
+        await notifiche.SmartWorkingChiestoAsync(id, [giorno]);
         Conferma($"Smart working del {giorno:dd/MM/yyyy} chiesto: in attesa di approvazione dell'azienda.");
         return torna;
     }

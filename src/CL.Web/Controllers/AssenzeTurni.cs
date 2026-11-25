@@ -62,6 +62,7 @@ public sealed partial class AssenzeController
             else
             {
                 db.RichiesteCambioTurno.Add(richiesta); await db.SaveChangesAsync();
+                await notifiche.CambioTurnoChiestoAsync(richiesta);
                 Conferma("Richiesta inviata all'azienda. I turni restano invariati fino all'approvazione.");
                 return RedirectToAction(nameof(Index));
             }
@@ -114,8 +115,14 @@ public sealed partial class AssenzeController
             else { mio.Modifica(richiesta.NuovoInizio, richiesta.NuovaFine, mio.Note); mio.Pubblica(AdessoUtc); }
         }
         if (!Prova(() => richiesta.Decidi(approva, utente.Email, motivo))) { Errore(PrimoErrore()); return Torna(ritorno); }
-        try { await db.SaveChangesAsync(); Conferma(approva ? "Richiesta approvata: calendario aggiornato per i dipendenti coinvolti." : "Richiesta rifiutata."); }
-        catch (DbUpdateConcurrencyException) { Errore("I turni o la richiesta sono stati modificati nel frattempo. Aggiorna la pagina."); }
+        try { await db.SaveChangesAsync(); }
+        catch (DbUpdateConcurrencyException)
+        {
+            Errore("I turni o la richiesta sono stati modificati nel frattempo. Aggiorna la pagina.");
+            return Torna(ritorno);
+        }
+        await notifiche.CambioTurnoDecisoAsync(richiesta);
+        Conferma(approva ? "Richiesta approvata: calendario aggiornato per i dipendenti coinvolti." : "Richiesta rifiutata.");
         return Torna(ritorno);
     }
 

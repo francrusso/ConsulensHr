@@ -215,23 +215,50 @@ Il dipendente viene portato al suo calendario.
   consulente (solo super amministratore).
 - **Consulenti** (super amministratore): crea i consulenti e assegna le aziende con le caselle di spunta.
 
-## Email automatiche
+## Notifiche
 
-Le email partono in background; senza server SMTP configurato non parte nulla. "I consulenti dell'azienda" sono quelli a
-cui l'azienda è assegnata; se non è assegnata a nessuno, l'avviso va ai super amministratori.
+Ogni evento importante genera una **notifica in piattaforma** per chi è coinvolto: la campanella in alto mostra le
+ultime e quante sono da leggere, la pagina **Notifiche** (`/Notifiche`) le elenca tutte con ricerca, filtro per sezione,
+"Segna come letta" / "Segna tutte come lette" e "Vai alla sezione", che apre la pagina dell'evento e la segna come letta.
+Chi compie un'azione non riceve la notifica della propria azione.
 
-| Quando | A chi |
-|---|---|
-| Invito o recupero password | La persona invitata |
-| Nuova richiesta di ferie o permesso in attesa | Il responsabile (se ha un accesso attivo), altrimenti i referenti dell'azienda |
-| Richiesta approvata o rifiutata | Il dipendente (con il motivo del rifiuto) |
-| Profilo azienda completato | I consulenti dell'azienda |
-| Dati personali completati o modificati dal dipendente | I consulenti e i referenti dell'azienda |
-| Presenze del mese inviate | I consulenti dell'azienda |
-| Sollecito o riapertura delle presenze | I referenti dell'azienda |
-| Busta paga pubblicata | Il dipendente con accesso attivo |
+Le notifiche in piattaforma sono **sempre attive**. In **Impostazioni notifiche** (`/Notifiche/Impostazioni`, anche dalla
+campanella e dal profilo) ognuno sceglie per quali tipologie ricevere **anche l'email**: interruttore per tipologia,
+"Disattiva tutte" per sezione e interruttore generale del canale Email; ogni scelta si salva subito. Senza scelta l'email è
+attiva. Compaiono solo le tipologie che il ruolo può ricevere. Il canale **WhatsApp** è previsto ma non ancora disponibile.
 
-Smart working, straordinari, cancellazioni, revoche e chiusure non mandano email.
+"I consulenti dell'azienda" sono quelli a cui l'azienda è assegnata; se non è assegnata a nessuno, la notifica va ai
+super amministratori. Le email partono in background; senza server SMTP configurato arrivano solo le notifiche in
+piattaforma (il consulente lo vede scritto nelle impostazioni). L'email arriva solo a chi ha già attivato l'accesso.
+
+| Sezione | Tipologia | Chi la riceve |
+|---|---|---|
+| Ferie e permessi | Nuova richiesta da approvare | Il responsabile (se ha un accesso attivo), altrimenti i referenti |
+| | Richiesta approvata o rifiutata | La persona (con il motivo del rifiuto) |
+| | Cancellazione da decidere | Il responsabile, altrimenti i referenti |
+| | Cancellazione confermata o respinta | La persona |
+| | Richiesta revocata (anche smart working e straordinari) | La persona |
+| | Chiusura aziendale | Le persone a cui sono state registrate le ferie |
+| Smart working e straordinari | Smart working / straordinario da approvare | I referenti |
+| | Smart working / straordinario approvato o rifiutato | La persona |
+| Turni di lavoro | Turni pubblicati | Ogni persona, con il periodo dei suoi turni |
+| | Cambio turno da approvare | I referenti |
+| | Cambio turno approvato o rifiutato | Il richiedente e, per uno scambio approvato, il collega |
+| Presenze del mese | Presenze inviate | I consulenti dell'azienda |
+| | Promemoria presenze, presenze da correggere, presenze elaborate | I referenti |
+| Documenti | Nuova busta paga, nuova CU, contratto o lettera di variazione caricati | La persona |
+| | Documento personale caricato | Caricato dalla persona: referenti e consulenti; caricato da loro: la persona |
+| | Archivio storico | Caricato dallo studio: i referenti; caricato dal referente: i consulenti |
+| Personale | Dati personali compilati o modificati, nuovo contratto o incarico, cessazione | Consulenti e referenti dell'azienda |
+| Aziende | Profilo azienda completato | I consulenti dell'azienda |
+| | Azienda assegnata | Il consulente a cui il super amministratore la assegna |
+| Scadenze | Contratto a termine in scadenza (30 giorni, senza contratto successivo né cessazione) | Consulenti e referenti |
+| | Documento personale in scadenza (30 giorni) | La persona, i consulenti e i referenti |
+
+I promemoria delle scadenze si controllano poco dopo l'avvio e poi ogni 6 ore; ognuno arriva una volta sola (se la data
+cambia, per esempio con una proroga, arriva un nuovo promemoria).
+
+Invito, recupero password e cambio dell'email di accesso arrivano sempre per email e non si possono spegnere.
 
 ## Indirizzi e partita IVA
 

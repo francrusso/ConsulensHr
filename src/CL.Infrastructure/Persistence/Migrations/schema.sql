@@ -2055,3 +2055,75 @@ BEGIN
 END $EF$;
 COMMIT;
 
+START TRANSACTION;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261125101627_Notifiche') THEN
+    CREATE TABLE hr."Notifiche" (
+        "Id" uuid NOT NULL,
+        "UtenteId" character varying(450) NOT NULL,
+        "Tipo" character varying(32) NOT NULL,
+        "Titolo" character varying(200) NOT NULL,
+        "Testo" character varying(2000) NOT NULL,
+        "Link" character varying(500),
+        "Chiave" character varying(200),
+        "CreataIl" timestamp with time zone NOT NULL,
+        "LettaIl" timestamp with time zone,
+        CONSTRAINT "PK_Notifiche" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_Notifiche_AspNetUsers_UtenteId" FOREIGN KEY ("UtenteId") REFERENCES hr."AspNetUsers" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261125101627_Notifiche') THEN
+    CREATE TABLE hr."PreferenzeNotifiche" (
+        "Id" uuid NOT NULL,
+        "UtenteId" character varying(450) NOT NULL,
+        "Tipo" character varying(32) NOT NULL,
+        "Email" boolean NOT NULL,
+        CONSTRAINT "PK_PreferenzeNotifiche" PRIMARY KEY ("Id"),
+        CONSTRAINT "FK_PreferenzeNotifiche_AspNetUsers_UtenteId" FOREIGN KEY ("UtenteId") REFERENCES hr."AspNetUsers" ("Id") ON DELETE CASCADE
+    );
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261125101627_Notifiche') THEN
+    CREATE INDEX "IX_Notifiche_Chiave_UtenteId" ON hr."Notifiche" ("Chiave", "UtenteId");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261125101627_Notifiche') THEN
+    CREATE INDEX "IX_Notifiche_UtenteId_CreataIl" ON hr."Notifiche" ("UtenteId", "CreataIl");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261125101627_Notifiche') THEN
+    CREATE INDEX "IX_Notifiche_UtenteId_LettaIl" ON hr."Notifiche" ("UtenteId", "LettaIl");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261125101627_Notifiche') THEN
+    CREATE UNIQUE INDEX "IX_PreferenzeNotifiche_UtenteId_Tipo" ON hr."PreferenzeNotifiche" ("UtenteId", "Tipo");
+    END IF;
+END $EF$;
+
+DO $EF$
+BEGIN
+    IF NOT EXISTS(SELECT 1 FROM hr."__EFMigrationsHistory" WHERE "MigrationId" = '20261125101627_Notifiche') THEN
+    INSERT INTO hr."__EFMigrationsHistory" ("MigrationId", "ProductVersion")
+    VALUES ('20261125101627_Notifiche', '10.0.15');
+    END IF;
+END $EF$;
+COMMIT;
+

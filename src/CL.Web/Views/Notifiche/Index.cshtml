@@ -1,0 +1,104 @@
+@model CL.Web.Controllers.NotificheViewModel
+@using CL.Domain.Notifiche
+@{
+    ViewData["Title"] = "Notifiche";
+    var ritorno = Context.Request.Path + Context.Request.QueryString;
+    var italiano = System.Globalization.CultureInfo.GetCultureInfo("it-IT");
+}
+@* Come la pagina Notifiche di ConsulensNew: promemoria delle non lette, filtri, schede con "Vai alla sezione". *@
+<div class="breadcrumb-titolo d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+    <h1 class="titolo-pagina mb-0">@ViewData["Title"]</h1>
+    <a asp-action="Impostazioni" class="btn btn-primary"><i class="ri-settings-3-line" aria-hidden="true"></i> Impostazioni notifiche</a>
+</div>
+
+@if (Model.DaLeggere > 0)
+{
+    <div class="notifiche-da-leggere" role="status">
+        <p class="mb-0"><i class="ri-notification-line" aria-hidden="true"></i> @Model.DaLeggere @(Model.DaLeggere == 1 ? "nuova notifica" : "nuove notifiche") da leggere</p>
+        <form asp-action="SegnaTutteLette" method="post" class="m-0">
+            <input type="hidden" name="ritorno" value="@ritorno" />
+            <button type="submit" class="btn btn-sm btn-outline-primary"><i class="ri-check-double-line" aria-hidden="true"></i> Segna tutte come lette</button>
+        </form>
+    </div>
+}
+
+<form asp-action="Index" method="get" class="invoice-filter-bar customer-filter-form mb-3">
+    <div class="invoice-filter-toolbar flex-wrap">
+        <div class="invoice-filter-client">
+            <div class="input-group">
+                <span class="input-group-text bg-transparent"><i class="ri-search-line" aria-hidden="true"></i></span>
+                <input type="search" name="q" value="@Model.Ricerca" class="form-control" placeholder="Cerca tra le notifiche" aria-label="Cerca tra le notifiche" />
+            </div>
+        </div>
+        <div>
+            <select name="categoria" class="form-select" aria-label="Filtra per sezione" asp-items="Model.Categorie">
+                <option value="">Tutte le sezioni</option>
+            </select>
+        </div>
+        @if (Model.SoloDaLeggere) { <input type="hidden" name="daLeggere" value="true" /> }
+        <div class="invoice-filter-actions"><button class="btn invoice-filter-submit" type="submit">Cerca <i class="ri-search-line" aria-hidden="true"></i></button></div>
+    </div>
+</form>
+
+<div class="invoice-filter-categories filtro-stati mb-3" role="group" aria-label="Filtra per lettura">
+    @foreach (var (valore, testo) in new (bool, string)[] { (false, "Tutte"), (true, "Da leggere") })
+    {
+        <a class="badge-filtro-categoria @(Model.SoloDaLeggere == valore ? "active" : "")" aria-current="@(Model.SoloDaLeggere == valore ? "true" : null)"
+           asp-action="Index" asp-route-daLeggere="@(valore ? "true" : null)" asp-route-q="@Model.Ricerca" asp-route-categoria="@Model.Categoria">@testo</a>
+    }
+</div>
+
+<div class="elenco-notifiche">
+    @if (Model.Notifiche.Count == 0)
+    {
+        <div class="card radius-15 p-4 text-center elenco-vuoto">
+            <span class="elenco-vuoto-icona" aria-hidden="true"><i class="ri-notification-2-line"></i></span>
+            <div>@(Model.Ricerca is null && Model.Categoria is null && !Model.SoloDaLeggere ? "Non ci sono notifiche" : "Nessuna notifica con questi filtri")</div>
+        </div>
+    }
+    @foreach (var n in Model.Notifiche)
+    {
+        var categoria = n.Tipo.Categoria();
+        <article class="notification-card @(n.Letta ? "notifica-letta" : "notifica-non-letta")">
+            <span class="notification-category-icon"><i class="@IconeNotifiche.Di(categoria)" aria-hidden="true"></i></span>
+            <div class="notification-card-content">
+                <div class="notification-card-meta">
+                    <h2>@n.Titolo</h2>
+                    <span class="badge badge-categoria-notifica">@categoria.Descrizione()</span>
+                </div>
+                <p class="notifica-testo">@n.Testo</p>
+                @if (!n.Letta)
+                {
+                    <form asp-action="SegnaLetta" method="post" class="m-0">
+                        <input type="hidden" name="id" value="@n.Id" />
+                        <input type="hidden" name="ritorno" value="@ritorno" />
+                        <button type="submit" class="notification-mark-read">Segna come letta</button>
+                    </form>
+                }
+                <div class="notification-card-footer">
+                    <time datetime="@n.CreataIl.ToString("O")">@n.CreataIl.ToLocalTime().ToString("dd/MM/yyyy · HH:mm", italiano)</time>
+                    @if (!n.Letta) { <span class="notification-unread"><span aria-hidden="true"></span>Da leggere</span> }
+                </div>
+                @if (n.Link is not null)
+                {
+                    <a class="btn btn-outline-primary notification-section-link" asp-action="Apri" asp-route-id="@n.Id"><i class="ri-external-link-line" aria-hidden="true"></i> Vai alla sezione</a>
+                }
+            </div>
+        </article>
+    }
+</div>
+
+@if (Model.Pagine > 1)
+{
+    <nav aria-label="Pagine delle notifiche" class="paginazione mb-3">
+        <ul class="pagination justify-content-center">
+            @for (var p = 1; p <= Model.Pagine; p++)
+            {
+                <li class="page-item @(p == Model.Pagina ? "active" : "")">
+                    <a class="page-link" asp-action="Index" asp-route-pagina="@p" asp-route-q="@Model.Ricerca" asp-route-categoria="@Model.Categoria"
+                       asp-route-daLeggere="@(Model.SoloDaLeggere ? "true" : null)" aria-current="@(p == Model.Pagina ? "page" : null)">@p</a>
+                </li>
+            }
+        </ul>
+    </nav>
+}

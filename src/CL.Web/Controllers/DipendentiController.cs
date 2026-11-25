@@ -5,6 +5,7 @@ using CL.Domain.Aziende;
 using CL.Domain.Dipendenti;
 using CL.Domain.Presenze;
 using CL.Domain.ValueObjects;
+using CL.Domain.Notifiche;
 using CL.Infrastructure.Archivio;
 using CL.Infrastructure.Persistence;
 using CL.Web.Infrastruttura;
@@ -280,7 +281,8 @@ public sealed record TeamRiga(string Nome, string Colore, string? Emoji);
 /// </summary>
 [Authorize(Policy = Policy.GestionePersonale)]
 public sealed class DipendentiController(AppDbContext db, UtenteCorrente utente, ServizioSaldi saldi, ServizioAccessi accessi,
-    ServizioConsulentiAziende consulenti, FotoDipendenti foto, IArchivioDocumenti archivio, TimeProvider clock) : AppController
+    ServizioConsulentiAziende consulenti, FotoDipendenti foto, IArchivioDocumenti archivio, ServizioNotifiche notifiche,
+    TimeProvider clock) : AppController
 {
     private DateOnly Oggi => DateOnly.FromDateTime(clock.GetLocalNow().DateTime);
 
@@ -432,6 +434,9 @@ public sealed class DipendentiController(AppDbContext db, UtenteCorrente utente,
             catch (CL.Domain.Common.DomainException ex) { Errore(ex.Message); return SchedaAperta(id); }
             await using (var st = documento.OpenReadStream()) await archivio.SalvaAsync(chiave, st);
             await db.SaveChangesAsync();
+            await notifiche.InviaAsync(TipoNotifica.ContrattoCaricato, await db.PersoneAsync([id]),
+                $"{tipo.Descrizione()} disponibile",
+                $"È disponibile la lettera «{tipo.Descrizione()}» del tuo contratto, valida dal {dataEffetto.Value:dd/MM/yyyy}.", "/MioContratto");
             Conferma($"{tipo.Descrizione()} caricata.");
             return SchedaAperta(id);
         }
@@ -440,6 +445,9 @@ public sealed class DipendentiController(AppDbContext db, UtenteCorrente utente,
         c.ImpostaDocumento(chiave, documento.FileName, clock.GetUtcNow().UtcDateTime);
         await db.SaveChangesAsync();
         if (precedente is not null) await archivio.EliminaAsync(precedente);
+        await notifiche.InviaAsync(TipoNotifica.ContrattoCaricato, await db.PersoneAsync([id]),
+            precedente is null ? "Contratto firmato disponibile" : "Contratto firmato aggiornato",
+            "È disponibile il PDF firmato del tuo contratto.", "/MioContratto");
         Conferma("Contratto caricato.");
         return SchedaAperta(id);
     }
@@ -762,6 +770,10 @@ public sealed class DipendentiController(AppDbContext db, UtenteCorrente utente,
             return View(form);
 
         await db.SaveChangesAsync();
+        var cosa = form.Tipo.IsSubordinato() ? "contratto" : "incarico";
+        await AvvisaPersonaleAsync(d, TipoNotifica.NuovoContratto, $"Nuovo {cosa}: {d.NomeCompleto}",
+            $"È stato registrato un {cosa} ({form.Tipo.Descrizione().ToLower()}) per {d.NomeCompleto} dal {form.DataInizio:dd/MM/yyyy}"
+            + (form.DataFine is { } fine ? $" al {fine:dd/MM/yyyy}." : ", a tempo indeterminato."));
         Conferma(form.Tipo.IsSubordinato() ? "Contratto registrato." : "Incarico registrato.");
         return RedirectToAction(nameof(Dettaglio), new { id = d.Id });
     }
@@ -776,10 +788,17 @@ public sealed class DipendentiController(AppDbContext db, UtenteCorrente utente,
         else if (ProvaOAvvisa(() => d.Cessa(data)))
         {
             await db.SaveChangesAsync();
+            await AvvisaPersonaleAsync(d, TipoNotifica.Cessazione, $"Cessazione: {d.NomeCompleto}",
+                $"È stata registrata la cessazione del rapporto di {d.NomeCompleto} al {data:dd/MM/yyyy}.");
             Conferma($"Cessazione registrata al {data:dd/MM/yyyy}.");
         }
         return RedirectToAction(nameof(Dettaglio), new { id, sezione = "contratto" });
     }
+
+    /// <summary>Notifica a studio e referenti dell'azienda (non a chi ha fatto la modifica), con il link al contratto.</summary>
+    private async Task AvvisaPersonaleAsync(Dipendente d, TipoNotifica tipo, string titolo, string testo) =>
+        await notifiche.InviaAsync(tipo, [.. await db.StudioAsync(d.AziendaId), .. await db.ReferentiAsync(d.AziendaId)],
+            titolo, testo, $"/Dipendenti/Dettaglio/{d.Id}?sezione=contratto");
 
     /// <summary>
     /// Foto del dipendente: la vedono il consulente, i referenti della sua azienda e il dipendente stesso.

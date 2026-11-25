@@ -248,14 +248,13 @@ public sealed partial class AccessiWebTests : IDisposable
         await _app.CreaUtente("bianchi@studio.test", Ruoli.Consulente, amministratore: false);
         await _app.ConDb(async db =>
         {
-            foreach (var u in await db.Users.ToListAsync()) u.EmailConfirmed = true; // solo le email confermate ricevono avvisi
             db.AssegnazioniAziende.Add(new AssegnazioneAzienda { AziendaId = acme, UserId = rossi.Id, AssegnataIl = DateTime.UtcNow });
             return await db.SaveChangesAsync();
         });
 
         // Solo il consulente a cui l'azienda è assegnata, non tutto lo studio.
-        Assert.Equal(["rossi@studio.test"], await _app.ConDb(db => db.EmailStudioAsync(acme)));
+        Assert.Equal(["rossi@studio.test"], await _app.ConDb(async db => (await db.StudioAsync(acme)).Select(d => d.Email).ToList()));
         // Azienda senza consulenti assegnati: l'avviso va al super amministratore, così non si perde.
-        Assert.Equal(["admin@studio.test"], await _app.ConDb(db => db.EmailStudioAsync(altra)));
+        Assert.Equal(["admin@studio.test"], await _app.ConDb(async db => (await db.StudioAsync(altra)).Select(d => d.Email).ToList()));
     }
 }

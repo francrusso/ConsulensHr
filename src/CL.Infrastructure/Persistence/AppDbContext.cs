@@ -3,6 +3,7 @@ using CL.Domain.Aziende;
 using CL.Domain.BustePaga;
 using CL.Domain.Dipendenti;
 using CL.Domain.Documenti;
+using CL.Domain.Notifiche;
 using CL.Domain.Organizzazione;
 using CL.Domain.Presenze;
 using CL.Domain.ValueObjects;
@@ -44,6 +45,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, Perimet
     public DbSet<ComunicazioneMensile> ComunicazioniPresenze => Set<ComunicazioneMensile>();
     public DbSet<ProfiloDipendente> ProfiliDipendente => Set<ProfiloDipendente>();
     public DbSet<Team> Team => Set<Team>();
+    public DbSet<Notifica> Notifiche => Set<Notifica>();
+    public DbSet<PreferenzaNotifica> PreferenzeNotifiche => Set<PreferenzaNotifica>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

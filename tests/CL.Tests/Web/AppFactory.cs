@@ -27,6 +27,9 @@ public sealed class AppFactory : WebApplicationFactory<Program>
     /// <summary>Errori registrati dal server durante il test (utile per capire un 500).</summary>
     public List<string> ErroriServer { get; } = [];
 
+    /// <summary>Email al posto dell'SMTP: come senza server finché un test non imposta <see cref="EmailFinte.Configurato"/>.</summary>
+    public EmailFinte Email { get; } = new();
+
     public AppFactory() => _conn.Open();
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
@@ -46,6 +49,8 @@ public sealed class AppFactory : WebApplicationFactory<Program>
             // Né a OpenStreetMap per i suggerimenti di indirizzo.
             services.RemoveAll<CL.Infrastructure.Indirizzi.IRicercaIndirizzi>();
             services.AddSingleton<CL.Infrastructure.Indirizzi.IRicercaIndirizzi, IndirizziFinti>();
+            services.RemoveAll<CL.Infrastructure.Email.IInvioEmail>();
+            services.AddSingleton<CL.Infrastructure.Email.IInvioEmail>(Email);
         });
     }
 
@@ -188,4 +193,29 @@ internal sealed class IndirizziFinti : CL.Infrastructure.Indirizzi.IRicercaIndir
         Task.FromResult<IReadOnlyList<CL.Infrastructure.Indirizzi.IndirizzoTrovato>>(testo.Contains("roma", StringComparison.OrdinalIgnoreCase)
             ? [new("Via Roma 10, 20121 Milano (MI)", "Via Roma 10", "20121", "Milano", "MI")]
             : []);
+}
+
+/// <summary>Invio email finto: raccoglie i messaggi (in background, dalla coda) invece di spedirli.</summary>
+public sealed class EmailFinte : CL.Infrastructure.Email.IInvioEmail
+{
+    public bool Configurato { get; set; }
+    public System.Collections.Concurrent.ConcurrentQueue<(string A, string Oggetto, string Html)> Inviate { get; } = new();
+
+    public Task<bool> InviaAsync(string destinatario, string oggetto, string html, CancellationToken ct = default)
+    {
+        if (!Configurato) return Task.FromResult(false);
+        Inviate.Enqueue((destinatario, oggetto, html));
+        return Task.FromResult(true);
+    }
+
+    /// <summary>Aspetta (al massimo 5 secondi) che arrivi un'email con questo oggetto.</summary>
+    public async Task<(string A, string Oggetto, string Html)> AttendiAsync(string oggetto)
+    {
+        for (var i = 0; i < 100; i++)
+        {
+            if (Inviate.FirstOrDefault(m => m.Oggetto == oggetto) is { A: not null } m) return m;
+            await Task.Delay(50);
+        }
+        throw new TimeoutException($"Nessuna email \"{oggetto}\". Arrivate: {string.Join(" | ", Inviate.Select(m => m.Oggetto))}");
+    }
 }

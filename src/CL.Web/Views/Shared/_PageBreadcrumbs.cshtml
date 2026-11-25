@@ -20,6 +20,7 @@
         "Turni" => (Utente.IsDipendente ? "I miei turni" : "Turni di lavoro", Url.Action("Index", "Turni")),
         "Ufficio" => ("Calendario", Url.Action("Index", "Ufficio")),
         "Account" => ("Profilo", null),
+        "Notifiche" => ("Notifiche", Url.Action("Index", "Notifiche")),
         _ => (controller, null),
     };
     var mostra = !string.IsNullOrWhiteSpace(titolo) && controller is not "" && ViewData["AuthPanel"] is not true;

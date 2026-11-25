@@ -1,8 +1,7 @@
 using System.ComponentModel.DataAnnotations;
-using System.Net;
 using CL.Domain.Aziende;
+using CL.Domain.Notifiche;
 using CL.Domain.ValueObjects;
-using CL.Infrastructure.Email;
 using CL.Infrastructure.Identity;
 using CL.Infrastructure.Persistence;
 using CL.Web.Infrastruttura;
@@ -209,8 +208,8 @@ public sealed class OnboardingViewModel
 /// </summary>
 [Authorize(Policy = Policy.GestionePersonale)]
 public sealed class OnboardingController(
-    AppDbContext db, UtenteCorrente utente, SignInManager<ApplicationUser> signIn, CodaEmail coda,
-    ServizioAccessi accessi, LoghiAziende loghi, TimeProvider clock) : AppController
+    AppDbContext db, UtenteCorrente utente, SignInManager<ApplicationUser> signIn, ServizioNotifiche notifiche,
+    LoghiAziende loghi, TimeProvider clock) : AppController
 {
     /// <summary>Scheda "Tipi di richiesta" del profilo completo.</summary>
     public const int PassoRichieste = 8;
@@ -491,19 +490,12 @@ public sealed class OnboardingController(
         _ => null,
     };
 
-    /// <summary>Email ai consulenti attivi (in coda, inviate in background) con il link alla scheda dell'azienda.</summary>
-    private async Task AvvisaStudio(Azienda azienda, ProfiloAzienda profilo)
-    {
-        var consulenti = await db.EmailStudioAsync(azienda.Id);
-        var link = WebUtility.HtmlEncode(accessi.ComponiUrl($"/Aziende/Dettaglio/{azienda.Id}"));
-        var nome = WebUtility.HtmlEncode(azienda.RagioneSociale);
-        foreach (var email in consulenti)
-            coda.Accoda(new MessaggioEmail(email, $"Profilo completato: {azienda.RagioneSociale}",
-                $"""
-                <p>{nome} ha completato il profilo per il consulente (compilato da {WebUtility.HtmlEncode(profilo.CompletatoDa)}).</p>
-                <p>Dati societari, sedi, legale rappresentante, posizioni INPS/INAIL e referente paghe sono nella scheda dell'azienda:</p>
-                <p><a href="{link}">{link}</a></p>
-                <p>Consulens HR</p>
-                """));
-    }
+    /// <summary>Notifica ai consulenti dell'azienda, con il link alla sua scheda.</summary>
+    private async Task AvvisaStudio(Azienda azienda, ProfiloAzienda profilo) =>
+        await notifiche.InviaAsync(TipoNotifica.ProfiloAziendaCompletato, await db.StudioAsync(azienda.Id),
+            $"Profilo completato: {azienda.RagioneSociale}",
+            NotificheRichieste.Righe(
+                $"{azienda.RagioneSociale} ha completato il profilo per il consulente (compilato da {profilo.CompletatoDa}).",
+                "Dati societari, sedi, legale rappresentante, posizioni INPS/INAIL e referente paghe sono nella scheda dell'azienda."),
+            $"/Aziende/Dettaglio/{azienda.Id}");
 }

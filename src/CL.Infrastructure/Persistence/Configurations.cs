@@ -3,6 +3,7 @@ using CL.Domain.Aziende;
 using CL.Domain.BustePaga;
 using CL.Domain.Dipendenti;
 using CL.Domain.Documenti;
+using CL.Domain.Notifiche;
 using CL.Domain.Organizzazione;
 using CL.Domain.Presenze;
 using CL.Infrastructure.Identity;
@@ -542,5 +543,38 @@ internal sealed class RichiestaCambioTurnoConfig : IEntityTypeConfiguration<Rich
         b.HasOne<Dipendente>().WithMany().HasForeignKey(x => x.DipendenteId).OnDelete(DeleteBehavior.Cascade);
         b.HasIndex(x => new { x.DipendenteId, x.Stato });
         b.HasIndex(x => x.TurnoId);
+    }
+}
+
+internal sealed class NotificaConfig : IEntityTypeConfiguration<Notifica>
+{
+    public void Configure(EntityTypeBuilder<Notifica> b)
+    {
+        b.ToTable("Notifiche");
+        b.Property(x => x.Id).ValueGeneratedNever();
+        b.Property(x => x.UtenteId).HasMaxLength(450);
+        b.Property(x => x.Titolo).HasMaxLength(Notifica.LunghezzaTitolo);
+        b.Property(x => x.Testo).HasMaxLength(Notifica.LunghezzaTesto);
+        b.Property(x => x.Link).HasMaxLength(Notifica.LunghezzaLink);
+        b.Property(x => x.Chiave).HasMaxLength(Notifica.LunghezzaChiave);
+        b.Ignore(x => x.Letta);
+        // Un utente eliminato si porta via le sue notifiche.
+        b.HasOne<ApplicationUser>().WithMany().HasForeignKey(x => x.UtenteId).OnDelete(DeleteBehavior.Cascade);
+        // Campanella (le più recenti e quante da leggere) e promemoria già mandati.
+        b.HasIndex(x => new { x.UtenteId, x.CreataIl });
+        b.HasIndex(x => new { x.UtenteId, x.LettaIl });
+        b.HasIndex(x => new { x.Chiave, x.UtenteId });
+    }
+}
+
+internal sealed class PreferenzaNotificaConfig : IEntityTypeConfiguration<PreferenzaNotifica>
+{
+    public void Configure(EntityTypeBuilder<PreferenzaNotifica> b)
+    {
+        b.ToTable("PreferenzeNotifiche");
+        b.Property(x => x.Id).ValueGeneratedNever();
+        b.Property(x => x.UtenteId).HasMaxLength(450);
+        b.HasOne<ApplicationUser>().WithMany().HasForeignKey(x => x.UtenteId).OnDelete(DeleteBehavior.Cascade);
+        b.HasIndex(x => new { x.UtenteId, x.Tipo }).IsUnique();
     }
 }

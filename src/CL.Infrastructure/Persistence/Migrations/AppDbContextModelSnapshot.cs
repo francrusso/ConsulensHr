@@ -1087,6 +1087,82 @@ namespace CL.Infrastructure.Persistence.Migrations
                     b.ToTable("DocumentiStorici", "hr");
                 });
 
+            modelBuilder.Entity("CL.Domain.Notifiche.Notifica", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Chiave")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTime>("CreataIl")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("LettaIl")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Link")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Testo")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<string>("Titolo")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("UtenteId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("character varying(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Chiave", "UtenteId");
+
+                    b.HasIndex("UtenteId", "CreataIl");
+
+                    b.HasIndex("UtenteId", "LettaIl");
+
+                    b.ToTable("Notifiche", "hr");
+                });
+
+            modelBuilder.Entity("CL.Domain.Notifiche.PreferenzaNotifica", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("Email")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<string>("UtenteId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("character varying(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UtenteId", "Tipo")
+                        .IsUnique();
+
+                    b.ToTable("PreferenzeNotifiche", "hr");
+                });
+
             modelBuilder.Entity("CL.Domain.Organizzazione.Team", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2105,6 +2181,24 @@ namespace CL.Infrastructure.Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("AziendaId")
                         .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("CL.Domain.Notifiche.Notifica", b =>
+                {
+                    b.HasOne("CL.Infrastructure.Identity.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UtenteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("CL.Domain.Notifiche.PreferenzaNotifica", b =>
+                {
+                    b.HasOne("CL.Infrastructure.Identity.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UtenteId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 

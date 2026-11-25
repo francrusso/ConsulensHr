@@ -1,5 +1,6 @@
 ﻿@inject UtenteCorrente Utente
 @inject ServizioAvatar Avatar
+@inject ServizioNotifiche Notifiche
 @*
     Struttura ripresa da ConsulensNew (sidebar + topbar + page-content) per avere la stessa estetica;
     i colori beige vengono da assets/css/tema-beige.css.
@@ -305,23 +306,40 @@
                                     </a>
                                 </li>
                             }
-                            @* Notifiche: la sezione verrà sviluppata in seguito; per ora il menù è vuoto. *@
+                            @{
+                                // Campanella: le ultime notifiche e quante sono da leggere (la pagina Notifiche ha tutto).
+                                var daLeggere = await Notifiche.DaLeggereAsync();
+                                var ultime = await Notifiche.UltimeAsync();
+                            }
                             <li class="nav-item dropdown dropdown-lg topbar-notifications">
                                 <a class="nav-link dropdown-toggle dropdown-toggle-nocaret position-relative" href="javascript:;" data-bs-toggle="dropdown"
-                                   aria-label="Notifiche" aria-expanded="false">
+                                   aria-label="@(daLeggere > 0 ? $"Notifiche, {daLeggere} da leggere" : "Notifiche")" aria-expanded="false">
                                     <i class="ri-notification-2-line vertical-align-middle" aria-hidden="true"></i>
+                                    @if (daLeggere > 0) { <span class="msg-count" aria-hidden="true">@(daLeggere > 99 ? "99+" : daLeggere)</span> }
                                 </a>
                                 <div class="dropdown-menu dropdown-menu-end">
                                     <div class="notifications-heading">
                                         <h6>Notifiche</h6>
-                                        <span>0 da leggere</span>
+                                        <span>@daLeggere da leggere</span>
+                                        <a asp-controller="Notifiche" asp-action="Impostazioni" class="notifications-settings" title="Impostazioni notifiche" aria-label="Impostazioni notifiche"><i class="ri-settings-3-line" aria-hidden="true"></i></a>
                                     </div>
                                     <div class="header-notifications-list">
-                                        <div class="notifications-empty">
-                                            <i class="ri-notification-2-line" aria-hidden="true"></i>
-                                            <p>Non ci sono notifiche</p>
-                                        </div>
+                                        @if (ultime.Count == 0)
+                                        {
+                                            <div class="notifications-empty">
+                                                <i class="ri-notification-2-line" aria-hidden="true"></i>
+                                                <p>Non ci sono notifiche</p>
+                                            </div>
+                                        }
+                                        @foreach (var n in ultime)
+                                        {
+                                            <a class="dropdown-item notification-entry @(n.Letta ? "" : "notification-unread")" asp-controller="Notifiche" asp-action="Apri" asp-route-id="@n.Id">
+                                                <h6 class="msg-name mb-1"><i class="@IconeNotifiche.Di(CL.Domain.Notifiche.CategoriaNotificaExtensions.Categoria(n.Tipo)) me-1" aria-hidden="true"></i>@n.Titolo</h6>
+                                                <p class="msg-time mb-0">@n.CreataIl.ToLocalTime().ToString("dd/MM/yyyy · HH:mm")@(n.Letta ? "" : " · da leggere")</p>
+                                            </a>
+                                        }
                                     </div>
+                                    <a asp-controller="Notifiche" asp-action="Index"><div class="text-center msg-footer">Tutte le notifiche</div></a>
                                 </div>
                             </li>
                             <li class="nav-item topbar-profile">

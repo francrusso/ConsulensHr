@@ -4,6 +4,7 @@ using CL.Domain.Assenze;
 using CL.Domain.Common;
 using CL.Domain.Organizzazione;
 using CL.Domain.Dipendenti;
+using CL.Domain.Notifiche;
 using CL.Infrastructure.Persistence;
 using CL.Web.Infrastruttura;
 using Microsoft.AspNetCore.Authorization;
@@ -92,7 +93,7 @@ public sealed class FaseTurnoForm
 public sealed record TurniSalvatiViewModel(List<TurnoSalvato> Turni, Dictionary<Guid, string> Aziende);
 
 [Authorize]
-public sealed class TurniController(AppDbContext db, UtenteCorrente utente, TimeProvider clock) : AppController
+public sealed class TurniController(AppDbContext db, UtenteCorrente utente, ServizioNotifiche notifiche, TimeProvider clock) : AppController
 {
     public async Task<IActionResult> Index(int? anno, int? mese, Guid? dipendenteId, DateOnly? data, Guid? teamId, SedeLavoro? sede, string? vista)
     {
@@ -244,6 +245,15 @@ public sealed class TurniController(AppDbContext db, UtenteCorrente utente, Time
         }
         foreach (var turno in turni) turno.Pubblica(clock.GetUtcNow().UtcDateTime);
         await db.SaveChangesAsync();
+        // Ogni persona riceve una notifica con il periodo dei suoi turni appena pubblicati.
+        var accessi = (await db.PersoneAsync(turni.Select(t => t.DipendenteId))).ToLookup(p => p.DipendenteId);
+        await notifiche.InviaAsync(TipoNotifica.TurniPubblicati, turni.GroupBy(t => t.DipendenteId).SelectMany(g => accessi[g.Key].Select(p =>
+        {
+            var (primo, ultimo) = (g.Min(t => t.Inizio), g.Max(t => t.Inizio));
+            var quando = primo.Date == ultimo.Date ? $"per il {primo:dd/MM/yyyy}" : $"dal {primo:dd/MM/yyyy} al {ultimo:dd/MM/yyyy}";
+            return new MessaggioNotifica(p, "Nuovi turni pubblicati",
+                $"L'azienda ha pubblicato {(g.Count() == 1 ? "un tuo turno" : $"{g.Count()} tuoi turni")} {quando}.", "/Turni");
+        })));
         Conferma($"Pubblicati {turni.Count} turni del periodo selezionato. I dipendenti possono consultarli.");
         return RedirectToAction(nameof(Index), new { data = data.ToString("yyyy-MM-dd"), dipendenteId, teamId, sede, vista });
     }

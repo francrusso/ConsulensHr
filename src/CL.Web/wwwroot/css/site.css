@@ -789,3 +789,50 @@ input.tessera-emoji.altra-emoji::placeholder { font-size: 12.5px; color: var(--c
 .turni-selezione .select2-container--default .select2-selection--multiple .select2-selection__choice { background: #f6e8e4; border: 1px solid #edd9da; border-radius: 16px; color: #512d38; font-size: 12px; padding: 4px 9px; margin: 3px 6px 3px 0; }
 .turni-selezione .select2-container--default .select2-selection--multiple .select2-selection__choice__remove { color: #98494e; border: 0; margin-right: 6px; }
 .turni-selezione .select2-search__field { font-family: 'Poppins', sans-serif; font-size: 13px; }
+
+/* Notifiche: campanella, elenco e impostazioni (markup di ConsulensNew, colori del tema beige). */
+.topbar-notifications .notifications-heading { gap: 8px; }
+.topbar-notifications .notifications-heading > span { margin-left: auto; }
+.topbar-notifications .notifications-settings { display: inline-flex; color: var(--consulens-icon); font-size: 17px; line-height: 1; }
+.topbar-notifications .notifications-settings:hover { color: var(--consulens-accent); }
+/* "notification-unread" è anche l'etichetta "Da leggere" dell'elenco (inline-flex): qui la voce resta un blocco. */
+.topbar-notifications .notification-entry.notification-unread { display: block; background: var(--consulens-surface-subtle); }
+.topbar-notifications .notification-entry .msg-name i { color: var(--consulens-icon); }
+
+.notifiche-da-leggere {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px;
+  padding: 8px 12px; margin-bottom: 16px; border-radius: 10px;
+  background: var(--consulens-alert-info-bg); color: var(--consulens-alert-info-text);
+}
+.notification-card.notifica-non-letta { border-left: 3px solid var(--consulens-accent); }
+.notification-card .notifica-testo { white-space: pre-line; }
+.notification-card .badge-categoria-notifica { background: var(--consulens-badge-primary-bg); color: var(--consulens-badge-primary-text); font-weight: 500; }
+
+.impostazioni-notifiche > .card { margin-bottom: 16px; }
+.impostazioni-notifiche .icon-canale { color: var(--bs-info); font-size: 22px; }
+.impostazioni-notifiche .canali-notifiche { display: flex; flex-wrap: wrap; gap: 10px; }
+.impostazioni-notifiche .card-canale {
+  width: 200px; max-width: 100%; margin-bottom: 0; padding: 16px 20px; gap: 6px;
+  background: var(--consulens-surface-subtle); border: 1px solid transparent;
+}
+.impostazioni-notifiche .card-canale.attivo { border-color: var(--bs-info); background: var(--consulens-surface); }
+.impostazioni-notifiche .card-canale.disabilitato { opacity: .65; }
+.impostazioni-notifiche .canale-stato { font-size: 11px; color: var(--consulens-muted); }
+.impostazioni-notifiche .card-categoria-notifica { margin-bottom: 12px; }
+.impostazioni-notifiche .notifiche-tipi { margin-top: 8px; }
+.impostazioni-notifiche .notifiche-tipo {
+  display: grid; grid-template-columns: minmax(0, 1fr) 130px 60px; gap: 12px; align-items: center;
+  padding: 10px 8px; border-top: 1px solid var(--consulens-divider);
+}
+.impostazioni-notifiche .notifiche-tipo-fisso { grid-template-columns: minmax(0, 1fr) auto; }
+.impostazioni-notifiche .notifiche-intestazione { border-top: 0; padding-block: 4px; font-size: 11px; letter-spacing: .5px; text-transform: uppercase; color: var(--consulens-muted); }
+.impostazioni-notifiche .notifiche-tipo-descrizione { font-size: 12px; color: var(--consulens-description-text); }
+.impostazioni-notifiche .notifiche-sempre { font-size: 12px; color: var(--consulens-muted); }
+.impostazioni-notifiche .notifiche-solo-email { font-size: 10px; font-weight: 500; letter-spacing: .5px; text-transform: uppercase; color: var(--bs-danger); text-align: right; }
+.impostazioni-notifiche .stato-salvataggio { font-size: 12px; color: #1E7A47; }
+.impostazioni-notifiche .stato-salvataggio.errore { color: var(--bs-danger); }
+@media (max-width: 575.98px) {
+  .impostazioni-notifiche .card-canale { width: 100%; }
+  .impostazioni-notifiche .notifiche-tipo { grid-template-columns: minmax(0, 1fr) auto; }
+  .impostazioni-notifiche .notifiche-sempre, .impostazioni-notifiche .notifiche-intestazione > span:nth-child(2) { display: none; }
+}

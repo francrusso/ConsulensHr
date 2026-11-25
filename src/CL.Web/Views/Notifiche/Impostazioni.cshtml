@@ -1,0 +1,128 @@
+@model CL.Web.Controllers.ImpostazioniNotificheViewModel
+@using CL.Domain.Notifiche
+@inject UtenteCorrente Utente
+@{
+    ViewData["Title"] = "Impostazioni notifiche";
+    ViewData["Percorso"] = new List<(string Nome, string? Link)> { ("Notifiche", Url.Action("Index")) };
+    var tutte = Model.Gruppi.SelectMany(g => g.Tipi).ToList();
+    var emailAttive = tutte.Count(t => t.Email);
+}
+@*
+    Come le impostazioni notifiche di ConsulensNew: canali di ricezione in alto, poi una scheda per sezione.
+    Le notifiche in piattaforma sono sempre attive; l'email si accende e si spegne per tipologia e si salva subito
+    (js/notifiche.js). WhatsApp è previsto ma non ancora disponibile.
+*@
+<div class="impostazioni-notifiche" data-salva="@Url.Action("Email")">
+    @Html.AntiForgeryToken()
+    <h1 class="titolo-pagina mb-3">@ViewData["Title"]</h1>
+
+    @if (!Model.EmailConfigurata && Utente.IsConsulente)
+    {
+        <div class="alert alert-warning radius-15" role="status">
+            <i class="ri-error-warning-line" aria-hidden="true"></i>
+            L'invio delle email non è configurato sul server (<code>Email:Host</code> e <code>Email:Mittente</code>): finché non lo è,
+            arrivano solo le notifiche in piattaforma.
+        </div>
+    }
+
+    <section class="card radius-15 p-3" aria-labelledby="titolo-canali">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div class="d-flex align-items-center">
+                <i class="ri-notification-line icon-canale notifiche-canale-icona" aria-hidden="true"></i>
+                <div class="ms-3">
+                    <h2 class="h5 text-primary" id="titolo-canali">Canali di ricezione</h2>
+                    <p class="mb-0">Le notifiche in piattaforma sono sempre attive. Per ogni tipologia scegli se ricevere anche l'email.</p>
+                </div>
+            </div>
+            <div class="canali-notifiche">
+                <div class="card radius-15 card-canale attivo">
+                    <div class="d-flex justify-content-between">
+                        <i class="ri-computer-line icon-canale" aria-hidden="true"></i>
+                        <div class="form-check form-switch m-0">
+                            <input type="checkbox" class="form-check-input" role="switch" checked disabled aria-label="Notifiche in piattaforma: sempre attive" />
+                        </div>
+                    </div>
+                    <h3 class="h6 fw-medium text-primary mb-0">In piattaforma</h3>
+                    <span class="canale-stato">Sempre attive</span>
+                </div>
+                <div class="card radius-15 card-canale @(emailAttive > 0 ? "attivo" : "")" data-canale="email">
+                    <div class="d-flex justify-content-between">
+                        <i class="ri-mail-line icon-canale" aria-hidden="true"></i>
+                        <div class="form-check form-switch m-0">
+                            <input type="checkbox" class="form-check-input chk-canale-email" role="switch" checked="@(emailAttive > 0)"
+                                   aria-label="Email per tutte le tipologie" aria-describedby="conteggio-email" />
+                        </div>
+                    </div>
+                    <h3 class="h6 fw-medium text-primary mb-0">Email</h3>
+                    <span class="canale-stato" id="conteggio-email" data-totale="@tutte.Count">@emailAttive di @tutte.Count attive</span>
+                </div>
+                <div class="card radius-15 card-canale disabilitato">
+                    <div class="d-flex justify-content-between">
+                        <i class="ri-whatsapp-line icon-canale text-success" aria-hidden="true"></i>
+                        <div class="form-check form-switch m-0">
+                            <input type="checkbox" class="form-check-input" role="switch" disabled aria-label="WhatsApp: presto disponibile" />
+                        </div>
+                    </div>
+                    <h3 class="h6 fw-medium text-primary mb-0">WhatsApp</h3>
+                    <span class="canale-stato">Presto disponibile</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="card radius-15 p-3 card-categorie-wrapper card-tinted" aria-labelledby="titolo-categorie">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+            <h2 class="h5 text-primary mb-0" id="titolo-categorie"><i class="ri-list-check-3 icon-canale notifiche-canale-icona" aria-hidden="true"></i> Categorie di notifica</h2>
+            <span class="stato-salvataggio" role="status" aria-live="polite"></span>
+        </div>
+
+        @foreach (var g in Model.Gruppi)
+        {
+            var idSezione = $"sezione-{g.Categoria}";
+            <section class="card p-3 radius-15 card-categoria-notifica" aria-labelledby="@idSezione">
+                <div class="d-flex justify-content-between align-items-center gap-2">
+                    <h3 class="h5 text-primary mb-0" id="@idSezione"><i class="@IconeNotifiche.Di(g.Categoria) me-1" aria-hidden="true"></i> @g.Categoria.Descrizione()</h3>
+                    <button type="button" class="btn btn-link text-info fw-medium p-0 toggle-categoria">@(g.Tipi.Any(t => t.Email) ? "Disattiva tutte" : "Attiva tutte")</button>
+                </div>
+                <div class="notifiche-tipi">
+                    <div class="notifiche-tipo notifiche-intestazione" aria-hidden="true">
+                        <span>Tipologia</span><span>In piattaforma</span><span>Email</span>
+                    </div>
+                    @foreach (var t in g.Tipi)
+                    {
+                        var id = $"email-{t.Definizione.Tipo}";
+                        <div class="notifiche-tipo">
+                            <div>
+                                <label class="fw-medium mb-0" for="@id">@t.Definizione.Nome</label>
+                                <p class="notifiche-tipo-descrizione mb-0">@t.Definizione.Descrizione</p>
+                            </div>
+                            <span class="notifiche-sempre"><i class="ri-check-line" aria-hidden="true"></i> Sempre attiva</span>
+                            <div class="form-check form-switch m-0">
+                                <input type="checkbox" class="form-check-input chk-email" role="switch" id="@id" value="@t.Definizione.Tipo"
+                                       checked="@t.Email" aria-label="Email per «@t.Definizione.Nome»" />
+                            </div>
+                        </div>
+                    }
+                </div>
+            </section>
+        }
+
+        <section class="card p-3 radius-15 card-categoria-notifica mb-0" aria-labelledby="sezione-accesso">
+            <h3 class="h5 text-primary mb-0" id="sezione-accesso"><i class="ri-shield-keyhole-line me-1" aria-hidden="true"></i> Accesso e sicurezza</h3>
+            <div class="notifiche-tipi">
+                @foreach (var a in CatalogoNotifiche.SempreAttivi)
+                {
+                    <div class="notifiche-tipo notifiche-tipo-fisso">
+                        <div>
+                            <p class="fw-medium mb-0">@a.Nome</p>
+                            <p class="notifiche-tipo-descrizione mb-0">@a.Descrizione</p>
+                        </div>
+                        <span class="notifiche-solo-email">Solo email · sempre attiva</span>
+                    </div>
+                }
+            </div>
+        </section>
+    </section>
+</div>
+
+@section Scripts { <script src="~/js/notifiche.js" asp-append-version="true"></script> }

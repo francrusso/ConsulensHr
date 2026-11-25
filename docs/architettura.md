@@ -78,6 +78,7 @@ Tutte le entità derivano da `Common/Entity` (Id `Guid` generato nel dominio). L
 | `Presenze` | `ComunicazioneMensile` (foglio presenze del mese: Bozza → Inviata → Elaborata), `GiornoInUfficio`, `GiornoSmartWorking`, `Straordinario`. |
 | `BustePaga`, `Documenti` | `BustaPaga` (Bozza → Pubblicata → Ritirata, hash SHA-256 unico, presa visione), `CertificazioneUnica`. |
 | `Organizzazione` | `Team` (albero senza cicli, colore ed emoji) e `Organigramma` (chi approva le richieste di chi). |
+| `Notifiche` | `CatalogoNotifiche` (tipologie, sezioni e destinatari), `Notifica` (in piattaforma, per utente), `PreferenzaNotifica` (email accesa o spenta per tipologia). |
 
 ### Regole principali
 
@@ -113,6 +114,17 @@ Tutte le entità derivano da `Common/Entity` (Id `Guid` generato nel dominio). L
 Le pagine non aspettano il server SMTP: mettono il messaggio in `CodaEmail` (un canale in memoria) e il servizio in
 background `InvioCodaEmail` lo spedisce. Se l'app si ferma, i messaggi ancora in coda si perdono. Senza `Email:Host` e
 `Email:Mittente` l'invio è disattivato e i link di invito vengono mostrati a schermo.
+
+## Notifiche
+
+Gli avvisi passano tutti da `ServizioNotifiche.InviaAsync`: salva una `Notifica` per ogni destinatario (tabella
+`Notifiche`, sempre) e accoda l'email a chi non l'ha spenta per quella tipologia (tabella `PreferenzeNotifiche`, una riga
+solo quando l'utente cambia la scelta). Esclude chi compie l'azione; con una `Chiave` non ripete un promemoria già
+ricevuto. I destinatari si trovano con le query di `QueryDestinatari` (studio, referenti, persone, utenti) e devono avere
+l'accesso attivo; l'email parte solo con l'email confermata. I testi delle richieste sono in `NotificheRichieste`; gli altri
+eventi chiamano il servizio dal proprio controller o servizio. Le scadenze le controlla `PromemoriaScadenze`, lanciato dal
+servizio in background `ControlloScadenze` (non registrato nell'ambiente `Testing`, dove i test lo chiamano a mano).
+Per aggiungere WhatsApp basterà un nuovo canale accanto all'email in `PreferenzaNotifica` e in `InviaAsync`.
 
 ## Archivio documenti (`CL.Infrastructure/Archivio`)
 
@@ -152,6 +164,8 @@ Servizi principali in `Infrastruttura`:
 | `ServizioPresenze` | Foglio presenze del mese: righe per i dipendenti in forza, invio, esportazione CSV. |
 | `ServizioPanoramica` | Dati della home di consulente e referente (da fare, indicatori, grafici, scadenze). |
 | `ServizioBustePaga` | Caricamento dei PDF dei cedolini, abbinamento alle persone, pubblicazione. |
-| `NotificheAssenze` | Email per le richieste di assenza (nuova, approvata, rifiutata). |
+| `ServizioNotifiche` | Consegna delle notifiche (piattaforma ed email), campanella, letture e impostazioni dell'utente. |
+| `NotificheRichieste` | Testi e destinatari delle notifiche su assenze, smart working, straordinari, cambi turno e chiusure. |
+| `PromemoriaScadenze` | Promemoria di contratti e documenti personali in scadenza (una volta per scadenza). |
 | `Immagini`, `LoghiAziende`, `FotoDipendenti`, `ServizioAvatar` | Caricamento e visualizzazione di loghi e foto. |
 | `Filtri`, `Elenchi` | Condizioni riusabili tradotte in SQL; opzioni delle select di indirizzo. |

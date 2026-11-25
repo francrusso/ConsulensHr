@@ -122,6 +122,7 @@ public sealed class PresenzeController(AppDbContext db, UtenteCorrente utente, S
         if (ProvaOAvvisa(() => c.SegnaElaborata(utente.Email, AdessoUtc)))
         {
             await db.SaveChangesAsync();
+            await servizio.AvvisaElaborataAsync(aziendaId, c);
             Conferma("Mese segnato come elaborato.");
         }
         return RedirectToAction(nameof(Foglio), new { aziendaId, anno, mese });
@@ -138,7 +139,7 @@ public sealed class PresenzeController(AppDbContext db, UtenteCorrente utente, S
         {
             await db.SaveChangesAsync();
             var n = await servizio.AvvisaAziendaAsync(azienda, anno, mese, riaperta: true, motivo);
-            Conferma(n > 0 ? "Comunicazione riaperta: l'azienda è stata avvisata per email." : "Comunicazione riaperta (l'azienda non ha referenti con accesso da avvisare).");
+            Conferma(n > 0 ? "Comunicazione riaperta: l'azienda è stata avvisata." : "Comunicazione riaperta (l'azienda non ha referenti con accesso da avvisare).");
         }
         return RedirectToAction(nameof(Foglio), new { aziendaId, anno, mese });
     }

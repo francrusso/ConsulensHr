@@ -48,7 +48,11 @@ builder.Services.AddScoped<ServizioAvatar>();
 builder.Services.AddScoped<ServizioConsulentiAziende>();
 builder.Services.AddScoped<ServizioAccessi>();
 builder.Services.AddScoped<ServizioBustePaga>();
-builder.Services.AddScoped<NotificheAssenze>();
+builder.Services.AddScoped<ServizioNotifiche>();
+builder.Services.AddScoped<NotificheRichieste>();
+builder.Services.AddScoped<PromemoriaScadenze>();
+// Promemoria di contratti e documenti in scadenza. Nei test d'integrazione si lancia a mano (il database lo prepara il test).
+if (!builder.Environment.IsEnvironment("Testing")) builder.Services.AddHostedService<ControlloScadenze>();
 builder.Services.AddScoped<ServizioPresenze>();
 builder.Services.AddScoped<ServizioPanoramica>();
 builder.Services.AddScoped<Immagini>();

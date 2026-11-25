@@ -1,11 +1,10 @@
 using System.Globalization;
-using System.Net;
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 using CL.Domain.BustePaga;
 using CL.Domain.Common;
+using CL.Domain.Notifiche;
 using CL.Infrastructure.Archivio;
-using CL.Infrastructure.Email;
 using CL.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -51,7 +50,7 @@ public sealed record EsitoCaricamento(List<(string File, string Dipendente)> Car
 /// Caricamento dei PDF dei cedolini, abbinamento al dipendente, pubblicazione e avviso via email.
 /// </summary>
 public sealed partial class ServizioBustePaga(
-    AppDbContext db, IArchivioDocumenti archivio, CodaEmail coda, ServizioAccessi accessi, TimeProvider clock)
+    AppDbContext db, IArchivioDocumenti archivio, ServizioNotifiche notifiche, TimeProvider clock)
 {
     public const long DimensioneMassima = 10 * 1024 * 1024;
     private static readonly CultureInfo Italiano = new("it-IT");
@@ -181,31 +180,19 @@ public sealed partial class ServizioBustePaga(
         return Separatori().Split(nome).Any(parola => parola == m || (senzaZeri.Length > 0 && parola.TrimStart('0') == senzaZeri));
     }
 
-    /// <summary>Email di avviso (senza allegato: il cedolino si apre solo dal portale, dopo il login).</summary>
+    /// <summary>Notifica a ogni persona (l'email è senza allegato: il cedolino si apre solo dal portale, dopo il login).</summary>
     private async Task AvvisaAsync(IReadOnlyCollection<BustaPaga> buste)
     {
         if (buste.Count == 0) return;
-        var ids = buste.Select(b => b.DipendenteId).Distinct().ToList();
-        var destinatari = await db.Users.AsNoTracking()
-            .Where(u => u.DipendenteId != null && ids.Contains(u.DipendenteId.Value) && u.Attivo && u.EmailConfirmed)
-            .Select(u => new { u.DipendenteId, u.Email, u.Nome })
-            .ToListAsync();
-        var link = WebUtility.HtmlEncode(accessi.ComponiUrl("/BustePaga"));
-
-        foreach (var b in buste)
+        var persone = (await db.PersoneAsync(buste.Select(b => b.DipendenteId))).ToLookup(d => d.DipendenteId);
+        var messaggi = buste.SelectMany(b => persone[b.DipendenteId].Select(d =>
         {
-            var u = destinatari.FirstOrDefault(x => x.DipendenteId == b.DipendenteId);
-            if (u?.Email is null) continue;
             var cosa = b.Tipo == TipoCedolino.Ordinario
                 ? $"la busta paga di {NomeMese(b.Mese).ToLower(Italiano)} {b.Anno}"
                 : $"il cedolino {b.Tipo.Descrizione().ToLower(Italiano)} di {NomeMese(b.Mese).ToLower(Italiano)} {b.Anno}";
-            coda.Accoda(new MessaggioEmail(u.Email, $"Nuova busta paga disponibile: {NomeMese(b.Mese)} {b.Anno}",
-                $"""
-                <p>Ciao {WebUtility.HtmlEncode(u.Nome)},</p>
-                <p>è disponibile {cosa}. Puoi consultarla e scaricarla dal portale:</p>
-                <p><a href="{link}">{link}</a></p>
-                <p>Consulens HR</p>
-                """));
-        }
+            return new MessaggioNotifica(d, $"Nuova busta paga disponibile: {NomeMese(b.Mese)} {b.Anno}",
+                $"È disponibile {cosa}. Puoi consultarla e scaricarla dal portale.", "/BustePaga");
+        }));
+        await notifiche.InviaAsync(TipoNotifica.BustaPagaPubblicata, messaggi);
     }
 }

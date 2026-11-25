@@ -1,10 +1,9 @@
 using System.ComponentModel.DataAnnotations;
-using System.Net;
 using CL.Domain.Aziende;
 using CL.Domain.Common;
 using CL.Domain.Dipendenti;
+using CL.Domain.Notifiche;
 using CL.Domain.ValueObjects;
-using CL.Infrastructure.Email;
 using CL.Infrastructure.Identity;
 using CL.Infrastructure.Persistence;
 using CL.Web.Infrastruttura;
@@ -231,8 +230,8 @@ public sealed class DatiPersonaliViewModel
 /// </summary>
 [Authorize]
 public sealed class DatiPersonaliController(
-    AppDbContext db, UtenteCorrente utente, SignInManager<ApplicationUser> signIn, CodaEmail coda,
-    ServizioAccessi accessi, FotoDipendenti foto, TimeProvider clock) : AppController
+    AppDbContext db, UtenteCorrente utente, SignInManager<ApplicationUser> signIn, ServizioNotifiche notifiche,
+    FotoDipendenti foto, TimeProvider clock) : AppController
 {
     private DateTime Adesso => clock.GetUtcNow().UtcDateTime;
 
@@ -404,18 +403,11 @@ public sealed class DatiPersonaliController(
         _ => null,
     };
 
-    /// <summary>Avviso al consulente e ai referenti dell'azienda (in background).</summary>
-    private async Task Avvisa(Dipendente dip, string cosa)
-    {
-        // I consulenti dell'azienda e i suoi referenti.
-        var destinatari = (await db.EmailStudioAsync(dip.AziendaId))
-            .Concat(await db.EmailConRuoloAsync(Ruoli.Azienda, dip.AziendaId)).Distinct();
-        var link = WebUtility.HtmlEncode(accessi.ComponiUrl($"/DatiPersonali?dipendenteId={dip.Id}"));
-        var chi = WebUtility.HtmlEncode(dip.NomeCompleto);
-        foreach (var email in destinatari)
-            coda.Accoda(new MessaggioEmail(email, $"{dip.NomeCompleto} {cosa}",
-                $"""<p>{chi} {WebUtility.HtmlEncode(cosa)}.</p><p><a href="{link}">{link}</a></p><p>Consulens HR</p>"""));
-    }
+    /// <summary>Notifica ai consulenti e ai referenti dell'azienda.</summary>
+    private async Task Avvisa(Dipendente dip, string cosa) =>
+        await notifiche.InviaAsync(TipoNotifica.DatiPersonaliAggiornati,
+            [.. await db.StudioAsync(dip.AziendaId), .. await db.ReferentiAsync(dip.AziendaId)],
+            $"{dip.NomeCompleto} {cosa}", $"{dip.NomeCompleto} {cosa}.", $"/DatiPersonali?dipendenteId={dip.Id}");
 
     public static IEnumerable<SelectListItem> Generi =>
         Enum.GetValues<Genere>().Select(g => new SelectListItem(g.Descrizione(), g.ToString()));

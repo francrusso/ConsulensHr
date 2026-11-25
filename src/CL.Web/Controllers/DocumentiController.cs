@@ -3,6 +3,7 @@ using CL.Domain.Common;
 using CL.Domain.Dipendenti;
 using CL.Domain.Documenti;
 using CL.Domain.ValueObjects;
+using CL.Domain.Notifiche;
 using CL.Infrastructure.Archivio;
 using CL.Infrastructure.Persistence;
 using CL.Web.Infrastruttura;
@@ -77,7 +78,8 @@ public sealed class NuovoContrattoForm
 /// I PDF stanno nell'archivio privato (cartelle <c>cu/</c> e <c>contratti/</c>) e si aprono solo da qui, dopo il controllo del perimetro.
 /// </summary>
 [Authorize]
-public sealed class DocumentiController(AppDbContext db, UtenteCorrente utente, IArchivioDocumenti archivio, TimeProvider clock) : AppController
+public sealed class DocumentiController(AppDbContext db, UtenteCorrente utente, IArchivioDocumenti archivio, ServizioNotifiche notifiche,
+    TimeProvider clock) : AppController
 {
     public const long DimensioneMassima = 10 * 1024 * 1024;
     private int AnnoCorrente => clock.GetLocalNow().Year;
@@ -135,6 +137,11 @@ public sealed class DocumentiController(AppDbContext db, UtenteCorrente utente, 
             }
             await db.SaveChangesAsync();
             if (precedente is not null) await archivio.EliminaAsync(precedente);
+            await notifiche.InviaAsync(TipoNotifica.CuDisponibile, await db.PersoneAsync([d.Id]),
+                esistente is null ? $"CU dei redditi {anno} disponibile" : $"CU dei redditi {anno} aggiornata",
+                esistente is null ? $"È disponibile la tua Certificazione Unica dei redditi {anno}. Puoi scaricarla dal portale."
+                                  : $"La tua Certificazione Unica dei redditi {anno} è stata sostituita con una nuova versione.",
+                "/Documenti/Cu");
             Conferma($"CU {anno} di {d.NomeCompleto} caricata.");
         }
         return Torna(ritorno, nameof(Cu), new { anno });
@@ -234,6 +241,17 @@ public sealed class DocumentiController(AppDbContext db, UtenteCorrente utente, 
         await using (var s = documento.OpenReadStream()) await archivio.SalvaAsync(chiave, s);
         db.DocumentiPersonali.Add(doc);
         await db.SaveChangesAsync();
+        // Caricato dalla persona: lo sanno azienda e studio; caricato da loro: lo sa la persona.
+        var scade = doc.Scadenza is { } sc ? $"Scade il {sc:dd/MM/yyyy}." : null;
+        if (utente.IsDipendente)
+            await notifiche.InviaAsync(TipoNotifica.DocumentoPersonaleCaricato,
+                [.. await db.ReferentiAsync(d.AziendaId), .. await db.StudioAsync(d.AziendaId)],
+                $"Nuovo documento di {d.NomeCompleto}: {doc.Titolo}",
+                NotificheRichieste.Righe($"{d.NomeCompleto} ha caricato {doc.Titolo}.", scade), "/Documenti/Personali");
+        else
+            await notifiche.InviaAsync(TipoNotifica.DocumentoPersonaleCaricato, await db.PersoneAsync([d.Id]),
+                $"Nuovo documento personale: {doc.Titolo}",
+                NotificheRichieste.Righe($"Tra i tuoi documenti è stato caricato: {doc.Titolo}.", scade), "/Documenti/Personali");
         Conferma(utente.IsDipendente ? $"{doc.Titolo} caricato." : $"{doc.Titolo} di {d.NomeCompleto} caricato.");
         return Torna(ritorno, nameof(Personali), new { });
     }
@@ -330,6 +348,13 @@ public sealed class DocumentiController(AppDbContext db, UtenteCorrente utente, 
         await using (var s = documento.OpenReadStream()) await archivio.SalvaAsync(chiave, s);
         db.DocumentiStorici.Add(doc);
         await db.SaveChangesAsync();
+        // Lo carica lo studio: lo sanno i referenti; lo carica il referente: lo sa lo studio.
+        var nomeAzienda = await db.Aziende.Where(a => a.Id == id).Select(a => a.RagioneSociale).FirstAsync();
+        await notifiche.InviaAsync(TipoNotifica.DocumentoStoricoCaricato,
+            utente.IsConsulente ? await db.ReferentiAsync(id) : await db.StudioAsync(id),
+            $"Archivio storico: {doc.Titolo} {doc.Anno}",
+            $"Nell'archivio storico di {nomeAzienda} è stato caricato {doc.Titolo} {doc.Anno}.",
+            utente.IsConsulente ? "/Documenti/Storico" : $"/Documenti/Storico?aziendaId={id}");
         Conferma($"{doc.Titolo} {doc.Anno} caricato.");
         return RedirectToAction(nameof(Storico), new { aziendaId = utente.IsConsulente ? id : (Guid?)null });
     }

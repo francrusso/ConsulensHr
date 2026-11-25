@@ -1,3 +1,4 @@
+using CL.Domain.Notifiche;
 using CL.Infrastructure.Identity;
 using CL.Infrastructure.Persistence;
 using CL.Web.Infrastruttura;
@@ -26,7 +27,7 @@ public sealed class ConsulenteViewModel
 /// Un consulente vede solo le aziende assegnate (o create da lui), con il loro personale e i documenti.
 /// </summary>
 [Authorize(Roles = Ruoli.Amministratore)]
-public sealed class ConsulentiController(AppDbContext db) : AppController
+public sealed class ConsulentiController(AppDbContext db, ServizioNotifiche notifiche) : AppController
 {
     public async Task<IActionResult> Index(string? q)
     {
@@ -66,9 +67,18 @@ public sealed class ConsulentiController(AppDbContext db) : AppController
         var attuali = await db.AssegnazioniAziende.Where(a => a.UserId == id).ToListAsync();
         db.AssegnazioniAziende.RemoveRange(attuali.Where(a => !scelte.Contains(a.AziendaId)));
         var esistenti = await db.Aziende.Where(a => scelte.Contains(a.Id)).Select(a => a.Id).ToListAsync();
-        foreach (var az in esistenti.Where(az => attuali.All(a => a.AziendaId != az)))
+        var nuove = esistenti.Where(az => attuali.All(a => a.AziendaId != az)).ToList();
+        foreach (var az in nuove)
             db.AssegnazioniAziende.Add(new AssegnazioneAzienda { AziendaId = az, UserId = id, AssegnataIl = DateTime.UtcNow });
         await db.SaveChangesAsync();
+        if (nuove.Count > 0)
+        {
+            var nomi = await db.Aziende.Where(a => nuove.Contains(a.Id)).OrderBy(a => a.RagioneSociale).Select(a => a.RagioneSociale).ToListAsync();
+            await notifiche.InviaAsync(TipoNotifica.AziendaAssegnata, await db.UtentiAsync([id]),
+                nomi.Count == 1 ? $"Nuova azienda assegnata: {nomi[0]}" : $"{nomi.Count} nuove aziende assegnate",
+                $"Il super amministratore ti ha assegnato {string.Join(", ", nomi)}: ora {(nomi.Count == 1 ? "la trovi" : "le trovi")} tra le tue aziende.",
+                nomi.Count == 1 ? $"/Aziende/Dettaglio/{nuove[0]}" : "/Aziende");
+        }
         Conferma($"Aziende assegnate: {esistenti.Count}.");
         return RedirectToAction(nameof(Dettaglio), new { id });
     }

@@ -13,7 +13,8 @@ namespace CL.Web.Infrastruttura;
 public sealed class FiltroOnboarding : IActionFilter
 {
     // Indirizzi: i suggerimenti di comune e via servono proprio ai passi delle sedi e della residenza.
-    private static readonly HashSet<string> Consentiti = new(StringComparer.OrdinalIgnoreCase) { "Onboarding", "DatiPersonali", "Account", "Indirizzi" };
+    // Notifiche: la campanella resta consultabile (le pagine a cui porta restano chiuse fino a fine percorso).
+    private static readonly HashSet<string> Consentiti = new(StringComparer.OrdinalIgnoreCase) { "Onboarding", "DatiPersonali", "Account", "Indirizzi", "Notifiche" };
 
     public void OnActionExecuting(ActionExecutingContext context)
     {

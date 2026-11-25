@@ -120,7 +120,7 @@ public sealed class AssenzeViewModel
 /// Decide il referente dell'azienda (o il responsabile indicato dall'organigramma); il consulente registra ma non approva.
 /// </summary>
 [Authorize]
-public sealed partial class AssenzeController(AppDbContext db, UtenteCorrente utente, ServizioSaldi saldi, NotificheAssenze notifiche,
+public sealed partial class AssenzeController(AppDbContext db, UtenteCorrente utente, ServizioSaldi saldi, NotificheRichieste notifiche,
     ServizioOrganigramma organigramma, ServizioUfficio ufficio, TimeProvider clock) : AppController
 {
     private DateOnly Oggi => DateOnly.FromDateTime(clock.GetLocalNow().DateTime);
@@ -309,7 +309,7 @@ public sealed partial class AssenzeController(AppDbContext db, UtenteCorrente ut
 
         db.RichiesteAssenza.Add(richiesta!);
         await db.SaveChangesAsync();
-        await notifiche.NuovaRichiestaAsync(richiesta!);
+        await notifiche.NuovaAssenzaAsync(richiesta!);
 
         Conferma(richiesta!.Stato == StatoRichiesta.Approvata
             ? $"{richiesta.Tipo.Descrizione()} registrata: {richiesta.Ore:0.##} ore."
@@ -344,6 +344,7 @@ public sealed partial class AssenzeController(AppDbContext db, UtenteCorrente ut
         if (utente.IsAzienda && form.ApprovaSubito) s!.Approva(utente.Email, AdessoUtc);
         db.Straordinari.Add(s!);
         await db.SaveChangesAsync();
+        await notifiche.StraordinarioChiestoAsync(s!);
         Conferma(s!.Stato == StatoRichiesta.Approvata
             ? $"Straordinario registrato: {s.Ore:0.##} ore il {g:dd/MM/yyyy}."
             : $"Straordinario di {s.Ore:0.##} ore del {g:dd/MM/yyyy} inviato: in attesa di approvazione dell'azienda.");
@@ -380,7 +381,11 @@ public sealed partial class AssenzeController(AppDbContext db, UtenteCorrente ut
         if (approvaSubito)
             foreach (var g in db.ChangeTracker.Entries<GiornoSmartWorking>().Where(e => e.State == EntityState.Added))
                 g.Entity.Approva(utente.Email, AdessoUtc);
+        // Smart working da approvare: i giorni nuovi, letti prima del salvataggio (dopo non sono più "aggiunti").
+        var daApprovare = db.ChangeTracker.Entries<GiornoSmartWorking>()
+            .Where(e => e.State == EntityState.Added && e.Entity.Stato == StatoSmartWorking.InAttesa).Select(e => e.Entity.Giorno).ToList();
         await db.SaveChangesAsync();
+        await notifiche.SmartWorkingChiestoAsync(id, daApprovare);
 
         var giorni = aggiunti == 1 ? "1 giorno" : $"{aggiunti} giorni";
         var messaggio = modo == ModoLavoro.Distanza ? $"{giorni} in ufficio segnat{(aggiunti == 1 ? "o" : "i")}."
@@ -401,6 +406,7 @@ public sealed partial class AssenzeController(AppDbContext db, UtenteCorrente ut
         if (Prova(() => { if (approva) s.Approva(utente.Email, AdessoUtc); else s.Rifiuta(utente.Email, motivo, AdessoUtc); }))
         {
             await db.SaveChangesAsync();
+            await notifiche.StraordinarioDecisoAsync(s);
             Conferma(approva ? "Straordinario approvato." : "Straordinario rifiutato.");
         }
         else Errore(PrimoErrore());
@@ -414,25 +420,31 @@ public sealed partial class AssenzeController(AppDbContext db, UtenteCorrente ut
     [HttpPost, ValidateAntiForgeryToken, Authorize(Roles = Ruoli.Azienda)]
     public async Task<IActionResult> Revoca(Guid id, string? genere, string? ritorno)
     {
+        // Chi avvisare e di cosa (es. "smart working del 12/12/2026").
+        (Guid DipendenteId, string Cosa) revocata;
         switch (genere)
         {
             case "smart":
                 var g = await db.GiorniSmartWorking.FirstOrDefaultAsync(x => x.Id == id && Perimetro.Contains(x.DipendenteId));
                 if (g is null) return NotFound();
                 db.GiorniSmartWorking.Remove(g);
+                revocata = (g.DipendenteId, $"smart working del {g.Giorno:dd/MM/yyyy}");
                 break;
             case "straordinario":
                 var s = await db.Straordinari.FirstOrDefaultAsync(x => x.Id == id && Perimetro.Contains(x.DipendenteId));
                 if (s is null) return NotFound();
                 if (!Prova(s.Revoca)) { Errore(PrimoErrore()); return Torna(ritorno); }
+                revocata = (s.DipendenteId, NotificheRichieste.Descrizione(s));
                 break;
             default:
                 var r = await Trova(id);
                 if (r is null) return NotFound();
                 if (!Prova(r.Revoca)) { Errore(PrimoErrore()); return Torna(ritorno); }
+                revocata = (r.DipendenteId, NotificheRichieste.Descrizione(r));
                 break;
         }
         await db.SaveChangesAsync();
+        await notifiche.RevocaAsync(revocata.DipendenteId, revocata.Cosa);
         Conferma("Richiesta revocata.");
         return Torna(ritorno);
     }
@@ -446,6 +458,7 @@ public sealed partial class AssenzeController(AppDbContext db, UtenteCorrente ut
         if (Prova(() => r.ChiediAnnullamento(motivo, AdessoUtc)))
         {
             await db.SaveChangesAsync();
+            await notifiche.CancellazioneChiestaAsync(r);
             Conferma("Cancellazione chiesta: l'azienda deve confermarla.");
         }
         else Errore(PrimoErrore());
@@ -459,7 +472,8 @@ public sealed partial class AssenzeController(AppDbContext db, UtenteCorrente ut
         {
             if (!r.AnnullamentoInAttesa) throw new DomainException("Non c'è una cancellazione da decidere.");
             if (conferma) r.Revoca(); else r.RespingiAnnullamento();
-        }, conferma ? "Cancellazione confermata: la richiesta è annullata." : "Cancellazione respinta: la richiesta resta approvata.");
+        }, conferma ? "Cancellazione confermata: la richiesta è annullata." : "Cancellazione respinta: la richiesta resta approvata.",
+        r => notifiche.CancellazioneDecisaAsync(r, conferma));
 
     /// <summary>Il dipendente ritira uno straordinario ancora in attesa.</summary>
     [HttpPost, ValidateAntiForgeryToken]
@@ -475,11 +489,11 @@ public sealed partial class AssenzeController(AppDbContext db, UtenteCorrente ut
 
     [HttpPost, ValidateAntiForgeryToken]
     public Task<IActionResult> Approva(Guid id, string? ritorno) =>
-        Decidi(id, ritorno, r => r.Approva(utente.Email, AdessoUtc), "Richiesta approvata.", avvisaDipendente: true);
+        Decidi(id, ritorno, r => r.Approva(utente.Email, AdessoUtc), "Richiesta approvata.", notifiche.EsitoAssenzaAsync);
 
     [HttpPost, ValidateAntiForgeryToken]
     public Task<IActionResult> Rifiuta(Guid id, string? motivo, string? ritorno) =>
-        Decidi(id, ritorno, r => r.Rifiuta(utente.Email, motivo ?? "", AdessoUtc), "Richiesta rifiutata.", avvisaDipendente: true);
+        Decidi(id, ritorno, r => r.Rifiuta(utente.Email, motivo ?? "", AdessoUtc), "Richiesta rifiutata.", notifiche.EsitoAssenzaAsync);
 
     /// <summary>Annulla una richiesta in attesa, o approvata ma non ancora iniziata (vedi <see cref="RichiestaAssenza.Annulla"/>).</summary>
     [HttpPost, ValidateAntiForgeryToken]
@@ -506,6 +520,7 @@ public sealed partial class AssenzeController(AppDbContext db, UtenteCorrente ut
         if (Prova(() => { if (approva) g.Approva(utente.Email, AdessoUtc); else g.Rifiuta(utente.Email, motivo, AdessoUtc); }))
         {
             await db.SaveChangesAsync();
+            await notifiche.SmartWorkingDecisoAsync(g);
             Conferma(approva ? "Smart working approvato." : "Smart working rifiutato.");
         }
         else Errore(PrimoErrore());
@@ -654,7 +669,8 @@ public sealed partial class AssenzeController(AppDbContext db, UtenteCorrente ut
             .ToListAsync();
         var ids = persone.Select(d => d.Id).ToList();
         var esistenti = await db.RichiesteAssenza.Where(r => ids.Contains(r.DipendenteId) && r.Dal <= fine && r.Al >= inizio).ToListAsync();
-        int registrate = 0, saltate = 0;
+        var conFerie = new List<Guid>();
+        var saltate = 0;
         foreach (var d in persone)
         {
             try
@@ -663,11 +679,13 @@ public sealed partial class AssenzeController(AppDbContext db, UtenteCorrente ut
                 ferie.Approva("Chiusura aziendale", adesso);
                 ferie.CollegaChiusura(chiusura.Id);
                 db.RichiesteAssenza.Add(ferie);
-                registrate++;
+                conFerie.Add(d.Id);
             }
             catch (DomainException) { saltate++; }
         }
         await db.SaveChangesAsync();
+        await notifiche.ChiusuraAsync(chiusura, conFerie);
+        var registrate = conFerie.Count;
         Conferma($"Chiusura \"{chiusura.Descrizione}\" dal {inizio:dd/MM/yyyy} al {fine:dd/MM/yyyy} salvata: ferie registrate per {registrate} {(registrate == 1 ? "persona" : "persone")}"
                  + (saltate > 0 ? $", {saltate} {(saltate == 1 ? "saltata" : "saltate")} (già assenti o senza contratto per tutto il periodo)." : "."));
         return RedirectToAction(nameof(Calendario), new { anno = inizio.Year, mese = inizio.Month, aziendaId });
@@ -706,16 +724,17 @@ public sealed partial class AssenzeController(AppDbContext db, UtenteCorrente ut
 
     /// <summary>
     /// Decisione su una richiesta di assenza da parte di chi può prenderla (<see cref="DaDecidere"/>): le regole violate
-    /// tornano come messaggio d'errore. Con <paramref name="avvisaDipendente"/> il dipendente riceve l'esito per email.
+    /// tornano come messaggio d'errore. Dopo il salvataggio <paramref name="avviso"/> notifica l'esito alla persona.
     /// </summary>
-    private async Task<IActionResult> Decidi(Guid id, string? ritorno, Action<RichiestaAssenza> decisione, string messaggio, bool avvisaDipendente = false)
+    private async Task<IActionResult> Decidi(Guid id, string? ritorno, Action<RichiestaAssenza> decisione, string messaggio,
+        Func<RichiestaAssenza, Task> avviso)
     {
         var r = await DaDecidere(id);
         if (r is null) return utente.IsAzienda ? NotFound() : Forbid();
         if (Prova(() => decisione(r)))
         {
             await db.SaveChangesAsync();
-            if (avvisaDipendente) await notifiche.EsitoAsync(r);
+            await avviso(r);
             Conferma(messaggio);
         }
         else Errore(PrimoErrore());

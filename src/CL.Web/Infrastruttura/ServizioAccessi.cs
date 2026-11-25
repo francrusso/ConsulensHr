@@ -39,32 +39,6 @@ public static class QueryUtenti
         join r in db.Roles on ur.RoleId equals r.Id
         where r.Name == ruolo
         select ur.UserId;
-
-    /// <summary>
-    /// Email degli utenti con il ruolo indicato che possono ricevere avvisi (accesso attivo, email confermata).
-    /// Con <paramref name="aziendaId"/> solo quelli collegati a quell'azienda (es. i referenti).
-    /// </summary>
-    public static async Task<List<string>> EmailConRuoloAsync(this AppDbContext db, string ruolo, Guid? aziendaId = null)
-    {
-        var conRuolo = db.IdConRuolo(ruolo);
-        return (await db.Users
-            .Where(u => conRuolo.Contains(u.Id) && u.Attivo && u.EmailConfirmed && (aziendaId == null || u.AziendaId == aziendaId))
-            .Select(u => u.Email).ToListAsync()).OfType<string>().ToList();
-    }
-
-    /// <summary>
-    /// A chi dello studio scrivere per un'azienda: i consulenti a cui è assegnata. Se non è assegnata a nessuno,
-    /// i super amministratori (vedono tutte le aziende), così l'avviso non va perso.
-    /// </summary>
-    public static async Task<List<string>> EmailStudioAsync(this AppDbContext db, Guid aziendaId)
-    {
-        var consulenti = db.IdConRuolo(Ruoli.Consulente);
-        var assegnati = db.AssegnazioniAziende.Where(a => a.AziendaId == aziendaId).Select(a => a.UserId);
-        var email = (await db.Users
-            .Where(u => consulenti.Contains(u.Id) && assegnati.Contains(u.Id) && u.Attivo && u.EmailConfirmed)
-            .Select(u => u.Email).ToListAsync()).OfType<string>().ToList();
-        return email.Count > 0 ? email : await db.EmailConRuoloAsync(Ruoli.Amministratore);
-    }
 }
 
 /// <summary>
@@ -175,6 +149,10 @@ public sealed class ServizioAccessi(
         var req = http.HttpContext?.Request ?? throw new InvalidOperationException("Serve una richiesta HTTP per comporre il link.");
         return $"{req.Scheme}://{req.Host}{req.PathBase}{percorso}";
     }
+
+    /// <summary>Come <see cref="ComponiUrl"/>, ma null quando non si può comporre (servizio in background senza "App:UrlPubblico").</summary>
+    public string? UrlAssoluto(string percorso) =>
+        config["App:UrlPubblico"] is { Length: > 0 } || http.HttpContext is not null ? ComponiUrl(percorso) : null;
 
     /// <summary>
     /// Nuova email di accesso (è anche il nome utente). Le sessioni aperte decadono; la persona riceve un avviso al nuovo indirizzo.
