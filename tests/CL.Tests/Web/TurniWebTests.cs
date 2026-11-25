@@ -173,4 +173,34 @@ public sealed class TurniWebTests : IDisposable
         Assert.Equal(1, await _app.ConDb(db => db.TurniLavoro.CountAsync()));
         Assert.Empty(_app.ErroriServer);
     }
+
+    [Fact]
+    public async Task Il_consulente_filtra_i_turni_per_azienda_e_non_vede_i_turni_salvati()
+    {
+        await _app.ConDb(async db =>
+        {
+            var a = new Azienda("Alfa S.r.l.", PartitaIva.Parse("01234567897"));
+            var b = new Azienda("Beta S.r.l.", PartitaIva.Parse("12345678903"));
+            var anna = new Dipendente(a.Id, "Anna", "Alfieri", CodiceFiscale.Parse("RSSMRA85T10A562S"), new DateOnly(1985, 12, 10));
+            var bruno = new Dipendente(b.Id, "Bruno", "Bianchi", CodiceFiscale.Parse("VRDLGU90A01H501S"), new DateOnly(1990, 1, 1));
+            db.AddRange(a, b, anna, bruno);
+            return await db.SaveChangesAsync();
+        });
+        var alfa = await _app.ConDb(db => db.Aziende.Where(a => a.RagioneSociale == "Alfa S.r.l.").Select(a => a.Id).SingleAsync());
+        await _app.CreaUtente("studio@test.it", Ruoli.Consulente);
+        var consulente = _app.CreateClient();
+        await consulente.Accedi("studio@test.it");
+
+        var tutte = WebUtility.HtmlDecode(await consulente.GetStringAsync("/Turni"));
+        Assert.Contains("Tutte le aziende", tutte);
+        Assert.Contains("Alfieri Anna", tutte);
+        Assert.Contains("Bianchi Bruno", tutte);
+        var filtrate = WebUtility.HtmlDecode(await consulente.GetStringAsync($"/Turni?aziendaId={alfa}"));
+        Assert.Contains("Alfieri Anna", filtrate);
+        Assert.DoesNotContain("Bianchi Bruno", filtrate);
+
+        // I turni salvati sono la libreria del referente: niente voce di menù né pagina per il consulente.
+        Assert.DoesNotContain("Turni salvati", tutte);
+        Assert.Contains("/Account/AccessoNegato", (await consulente.GetAsync("/Turni/Salvati")).RequestMessage!.RequestUri!.AbsolutePath);
+    }
 }

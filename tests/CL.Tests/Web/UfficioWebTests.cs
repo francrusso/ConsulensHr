@@ -573,11 +573,18 @@ public sealed class UfficioWebTests : IDisposable
         Assert.DoesNotContain("Rossi Mario", WebUtility.HtmlDecode(await c1.GetStringAsync("/Dipendenti")));
         Assert.Equal(HttpStatusCode.NotFound, (await c1.GetAsync($"/Dipendenti/Dettaglio/{_dipId}")).StatusCode);
         Assert.Contains("AccessoNegato", (await c1.GetAsync("/Consulenti")).RequestMessage!.RequestUri!.AbsolutePath); // solo il super amministratore
+        Assert.Contains("AccessoNegato", (await c1.GetAsync("/Utenti")).RequestMessage!.RequestUri!.AbsolutePath);   // anche l'elenco degli utenti
+        Assert.Contains("AccessoNegato", (await c1.GetAsync("/Utenti/Nuovo")).RequestMessage!.RequestUri!.AbsolutePath);
+        Assert.DoesNotContain(">Utenti</div>", await c1.GetStringAsync("/Aziende"));                                   // né la voce di menù
 
         // Il super amministratore gli assegna Acme: ora la vede, l'altro consulente no.
         await _app.CreaUtente("admin@test.it", Ruoli.Consulente);
         var admin = _app.CreateClient(); await admin.Accedi("admin@test.it");
-        Assert.Contains("studio1@test.it", WebUtility.HtmlDecode(await admin.GetStringAsync("/Consulenti")));
+        // Consulenti e utenti sono un'unica pagina: /Consulenti porta a Utenti filtrato sui consulenti.
+        var consulenti = WebUtility.HtmlDecode(await admin.GetStringAsync("/Consulenti"));
+        Assert.Contains("studio1@test.it", consulenti);
+        Assert.Contains("Consulenti <span>(2)</span>", consulenti);
+        Assert.Contains("0 aziende", consulenti);
         var utenti = WebUtility.HtmlDecode(await admin.GetStringAsync("/Utenti"));
         Assert.Single(System.Text.RegularExpressions.Regex.Matches(utenti, @"<td[^>]*>admin@test\.it</td>"));   // una sola riga per il super amministratore
         Assert.Contains("Super amministratore", utenti);

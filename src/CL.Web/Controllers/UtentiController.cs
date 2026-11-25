@@ -27,19 +27,31 @@ public sealed class UtentiViewModel
     public required List<UtenteRiga> Utenti { get; init; }
     public string? Ruolo { get; init; }
     public string? Ricerca { get; init; }
+    /// <summary>Quanti utenti per ruolo (con la ricerca applicata), per le pillole.</summary>
+    public Dictionary<string, int> Conteggi { get; init; } = [];
+    /// <summary>Aziende assegnate a ogni consulente (per id utente).</summary>
+    public Dictionary<string, int> AziendeConsulenti { get; init; } = [];
+
+    /// <summary>Le tipologie di utente, nell'ordine delle pillole.</summary>
+    public static readonly (string Ruolo, string Nome)[] Tipologie =
+    [
+        (Ruoli.Amministratore, "Super amministratori"), (Ruoli.Consulente, "Consulenti"),
+        (Ruoli.Azienda, "Referenti azienda"), (Ruoli.Dipendente, "Personale"),
+    ];
 }
 
 /// <summary>
-/// Accessi al portale. Il consulente gestisce quelli delle aziende del suo perimetro; il referente di un'azienda
-/// quelli dei colleghi e del personale della propria azienda (dalla scheda di ogni persona); i consulenti li crea
-/// e gestisce il super amministratore. Nessuno può disattivare sé stesso.
+/// Accessi al portale. L'elenco di tutti gli utenti e "Aggiungi altro utente" sono solo del super amministratore, che crea
+/// e gestisce anche i consulenti. Il consulente gestisce gli accessi delle aziende del suo perimetro dal profilo
+/// dell'azienda (referenti) e dalla scheda di ogni persona (dipendenti); il referente quelli della propria azienda.
+/// Nessuno può disattivare sé stesso.
 /// </summary>
 [Authorize(Policy = Policy.GestionePersonale)]
 public sealed class UtentiController(
     AppDbContext db, UserManager<ApplicationUser> users, ServizioAccessi accessi, UtenteCorrente utente,
     PerimetroAziende perimetro) : AppController
 {
-    [Authorize(Policy = Policy.SoloConsulente)]
+    [Authorize(Roles = Ruoli.Amministratore)]
     public async Task<IActionResult> Index(string? ruolo, string? q)
     {
         var query = accessi.Elenco();
@@ -49,24 +61,31 @@ public sealed class UtentiController(
             var mio = utente.UserId;
             query = query.Where(u => u.Id == mio || (u.AziendaId != null && consentite.Contains(u.AziendaId.Value)));
         }
-        if (!string.IsNullOrEmpty(ruolo)) query = query.Where(u => u.Ruolo == ruolo);
         if (!string.IsNullOrWhiteSpace(q))
         {
             var t = q.Trim().ToLower();
             query = query.Where(u => u.Email.ToLower().Contains(t) || u.Nome.ToLower().Contains(t)
                                      || (u.Azienda != null && u.Azienda.ToLower().Contains(t)));
         }
-        var elenco = await query.OrderBy(u => u.Nome).ThenBy(u => u.Email).ToListAsync();
-        return View(new UtentiViewModel { Utenti = elenco, Ruolo = ruolo, Ricerca = q });
+        var tutti = await query.OrderBy(u => u.Nome).ThenBy(u => u.Email).ToListAsync();
+        if (UtentiViewModel.Tipologie.All(x => x.Ruolo != ruolo)) ruolo = null;
+        return View(new UtentiViewModel
+        {
+            Utenti = ruolo is null ? tutti : tutti.Where(u => u.Ruolo == ruolo).ToList(),
+            Ruolo = ruolo, Ricerca = q,
+            Conteggi = tutti.GroupBy(u => u.Ruolo).ToDictionary(g => g.Key, g => g.Count()),
+            AziendeConsulenti = await db.AssegnazioniAziende.GroupBy(a => a.UserId).Select(g => new { g.Key, N = g.Count() })
+                .ToDictionaryAsync(x => x.Key, x => x.N),
+        });
     }
 
     /// <summary>Solo il super amministratore crea i consulenti.</summary>
     [HttpPost, ValidateAntiForgeryToken, Authorize(Roles = Ruoli.Amministratore)]
     public async Task<IActionResult> InvitaConsulente(InvitoForm form, string? ritorno = null) =>
-        await Invita(form, Ruoli.Consulente, null, null, Url.IsLocalUrl(ritorno) ? ritorno! : Url.Action("Index", "Consulenti")!);
+        await Invita(form, Ruoli.Consulente, null, null, Url.IsLocalUrl(ritorno) ? ritorno! : Url.Action("Index", "Utenti", new { ruolo = Ruoli.Consulente })!);
 
-    /// <summary>"Aggiungi altro utente": referente di un'azienda, persona del personale o (super amministratore) consulente.</summary>
-    [Authorize(Policy = Policy.SoloConsulente)]
+    /// <summary>"Aggiungi altro utente" (super amministratore): referente di un'azienda, persona del personale o consulente.</summary>
+    [Authorize(Roles = Ruoli.Amministratore)]
     public async Task<IActionResult> Nuovo()
     {
         ViewBag.Aziende = await db.Aziende.AsNoTracking().Where(a => a.Attiva).OrderBy(a => a.RagioneSociale)
@@ -225,5 +244,6 @@ public sealed class UtentiController(
 
     private IActionResult Torna(string? ritorno) =>
         Url.IsLocalUrl(ritorno) ? LocalRedirect(ritorno)
-        : utente.IsConsulente ? RedirectToAction(nameof(Index)) : RedirectToAction("Index", "Dipendenti");
+        : utente.IsAmministratore ? RedirectToAction(nameof(Index))
+        : utente.IsConsulente ? RedirectToAction("Index", "Aziende") : RedirectToAction("Index", "Dipendenti");
 }

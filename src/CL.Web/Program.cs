@@ -51,6 +51,7 @@ builder.Services.AddScoped<ServizioBustePaga>();
 builder.Services.AddScoped<ServizioNotifiche>();
 builder.Services.AddScoped<CollegamentoWhatsApp>();
 builder.Services.AddScoped<EliminazioneAzienda>();
+builder.Services.AddScoped<ArchivioStorico>();
 builder.Services.AddScoped<NotificheRichieste>();
 builder.Services.AddScoped<PromemoriaScadenze>();
 // Promemoria di contratti e documenti in scadenza. Nei test d'integrazione si lancia a mano (il database lo prepara il test).

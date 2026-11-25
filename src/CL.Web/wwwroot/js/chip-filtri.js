@@ -64,7 +64,9 @@
 
     chip.forEach(c => {
         const senza = new URLSearchParams(location.search);
-        [c.nome, ...c.anche, 'pagina'].forEach(n => senza.delete(n));
+        // Nomi senza distinzione di maiuscole (es. "TeamId" del form e "teamId" dei link).
+        const daTogliere = new Set([c.nome, ...c.anche, 'pagina'].map(n => n.toLowerCase()));
+        [...senza.keys()].filter(k => daTogliere.has(k.toLowerCase())).forEach(k => senza.delete(k));
         const resto = senza.toString();
 
         const el = document.createElement('span');

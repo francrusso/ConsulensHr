@@ -1,6 +1,7 @@
 ﻿@inject UtenteCorrente Utente
 @inject ServizioAvatar Avatar
 @inject ServizioNotifiche Notifiche
+@inject ArchivioStorico Storico
 @*
     Struttura ripresa da ConsulensNew (sidebar + topbar + page-content) per avere la stessa estetica;
     i colori beige vengono da assets/css/tema-beige.css.
@@ -19,7 +20,7 @@
     var gestisce = !Utente.IsDipendente; // consulente o referente azienda
     (string? Url, string Etichetta, string Icona) azione = inOnboarding ? (null, "", "") : (sezione, pagina) switch
     {
-        ("turni", "Salvati" or "Modello") when Utente.IsAzienda || Utente.IsConsulente => (Url.Action("Modello", "Turni"), "Crea turno salvato", "ri-add-line"),
+        ("turni", "Salvati" or "Modello") when Utente.IsAzienda => (Url.Action("Modello", "Turni"), "Crea turno salvato", "ri-add-line"),
         ("onboarding", _) when Utente.IsConsulente => (Url.Action("Nuovo", "Dipendenti", new { aziendaId = query["aziendaId"].FirstOrDefault() }), "Aggiungi persona", "ri-user-add-line"),
         ("dipendenti", "Dettaglio") when gestisce && query["sezione"] == "contratto" => (Url.Action("Assumi", "Dipendenti", new { id = ViewContext.RouteData.Values["id"] }), "Nuovo contratto", "ri-file-add-line"),
         ("dipendenti", _) when gestisce => (Url.Action("Nuovo", "Dipendenti", new { aziendaId = query["aziendaId"].FirstOrDefault() }),
@@ -27,8 +28,7 @@
         ("aziende", _) when Utente.IsConsulente => (Url.Action("Nuova", "Aziende"), "Nuova azienda", "ri-add-line"),
         ("turni", "Index") when Utente.IsAzienda || Utente.IsConsulente => (Url.Action("Modifica", "Turni"), "Nuovo turno", "ri-add-line"),
         ("team", "Index") => ("#nuovoTeam", "Nuovo team", "ri-add-line"),
-        ("utenti", "Index" or "Nuovo") when Utente.IsConsulente => (Url.Action("Nuovo", "Utenti"), "Aggiungi altro utente", "ri-user-add-line"),
-        ("consulenti", "Index") => ("#nuovoConsulente", "Nuovo consulente", "ri-user-add-line"),
+        ("utenti", "Index" or "Nuovo") when Utente.IsAmministratore => (Url.Action("Nuovo", "Utenti"), "Aggiungi altro utente", "ri-user-add-line"),
         ("assenze" or "ufficio", _) => (Url.Action("Nuova", "Assenze"), "Nuova richiesta", "ri-calendar-event-line"),
         ("bustepaga", _) when gestisce => (Url.Action("Carica", "BustePaga"), "Carica busta paga", "ri-upload-2-line"),
         ("documenti", "Contratti" or "NuovoContratto") when gestisce => (Url.Action("NuovoContratto", "Documenti"), "Nuovo contratto", "ri-file-add-line"),
@@ -126,7 +126,7 @@
                                 Voci per ruolo:
                                 dipendente: I miei dati, Il mio contratto, Calendario, Richieste, Documenti (buste paga e CU);
                                 referente azienda: Panoramica, Profilo azienda, Personale (elenco, team, organigramma), Presenze e assenze, Documenti;
-                                consulente: Panoramica, Aziende, Personale, Presenze e assenze, Documenti, Consulenti (solo super amministratore), Utenti.
+                                consulente: Panoramica, Aziende, Personale, Presenze e assenze, Turni di lavoro, Documenti; il super amministratore anche Utenti (consulenti compresi).
                                 Durante il percorso guidato (sopra) c'è solo la voce del profilo da completare.
                             *@
                             if (Utente.IsDipendente)
@@ -229,11 +229,16 @@
                             {
                                 <li><a asp-controller="Turni" asp-action="Index"><div class="parent-icon icon-color-1"><i class="ri-time-line ri-xs"></i></div><div class="menu-title">I miei turni</div></a></li>
                             }
-                            else
+                            else if (Utente.IsAzienda)
                             {
                                 <li><a href="javascript:;" class="has-arrow"><div class="parent-icon icon-color-1"><i class="ri-time-line ri-xs"></i></div><div class="menu-title">Turni di lavoro</div></a>
                                     <ul><li><a asp-controller="Turni" asp-action="Index">Calendario turni</a></li><li><a asp-controller="Turni" asp-action="Salvati">Turni salvati</a></li></ul>
                                 </li>
+                            }
+                            else
+                            {
+                                @* Il consulente vede il calendario dei turni; i turni salvati sono la libreria del referente. *@
+                                <li><a asp-controller="Turni" asp-action="Index"><div class="parent-icon icon-color-1"><i class="ri-time-line ri-xs"></i></div><div class="menu-title">Turni di lavoro</div></a></li>
                             }
                             <li>
                                 <a href="javascript:;" class="has-arrow">
@@ -244,20 +249,13 @@
                                     <li><a asp-controller="BustePaga" asp-action="Index">Buste paga</a></li>
                                     <li><a asp-controller="Documenti" asp-action="Cu">CU</a></li>
                                     @if (!Utente.IsDipendente) { <li><a asp-controller="Documenti" asp-action="Contratti">Contratti</a></li> }
-                                    @if (!Utente.IsDipendente) { <li><a asp-controller="Documenti" asp-action="Storico">Archivio storico</a></li> }
+                                    @* Archivio storico: solo per le aziende che arrivano da un altro consulente. *@
+                                    @if (!Utente.IsDipendente && await Storico.VisibileAsync()) { <li><a asp-controller="Documenti" asp-action="Storico">Archivio storico</a></li> }
                                     <li><a asp-controller="Documenti" asp-action="Personali">@(Utente.IsDipendente ? "I miei documenti" : "Documenti personali")</a></li>
                                 </ul>
                             </li>
+                            @* Utenti (consulenti compresi): l'elenco di tutti gli accessi è del super amministratore; il consulente li gestisce da aziende e persone. *@
                             if (Utente.IsAmministratore)
-                            {
-                                <li>
-                                    <a asp-controller="Consulenti" asp-action="Index">
-                                        <div class="parent-icon icon-color-1"><i class="ri-user-star-line ri-xs"></i></div>
-                                        <div class="menu-title">Consulenti</div>
-                                    </a>
-                                </li>
-                            }
-                            if (Utente.IsConsulente)
                             {
                                 <li>
                                     <a asp-controller="Utenti" asp-action="Index">

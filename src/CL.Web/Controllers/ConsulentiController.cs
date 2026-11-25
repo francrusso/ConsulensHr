@@ -29,19 +29,8 @@ public sealed class ConsulenteViewModel
 [Authorize(Roles = Ruoli.Amministratore)]
 public sealed class ConsulentiController(AppDbContext db, ServizioNotifiche notifiche) : AppController
 {
-    public async Task<IActionResult> Index(string? q)
-    {
-        var idConsulenti = db.IdConRuolo(Ruoli.Consulente);
-        var consulenti = await db.Users.Where(u => idConsulenti.Contains(u.Id)).ToListAsync();
-        var amministratori = (await db.IdConRuolo(Ruoli.Amministratore).ToListAsync()).ToHashSet();
-        var conteggi = await db.AssegnazioniAziende.GroupBy(a => a.UserId).Select(g => new { g.Key, N = g.Count() }).ToDictionaryAsync(x => x.Key, x => x.N);
-        var righe = consulenti
-            .Select(u => Riga(u, amministratori.Contains(u.Id), conteggi.GetValueOrDefault(u.Id)))
-            .Where(c => string.IsNullOrWhiteSpace(q) || c.Nome.Contains(q, StringComparison.CurrentCultureIgnoreCase) || c.Email.Contains(q, StringComparison.CurrentCultureIgnoreCase))
-            .OrderBy(c => c.Nome).ToList();
-        ViewBag.Ricerca = q;
-        return View(righe);
-    }
+    /// <summary>L'elenco dei consulenti è nella pagina Utenti (pillola "Consulenti"): questo indirizzo resta e porta lì.</summary>
+    public IActionResult Index(string? q) => RedirectToAction("Index", "Utenti", new { ruolo = Ruoli.Consulente, q });
 
     public async Task<IActionResult> Dettaglio(string id)
     {

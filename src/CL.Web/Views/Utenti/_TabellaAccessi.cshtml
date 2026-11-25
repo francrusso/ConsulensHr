@@ -1,6 +1,11 @@
 @model (List<UtenteRiga> Utenti, string Ritorno, bool MostraRuoloAzienda)
 @* Tabella degli accessi: estesa (ruolo e azienda) nella pagina Utenti, ridotta nella scheda dell'azienda. *@
-@{ var (utenti, ritorno, esteso) = Model; }
+@{
+    var (utenti, ritorno, esteso) = Model;
+    // Pagina Utenti del super amministratore: per i consulenti le aziende assegnate, con il link per assegnarle.
+    var aziendeConsulenti = ViewData["AziendeConsulenti"] as Dictionary<string, int>;
+    bool DelloStudio(UtenteRiga u) => aziendeConsulenti is not null && u.Ruolo is "Consulente" or "Amministratore";
+}
 <div class="card radius-15 table-responsive table-actions-responsive p-1 customer-results">
     <table class="table mb-0 align-middle">
         <thead>
@@ -25,6 +30,10 @@
                         {
                             <a class="customer-name" asp-controller="Dipendenti" asp-action="Dettaglio" asp-route-id="@d"><i class="ri-user-line" aria-hidden="true"></i><span>@u.Nome</span></a>
                         }
+                        else if (DelloStudio(u))
+                        {
+                            <a class="customer-name" asp-controller="Consulenti" asp-action="Dettaglio" asp-route-id="@u.Id"><i class="ri-user-star-line" aria-hidden="true"></i><span>@u.Nome</span></a>
+                        }
                         else { @u.Nome }
                     </td>
                     <td data-label="Email">@u.Email</td>
@@ -32,11 +41,26 @@
                     {
                         <td data-label="Ruolo">@(u.Ruolo switch { "Azienda" => "Referente azienda", "Amministratore" => "Super amministratore", var r => r })</td>
                         <td data-label="Azienda">
-                            @if (u.AziendaId is { } a) { <a asp-controller="Aziende" asp-action="Dettaglio" asp-route-id="@a">@u.Azienda</a> } else { <span>—</span> }
+                            @if (u.AziendaId is { } a) { <a asp-controller="Aziende" asp-action="Dettaglio" asp-route-id="@a">@u.Azienda</a> }
+                            else if (u.Ruolo == "Amministratore" && aziendeConsulenti is not null) { <span>Tutte</span> }
+                            else if (u.Ruolo == "Consulente" && aziendeConsulenti is not null)
+                            {
+                                var n = aziendeConsulenti.GetValueOrDefault(u.Id);
+                                <a asp-controller="Consulenti" asp-action="Dettaglio" asp-route-id="@u.Id">@(n == 1 ? "1 azienda" : $"{n} aziende")</a>
+                            }
+                            else { <span>—</span> }
                         </td>
                     }
                     <td data-label="Stato"><partial name="~/Views/Utenti/_StatoAccesso.cshtml" model="u.Stato" /></td>
-                    <td data-label="Azioni"><partial name="~/Views/Utenti/_AzioniAccesso.cshtml" model="(u, ritorno)" /></td>
+                    <td data-label="Azioni">
+                        <div class="d-flex justify-content-end align-items-center gap-1">
+                            @if (DelloStudio(u) && u.Ruolo == "Consulente")
+                            {
+                                <span class="customer-actions"><a asp-controller="Consulenti" asp-action="Dettaglio" asp-route-id="@u.Id" title="Aziende assegnate" aria-label="Aziende assegnate a @u.Email"><i class="ri-building-line" aria-hidden="true"></i></a></span>
+                            }
+                            <partial name="~/Views/Utenti/_AzioniAccesso.cshtml" model="(u, ritorno)" />
+                        </div>
+                    </td>
                 </tr>
             }
         </tbody>

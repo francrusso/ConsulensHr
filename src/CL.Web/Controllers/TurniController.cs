@@ -5,6 +5,7 @@ using CL.Domain.Common;
 using CL.Domain.Organizzazione;
 using CL.Domain.Dipendenti;
 using CL.Domain.Notifiche;
+using CL.Infrastructure.Identity;
 using CL.Infrastructure.Persistence;
 using CL.Web.Infrastruttura;
 using Microsoft.AspNetCore.Authorization;
@@ -52,6 +53,9 @@ public sealed record TurniViewModel(DateOnly Settimana, Guid? DipendenteId, List
     public Guid? TeamId { get; init; }
     public SedeLavoro? Sede { get; init; }
     public List<SelectListItem> Team { get; init; } = [];
+    /// <summary>Solo per il consulente: l'azienda scelta e l'elenco delle aziende del suo perimetro.</summary>
+    public Guid? AziendaId { get; init; }
+    public List<SelectListItem>? Aziende { get; init; }
     public List<RichiestaAssenza> Assenze { get; init; } = [];
     public double OreEffettive(TurnoLavoro turno)
     {
@@ -95,8 +99,10 @@ public sealed record TurniSalvatiViewModel(List<TurnoSalvato> Turni, Dictionary<
 [Authorize]
 public sealed class TurniController(AppDbContext db, UtenteCorrente utente, ServizioNotifiche notifiche, TimeProvider clock) : AppController
 {
-    public async Task<IActionResult> Index(int? anno, int? mese, Guid? dipendenteId, DateOnly? data, Guid? teamId, SedeLavoro? sede, string? vista)
+    public async Task<IActionResult> Index(int? anno, int? mese, Guid? dipendenteId, DateOnly? data, Guid? teamId, SedeLavoro? sede, string? vista,
+        Guid? aziendaId)
     {
+        if (!utente.IsConsulente) aziendaId = null; // il referente vede già solo la sua azienda
         var oggi = clock.GetLocalNow();
         var primo = new DateOnly(anno is >= 2 and <= 9998 ? anno.Value : oggi.Year, mese is >= 1 and <= 12 ? mese.Value : oggi.Month, 1);
         var riferimento = data is { Year: >= 2 and <= 9998 } ? data.Value : (anno.HasValue || mese.HasValue ? primo : DateOnly.FromDateTime(oggi.DateTime));
@@ -106,6 +112,7 @@ public sealed class TurniController(AppDbContext db, UtenteCorrente utente, Serv
         var dal = settimana.ToDateTime(TimeOnly.MinValue);
         var al = dal.AddDays(giorniVista);
         var persone = utente.Filtra(db.Dipendenti.AsNoTracking());
+        if (aziendaId is { } filtroAzienda) persone = persone.Where(d => d.AziendaId == filtroAzienda);
         if (teamId is { } filtroTeam) persone = persone.Where(d => d.TeamId == filtroTeam);
         if (sede is { } filtroSede) persone = persone.Where(d => d.Sede == filtroSede);
         var turni = await (from t in db.TurniLavoro.AsNoTracking()
@@ -123,11 +130,16 @@ public sealed class TurniController(AppDbContext db, UtenteCorrente utente, Serv
         var idsRighe = righe.Select(r => r.Id).ToList();
         var inizioAssenze = DateOnly.FromDateTime(dal); var fineAssenze = DateOnly.FromDateTime(al.AddDays(-1));
         var assenze = await db.RichiesteAssenza.AsNoTracking().Where(a => idsRighe.Contains(a.DipendenteId) && a.Dal <= fineAssenze && a.Al >= inizioAssenze && (a.Stato == StatoRichiesta.InAttesa || a.Stato == StatoRichiesta.Approvata)).ToListAsync();
-        var aziende = await utente.Filtra(db.Dipendenti).Select(d => d.AziendaId).Distinct().ToListAsync();
-        return View(new TurniViewModel(settimana, dipendenteId, await Persone(), righe, turni, utente.IsAzienda || utente.IsConsulente)
+        var aziende = aziendaId is { } scelta ? [scelta] : await utente.Filtra(db.Dipendenti).Select(d => d.AziendaId).Distinct().ToListAsync();
+        return View(new TurniViewModel(settimana, dipendenteId, await Persone(aziendaId), righe, turni, utente.IsAzienda || utente.IsConsulente)
         {
-            Vista = vistaScelta, GiorniVista = giorniVista, TeamId = teamId, Sede = sede, Assenze = assenze,
-            Team = team.Where(t => aziende.Contains(t.AziendaId)).Select(t => new SelectListItem(t.Nome, t.Id.ToString())).ToList()
+            Vista = vistaScelta, GiorniVista = giorniVista, TeamId = teamId, Sede = sede, Assenze = assenze, AziendaId = aziendaId,
+            Team = team.Where(t => aziende.Contains(t.AziendaId)).Select(t => new SelectListItem(t.Nome, t.Id.ToString())).ToList(),
+            // Il consulente segue più aziende: le sceglie dal primo filtro.
+            Aziende = utente.IsConsulente
+                ? await db.Aziende.AsNoTracking().OrderBy(a => a.RagioneSociale)
+                    .Select(a => new SelectListItem(a.RagioneSociale, a.Id.ToString(), a.Id == aziendaId)).ToListAsync()
+                : null,
         });
     }
 
@@ -230,18 +242,21 @@ public sealed class TurniController(AppDbContext db, UtenteCorrente utente, Serv
     }
 
     [HttpPost, ValidateAntiForgeryToken, Authorize(Policy = Policy.GestionePersonale)]
-    public async Task<IActionResult> Pubblica(DateOnly data, Guid? dipendenteId, Guid? teamId, SedeLavoro? sede, string? vista)
+    public async Task<IActionResult> Pubblica(DateOnly data, Guid? dipendenteId, Guid? teamId, SedeLavoro? sede, string? vista, Guid? aziendaId)
     {
+        if (!utente.IsConsulente) aziendaId = null;
         if (data.Year is < 2 or > 9998) return BadRequest();
         var dal = data.ToDateTime(TimeOnly.MinValue);
         var giorni = vista == "giorno" ? 1 : vista == "mese" ? DateTime.DaysInMonth(data.Year, data.Month) : 7;
         var al = dal.AddDays(giorni);
-        var persone = utente.Filtra(db.Dipendenti).Where(d => (teamId == null || d.TeamId == teamId) && (sede == null || d.Sede == sede)).Select(d => d.Id);
+        var persone = utente.Filtra(db.Dipendenti)
+            .Where(d => (aziendaId == null || d.AziendaId == aziendaId) && (teamId == null || d.TeamId == teamId) && (sede == null || d.Sede == sede))
+            .Select(d => d.Id);
         var turni = await Visibili().Where(t => persone.Contains(t.DipendenteId) && t.Inizio < al && t.Fine > dal && t.PubblicatoIl == null && (dipendenteId == null || t.DipendenteId == dipendenteId)).ToListAsync();
         if (await ConAssenzeApprovate(turni))
         {
             Errore("Sono presenti turni in conflitto con assenze approvate. Correggi la pianificazione prima di pubblicare.");
-            return RedirectToAction(nameof(Index), new { data = data.ToString("yyyy-MM-dd"), dipendenteId, teamId, sede, vista });
+            return RedirectToAction(nameof(Index), new { data = data.ToString("yyyy-MM-dd"), dipendenteId, teamId, sede, vista, aziendaId });
         }
         foreach (var turno in turni) turno.Pubblica(clock.GetUtcNow().UtcDateTime);
         await db.SaveChangesAsync();
@@ -255,7 +270,7 @@ public sealed class TurniController(AppDbContext db, UtenteCorrente utente, Serv
                 $"L'azienda ha pubblicato {(g.Count() == 1 ? "un tuo turno" : $"{g.Count()} tuoi turni")} {quando}.", "/Turni");
         })));
         Conferma($"Pubblicati {turni.Count} turni del periodo selezionato. I dipendenti possono consultarli.");
-        return RedirectToAction(nameof(Index), new { data = data.ToString("yyyy-MM-dd"), dipendenteId, teamId, sede, vista });
+        return RedirectToAction(nameof(Index), new { data = data.ToString("yyyy-MM-dd"), dipendenteId, teamId, sede, vista, aziendaId });
     }
 
     [HttpPost, ValidateAntiForgeryToken, Authorize(Policy = Policy.GestionePersonale)]
@@ -269,14 +284,15 @@ public sealed class TurniController(AppDbContext db, UtenteCorrente utente, Serv
         return RedirectToAction(nameof(Index), new { data = DateOnly.FromDateTime(turno.Inizio).ToString("yyyy-MM-dd") });
     }
 
-    [Authorize(Policy = Policy.GestionePersonale)]
+    /// <summary>Libreria dei turni salvati: solo del referente dell'azienda (il consulente non la gestisce).</summary>
+    [Authorize(Roles = Ruoli.Azienda)]
     public async Task<IActionResult> Salvati()
     {
         var aziende = await AziendeVisibili().ToDictionaryAsync(a => a.Id, a => a.RagioneSociale);
         return View(new TurniSalvatiViewModel(await db.TurniSalvati.AsNoTracking().Where(t => aziende.Keys.Contains(t.AziendaId)).OrderBy(t => t.Nome).ToListAsync(), aziende));
     }
 
-    [Authorize(Policy = Policy.GestionePersonale)]
+    [Authorize(Roles = Ruoli.Azienda)]
     public async Task<IActionResult> Modello(Guid? id)
     {
         var form = new TurnoSalvatoForm { AziendaId = utente.AziendaId ?? Guid.Empty,
@@ -299,7 +315,7 @@ public sealed class TurniController(AppDbContext db, UtenteCorrente utente, Serv
         return View(form);
     }
 
-    [HttpPost, ValidateAntiForgeryToken, Authorize(Policy = Policy.GestionePersonale)]
+    [HttpPost, ValidateAntiForgeryToken, Authorize(Roles = Ruoli.Azienda)]
     public async Task<IActionResult> Modello(TurnoSalvatoForm form)
     {
         if (!await AziendeVisibili().AnyAsync(a => a.Id == form.AziendaId)) return NotFound();
@@ -329,7 +345,7 @@ public sealed class TurniController(AppDbContext db, UtenteCorrente utente, Serv
         await CaricaModello(form); return View(form);
     }
 
-    [HttpPost, ValidateAntiForgeryToken, Authorize(Policy = Policy.GestionePersonale)]
+    [HttpPost, ValidateAntiForgeryToken, Authorize(Roles = Ruoli.Azienda)]
     public async Task<IActionResult> EliminaModello(Guid id)
     {
         var t = await ModelliVisibili().FirstOrDefaultAsync(t => t.Id == id);
@@ -381,7 +397,10 @@ public sealed class TurniController(AppDbContext db, UtenteCorrente utente, Serv
         var persone = utente.Filtra(db.Dipendenti).Select(d => d.Id);
         return db.TurniLavoro.Where(t => persone.Contains(t.DipendenteId));
     }
-    private async Task<List<SelectListItem>> Persone() => await (from d in utente.Filtra(db.Dipendenti.AsNoTracking())
-        join a in db.Aziende on d.AziendaId equals a.Id orderby a.RagioneSociale, d.Cognome, d.Nome
+    /// <summary>Persone tra cui scegliere (del perimetro; con <paramref name="aziendaId"/> solo di quell'azienda).</summary>
+    private async Task<List<SelectListItem>> Persone(Guid? aziendaId = null) => await (from d in utente.Filtra(db.Dipendenti.AsNoTracking())
+        join a in db.Aziende on d.AziendaId equals a.Id
+        where aziendaId == null || d.AziendaId == aziendaId
+        orderby a.RagioneSociale, d.Cognome, d.Nome
         select new SelectListItem(d.Cognome + " " + d.Nome + " · " + a.RagioneSociale, d.Id.ToString())).ToListAsync();
 }

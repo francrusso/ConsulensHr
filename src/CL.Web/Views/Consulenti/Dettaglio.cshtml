@@ -2,7 +2,7 @@
 @{
     var c = Model.Consulente;
     ViewData["Title"] = c.NomeVisibile;
-    ViewData["Percorso"] = new List<(string, string?)> { ("Consulenti", Url.Action("Index")) };
+    ViewData["Percorso"] = new List<(string, string?)> { ("Utenti", Url.Action("Index", "Utenti", new { ruolo = CL.Infrastructure.Identity.Ruoli.Consulente })) };
 }
 <div class="breadcrumb-titolo mb-3"><h1 class="titolo-pagina mb-0">@ViewData["Title"]</h1></div>
 

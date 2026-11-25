@@ -17,7 +17,7 @@
     {
         var bozze = Model.Turni.Count(t => t.Turno.PubblicatoIl is null);
         <form asp-action="Pubblica" method="post" class="d-flex align-items-center gap-2">
-            <input type="hidden" name="data" value="@Model.Settimana.ToString("yyyy-MM-dd")" /><input type="hidden" name="dipendenteId" value="@Model.DipendenteId" /><input type="hidden" name="teamId" value="@Model.TeamId" /><input type="hidden" name="sede" value="@Model.Sede" /><input type="hidden" name="vista" value="@Model.Vista" />
+            <input type="hidden" name="data" value="@Model.Settimana.ToString("yyyy-MM-dd")" /><input type="hidden" name="dipendenteId" value="@Model.DipendenteId" /><input type="hidden" name="teamId" value="@Model.TeamId" /><input type="hidden" name="sede" value="@Model.Sede" /><input type="hidden" name="vista" value="@Model.Vista" /><input type="hidden" name="aziendaId" value="@Model.AziendaId" />
             <span class="small text-muted">@bozze turni in bozza</span>
             <button type="submit" class="btn btn-primary" disabled="@(bozze == 0)">Pubblica i turni</button>
         </form>
@@ -25,6 +25,12 @@
 </div>
 <form method="get" class="invoice-filter-bar d-flex flex-wrap gap-2 mb-3">
     <input type="hidden" name="data" value="@Model.Settimana.ToString("yyyy-MM-dd")" />
+    @if (Model.Aziende is not null)
+    {
+        @* Consulente: prima l'azienda; cambiandola si riparte da tutte le sue persone e i suoi team. *@
+        <select name="aziendaId" asp-items="Model.Aziende" class="form-select w-auto" aria-label="Filtra per azienda" data-chip-togli-anche="dipendenteId teamId"
+                onchange="this.form.dipendenteId.value = ''; this.form.TeamId.value = ''; this.form.submit()"><option value="">Tutte le aziende</option></select>
+    }
     @if (Model.Gestione)
     {
         <label for="dipendenteId" class="visually-hidden">Dipendente</label>
@@ -36,9 +42,9 @@
     <button class="btn invoice-filter-submit" type="submit">Filtra <i class="ri-filter-3-line" aria-hidden="true"></i></button>
 </form>
 <div class="barra-mese mb-3">
-    <a asp-action="Index" asp-route-data="@precedente.ToString("yyyy-MM-dd")" asp-route-dipendenteId="@Model.DipendenteId" asp-route-teamId="@Model.TeamId" asp-route-sede="@Model.Sede" asp-route-vista="@Model.Vista" class="btn btn-outline-primary btn-sm" aria-label="Periodo precedente"><i class="ri-arrow-left-s-line" aria-hidden="true"></i></a>
+    <a asp-action="Index" asp-route-data="@precedente.ToString("yyyy-MM-dd")" asp-route-dipendenteId="@Model.DipendenteId" asp-route-teamId="@Model.TeamId" asp-route-sede="@Model.Sede" asp-route-vista="@Model.Vista" asp-route-aziendaId="@Model.AziendaId" class="btn btn-outline-primary btn-sm" aria-label="Periodo precedente"><i class="ri-arrow-left-s-line" aria-hidden="true"></i></a>
     <h2 class="titolo-mese mb-0">@periodo.ToUpper(it)</h2>
-    <a asp-action="Index" asp-route-data="@successivo.ToString("yyyy-MM-dd")" asp-route-dipendenteId="@Model.DipendenteId" asp-route-teamId="@Model.TeamId" asp-route-sede="@Model.Sede" asp-route-vista="@Model.Vista" class="btn btn-outline-primary btn-sm" aria-label="Periodo successivo"><i class="ri-arrow-right-s-line" aria-hidden="true"></i></a>
+    <a asp-action="Index" asp-route-data="@successivo.ToString("yyyy-MM-dd")" asp-route-dipendenteId="@Model.DipendenteId" asp-route-teamId="@Model.TeamId" asp-route-sede="@Model.Sede" asp-route-vista="@Model.Vista" asp-route-aziendaId="@Model.AziendaId" class="btn btn-outline-primary btn-sm" aria-label="Periodo successivo"><i class="ri-arrow-right-s-line" aria-hidden="true"></i></a>
 </div>
 <div class="table-responsive turni-calendario">
 <table class="table mb-0 turni-griglia" style="min-width:@(Math.Max(700, 350 + Model.GiorniVista * 140))px"><thead><tr><th scope="col" class="turni-persona">Dipendente</th>

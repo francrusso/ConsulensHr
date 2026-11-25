@@ -20,7 +20,7 @@ CU e contratti. **Non calcola i cedolini**: i PDF arrivano dal gestionale paghe 
 
 - **Dipendente**: I miei dati, Il mio contratto, Calendario, Richieste, Documenti (buste paga e CU).
 - **Referente**: Panoramica, Profilo azienda, Personale (elenco, team, organigramma), Presenze e assenze, Documenti (anche Contratti).
-- **Consulente**: Panoramica, Aziende, Personale, Presenze e assenze, Documenti, Utenti; il super amministratore anche Consulenti.
+- **Consulente**: Panoramica, Aziende, Personale, Presenze e assenze, Turni di lavoro, Documenti; il super amministratore anche Utenti (consulenti compresi).
 - Durante il **percorso guidato** (referente o dipendente al primo accesso) c'è solo la voce del profilo da completare.
 
 Il pulsante in alto a destra cambia con la sezione ("Aggiungi persona", "Nuova azienda", "Nuova richiesta", "Carica busta paga"…).
@@ -208,6 +208,12 @@ CU per persona e anno) ed eliminano; la sostituzione azzera la presa visione. Il
 
 Tutti i contratti con stato e PDF, oppure "Da caricare". Il dipendente viene portato a "Il mio contratto".
 
+### Archivio storico (`/Documenti/Storico`)
+
+Solo per le aziende che arrivano da un altro consulente (tipo di attività "Attività già operativa"): i documenti degli anni
+precedenti al subentro, per anno (CU, Modello 770, UniEmens, DM10, autoliquidazione INAIL, F24, verbali ispettivi,
+contenziosi, altro). Lo vedono studio e referente, non i dipendenti; per le aziende nuove la voce di menù non c'è.
+
 Tutti i file stanno nell'archivio privato e si aprono solo passando dal portale, che controlla chi li chiede.
 
 ## Panoramica (home)
@@ -219,11 +225,15 @@ Il dipendente viene portato al suo calendario.
 
 ## Utenti e consulenti
 
-- **Utenti** (studio): un elenco degli accessi con filtri per ruolo e testo. Azioni: reinvio del link, attiva/disattiva
-  (non su sé stessi), cambio email.
-- **Aggiungi altro utente**: referente di un'azienda, accesso per una persona del personale (anche come referente),
-  consulente (solo super amministratore).
-- **Consulenti** (super amministratore): crea i consulenti e assegna le aziende con le caselle di spunta.
+- **Utenti** (solo super amministratore): l'elenco di tutti gli accessi, consulenti compresi, con le pillole per tipologia
+  (Tutti, Super amministratori, Consulenti, Referenti azienda, Personale) e la ricerca. Azioni: reinvio del link,
+  attiva/disattiva (non su sé stessi), cambio email; per i consulenti anche le aziende assegnate.
+- **Aggiungi altro utente** (solo super amministratore): referente di un'azienda, accesso per una persona del personale
+  (anche come referente), consulente.
+- Il **consulente** gestisce gli accessi delle sue aziende dal profilo dell'azienda (referenti, con invito) e dalla scheda
+  di ogni persona (accesso del dipendente, anche come referente): stesse azioni, solo per le aziende assegnate.
+- **Aziende di un consulente** (dalla pagina Utenti): il super amministratore assegna le aziende con le caselle di spunta.
+  I consulenti si creano da "Aggiungi altro utente".
 
 ## Notifiche
 
@@ -284,9 +294,11 @@ Invito, recupero password e cambio dell'email di accesso arrivano sempre per ema
 
 ## Turni di lavoro
 
-Il calendario mostra dipendenti, foto e badge del team sulle righe e i giorni sulle colonne. Sono disponibili viste giorno, settimana e mese e filtri per persona, team e sede abituale. La navigazione e i colori riprendono il calendario presenze. Le assenze approvate o in attesa compaiono nelle celle; le assenze approvate di giornata intera sono escluse dal conteggio delle ore pianificate. Non vengono calcolati cedolini, costi retributivi o maggiorazioni.
+Il calendario mostra dipendenti, foto e badge del team sulle righe e i giorni sulle colonne. Sono disponibili viste giorno, settimana e mese e filtri per persona, team e sede abituale; il consulente filtra prima per azienda (anche "Pubblica i turni" vale solo per l'azienda scelta). La navigazione e i colori riprendono il calendario presenze. Le assenze approvate o in attesa compaiono nelle celle; le assenze approvate di giornata intera sono escluse dal conteggio delle ore pianificate. Non vengono calcolati cedolini, costi retributivi o maggiorazioni.
 
 ### Turni salvati e cicli giornalieri
+
+La libreria dei turni salvati è del referente dell'azienda: il consulente non la vede (nel menù ha solo il calendario dei turni).
 
 La libreria per azienda contiene turni con nome, giorni della settimana e orari, oppure cicli giornalieri ordinati (es. Mattina 06–14 → Pomeriggio 14–22 → Notte 22–06 → Smonto → Riposo). I notturni terminano il giorno successivo; smonto e riposo non conteggiano ore lavorate. Il ciclo parte dalla prima fase alla data iniziale e avanza ogni giorno di calendario, ripetendosi; nei giorni della settimana esclusi non genera assegnazioni. Si può limitare un modello a uno o più team con una multiselezione facoltativa; senza selezione è disponibile per tutti. La modifica del modello non modifica retroattivamente le assegnazioni.
 

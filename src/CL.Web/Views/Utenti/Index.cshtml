@@ -16,19 +16,23 @@
                     <input type="text" name="q" class="form-control" placeholder="Cerca per nome, email o azienda" aria-label="Cerca utenti" value="@Model.Ricerca" />
                 </div>
             </div>
-            <div>
-                <select name="ruolo" class="form-select" aria-label="Filtra per ruolo">
-                    <option value="">Tutti i ruoli</option>
-                    <option value="Amministratore" selected="@(Model.Ruolo == "Amministratore")">Super amministratori</option>
-                    <option value="Consulente" selected="@(Model.Ruolo == "Consulente")">Consulenti</option>
-                    <option value="Azienda" selected="@(Model.Ruolo == "Azienda")">Referenti azienda</option>
-                    <option value="Dipendente" selected="@(Model.Ruolo == "Dipendente")">Personale</option>
-                </select>
-            </div>
+            @if (Model.Ruolo is not null) { <input type="hidden" name="ruolo" value="@Model.Ruolo" /> }
             <div class="invoice-filter-actions"><button class="btn invoice-filter-submit" type="submit">Cerca <i class="ri-search-line" aria-hidden="true"></i></button></div>
         </div>
     </form>
     <partial name="_ChipRicerca" />
 
+    @* Tipologie di utente come pillole (come gli stati del personale): di default tutte. *@
+    <nav class="invoice-filter-categories filtro-stati mb-3" aria-label="Tipologia di utente">
+        <a class="badge-filtro-categoria @(Model.Ruolo is null ? "active" : "")" aria-current="@(Model.Ruolo is null ? "page" : null)"
+           asp-action="Index" asp-route-q="@Model.Ricerca">Tutti <span>(@Model.Conteggi.Values.Sum())</span></a>
+        @foreach (var (ruolo, nome) in CL.Web.Controllers.UtentiViewModel.Tipologie)
+        {
+            <a class="badge-filtro-categoria @(Model.Ruolo == ruolo ? "active" : "")" aria-current="@(Model.Ruolo == ruolo ? "page" : null)"
+               asp-action="Index" asp-route-ruolo="@ruolo" asp-route-q="@Model.Ricerca">@nome <span>(@Model.Conteggi.GetValueOrDefault(ruolo))</span></a>
+        }
+    </nav>
+
+    @{ ViewData["AziendeConsulenti"] = Model.AziendeConsulenti; }
     <partial name="_TabellaAccessi" model="(Model.Utenti, ritorno, true)" />
 </section>

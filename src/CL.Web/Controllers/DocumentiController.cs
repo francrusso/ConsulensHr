@@ -79,7 +79,7 @@ public sealed class NuovoContrattoForm
 /// </summary>
 [Authorize]
 public sealed class DocumentiController(AppDbContext db, UtenteCorrente utente, IArchivioDocumenti archivio, ServizioNotifiche notifiche,
-    TimeProvider clock) : AppController
+    ArchivioStorico storico, TimeProvider clock) : AppController
 {
     public const long DimensioneMassima = 10 * 1024 * 1024;
     private int AnnoCorrente => clock.GetLocalNow().Year;
@@ -300,13 +300,15 @@ public sealed class DocumentiController(AppDbContext db, UtenteCorrente utente, 
 
     /// <summary>
     /// Archivio storico dell'azienda: i documenti degli anni passati portati dal consulente precedente
-    /// (CU, 770, UniEmens/DM10, autoliquidazione INAIL, F24, verbali e contenziosi), per anno.
+    /// (CU, 770, UniEmens/DM10, autoliquidazione INAIL, F24, verbali e contenziosi), per anno. Solo per le aziende che
+    /// arrivano da un altro consulente (<see cref="ArchivioStorico"/>).
     /// </summary>
     [Authorize(Policy = Policy.GestionePersonale)]
     public async Task<IActionResult> Storico(Guid? aziendaId, int? anno, string? tipo)
     {
+        if (!await storico.VisibileAsync()) return NotFound();
         var query = from s in db.DocumentiStorici.AsNoTracking()
-                    join az in db.Aziende.AsNoTracking() on s.AziendaId equals az.Id
+                    join az in db.Aziende.AsNoTracking().Where(ArchivioStorico.Interessata) on s.AziendaId equals az.Id
                     select new { s, az };
         if (utente.IsAzienda) query = query.Where(x => x.s.AziendaId == utente.AziendaId);
         else if (aziendaId is { } scelta) query = query.Where(x => x.s.AziendaId == scelta);
@@ -318,14 +320,15 @@ public sealed class DocumentiController(AppDbContext db, UtenteCorrente utente, 
         ViewBag.Tipo = tipo;
         return View(new ElencoDocumentiViewModel<RigaStorico>
         {
-            Righe = righe, Anno = anno ?? 0, Anni = anni, AziendaId = aziendaId, Aziende = await ElencoAziende(aziendaId),
+            Righe = righe, Anno = anno ?? 0, Anni = anni, AziendaId = aziendaId, Aziende = await ElencoAziende(aziendaId, soloStorico: true),
         });
     }
 
     [Authorize(Policy = Policy.GestionePersonale)]
     public async Task<IActionResult> NuovoStorico()
     {
-        ViewBag.Aziende = await ElencoAziende(null);
+        if (!await storico.VisibileAsync()) return NotFound();
+        ViewBag.Aziende = await ElencoAziende(null, soloStorico: true);
         ViewBag.AnnoProposto = AnnoCorrente - 1;
         return View();
     }
@@ -335,6 +338,11 @@ public sealed class DocumentiController(AppDbContext db, UtenteCorrente utente, 
     {
         var az = utente.IsAzienda ? utente.AziendaId : aziendaId;
         if (az is not { } id || !await db.Aziende.AnyAsync(a => a.Id == id)) { Errore("Scegli l'azienda."); return RedirectToAction(nameof(NuovoStorico)); }
+        if (!await storico.PerAziendaAsync(id))
+        {
+            Errore("L'archivio storico è solo per le aziende che arrivano da un altro consulente.");
+            return RedirectToAction(nameof(NuovoStorico));
+        }
         var (tipoFile, estensione, errore) = await ControllaFile(documento);
         if (errore is not null) { Errore(errore); return RedirectToAction(nameof(NuovoStorico)); }
         var chiave = $"storico/{id}-{Guid.NewGuid():N}{estensione}";
@@ -493,8 +501,10 @@ public sealed class DocumentiController(AppDbContext db, UtenteCorrente utente, 
     }
 
     /// <summary>Elenco delle aziende per il filtro: solo per il consulente.</summary>
-    private async Task<List<SelectListItem>?> ElencoAziende(Guid? scelta) => !utente.IsConsulente ? null
-        : await db.Aziende.AsNoTracking().Where(a => a.Attiva || a.Id == scelta).OrderBy(a => a.RagioneSociale)
+    /// <summary>Aziende per il filtro del consulente (null per gli altri ruoli); con <paramref name="soloStorico"/> solo quelle con l'archivio storico.</summary>
+    private async Task<List<SelectListItem>?> ElencoAziende(Guid? scelta, bool soloStorico = false) => !utente.IsConsulente ? null
+        : await db.Aziende.AsNoTracking().Where(a => a.Attiva || a.Id == scelta)
+            .Where(soloStorico ? ArchivioStorico.Interessata : a => true).OrderBy(a => a.RagioneSociale)
             .Select(a => new SelectListItem(a.RagioneSociale, a.Id.ToString(), a.Id == scelta)).ToListAsync();
 
     private static async Task<string?> ErrorePdf(IFormFile? f)

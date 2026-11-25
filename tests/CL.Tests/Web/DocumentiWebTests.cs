@@ -272,4 +272,34 @@ public sealed class DocumentiWebTests : IDisposable
         Assert.Contains("Modello 770", WebUtility.HtmlDecode(await hr.GetStringAsync("/Documenti/Storico?anno=2024")));
         Assert.Empty(_app.ErroriServer);
     }
+
+    [Fact]
+    public async Task L_archivio_storico_c_e_solo_per_chi_arriva_da_un_altro_consulente()
+    {
+        var (nuova, subentro) = await _app.ConDb(async db =>
+        {
+            var a = new Azienda("Nuova S.r.l.", PartitaIva.Parse("01234567897"));
+            var b = new Azienda("Subentro S.r.l.", PartitaIva.Parse("12345678903"));
+            b.ImpostaTipoAvvio(TipoAvvio.CambioConsulente);
+            db.AddRange(a, b);
+            await db.SaveChangesAsync();
+            return (a.Id, b.Id);
+        });
+        await _app.CreaUtente("hr@nuova.test", Ruoli.Azienda, nuova);
+        await _app.CreaUtente("hr@subentro.test", Ruoli.Azienda, subentro);
+        var hrNuova = _app.CreateClient(); await hrNuova.Accedi("hr@nuova.test");
+        var hrSubentro = _app.CreateClient(); await hrSubentro.Accedi("hr@subentro.test");
+
+        Assert.DoesNotContain("Archivio storico", WebUtility.HtmlDecode(await hrNuova.GetStringAsync("/Documenti/Personali")));
+        Assert.Equal(HttpStatusCode.NotFound, (await hrNuova.GetAsync("/Documenti/Storico")).StatusCode);
+        Assert.Contains("Archivio storico", WebUtility.HtmlDecode(await hrSubentro.GetStringAsync("/Documenti/Personali")));
+        Assert.Equal(HttpStatusCode.OK, (await hrSubentro.GetAsync("/Documenti/Storico")).StatusCode);
+
+        // Lo studio sceglie l'azienda solo tra quelle con l'archivio.
+        await _app.CreaUtente("studio@test.it", Ruoli.Consulente);
+        var studio = _app.CreateClient(); await studio.Accedi("studio@test.it");
+        var modulo = WebUtility.HtmlDecode(await studio.GetStringAsync("/Documenti/NuovoStorico"));
+        Assert.Contains("Subentro S.r.l.", modulo);
+        Assert.DoesNotContain("Nuova S.r.l.", modulo);
+    }
 }
