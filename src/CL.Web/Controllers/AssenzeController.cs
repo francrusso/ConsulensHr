@@ -544,7 +544,8 @@ public sealed partial class AssenzeController(AppDbContext db, UtenteCorrente ut
         }
         else teamId = null;
         // Chi ha un contratto in qualche giorno del mese, in ordine alfabetico (l'ordine resta nel dizionario).
-        var persone = (await query.Where(d => d.Contratti.Any(c => c.DataInizio <= ultimo && (c.DataFine == null || c.DataFine >= primo)))
+        var nelMese = Filtri.ContrattoAttivoNelPeriodo(primo, ultimo);
+        var persone = (await query.Where(d => d.Contratti.AsQueryable().Any(nelMese))
                 .OrderBy(d => d.Cognome).ThenBy(d => d.Nome).ToListAsync())
             .ToDictionary(d => d.Id);
         var ids = persone.Keys.ToList();
@@ -647,8 +648,9 @@ public sealed partial class AssenzeController(AppDbContext db, UtenteCorrente ut
         db.ChiusureAziendali.Add(chiusura);
 
         var esterni = TipoContrattoExtensions.Esterni.ToList();
+        var nelPeriodo = Filtri.ContrattoAttivoNelPeriodo(inizio, fine);
         var persone = await db.Dipendenti.Where(d => d.AziendaId == azienda.Id
-                && d.Contratti.Any(c => !esterni.Contains(c.Tipo) && c.DataInizio <= fine && (c.DataFine == null || c.DataFine >= inizio)))
+                && d.Contratti.AsQueryable().Where(nelPeriodo).Any(c => !esterni.Contains(c.Tipo)))
             .ToListAsync();
         var ids = persone.Select(d => d.Id).ToList();
         var esistenti = await db.RichiesteAssenza.Where(r => ids.Contains(r.DipendenteId) && r.Dal <= fine && r.Al >= inizio).ToListAsync();

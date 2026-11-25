@@ -52,9 +52,10 @@ public sealed class ServizioPresenze(AppDbContext db, CodaEmail coda, ServizioAc
         // Lavoro dipendente in forza per almeno un giorno del mese (più chi è già nella comunicazione);
         // i professionisti esterni non hanno presenze da comunicare.
         var esterni = TipoContrattoExtensions.Esterni.ToList();
+        var nelMese = Filtri.ContrattoAttivoNelPeriodo(inizio, fine);
         var dipendenti = await db.Dipendenti.AsNoTracking()
             .Where(d => d.AziendaId == aziendaId
-                        && (d.Contratti.Any(c => c.DataInizio <= fine && (c.DataFine == null || c.DataFine >= inizio) && !esterni.Contains(c.Tipo))
+                        && (d.Contratti.AsQueryable().Where(nelMese).Any(c => !esterni.Contains(c.Tipo))
                             || giaInRiga.Contains(d.Id)))
             .OrderBy(d => d.Cognome).ThenBy(d => d.Nome)
             .ToListAsync();
@@ -127,11 +128,12 @@ public sealed class ServizioPresenze(AppDbContext db, CodaEmail coda, ServizioAc
         var inizio = new DateOnly(anno, mese, 1);
         var fine = inizio.AddMonths(1).AddDays(-1);
         var esterni = TipoContrattoExtensions.Esterni.ToList();
+        var nelMese = Filtri.ContrattoAttivoNelPeriodo(inizio, fine);
         return await db.Aziende.AsNoTracking().Where(a => a.Attiva).OrderBy(a => a.RagioneSociale)
             .Select(a => new StatoAziendaMese(a.Id, a.RagioneSociale,
                 db.ComunicazioniPresenze.Where(c => c.AziendaId == a.Id && c.Anno == anno && c.Mese == mese).Select(c => (StatoComunicazione?)c.Stato).FirstOrDefault(),
                 db.ComunicazioniPresenze.Where(c => c.AziendaId == a.Id && c.Anno == anno && c.Mese == mese).Select(c => c.InviataIl).FirstOrDefault(),
-                db.Dipendenti.Count(d => d.AziendaId == a.Id && d.Contratti.Any(c => c.DataInizio <= fine && (c.DataFine == null || c.DataFine >= inizio) && !esterni.Contains(c.Tipo)))))
+                db.Dipendenti.Count(d => d.AziendaId == a.Id && d.Contratti.AsQueryable().Where(nelMese).Any(c => !esterni.Contains(c.Tipo)))))
             .ToListAsync();
     }
 

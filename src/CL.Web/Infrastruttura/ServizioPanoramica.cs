@@ -90,8 +90,9 @@ public sealed class ServizioPanoramica(AppDbContext db, UtenteCorrente utente, T
         var idsInPerimetro = perimetro.Select(d => d.Id);
 
         // Dipendenti con rapporto nel periodo osservato (con contratti), aziende per patrono e nome.
+        var nelPeriodo = Filtri.ContrattoAttivoNelPeriodo(da, fine);
         var dipendenti = await perimetro
-            .Where(d => d.Contratti.Any(c => c.DataInizio <= fine && (c.DataFine == null || c.DataFine >= da)))
+            .Where(d => d.Contratti.AsQueryable().Any(nelPeriodo))
             .ToListAsync();
         var ids = dipendenti.Select(d => d.Id).ToList();
         var aziendeIds = dipendenti.Select(d => d.AziendaId).Distinct().ToList();
@@ -207,8 +208,9 @@ public sealed class ServizioPanoramica(AppDbContext db, UtenteCorrente utente, T
 
         // Cose da fare in cima alla panoramica. Le chiavi col periodo fanno ripartire ogni giorno/mese le spunte messe a mano.
         var annoCu = oggi.Year - 1;
-        var personeCu = dipendenti.Where(d => d.Contratti.Any(c => c.Tipo.IsSubordinato() && c.DataInizio <= new DateOnly(annoCu, 12, 31)
-                                                                   && (c.DataFine == null || c.DataFine >= new DateOnly(annoCu, 1, 1)))).Select(d => d.Id).ToList();
+        var (inizioCu, fineCu) = Filtri.Anno(annoCu);
+        var inForzaAnnoCu = Filtri.ContrattoAttivoNelPeriodo(inizioCu, fineCu).Compile();
+        var personeCu = dipendenti.Where(d => d.Contratti.Any(c => c.Tipo.IsSubordinato() && inForzaAnnoCu(c))).Select(d => d.Id).ToList();
         var cuMancanti = personeCu.Count - await db.CertificazioniUniche.CountAsync(c => personeCu.Contains(c.DipendenteId) && c.AnnoImposta == annoCu);
         var cancellazioni = await db.RichiesteAssenza.CountAsync(r => idsInPerimetro.Contains(r.DipendenteId)
                                                                      && r.Stato == StatoRichiesta.Approvata && r.AnnullamentoRichiestoIl != null);
