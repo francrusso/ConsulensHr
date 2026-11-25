@@ -26,3 +26,8 @@ appsettings.*.local.json
 
 # Documenti caricati (cedolini): mai nel repository
 **/App_Data/
+
+# Strumenti locali: grafo di graphify (output e cache, si rigenera) e configurazioni di avvio di Claude Code
+graphify-out/
+.graphifyignore
+.claude/launch.json
