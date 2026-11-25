@@ -6,6 +6,7 @@ using CL.Domain.Documenti;
 using CL.Domain.Notifiche;
 using CL.Domain.Organizzazione;
 using CL.Domain.Presenze;
+using CL.Infrastructure.Archivio;
 using CL.Infrastructure.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -576,5 +577,15 @@ internal sealed class PreferenzaNotificaConfig : IEntityTypeConfiguration<Prefer
         b.Property(x => x.UtenteId).HasMaxLength(450);
         b.HasOne<ApplicationUser>().WithMany().HasForeignKey(x => x.UtenteId).OnDelete(DeleteBehavior.Cascade);
         b.HasIndex(x => new { x.UtenteId, x.Tipo }).IsUnique();
+    }
+}
+
+internal sealed class FileArchivioConfig : IEntityTypeConfiguration<FileArchivio>
+{
+    public void Configure(EntityTypeBuilder<FileArchivio> b)
+    {
+        b.ToTable("FileArchivio");
+        b.HasKey(x => x.Chiave);
+        b.Property(x => x.Chiave).HasMaxLength(500);
     }
 }

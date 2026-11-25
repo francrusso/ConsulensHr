@@ -46,7 +46,9 @@ Le impostazioni sensibili vanno **sempre** negli user-secrets (in sviluppo) o ne
 | `WhatsApp:PhoneNumberId`, `WhatsApp:Token` | WhatsApp Cloud API di Meta per le notifiche (vedi sotto). Senza, il canale WhatsApp non è disponibile. Solo negli user-secrets o nelle variabili d'ambiente. |
 | `WhatsApp:NumeroMittente` | Numero Consulens da cui arrivano i messaggi, mostrato nel portale (in `appsettings.json`: +39 349 584 4020). |
 | `WhatsApp:TemplateNotifica` (`notifica_consulens_hr`), `TemplateCodice` (`codice_verifica_consulens_hr`), `Lingua` (`it`), `VersioneApi` (`v23.0`) | Nomi dei template approvati e versione della Graph API, se diversi dai predefiniti. |
-| `Archivio:Percorso` | Cartella dei documenti caricati (buste paga, CU, contratti, foto, loghi). Predefinita: `src/CL.Web/App_Data/archivio`, fuori da `wwwroot`. |
+| `Archivio:Tipo` | Dove stanno i documenti caricati: `Disco` (predefinito, nella cartella di `Archivio:Percorso`) o `Database` (tabella `FileArchivio`, per gli hosting con il disco che si azzera, come l'app di prova online). |
+| `Archivio:Percorso` | Cartella dei documenti caricati (buste paga, CU, contratti, foto, loghi) con `Archivio:Tipo` = `Disco`. Predefinita: `src/CL.Web/App_Data/archivio`, fuori da `wwwroot`. |
+| `Database:ApplicaMigrazioni` | `true` = applica le migrazioni all'avvio anche fuori da Development (lo usa l'app di prova online). |
 
 ### WhatsApp (notifiche)
 
@@ -99,7 +101,7 @@ chiuse dal pooler dopo una pausa (`DependencyInjection.ConnessioneRobusta`).
 
 ## Database e migrazioni
 
-- In **Development** le migrazioni si applicano all'avvio.
+- In **Development** le migrazioni si applicano all'avvio, e così nell'app di prova online (`Database:ApplicaMigrazioni`).
 - In **produzione** vanno applicate dalla pipeline di rilascio, con lo script idempotente
   `src/CL.Infrastructure/Persistence/Migrations/schema.sql` (si può rilanciare senza danni).
 - In modalità **demo SQLite** non si usano le migrazioni: lo schema si crea con `EnsureCreated`.
@@ -129,6 +131,47 @@ dotnet ef migrations has-pending-model-changes --project src/CL.Infrastructure -
 ```
 
 `DesignTimeDbContextFactory` permette a `dotnet ef` di lavorare senza aprire connessioni al database.
+
+## App di prova online (Render, gratis)
+
+Per far provare l'app ai colleghi c'è un'app online sul piano gratuito di [Render](https://render.com), costruita dal
+`Dockerfile` e descritta in `render.yaml`. Usa **lo stesso database Supabase dello sviluppo**: tester e sviluppo vedono
+gli stessi dati. Vercel non va bene: non esegue .NET se non come container in beta, senza disco né processi in background.
+
+### Metterla online (una volta sola)
+
+1. Fai il push di `main` su GitHub.
+2. Su [dashboard.render.com](https://dashboard.render.com) accedi con GitHub, poi **New › Blueprint** e scegli il
+   repository `ConsulensHr`: Render legge `render.yaml` e propone il servizio `consulens-hr` (piano Free, Francoforte).
+3. Alla voce `ConnectionStrings__Default` incolla la stessa stringa di connessione degli user-secrets (session pooler di
+   Supabase, porta 5432). Per rileggerla (mostra anche le password, non condividere l'output):
+
+```bash
+dotnet user-secrets list --project src/CL.Web
+```
+
+4. **Deploy Blueprint**. La prima build richiede qualche minuto; poi l'app risponde su `https://consulens-hr.onrender.com`
+   (o l'indirizzo che Render mostra in alto nella pagina del servizio).
+
+Da lì in poi ogni push su `main` ripubblica l'app da sola. Le migrazioni nuove si applicano all'avvio.
+
+### Cosa cambia rispetto allo sviluppo
+
+- **Si addormenta** dopo 15 minuti senza visite: il primo accesso dopo una pausa impiega circa un minuto. Chi era collegato
+  resta collegato e i link di invito restano validi (le chiavi che li firmano stanno nel database, tabella `DataProtectionKeys`).
+- **Niente email**: il piano gratuito di Render blocca le porte SMTP. Quando inviti un collega il link d'accesso compare a
+  schermo e glielo mandi tu; "Password dimenticata?" online non manda niente: per chi l'ha persa usa in **Utenti** «Invia un link per reimpostare
+  la password», che online mostra il link da copiare.
+  Non aggiungere le variabili `Email__*` su Render: l'invio andrebbe in timeout.
+- **Documenti nel database** (`Archivio__Tipo` = `Database`): il disco di Render si azzera a ogni riavvio. I file caricati
+  in locale su disco online non si aprono, e viceversa. Per vedere in locale anche quelli caricati online:
+
+```bash
+dotnet user-secrets set "Archivio:Tipo" "Database" --project src/CL.Web
+```
+
+- **Stesso database**: una migrazione creata in locale si applica a Supabase al primo avvio in sviluppo. Fai il push
+  subito, così anche l'app online ha il codice che la conosce.
 
 ## Test
 

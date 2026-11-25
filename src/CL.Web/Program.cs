@@ -6,6 +6,7 @@ using CL.Infrastructure.Identity;
 using CL.Infrastructure.Persistence;
 using CL.Web.Infrastruttura;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.EntityFrameworkCore;
@@ -18,6 +19,10 @@ if (string.IsNullOrWhiteSpace(builder.Configuration["Archivio:Percorso"]))
     builder.Configuration["Archivio:Percorso"] = Path.Combine(builder.Environment.ContentRootPath, "App_Data", "archivio");
 
 builder.Services.AddInfrastructure(builder.Configuration);
+// Chiavi di cookie e link di invito nel database, uguali per sviluppo e app online (stesso nome applicazione): un riavvio
+// dell'hosting non fa uscire nessuno. Nei test restano in memoria: il database del test nasce dopo l'avvio dell'app.
+if (!builder.Environment.IsEnvironment("Testing"))
+    builder.Services.AddDataProtection().SetApplicationName("ConsulensHr").PersistKeysToDbContext<AppDbContext>();
 builder.Services.ConfigureApplicationCookie(o =>
 {
     o.LoginPath = "/Account/Login";
@@ -81,10 +86,11 @@ app.UseRequestLocalization(new RequestLocalizationOptions
     SupportedUICultures = [italiano],
 });
 
-// In sviluppo le migrazioni si applicano all'avvio; in produzione vanno applicate dalla pipeline di rilascio.
-// L'ambiente "Testing" (test di integrazione) prepara il database da sé.
+// In sviluppo le migrazioni si applicano all'avvio; altrove solo con "Database:ApplicaMigrazioni" = true (l'app di prova
+// online), altrimenti vanno applicate dalla pipeline di rilascio. L'ambiente "Testing" prepara il database da sé.
 if (!app.Environment.IsEnvironment("Testing"))
-    await DatabaseInitializer.InizializzaAsync(app.Services, applicaMigrazioni: app.Environment.IsDevelopment());
+    await DatabaseInitializer.InizializzaAsync(app.Services, applicaMigrazioni:
+        app.Environment.IsDevelopment() || app.Configuration.GetValue<bool>("Database:ApplicaMigrazioni"));
 
 if (!app.Environment.IsDevelopment())
 {

@@ -68,7 +68,10 @@ public static class DependencyInjection
         services.AddHostedService<InvioCodaWhatsApp>();
 
         services.Configure<OpzioniArchivio>(configuration.GetSection("Archivio"));
-        services.AddSingleton<IArchivioDocumenti, ArchivioSuDisco>();
+        if (configuration.GetSection("Archivio").Get<OpzioniArchivio>() is { NelDatabase: true })
+            services.AddSingleton<IArchivioDocumenti, ArchivioNelDatabase>();
+        else
+            services.AddSingleton<IArchivioDocumenti, ArchivioSuDisco>();
 
         services.AddHttpClient<IRicercaPartitaIva, RicercaVies>(c =>
         {

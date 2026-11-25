@@ -17,19 +17,33 @@ public interface IArchivioDocumenti
 
 public sealed class OpzioniArchivio
 {
-    /// <summary>Cartella dei documenti su disco (fuori da wwwroot). In produzione andrà sostituita da uno storage privato.</summary>
+    /// <summary>
+    /// "Disco" (predefinito): i file nella cartella <see cref="Percorso"/>. "Database": i file nella tabella FileArchivio,
+    /// per gli hosting senza disco persistente (es. il piano gratuito di Render, che azzera il disco a ogni riavvio).
+    /// </summary>
+    public string Tipo { get; set; } = "Disco";
+
+    /// <summary>Cartella dei documenti su disco (fuori da wwwroot), usata con <see cref="Tipo"/> "Disco".</summary>
     public string Percorso { get; set; } = "";
+
+    public bool NelDatabase => string.Equals(Tipo, "Database", StringComparison.OrdinalIgnoreCase);
 }
 
-internal sealed partial class ArchivioSuDisco(IOptions<OpzioniArchivio> opzioni) : IArchivioDocumenti
+/// <summary>Le chiavi valide: solo lettere, cifre, trattini e barre, niente "..", percorsi assoluti o caratteri speciali.</summary>
+internal static partial class ChiaviArchivio
 {
-    // Solo lettere, cifre, trattini e barre: niente "..", percorsi assoluti o caratteri speciali.
     [GeneratedRegex(@"^[A-Za-z0-9\-]+(/[A-Za-z0-9\-]+)*\.(pdf|png|jpg|webp)$")]
-    private static partial Regex ChiaveValida();
+    private static partial Regex Valida();
 
+    public static string Controlla(string chiave) =>
+        Valida().IsMatch(chiave) ? chiave : throw new ArgumentException("Chiave di archivio non valida.", nameof(chiave));
+}
+
+internal sealed class ArchivioSuDisco(IOptions<OpzioniArchivio> opzioni) : IArchivioDocumenti
+{
     private string Percorso(string chiave)
     {
-        if (!ChiaveValida().IsMatch(chiave)) throw new ArgumentException("Chiave di archivio non valida.", nameof(chiave));
+        ChiaviArchivio.Controlla(chiave);
         var radice = Path.GetFullPath(opzioni.Value.Percorso);
         var completo = Path.GetFullPath(Path.Combine(radice, chiave));
         if (!completo.StartsWith(radice + Path.DirectorySeparatorChar, StringComparison.Ordinal))

@@ -1,0 +1,21 @@
+# Blueprint di Render per l'app di prova online, sul piano gratuito. Istruzioni in docs/sviluppo.md, "App di prova online".
+# Render ricostruisce e ripubblica l'app a ogni push su main.
+services:
+  - type: web
+    name: consulens-hr
+    runtime: docker
+    plan: free
+    region: frankfurt
+    branch: main
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /Account/Login
+    envVars:
+      # Stringa di connessione a Supabase (session pooler, porta 5432): la chiede Render alla creazione, non sta nel repository.
+      - key: ConnectionStrings__Default
+        sync: false
+      # Il disco del piano gratuito si azzera a ogni riavvio: documenti, foto e loghi vanno nel database.
+      - key: Archivio__Tipo
+        value: Database
+      # Le migrazioni si applicano all'avvio, come in sviluppo.
+      - key: Database__ApplicaMigrazioni
+        value: "true"

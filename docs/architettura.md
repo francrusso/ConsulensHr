@@ -29,9 +29,11 @@ che usano direttamente `AppDbContext` e le entità del dominio.
 `src/CL.Web/Program.cs`, in ordine:
 
 1. **Lingua**: cultura `it-IT` per date, numeri e messaggi.
-2. **Database**: all'avvio `DatabaseInitializer` prepara lo schema (migrazioni solo in Development, `EnsureCreated` su
-   SQLite), crea i ruoli e gli utenti iniziali da `Seed:*`.
-3. **Errori**: fuori da Development `UseExceptionHandler("/Home/Error")`, HSTS e redirect HTTPS.
+2. **Database**: all'avvio `DatabaseInitializer` prepara lo schema (migrazioni solo in Development o con
+   `Database:ApplicaMigrazioni`, `EnsureCreated` su SQLite), crea i ruoli e gli utenti iniziali da `Seed:*`.
+3. **Errori**: fuori da Development `UseExceptionHandler("/Home/Error")`, HSTS e redirect HTTPS. Dietro un proxy che
+   gestisce l'HTTPS (Render) il container imposta `ASPNETCORE_FORWARDEDHEADERS_ENABLED=true`, così l'app riconosce le
+   richieste https.
 4. **Autenticazione**: cookie `cl.auth` di 8 ore con scadenza mobile (si rinnova mentre l'utente lavora).
 5. **Perimetro aziende**: per un consulente che non è super amministratore, un middleware legge le aziende a lui assegnate
    (`AssegnazioniAziende`) e le mette in `PerimetroAziende`. Da quel momento i filtri globali di `AppDbContext`
@@ -108,6 +110,8 @@ Tutte le entità derivano da `Common/Entity` (Id `Guid` generato nel dominio). L
 - Password di almeno 10 caratteri; blocco di 15 minuti dopo 5 tentativi falliti.
 - Link di invito e di recupero password validi 3 giorni; un utente disattivato o con password cambiata perde le sessioni
   aperte entro 5 minuti.
+- Le chiavi di ASP.NET Data Protection, che firmano cookie e link, stanno nel database (tabella `DataProtectionKeys`,
+  nome applicazione `ConsulensHr`): un riavvio dell'hosting non fa uscire nessuno. Nei test restano in memoria.
 
 ## Email (`CL.Infrastructure/Email`)
 
@@ -132,9 +136,12 @@ Il collegamento lo gestisce `CollegamentoWhatsApp`: il codice è il token telefo
 
 ## Archivio documenti (`CL.Infrastructure/Archivio`)
 
-`IArchivioDocumenti` salva buste paga, CU, contratti, foto e loghi su disco in `Archivio:Percorso`, fuori da `wwwroot`:
-i file si scaricano solo passando dai controller, che controllano i permessi. Le chiavi dei file sono generate dall'app
-e validate (solo pdf, png, jpg, webp; niente `..`); la scrittura passa da un file temporaneo poi rinominato.
+`IArchivioDocumenti` salva buste paga, CU, contratti, foto e loghi. Con `Archivio:Tipo` = `Disco` (predefinito,
+`ArchivioSuDisco`) stanno in `Archivio:Percorso`, fuori da `wwwroot`, e la scrittura passa da un file temporaneo poi
+rinominato. Con `Database` (`ArchivioNelDatabase`, usato dall'app di prova online) stanno nella tabella `FileArchivio`;
+ogni operazione usa un proprio contesto, per non salvare le modifiche ancora aperte di chi chiama. In entrambi i casi i
+file si scaricano solo passando dai controller, che controllano i permessi; le chiavi dei file sono generate dall'app e
+validate (solo pdf, png, jpg, webp; niente `..`) e una chiave già usata non si sovrascrive.
 
 ## Servizi esterni
 

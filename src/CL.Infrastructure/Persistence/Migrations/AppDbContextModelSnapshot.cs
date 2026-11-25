@@ -1584,6 +1584,24 @@ namespace CL.Infrastructure.Persistence.Migrations
                     b.ToTable("TurniSalvati", "hr");
                 });
 
+            modelBuilder.Entity("CL.Infrastructure.Archivio.FileArchivio", b =>
+                {
+                    b.Property<string>("Chiave")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<byte[]>("Contenuto")
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
+                    b.Property<DateTime>("SalvatoIl")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Chiave");
+
+                    b.ToTable("FileArchivio", "hr");
+                });
+
             modelBuilder.Entity("CL.Infrastructure.Identity.ApplicationUser", b =>
                 {
                     b.Property<string>("Id")
@@ -1692,6 +1710,25 @@ namespace CL.Infrastructure.Persistence.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("AziendeConsulenti", "hr");
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.DataProtection.EntityFrameworkCore.DataProtectionKey", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("FriendlyName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Xml")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("DataProtectionKeys", "hr");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>

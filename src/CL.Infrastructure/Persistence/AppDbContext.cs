@@ -7,13 +7,16 @@ using CL.Domain.Notifiche;
 using CL.Domain.Organizzazione;
 using CL.Domain.Presenze;
 using CL.Domain.ValueObjects;
+using CL.Infrastructure.Archivio;
 using CL.Infrastructure.Identity;
+using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace CL.Infrastructure.Persistence;
 
-public sealed class AppDbContext(DbContextOptions<AppDbContext> options, PerimetroAziende? perimetro = null) : IdentityDbContext<ApplicationUser>(options)
+public sealed class AppDbContext(DbContextOptions<AppDbContext> options, PerimetroAziende? perimetro = null)
+    : IdentityDbContext<ApplicationUser>(options), IDataProtectionKeyContext
 {
     public const string Schema = "hr";
 
@@ -47,6 +50,13 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, Perimet
     public DbSet<Team> Team => Set<Team>();
     public DbSet<Notifica> Notifiche => Set<Notifica>();
     public DbSet<PreferenzaNotifica> PreferenzeNotifiche => Set<PreferenzaNotifica>();
+    /// <summary>File dell'archivio, solo con "Archivio:Tipo" = "Database".</summary>
+    public DbSet<FileArchivio> FileArchivio => Set<FileArchivio>();
+    /// <summary>
+    /// Chiavi che firmano cookie di accesso e link di invito: nel database restano valide anche quando l'hosting riavvia
+    /// l'app su un disco nuovo (altrimenti a ogni riavvio tutti escono e i link già inviati non valgono più).
+    /// </summary>
+    public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

@@ -1,10 +1,12 @@
 using CL.Domain.Assenze;
 using CL.Domain.BustePaga;
 using CL.Domain.ValueObjects;
+using CL.Infrastructure.Archivio;
 using CL.Infrastructure.Persistence;
 using CL.Tests.Domain;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace CL.Tests.Infrastructure;
 
@@ -122,5 +124,28 @@ public sealed class PersistenzaTests : IDisposable
         using var db2 = NuovoContesto();
         db2.Remove(db2.Dipendenti.Single());
         Assert.Throws<DbUpdateException>(() => db2.SaveChanges());
+    }
+
+    [Fact]
+    public async Task Archivio_nel_database_salva_apre_ed_elimina_senza_sovrascrivere()
+    {
+        await using var servizi = new ServiceCollection().AddDbContext<AppDbContext>(o => o.UseSqlite(_conn)).BuildServiceProvider();
+        var archivio = new ArchivioNelDatabase(servizi.GetRequiredService<IServiceScopeFactory>(), TimeProvider.System);
+        const string chiave = "buste/2026/cedolino-1.pdf";
+
+        await archivio.SalvaAsync(chiave, new MemoryStream([1, 2, 3]));
+        await using (var letto = await archivio.ApriAsync(chiave))
+        {
+            Assert.NotNull(letto);
+            using var copia = new MemoryStream();
+            await letto.CopyToAsync(copia);
+            Assert.Equal([1, 2, 3], copia.ToArray());
+        }
+
+        await Assert.ThrowsAsync<DbUpdateException>(() => archivio.SalvaAsync(chiave, new MemoryStream([9])));
+        await Assert.ThrowsAsync<ArgumentException>(() => archivio.ApriAsync("../segreti.pdf"));
+
+        await archivio.EliminaAsync(chiave);
+        Assert.Null(await archivio.ApriAsync(chiave));
     }
 }

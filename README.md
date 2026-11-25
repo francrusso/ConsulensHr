@@ -41,7 +41,7 @@ dotnet test ConsulenzaLavoro.sln
 |---|---|
 | [docs/funzionalita.md](docs/funzionalita.md) | Cosa fa l'applicazione, sezione per sezione, e chi può fare cosa (super amministratore, consulente, referente azienda, dipendente). |
 | [docs/architettura.md](docs/architettura.md) | Progetti, percorso di una richiesta, perimetro dei dati per ruolo, dominio, database, email, archivio dei documenti. |
-| [docs/sviluppo.md](docs/sviluppo.md) | Configurazione, Supabase, migrazioni, test e regole del progetto (lingua, grafica, segreti). |
+| [docs/sviluppo.md](docs/sviluppo.md) | Configurazione, Supabase, migrazioni, app di prova online su Render, test e regole del progetto (lingua, grafica, segreti). |
 
 ## Struttura
 
@@ -53,4 +53,6 @@ src/
 tests/
   CL.Tests/           test del dominio, della persistenza e dell'app web completa
 docs/                 documentazione
+Dockerfile            immagine dell'app web, usata da Render
+render.yaml           app di prova online sul piano gratuito di Render
 ```

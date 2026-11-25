@@ -1,0 +1,18 @@
+# Fuori dall'immagine: compilati, dati locali (documenti caricati e database demo), strumenti e test.
+**/bin/
+**/obj/
+**/App_Data/
+**/*.db
+**/*.db-shm
+**/*.db-wal
+**/appsettings.*.local.json
+**/*.user
+**/.DS_Store
+.git/
+.vs/
+.vscode/
+.idea/
+.claude/
+graphify-out/
+docs/
+tests/
